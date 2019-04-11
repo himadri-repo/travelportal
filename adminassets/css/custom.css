@@ -1,0 +1,71 @@
+#signup-box
+{
+ background-color: rgba(100,110,120,.4);
+ padding: 5px;
+}
+#login-box
+{
+ background-color: rgba(100,110,120,.4);
+ padding: 5px;
+}
+.widget-main
+{
+padding: 16px 36px 36px;
+background: #F7F7F7;
+}
+#div_msg
+{
+margin-top:5px;
+margin-bottom:5px;
+}
+#complexity
+{
+ margin-bottom:5px !important;
+ padding:4px;
+ border:1px solid #ccc;
+
+}
+.weak{background-color: #f2dede;color: #a94442;}
+.strong{background-color: #fcf8e3;color: #8a6d3b;}
+.stronger{background-color: #d9edf7;color: #31708f;}
+.strongest{background-color: #dff0d8; color: #3c763d;}
+.btn-danger, .btn-danger:focus
+{
+ background:#F05555 !important;
+ border-color:#F05555  !important;
+ color:#fff !important;
+}
+#btn_remove:hover
+{
+  background:#D62929 !important;
+}
+#preview
+{
+  padding:10px;
+  text-align:center;
+}
+#logo_preview
+{
+  padding:10px;
+  text-align:center;
+}
+#banner_preview
+{
+  padding:10px;
+  text-align:center;
+}
+#preview img
+{
+  width:100%;
+  max-width:250px;
+}
+#logo_preview img
+{
+  width:auto;
+  max-width:250px;
+}
+#banner_preview img
+{
+ width:100%;
+  max-width:250px;
+}

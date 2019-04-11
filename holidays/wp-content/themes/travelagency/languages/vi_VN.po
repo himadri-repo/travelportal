@@ -1,0 +1,1657 @@
+# Copyright (C) 2014 Automattic
+# This file is distributed under the GNU General Public License v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: TravelAgency\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tags/_s\n"
+"POT-Creation-Date: 2018-06-14 14:39+0700\n"
+"PO-Revision-Date: 2018-06-14 14:39+0700\n"
+"Last-Translator: \n"
+"Language-Team: wpbooking\n"
+"Language: vi_VN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.6\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: esc_html__;esc_html_e;-n:1,2\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPathExcluded-0: .git\n"
+
+#: 404.php:26
+msgid "Oops! That page can&rsquo;t be found."
+msgstr ""
+
+#: 404.php:30
+msgid ""
+"It looks like nothing was found at this location. Maybe try one of the links "
+"below or a search?"
+msgstr ""
+
+#: comments.php:36 comments.php:56
+msgid "Comment navigation"
+msgstr ""
+
+#: comments.php:38 comments.php:58
+msgid "&larr; Older Comments"
+msgstr ""
+
+#: comments.php:40 comments.php:60
+msgid "Newer Comments &rarr;"
+msgstr ""
+
+#: comments.php:70
+msgid "Comments are closed."
+msgstr ""
+
+#: content-none.php:13
+msgid "Nothing Found"
+msgstr ""
+
+#: content-none.php:23
+msgid ""
+"Sorry, but nothing matched your search terms. Please try again with some "
+"different keywords."
+msgstr ""
+
+#: content-none.php:28
+msgid ""
+"It seems we can&rsquo;t find what you&rsquo;re looking for. Perhaps "
+"searching can help."
+msgstr ""
+
+#: content-page.php:15 content.php:23 st_templates/blog-content/content.php:22
+#: st_templates/single-content/content-audio.php:24
+#: st_templates/single-content/content-gallery.php:32
+#: st_templates/single-content/content-image.php:19
+#: st_templates/single-content/content-quote.php:16
+#: st_templates/single-content/content-video.php:24
+#: st_templates/single-content/content.php:20
+msgid "Pages:"
+msgstr ""
+
+#: demo/template-landing-page.php:41
+msgid "logo"
+msgstr ""
+
+#: footer.php:17
+#, php-format
+msgid "Proudly powered by %s"
+msgstr ""
+
+#: footer.php:19
+#, php-format
+msgid "Theme: %1$s by %2$s."
+msgstr ""
+
+#: header.php:94 shinetheme/configs/theme-options.php:75
+#: shinetheme/controllers/page-controller.php:25
+msgid "Logo"
+msgstr ""
+
+#: header.php:115
+msgid "Make your menu at Appearance => Menus "
+msgstr ""
+
+#: search.php:28
+#, php-format
+msgid "Search Results for: %s"
+msgstr ""
+
+#: shinetheme/configs/autoload.php:59
+msgid "Primary Navigation"
+msgstr ""
+
+#: shinetheme/configs/autoload.php:70
+msgid "Blog Sidebar"
+msgstr ""
+
+#: shinetheme/configs/autoload.php:72
+msgid "Widgets in this area will be shown on all blog page."
+msgstr ""
+
+#: shinetheme/configs/required_plugins.php:18
+msgid "Option Tree"
+msgstr ""
+
+#: shinetheme/configs/required_plugins.php:23
+msgid "Contact Form 7"
+msgstr ""
+
+#: shinetheme/configs/required_plugins.php:28
+msgid "King Composer"
+msgstr ""
+
+#: shinetheme/configs/required_plugins.php:33
+msgid "ShineTheme Core"
+msgstr ""
+
+#: shinetheme/configs/required_plugins.php:39
+msgid "WPBooking"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:21
+msgid "General Settings"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:25
+msgid "Logo Settings"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:29
+msgid "Heading Settings"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:33
+msgid "Layout Settings"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:37
+msgid "Typography"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:44
+msgid "Footer Page"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:45
+msgid "Include page to Footer"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:51
+msgid "Main color"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:57
+msgid "Google Map API Key"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:58
+msgid "Get google api key in "
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:58
+msgid "here"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:64
+msgid "Favicon"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:65
+msgid "Icon size should be: 44*44"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:76
+#: shinetheme/controllers/page-controller.php:26
+msgid "This allow you to change logo"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:82
+msgid "Logo Retina"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:93
+msgid "Top bar"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:99
+msgid "On or Off Top Bar"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:106
+msgid "Contact infomation"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:108
+msgid "Enter Your Contact"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:114
+msgid "Socials"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:116
+msgid "Add Socials"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:123
+#: shinetheme/controllers/elements/st-about.php:46
+msgid "Icon"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:129
+msgid "Link"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:135
+msgid "Background"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:145
+msgid "Menu"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:150
+#: shinetheme/controllers/page-controller.php:52
+msgid "Menu Fixed"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:151
+#: shinetheme/controllers/page-controller.php:53
+msgid "Menu change to fixed when scroll"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:157
+#: shinetheme/controllers/page-controller.php:77
+msgid "Background for menu"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:163
+#: shinetheme/controllers/page-controller.php:81
+msgid "Menu style"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:169
+#: shinetheme/controllers/page-controller.php:87
+msgid "Hover color"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:170
+#: shinetheme/configs/theme-options.php:177
+#: shinetheme/controllers/page-controller.php:88
+#: shinetheme/controllers/page-controller.php:95
+msgid "Choose color"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:176
+#: shinetheme/controllers/page-controller.php:94
+msgid "Active color"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:187
+msgid "General"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:192
+msgid "Sidebar Blog"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:198
+#: shinetheme/configs/theme-options.php:227
+#: shinetheme/configs/theme-options.php:255
+msgid "No Sidebar"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:202
+#: shinetheme/configs/theme-options.php:231
+#: shinetheme/configs/theme-options.php:259
+msgid "Left"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:206
+#: shinetheme/configs/theme-options.php:235
+#: shinetheme/configs/theme-options.php:263
+msgid "Right"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:212
+msgid "Sidebar select display in blog"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:221
+msgid "Sidebar Page"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:241
+msgid "Sidebar select display in page"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:249
+msgid "Sidebar Single Post"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:269
+msgid "Sidebar select display in single post"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:276
+msgid "Add SideBar"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:282
+msgid "Choose heading title widget"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:288
+#: shinetheme/configs/theme-options.php:385
+msgid "H1"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:292
+#: shinetheme/configs/theme-options.php:389
+msgid "H2"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:296
+#: shinetheme/configs/theme-options.php:393
+msgid "H3"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:300
+#: shinetheme/configs/theme-options.php:397
+msgid "H4"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:304
+#: shinetheme/configs/theme-options.php:401
+msgid "H5"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:308
+#: shinetheme/configs/theme-options.php:405
+msgid "H6"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:319
+msgid "Single"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:325
+msgid "Show or Hide Banner"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:331
+msgid "Select Image for Banner"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:339
+msgid "Breadcrumb"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:340
+msgid "Turn on or off Breadcrumb"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:349
+msgid "Add Settings"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:355
+msgid "Choose Area to style"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:361
+msgid "Header"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:365
+msgid "Main Content"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:369
+msgid "Widget"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:373
+msgid "Footer"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:379
+msgid "Choose heading Area"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:409
+msgid "a"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:413
+msgid "p"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:419
+msgid "Add Style"
+msgstr ""
+
+#: shinetheme/configs/theme-options.php:427
+msgid "Add Google Fonts"
+msgstr ""
+
+#: shinetheme/controllers/base-controller.php:272
+msgid "SideBar created by add sidebar in theme options."
+msgstr ""
+
+#: shinetheme/controllers/elements/st-about.php:28
+msgid "Travel Agency About"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-about.php:29
+msgid "Create About"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-about.php:36
+msgid "Title"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-about.php:41
+#: shinetheme/controllers/tour-controller.php:29
+msgid "Description"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-banner.php:24
+msgid "Travel Agency Banner"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-banner.php:25
+msgid "Create Banner"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-banner.php:31
+msgid "Background Images"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-banner.php:33
+msgid "Select a image for background of banner"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-banner.php:37
+msgid "Show Breadcrumb"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:12
+msgid "Travel Agency Blog"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:18
+msgid "Number Post"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:23
+msgid "post"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:27
+msgid "Number post in page"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:31
+msgid "Select Categories"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:35
+msgid "Select categories"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:39
+#: shinetheme/controllers/elements/st-list-location.php:81
+msgid "Order By"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:46
+#: shinetheme/controllers/elements/st-list-location.php:87
+#: shinetheme/controllers/elements/st-list-tour.php:100
+msgid "Order"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:49
+msgid "Ascending"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:50
+msgid "Descending"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:56
+msgid "Show Pagination"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-blog.php:59
+msgid "Show pagination on page"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:64
+msgid "Travel Agency List Location"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:65
+msgid "List Your Location"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:72
+msgid "Style"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:74
+msgid "Grid"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:75
+msgid "Slide Show"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:89
+#: shinetheme/controllers/elements/st-list-tour.php:103
+msgid "ASC"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:90
+#: shinetheme/controllers/elements/st-list-tour.php:104
+msgid "DESC"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:95
+msgid "Use Custom List Location"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:98
+#: shinetheme/controllers/elements/st-list-tour.php:135
+#: shinetheme/controllers/elements/st-list-tour.php:172
+#: shinetheme/controllers/elements/st-slider.php:93
+#: shinetheme/controllers/elements/st-slider.php:110
+#: shinetheme/controllers/elements/st-slider.php:118
+#: shinetheme/controllers/page-controller.php:40
+#: shinetheme/controllers/page-controller.php:60
+msgid "Yes"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:103
+msgid "Custom Location"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:104
+msgid "Enter your location"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:118
+#: shinetheme/controllers/elements/st-list-tour.php:109
+msgid "Number Item"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:134
+#: shinetheme/controllers/elements/st-list-tour.php:121
+msgid "Item per line"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:137
+#: shinetheme/controllers/elements/st-list-tour.php:124
+msgid "2 Items"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:138
+#: shinetheme/controllers/elements/st-list-tour.php:125
+msgid "3 Items"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:139
+#: shinetheme/controllers/elements/st-list-tour.php:126
+msgid "4 Items"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-location.php:145
+msgid "Overlay Item"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:87
+msgid "Travel Agency List Tour"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:88
+#: shinetheme/controllers/elements/st-list-tour.php:140
+msgid "List Your Tour"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:94
+msgid "Order by"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:132
+msgid "Use Custom List Tour"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:153
+#: shinetheme/controllers/elements/st-slider.php:75
+msgid "Link Tour Type"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:154
+#: shinetheme/controllers/elements/st-slider.php:76
+msgid "Enter Tour Type add to link"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:168
+msgid "Show View all button?"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-list-tour.php:170
+msgid "Choose to show button View all"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:35
+msgid "Travel Agency Slider"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:36
+msgid "Create Slider"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:42
+msgid "Images"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:44
+msgid "Select Images( Select Multiple Images with the CTRL )"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:48
+msgid "Overlay slider"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:53
+msgid "Height of Slider"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:65
+msgid "Title of box"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:70
+msgid "Background of box"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:90
+msgid "Use custom link"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:98
+msgid "Enter your link"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:107
+msgid "Show Navigation slider"
+msgstr ""
+
+#: shinetheme/controllers/elements/st-slider.php:115
+msgid "Show dots slider"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:71
+msgid "Location Featured Image"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:80
+msgid "Featured Thumb"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:85
+msgid "Select an image to upload"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:85
+msgid "Use this image"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:85
+msgid "Upload"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:86
+msgid "Do you want delete this image?"
+msgstr ""
+
+#: shinetheme/controllers/location-controller.php:86
+#: st_templates/admin/wb-meta-field/image.php:47
+msgid "Delete"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:12
+msgid "Page Options"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:20
+msgid "Header Settings"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:32
+msgid "Enable Top Bar"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:33
+msgid "Enable show top bar"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:36
+#: shinetheme/controllers/page-controller.php:56
+msgid "---Default---"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:44
+#: shinetheme/controllers/page-controller.php:64
+msgid "No"
+msgstr ""
+
+#: shinetheme/controllers/page-controller.php:72
+msgid "Background Top Bar"
+msgstr ""
+
+#: shinetheme/controllers/tour-controller.php:16
+msgid "5. Tour Programs"
+msgstr ""
+
+#: shinetheme/controllers/tour-controller.php:20
+#: shinetheme/controllers/tour-controller.php:23
+msgid "Tour Programs"
+msgstr ""
+
+#: shinetheme/controllers/tour-controller.php:26
+msgid "Program of the tour"
+msgstr ""
+
+#: shinetheme/controllers/tour-controller.php:34
+msgid "Image"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:14
+msgid "--Select--"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:38
+msgid "Text"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:42
+msgid "Textarea"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:46
+msgid "Date"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:50
+msgid "Colorpicker"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:54
+msgid "On/Off"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:66
+#: shinetheme/helpers/service_helper.php:5
+msgid "None"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:67
+#: shinetheme/helpers/service_helper.php:6
+msgid "Post ID"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:68
+#: shinetheme/helpers/service_helper.php:7
+msgid "Author"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:69
+#: shinetheme/helpers/service_helper.php:8
+msgid "Post Title"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:70
+#: shinetheme/helpers/service_helper.php:9
+msgid "Post Name"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:71
+#: shinetheme/helpers/service_helper.php:10
+msgid "Post Date"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:72
+#: shinetheme/helpers/service_helper.php:11
+msgid "Last Modified Date"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:73
+#: shinetheme/helpers/service_helper.php:12
+msgid "Post Parent"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:74
+#: shinetheme/helpers/service_helper.php:13
+msgid "Random"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:75
+#: shinetheme/helpers/service_helper.php:14
+msgid "Comment Count"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:213
+msgid "Home"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:268
+msgid "Search Results for:"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:270
+msgid "Post Tagged with:"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:276
+msgid "Author Archive"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:278
+msgid "Page Not Found"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:286
+msgid "Services"
+msgstr ""
+
+#: shinetheme/helpers/application_helper.php:292
+msgid "Page"
+msgstr ""
+
+#: shinetheme/helpers/post_helper.php:69
+msgid "All"
+msgstr ""
+
+#: shinetheme/helpers/post_helper.php:188
+msgid "&larr; Previous"
+msgstr ""
+
+#: shinetheme/helpers/post_helper.php:189
+msgid "Next &rarr;"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:24
+msgid "You do not have permission to do this"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:32
+msgid "Importer Class Was Not Installed"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:100
+msgid "travelagency"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:609 shinetheme/libraries/importer.php:610
+msgid "Submit Form"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:615
+msgid "PayPal"
+msgstr ""
+
+#: shinetheme/libraries/importer.php:616
+msgid "You will be redirect to paypal website to finish the payment process"
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:45
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:334
+msgid "Install Required Plugins"
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:46
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:335
+msgid "Install Plugins"
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:47
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:337
+#, php-format
+msgid "Installing Plugin: %s"
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:48
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:340
+msgid "Something went wrong with the plugin API."
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:59
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:392
+msgid "Return to Required Plugins Installer"
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:60
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:394
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3250
+msgid "Plugin activated successfully."
+msgstr ""
+
+#: shinetheme/libraries/required_plugins.php:61
+#, php-format
+msgid "All plugins installed and activated successfully. %s"
+msgstr ""
+
+#: shinetheme/libraries/st-optiontree.php:115
+#, php-format
+msgid "Version %s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:339
+#, php-format
+msgid "Updating Plugin: %s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:393
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:918
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2624
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3671
+msgid "Return to the Dashboard"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:395
+msgid "The following plugin was activated successfully:"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:397
+#, php-format
+msgid "No action taken. Plugin %1$s was already active."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:399
+#, php-format
+msgid ""
+"Plugin not activated. A higher version of %s is needed for this theme. "
+"Please update the plugin."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:401
+#, php-format
+msgid "All plugins installed and activated successfully. %1$s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:402
+msgid "Dismiss this notice"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:403
+msgid ""
+"There are one or more required or recommended plugins to install, update or "
+"activate."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:404
+msgid "Please contact the administrator of this site for help."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:608
+msgid "Update Required"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:725
+msgid "Set the parent_slug config variable instead."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:1025
+msgid ""
+"The remote plugin package does not contain a folder with the desired slug "
+"and renaming did not work."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:1025
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:1028
+msgid ""
+"Please contact the plugin provider and ask them to package their plugin "
+"according to the WordPress guidelines."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:1028
+msgid ""
+"The remote plugin package consists of more than one file, but the files are "
+"not packaged in a folder."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2073
+#, php-format
+msgid "TGMPA v%s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2364
+msgid "Required"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2367
+msgid "Recommended"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2383
+msgid "WordPress Repository"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2386
+msgid "External Source"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2389
+msgid "Pre-Packaged"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2406
+msgid "Not Installed"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2410
+msgid "Installed But Not Activated"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2412
+msgid "Active"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2418
+msgid "Required Update not Available"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2421
+msgid "Requires Update"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2424
+msgid "Update recommended"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2581
+msgid "Installed version:"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2589
+msgid "Minimum required version:"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2601
+msgid "Available version:"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2624
+msgid "No plugins to install, update or activate."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2638
+msgid "Plugin"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2639
+msgid "Source"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2640
+msgid "Type"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2644
+msgid "Version"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2645
+msgid "Status"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2694
+#, php-format
+msgid "Install %2$s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2699
+#, php-format
+msgid "Update %2$s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2705
+#, php-format
+msgid "Activate %2$s"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2775
+msgid "Upgrade message from the plugin author:"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2808
+msgid "Install"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2814
+msgid "Update"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2817
+msgid "Activate"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2848
+msgid "No plugins were selected to be installed. No action taken."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2850
+msgid "No plugins were selected to be updated. No action taken."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2891
+msgid "No plugins are available to be installed at this time."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2893
+msgid "No plugins are available to be updated at this time."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:2999
+msgid "No plugins were selected to be activated. No action taken."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3025
+msgid "No plugins are available to be activated at this time."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3249
+msgid "Plugin activation failed."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3589
+#, php-format
+msgid "Updating Plugin %1$s (%2$d/%3$d)"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3594
+#, php-format
+msgid "The installation of %1$s failed."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3598
+msgid ""
+"The installation and activation process is starting. This process may take a "
+"while on some hosts, so please be patient."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3600
+#, php-format
+msgid "%1$s installed and activated successfully."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3600
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3608
+msgid "Show Details"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3600
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3608
+msgid "Hide Details"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3601
+msgid "All installations and activations have been completed."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3603
+#, php-format
+msgid "Installing and Activating Plugin %1$s (%2$d/%3$d)"
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3606
+msgid ""
+"The installation process is starting. This process may take a while on some "
+"hosts, so please be patient."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3608
+#, php-format
+msgid "%1$s installed successfully."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3609
+msgid "All installations have been completed."
+msgstr ""
+
+#: shinetheme/libraries/tgm/class-tgm-plugin-activation.php:3611
+#, php-format
+msgid "Installing Plugin %1$s (%2$d/%3$d)"
+msgstr ""
+
+#: single-wpbooking_order.php:32
+msgid "Booking Details"
+msgstr ""
+
+#: single-wpbooking_order.php:34
+msgid "Success Booking"
+msgstr ""
+
+#: single-wpbooking_order.php:43
+#, php-format
+msgid ""
+"%s, Congratulation! Your booking has been successful! Below is booking "
+"details."
+msgstr ""
+
+#: single-wpbooking_order.php:45
+msgid "Thank you, your order has been received!"
+msgstr ""
+
+#: single-wpbooking_order.php:54
+msgid "Booking code:"
+msgstr ""
+
+#: single-wpbooking_order.php:58
+msgid "Method of Payment:"
+msgstr ""
+
+#: single-wpbooking_order.php:62
+msgid "Booking status:"
+msgstr ""
+
+#: single-wpbooking_order.php:68
+#: wpbooking/frontend/checkout/cart-total-box.php:8
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:36
+msgid "Total"
+msgstr ""
+
+#: single-wpbooking_order.php:83
+msgid "your booking information"
+msgstr ""
+
+#: single-wpbooking_order.php:126
+#: wpbooking/frontend/checkout/cart-total-box.php:23
+#, php-format
+msgid "%s V.A.T (included)"
+msgstr ""
+
+#: single-wpbooking_order.php:128
+#: wpbooking/frontend/checkout/cart-total-box.php:25
+#, php-format
+msgid "%s V.A.T"
+msgstr ""
+
+#: single-wpbooking_order.php:137
+#: wpbooking/frontend/checkout/cart-total-box.php:35
+msgid "City Tax"
+msgstr ""
+
+#: single-wpbooking_order.php:147
+#: wpbooking/frontend/checkout/cart-total-box.php:44
+msgid "Total Amount"
+msgstr ""
+
+#: single-wpbooking_order.php:154
+#: wpbooking/frontend/checkout/cart-total-box.php:54
+msgid "Deposit/Pay Now"
+msgstr ""
+
+#: single-wpbooking_order.php:156
+#: wpbooking/frontend/checkout/cart-total-box.php:59
+msgid "You'll pay at the property"
+msgstr ""
+
+#: st_templates/admin/wb-meta-field/image.php:45
+msgid "Add Image"
+msgstr ""
+
+#: st_templates/blog-content/items/standard.php:27
+msgid "Posted on"
+msgstr ""
+
+#: st_templates/blog-content/items/standard.php:28
+msgid "by"
+msgstr ""
+
+#: st_templates/elements/st-list-tour/style-1.php:32
+msgid "View all"
+msgstr ""
+
+#: st_templates/elements/st-slider/style-1.php:53
+msgid "view tours"
+msgstr ""
+
+#: st_templates/single-content/related.php:18
+msgid "Related Post"
+msgstr ""
+
+#: st_templates/single-content/related.php:33
+msgid "In"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:10
+msgid "Departure Date"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:29
+msgid "Adults"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:49
+msgid "Children"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:66
+msgid "Infant"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:84
+msgid "Book Now"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:91
+#: wpbooking/frontend/single/loop-room.php:142
+msgid "Extra services"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:97
+msgid "Service Name"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:98
+#: wpbooking/frontend/single/loop-room.php:158
+msgid "Quantity"
+msgstr ""
+
+#: st_templates/tour/tour-single/request-book.php:99
+msgid "Price(ALL)"
+msgstr ""
+
+#: st_templates/tour/tour-single/tour-program.php:8
+msgid "Tour program"
+msgstr ""
+
+#: wpbooking/frontend/account/lost-password.php:10
+msgid "Lost password"
+msgstr ""
+
+#: wpbooking/frontend/account/lost-password.php:13
+msgid "Username or email address"
+msgstr ""
+
+#: wpbooking/frontend/account/lost-password.php:17
+msgid "Reset Password"
+msgstr ""
+
+#: wpbooking/frontend/account/lost-password.php:18
+#: wpbooking/frontend/checkout/index.php:40
+msgid "Login"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:20
+#: wpbooking/frontend/account/register.php:48
+msgid "Register"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:23
+msgid "Username"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:27
+msgid "Email"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:31
+msgid "Password"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:35
+msgid "Re-type Password"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:44
+#, php-format
+msgid "Accept with %s"
+msgstr ""
+
+#: wpbooking/frontend/account/register.php:44
+msgid "Our privacy policy"
+msgstr ""
+
+#: wpbooking/frontend/archive/loop.php:25
+msgid "Not found anything related to search conditions."
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:5
+msgid "Sorry! Your cart is currently empty"
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:31
+#: wpbooking/frontend/checkout/index.php:35
+msgid "Billing Information"
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:37
+msgid "Already have an account?"
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:55
+msgid "Method of Payment"
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:68
+#, php-format
+msgid "I have read and accepted the %s"
+msgstr ""
+
+#: wpbooking/frontend/checkout/index.php:73
+msgid "CHECKOUT"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:6
+msgid "Room Details"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:14
+msgid "Do you want to delete it?"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:16
+msgid "Remove this room"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:22
+msgid "Max"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:22
+msgid "people"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:28
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:56
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:94
+#: wpbooking/frontend/single/types/tour.php:110
+msgid "Price"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:32
+msgid "Number"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:41
+msgid "Details"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:47
+msgid "Price by Night"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:53
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:64
+msgid "Night"
+msgstr ""
+
+#: wpbooking/frontend/checkout/other/checkout-item-room.php:91
+#: wpbooking/frontend/single/loop-room.php:155
+msgid "Service name"
+msgstr ""
+
+#: wpbooking/frontend/checkout/review.php:5
+msgid "Your booking details"
+msgstr ""
+
+#: wpbooking/frontend/checkout/review.php:38
+msgid "Change Date"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:116
+#: wpbooking/frontend/single/loop-room.php:216
+#, php-format
+msgid "/ %s nights"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:118
+#: wpbooking/frontend/single/loop-room.php:218
+#, php-format
+msgid "/ %s night"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:137
+msgid "Show Price"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:162
+#, php-format
+msgid "Price (%s)"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:250
+msgid "Max Guest:"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:250
+msgid "guests"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:250
+msgid "guest"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:260
+msgid "Room Size:"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:298
+msgid "Bath rooms"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:299
+#: wpbooking/frontend/single/loop-room.php:302
+#: wpbooking/frontend/single/loop-room.php:305
+msgid "room(s)"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:301
+msgid "Living rooms"
+msgstr ""
+
+#: wpbooking/frontend/single/loop-room.php:304
+msgid "Bed rooms"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:92
+msgid "Tour Overview"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:116
+msgid "Trip"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:124
+msgid "Duration"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:130
+msgid "Group size"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:131
+msgid " people"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:141
+msgid "Payment Policies"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:146
+#, php-format
+msgid "Deposit: %s &nbsp;&nbsp; required"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:147
+msgid "Allowed Cancellation: Yes"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:148
+#, php-format
+msgid "Time allowed to free: %s"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:149
+#, php-format
+msgid "Fee cancel for booking: %s"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:152
+msgid "100&#37; of the first night"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:153
+msgid "100&#37; of the full stay"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:180
+msgid "Day of arrival (6 pm)"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:182
+msgid " day"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:197
+msgid "Prepayment / Cancellation"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:216
+#, php-format
+msgid "V.A.T: %s &nbsp;&nbsp;"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:219
+#, php-format
+msgid "City tax: %s"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:222
+msgid " /stay"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:223
+msgid " /person per stay"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:224
+msgid " /night"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:225
+msgid "%"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:226
+msgid " /person per night"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:252
+#: wpbooking/frontend/single/types/tour.php:273
+msgid "included"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:287
+msgid "Tax"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:301
+msgid "Term & Condition"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:315
+msgid "Request to book"
+msgstr ""
+
+#: wpbooking/frontend/single/types/tour.php:326
+msgid "Contact us"
+msgstr ""

@@ -1,0 +1,49 @@
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  include_once(/home/qeded4rkn8ua/public_html/holidays/wp-content/plugins/wp-easy-mode/wp-easy-mode.php): failed to open stream: No such file or directory in /home/qeded4rkn8ua/public_html/holidays/wp-settings.php on line 322
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  include_once(): Failed opening '/home/qeded4rkn8ua/public_html/holidays/wp-content/plugins/wp-easy-mode/wp-easy-mode.php' for inclusion (include_path='.:/opt/alt/php56/usr/share/pear:/opt/alt/php56/usr/share/php') in /home/qeded4rkn8ua/public_html/holidays/wp-settings.php on line 322
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:04 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[17-Dec-2018 15:12:05 UTC] PHP Warning:  strpos(): Empty needle in /home/qeded4rkn8ua/public_html/holidays/wp-includes/plugin.php on line 658
+[09-Mar-2019 13:08:03 UTC] response was not a 200
+[09-Mar-2019 13:08:04 UTC] response was not a 200
+[10-Mar-2019 13:08:15 UTC] response was not a 200
+[10-Mar-2019 13:08:20 UTC] response was not a 200
+[11-Mar-2019 13:12:11 UTC] response was not a 200
+[11-Mar-2019 13:12:13 UTC] response was not a 200
+[12-Mar-2019 01:03:12 UTC] response was not a 200
+[12-Mar-2019 13:04:35 UTC] response was not a 200
+[13-Mar-2019 13:15:00 UTC] response was not a 200
+[13-Mar-2019 18:45:54 UTC] response was not a 200
+[13-Mar-2019 18:45:56 UTC] response was not a 200
+[14-Mar-2019 01:08:46 UTC] response was not a 200
+[14-Mar-2019 18:59:54 UTC] response was not a 200
+[15-Mar-2019 13:30:41 UTC] response was not a 200
+[15-Mar-2019 13:30:43 UTC] response was not a 200
+[15-Mar-2019 19:00:51 UTC] response was not a 200
+[15-Mar-2019 19:00:52 UTC] response was not a 200
+[16-Mar-2019 13:20:45 UTC] response was not a 200
+[16-Mar-2019 13:20:46 UTC] response was not a 200
+[17-Mar-2019 13:10:36 UTC] response was not a 200
+[17-Mar-2019 13:10:37 UTC] response was not a 200
+[18-Mar-2019 13:13:16 UTC] response was not a 200
+[19-Mar-2019 13:17:54 UTC] response was not a 200
+[19-Mar-2019 13:17:57 UTC] response was not a 200

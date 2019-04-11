@@ -1,0 +1,119 @@
+.btn_stp_do_import{
+    background: rgba(68, 165, 193, 0.9);
+    color: #fff!important;
+    text-shadow: none!important;
+    box-shadow: none !important;
+    font-weight: bold!important;
+    text-transform: uppercase;
+    line-height: 1.5!important;
+    padding: 15px 20px!important;
+    transition: all 0.3s ease 0s!important;
+    text-decoration: none!important;
+}
+.btn_stp_do_import:hover{
+    background: #44a5c1;
+}
+
+.oneclick-demo .oneclick-demo-wrap{
+    max-width: 400px;
+    display: block;
+    box-shadow: 0 0 20px #c7c7c7;
+    margin-left: 2px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.oneclick-demo .screenshot img{
+    width: 100%;
+}
+.oneclick-demo .oneclick-button a{
+    display: block;
+    width: 100%;
+}
+.oneclick-demo .oneclick-button a:focus{
+    outline: none;
+}
+.oneclick-button a i{
+    position: relative;
+    top: 1px;
+    padding-right: 3px;
+}
+
+.st_modal {
+    text-align: center;
+    padding: 0!important;
+    z-index: 9999 !important;
+}
+
+.modal.st_modal:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -4px;
+}
+
+.st_modal .modal-dialog {
+    display: inline-block;
+    text-align: left;
+    vertical-align: middle;
+}
+.st_modal .progress{
+    margin: 0 auto !important;
+    width: 85%;
+    height: 5px !important;
+    background: #efefef;
+}
+.st_modal .progress-wrap{
+    padding-bottom: 10px;
+    padding-top: 20px;
+    position: relative;
+}
+.st_modal .progress .progress-bar{
+    background-color: #44a5c1;
+    line-height: 2.5;
+    color: #000;
+}
+.st_modal .progress{
+    position: relative;
+}
+.st_modal .progress-wrap .percent{
+    position: absolute;
+    top: -5px;
+    left: 48%;
+}
+.st_modal .modal-content{
+    color: #333;
+    background-color: #FFF !important;
+    border-radius: 3px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, .15);
+    border: none;
+    padding: 15px 0;
+}
+.st_modal .modal-content .modal-body{
+    text-align: center;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+.st_modal .modal-header{
+    border: none;
+}
+.st_modal .modal-header .modal-title{
+    font-size: 28px;
+    text-align: center;
+}
+@media(min-width: 600px){
+    .st_modal .modal-dialog{
+        width: 500px;
+    }
+}
+.theme-settings_page_stp_importer .modal-backdrop{
+    background: rgba(0,0,0,0.2);
+}
+.st-close-button{
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 40px;
+    width: 40px;
+    border: none;
+}

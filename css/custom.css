@@ -1,0 +1,38 @@
+.error
+{
+	color:#EA6868;
+}
+.is-invalid
+{
+ border:1px solid #EA6868 !important;	
+}
+#status,#ticket_status
+{
+	margin-top:20px;
+}
+#profile_image
+{
+	height:0.1px;
+	width:0.1px;
+	opacity:0;
+}
+.user-img label
+{
+	padding: 0.625rem 1.25rem;
+	width: 80%;
+    text-align: center;
+    background: #FAA61A;
+	
+	cursor:pointer;
+}
+.user-img label:hover
+{
+	background:#333;
+	color:#fff;
+}
+#user-img
+{
+	border:1px solid #ccc;
+	padding:4px;
+}
+.specialDate  a { background-color: #6F0 !important; }
