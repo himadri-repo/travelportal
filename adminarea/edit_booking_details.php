@@ -492,7 +492,7 @@ include_once('leftbar.php');
 									$all_supplier_cancel = 0;
 									$sql_check = "SELECT * FROM refrence_booking_tbl WHERE booking_id='" . $_GET["id"] . "'";
 									$result_check = mysql_query($sql_check);
-									if (mysql_num_rows($result_check) == 0) {
+									if (mysql_num_rows($result_check) == 0 || true) {
 											$sql_details = "SELECT * FROM customer_information_tbl WHERE booking_id='" . $_GET["id"] . "' ORDER BY id ASC";
 										} else {
 											$sql_details = "SELECT * FROM refrence_booking_tbl WHERE booking_id='" . $_GET["id"] . "' ORDER BY id ASC";
@@ -902,7 +902,47 @@ include_once('leftbar.php');
 </div>
 </div><!-- /.main-content -->
 
-<?php include_once('footer.php'); ?>
+<?php include_once('footer.php'); 
+
+// error handler function
+function myErrorHandler($errno, $errstr, $errfile, $errline)
+{
+    if (!(error_reporting() & $errno)) {
+        // This error code is not included in error_reporting, so let it fall
+        // through to the standard PHP error handler
+        return false;
+    }
+
+    switch ($errno) {
+    case E_USER_ERROR:
+        echo "<b>My ERROR</b> [$errno] $errstr<br />\n";
+        echo "  Fatal error on line $errline in file $errfile";
+        echo ", PHP " . PHP_VERSION . " (" . PHP_OS . ")<br />\n";
+        echo "Aborting...<br />\n";
+        exit(1);
+        break;
+
+    case E_USER_WARNING:
+        echo "<b>My WARNING</b> [$errno] $errstr<br />\n";
+        break;
+
+    case E_USER_NOTICE:
+        echo "<b>My NOTICE</b> [$errno] $errstr<br />\n";
+        break;
+
+    default:
+        echo "Unknown error type: [$errno] $errstr<br />\n";
+        break;
+    }
+
+    /* Don't execute PHP internal error handler */
+    return true;
+}
+
+// set to the user defined error handler
+$old_error_handler = set_error_handler("myErrorHandler");
+
+?>
 <script src="<?php echo $baseurl; ?>/adminarea/script/booking.js"></script>
 <script>
 	$(document).ready(function() {

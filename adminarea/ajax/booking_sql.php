@@ -179,7 +179,8 @@ function bookTicket($bookingId, $sellerId, $noOfPerson, $ticketNo)
 
 			//Insert data into reference_booking_tbl where mutiple request can be placed to multiple sellers
 			//This table can be used to solve previous issue
-			$currentDate = date("Y-m-d h:i:s");
+			$datenow = new DateTime("now", new DateTimeZone('Asia/Kolkata'));
+			$currentDate = $datenow->format("Y-m-d H:i:s");
 			$sql_new_booking = "insert into refrence_booking_tbl (date,ticket_id,pnr,ticket_fare,seller_id,customer_id,`status`,qty,rate,amount,service_charge,igst,cgst,sgst,total,type,booking_id) 
 			values ('$currentDate', '$ticket_id', '$pnr', $ticket_fare, $supplier_user_id, $customer_id, 'PENDING', $noOfPerson, $rate, $amount, 0, 0, 0, 0, $total, '$type', $bookingId)";
 
@@ -195,7 +196,13 @@ function bookTicket($bookingId, $sellerId, $noOfPerson, $ticketNo)
 				$sql_update_ticket = "UPDATE tickets_tbl SET no_of_person=$current_no_of_person WHERE id=$ticketNo";
 				mysql_query($sql_update_ticket) or die(mysql_error());
 
-				sendCustomerEmail($customer_email, "Your booking approved!", getCustomerMessageBody($refrence_id), getHeaders("OXYTRA <noreply@oxytra.com>"));
+				try
+				{
+					sendCustomerEmail($customer_email, "Your booking approved!", getCustomerMessageBody($refrence_id), getHeaders("OXYTRA <noreply@oxytra.com>"));
+				}
+				catch(Exception $ex1) {
+					$errorMsg = $ex1->getMessage();
+				}
 			}
 		}
 		else {
@@ -208,7 +215,7 @@ function bookTicket($bookingId, $sellerId, $noOfPerson, $ticketNo)
 		}
 	} catch (Exception $ex) {
 		$errorMsg = $ex->getMessage();
-		log_message('error', $ex->getMessage());
+		//log_message('error', $ex->getMessage());
 	}
 
 	return array('bookingRefNo'=>$refrence_id, 'result'=>$returnValue, 'message'=> $errorMsg); // "{bookingRefNo: $refrence_id, result: $returnValue}, message: $errorMsg");
@@ -216,7 +223,13 @@ function bookTicket($bookingId, $sellerId, $noOfPerson, $ticketNo)
 
 function sendCustomerEmail($customerEmail, $subject, $message, $headers)
 { 
-	mail($customerEmail, $subject, $message, $headers);
+	try
+	{
+		mail($customerEmail, $subject, $message, $headers);
+	}
+	catch(Exception $e1) {
+		throw $e1;
+	}
 }
 
 function getHeaders($fromEmail)
