@@ -164,3 +164,41 @@ function get_all(start)
 
 }
 
+function bookTickets(tickets, callback) {
+	try
+	{
+		$.ajax({
+			url: ''+baseurl+'/adminarea/ajax/booking_sql.php',
+			cache: false,
+			method: "POST",      	
+			data: JSON.stringify(tickets),
+			dataType: 'json',
+			contentType: "application/json",
+			headers: {function: 'bookticket'},
+			success: function(result)
+			{
+				//var data = $.parseJSON(result);
+				var data = result;
+				alert('Selected sellers has been assigned');
+				//alert(data);
+				console.log('Ticket Booking : Got some error');
+				if(callback) {
+					callback(data);
+				}
+			},
+			fail: function(err) {
+				console.log('Ticket Booking : Got some error');
+				alert('Sorry couldn`t assign selected sellers. Please try after sometime');
+				if(callback) {
+					callback({'error': 'Error occured - ' + err});
+				}
+			},
+			always: function(result) {
+				console.log('ticket book request finished');
+			}
+		});
+	}
+	catch(ex) {
+		console.log(ex);
+	}	
+}

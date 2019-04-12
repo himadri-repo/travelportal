@@ -102,7 +102,7 @@ if(isset($_POST["submit"]))
 					'".$ticket_id."',							
 					'$pnr',
 					'".$ticket_fare."',	
-					'".$row_ticket["user_id"]."',
+					'".	$row_ticket["user_id"]."',
 					'".$row_check["customer_id"]."',
 					'PENDING',
 					'$no_of_person',
