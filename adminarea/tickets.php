@@ -46,113 +46,120 @@ if(!in_array(5,$auth))
 							  </div>
 						</div>-->
 						<form action="bulk_update.php" method="post" onsubmit="return validate_ids()">
-						<div class="row">
-							<div class="col-xs-12">																				
-								<div class="table-header" id="result">								
-								</div>
-                                <div class="form-group has-info col-sm-12" style="float:left;margin-top:15px">																											
-									<div class="col-sm-2" id="div_txt_name">
-									  <!--<span class="block input-icon input-icon-left">
-									  <input class="col-xs-12 col-sm-12" type="text" name="txt_search" id="txt_search" placeholder="Search..." value="" >-->
-                                      <select  class="col-xs-12 col-sm-12" name="field" id="field">	
-									   
-										<option value="t.approved">Status</option>
-										<option value="u.id">Agent ID</option>
-									  </select>
-									</div>
-									
-									<div class="col-sm-2" id="div_status">
-									  <select  class="col-xs-12 col-sm-12" name="status" id="status">	
-									     <option value="">All</option>
-										<option value="0">Pending</option>
-										<option value="1">Approved</option>
-									  </select>
-									</div> 
-									
-									<div class="col-sm-2" id="div_user" style="display:none">
-									  <select  class="col-xs-12 col-sm-12" name="user_id" id="user_id">
-									     <option value="">Select Agent</option>
-									    <?php 
-											$sql="SELECT * FROM user_tbl WHERE is_supplier=1";
-										$result=mysql_query($sql);
-										while($row=mysql_fetch_array($result))
-										{										
-									   ?>
-										<option value="<?php echo $row["id"];?>"><?php echo $row["name"]." ( ".$row["user_id"]." ) "; ?></option>
-										<?php
-										}
-										?>
-									  </select>
-									</div>
-									
-									<div class="col-sm-2" id="div_date_from">
-									  <input type="text"  id="dt_date_from" name="dt_date_from" placeholder="Date From" class="col-xs-12 col-sm-12 dpd3">									
-									</div>
-							
-									<div class="col-sm-2" id="div_date_to">
-									  <input type="text"  id="dt_date_to" name="dt_date_to" placeholder="Date To" class="col-xs-12 col-sm-12 dpd3">														
-									</div>
-									
-									<div class="col-sm-2" >
-									  <button type="button" class="pull-left btn btn-sm btn-primary col-md-10" id="btn_search">															
-											<span class="bigger-110">Search</span>
-								     </button>
-									</div>
-									
-									     
-									<div class="col-sm-2" >
-									  <button type="submit" class="pull-left btn btn-sm btn-primary col-md-10" id="btn_search">															
-											<span class="bigger-110">Bulk Update</span>
-								     </button>
-									</div>
-									
-									
-								</div>
-					
-								<div style="background:#EFF3F8;border:1px solid #ccc" >
-								  
-									<table id="dynamic-table" class="table table-striped table-bordered table-hover">
-										<thead>
-											<tr>
-												<th><input type="checkbox" id="chk_all"></th>	
-												<th>T.No.</th>
-												<th>PNR</th>
-                                                <th>Type</th>
-												<th>Going Date</th>
-												<th>Returning Date</th>
-												<th>Journey</th>												
-												<th>Rate</th> 
-												
-												<th>Seats</th>
-												<th>Agent</th>
-												<th>Avl</th>	
-												<th>Status</th>												
-												<th>Edit</th>												
-											</tr>
-										</thead>
-										<tbody id="grid">											                                                                                         									
-										</tbody>
-									</table>
-                                  
-
-									<div class="row">
-										<div class="col-xs-6">
-											<div class="dataTables_info" id="info" role="status" aria-live="polite" style="padding-left:20px">									
+							<div class="row">
+								<div class="col-xs-12 col-sm-12 col-md-12">
+										<div class="row">
+											<div class="col-xs-12 col-sm-12 col-md-12 table-header" id="result">
 											</div>
 										</div>
-										<div class="col-xs-6">
-											<div class="dataTables_paginate paging_simple_numbers" id="dynamic-table_paginate">
-												<ul class="pagination" id="div_pagination">
-
+										<div class="row">
+											<div class="form-group has-info col-xs-12 col-sm-12 col-md-12" style="float:left;margin-top:15px;">
+												<div class="col-sm-2" id="div_txt_name">
+													<!--<span class="block input-icon input-icon-left">
+													<input class="col-xs-12 col-sm-12" type="text" name="txt_search" id="txt_search" placeholder="Search..." value="" >-->
+																						<select  class="col-xs-12 col-sm-12" name="field" id="field">	
 													
-												</ul>
+													<option value="t.approved">Status</option>
+													<option value="u.id">Agent ID</option>
+													</select>
+												</div>
+												
+												<div class="col-sm-2 col-xs-2 col-md-2" id="div_status">
+													<select  class="col-xs-12 col-sm-12" name="status" id="status">	
+														<option value="">All</option>
+														<option value="0">Pending</option>
+														<option value="1">Approved</option>
+														<option value="2">Rejected</option>
+														<option value="3">Freezed</option>
+													</select>
+												</div> 
+												
+												<div class="col-sm-2 col-xs-2 col-md-2" id="div_user" style="display:none">
+													<select  class="col-xs-12 col-sm-12" name="user_id" id="user_id">
+														<option value="">Select Agent</option>
+														<?php 
+														$sql="SELECT * FROM user_tbl WHERE is_supplier=1";
+													$result=mysql_query($sql);
+													while($row=mysql_fetch_array($result))
+													{										
+													?>
+													<option value="<?php echo $row["id"];?>"><?php echo $row["name"]." ( ".$row["user_id"]." ) "; ?></option>
+													<?php
+													}
+													?>
+													</select>
+												</div>
+												
+												<div class="col-sm-2 col-xs-2 col-md-2" id="div_date_from">
+													<input type="text"  id="dt_date_from" name="dt_date_from" placeholder="Date From" class="col-xs-12 col-sm-12 dpd3">									
+												</div>
+										
+												<div class="col-sm-2 col-xs-2 col-md-2" id="div_date_to">
+													<input type="text"  id="dt_date_to" name="dt_date_to" placeholder="Date To" class="col-xs-12 col-sm-12 dpd3">														
+												</div>
+												
+												<div class="col-sm-2 col-xs-2 col-md-2" >
+													<button type="button" class="pull-left btn btn-sm btn-primary col-md-10" id="btn_search">															
+														<span class="bigger-110">Search</span>
+													</button>
+												</div>
+
+												<div class="col-sm-2 col-xs-2 col-md-2" >
+													<button type="submit" class="pull-left btn btn-sm btn-primary col-md-10" id="btn_search">															
+														<span class="bigger-110">Bulk Update</span>
+													</button>
+												</div>
 											</div>
 										</div>
-									</div>
+										<div class="row">
+											<div class="col-xs-12 col-sm-12 col-md-12">
+												<div style="margin: 0px 3px 5px 0px; float:right"><input type="checkbox" id="emptystock" name="emptystock" value="1"/>Show empty tickets ?</div>
+											</div>
+										</div>
+										<div style="background:#EFF3F8;border:1px solid #ccc" >
+											
+											<table id="dynamic-table" class="table table-striped table-bordered table-hover">
+												<thead>
+													<tr>
+														<th><input type="checkbox" id="chk_all"></th>	
+														<th>T.No.</th>
+														<th>PNR</th>
+																										<th>Type</th>
+														<th>Going Date</th>
+														<th>Returning Date</th>
+														<th>Journey</th>												
+														<th>Rate</th> 
+														
+														<th>Seats</th>
+														<th>Agent</th>
+														<th>Avl</th>	
+														<th>Status</th>												
+														<th>Edit</th>												
+													</tr>
+												</thead>
+												<tbody id="grid">											                                                                                         									
+												</tbody>
+											</table>
+																			
+
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="dataTables_info" id="info" role="status" aria-live="polite" style="padding-left:20px">									
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="dataTables_paginate paging_simple_numbers" id="dynamic-table_paginate">
+														<ul class="pagination" id="div_pagination">
+
+															
+														</ul>
+													</div>
+												</div>
+											</div>
+										</div>
 								</div>
-							</div>
-						</div><!-- /.row -->
-						  </form>
+							</div><!-- /.row -->
+						</form>
 									
 					</div><!-- /.page-content -->
 				</div>

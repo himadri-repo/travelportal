@@ -14,6 +14,7 @@ if(isset($_REQUEST["tag"]))
 					$dt_to=isset($_REQUEST['$dt_to'])?$_REQUEST['$dt_to']:"";
 					$field=trim($_REQUEST['field']);
 					$value=trim($_REQUEST['value']);
+					$allowEmptyStock=($_REQUEST['allowEmptyStock']==='true'?0:1);
 					$start=$start*100;
 					$limit=100;
 					$total=0;
@@ -26,7 +27,7 @@ if(isset($_REQUEST["tag"]))
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE  $field='$value' ORDER BY t.id DESC";
+								WHERE  $field='$value' and t.no_of_person>=$allowEmptyStock ORDER BY t.id DESC";
 						}
 						else
 						{
@@ -34,11 +35,12 @@ if(isset($_REQUEST["tag"]))
 									FROM tickets_tbl t
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
-									INNER JOIN city_tbl destination ON destination.id = t.destination							
+									INNER JOIN city_tbl destination ON destination.id = t.destination
+								WHERE t.no_of_person>=$allowEmptyStock 
 								ORDER BY t.id DESC";
 						}
 					}
-                    else
+          else
 					{
 						
 						$dt_from=date("Y-m-d",strtotime($_REQUEST['dt_from']));
@@ -50,7 +52,7 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-							WHERE  $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person>=$allowEmptyStock and $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
 					    }
 						else
 						{
@@ -59,10 +61,11 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-							WHERE   DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person>=$allowEmptyStock and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
 						}
 					}
-				
+					//echo $sql;
+					//die;
 					$result=mysql_query($sql);
 					if(mysql_num_rows($result)>0)
 					{
@@ -133,13 +136,13 @@ if(isset($_REQUEST["tag"]))
 								else if($k=='approved')
 								{
 								  if($v=="0")
-                                    $response[$i][$k]="PENDING";
-                                    if($v=="1")
-                                    $response[$i][$k]="APPROVED"; 
-                                    if($v=="2")
-                                    $response[$i][$k]="REJECTED"; 
-                                    if($v=="3")
-                                    $response[$i][$k]="FREEZED"; 
+										$response[$i][$k]="PENDING";
+									if($v=="1")
+										$response[$i][$k]="APPROVED"; 
+									if($v=="2")
+										$response[$i][$k]="REJECTED"; 
+									if($v=="3")
+										$response[$i][$k]="FREEZED"; 
 								}
 								else
 								$response[$i][$k]=$v;                             							

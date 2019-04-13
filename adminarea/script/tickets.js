@@ -72,6 +72,7 @@ function get_all(start)
 	{
 		value="";
 	}
+	var allowEmptyStock = $('#emptystock').is(':checked');
 	var ctr=0,page_ctr=0;
 	var msg='';
 	ctr=(start*100)+1;
@@ -82,7 +83,7 @@ function get_all(start)
     $.ajax({
 				url: ''+baseurl+'/adminarea/ajax/tickets_sql.php',   	
 				type: "POST",      	
-				data: "tag=search"+"&start="+start+"&field="+$("#field").val()+"&value="+value+"&dt_from="+$("#dt_date_from").val()+"&dt_to="+$("#dt_date_to").val(),	
+				data: "tag=search"+"&start="+start+"&field="+$("#field").val()+"&value="+value+"&dt_from="+$("#dt_date_from").val()+"&dt_to="+$("#dt_date_to").val()+"&allowEmptyStock="+allowEmptyStock,
 				cache: false,							
 				success: function(data)  		
 				{				

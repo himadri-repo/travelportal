@@ -781,7 +781,7 @@ include_once('leftbar.php');
 											</td>
 											<td><?php echo $sellerrecords["airline"]; ?></td>
 											<td><?php echo $sellerrecords["class"]; ?></td>
-											<td><?php echo "<b>Supplier Rate : </b>" . $sellerrecords["billed_rate"] . "<br> <b>Portal Rate : </b>" . ($sellerrecords["supplier_rate"]); ?></td>
+											<td><?php echo "<b>Supplier Rate : </b>" . $sellerrecords["supplier_rate"] . "<br> <b>Portal Rate : </b>" . ($sellerrecords["billed_rate"]); ?></td>
 											<td><?php echo $sellerrecords["ordered_qty"]; ?></td>
 											<td><?php echo $sellerrecords["customer_name"]; ?><br><?php echo $sellerrecords["customer_mobile"]; ?>(<?php echo $sellerrecords["customer_code"];?>)</td>
 											<?php
