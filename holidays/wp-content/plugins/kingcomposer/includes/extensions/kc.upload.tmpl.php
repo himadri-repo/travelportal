@@ -62,6 +62,6 @@ if(!defined('ABSPATH')) {
 			<?php _e('Return to extentions', 'kingcomposer'); ?>
 		</a>
 	</p>
-<?		
+<?php		
 	}
 ?>
