@@ -255,6 +255,12 @@
 															else if($flight[$key]["data_collected_from"]=='e2f') {
 																$splcode = 'oxytra-spl-2';
 															}
+															else if($flight[$key]["data_collected_from"]=='moh') {
+																$splcode = 'oxytra-spl-3';
+															}
+															else if($flight[$key]["data_collected_from"]=='mair') {
+																$splcode = 'oxytra-spl-4';
+															}
 														?>
 														<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>
 														<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>

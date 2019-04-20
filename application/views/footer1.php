@@ -187,6 +187,28 @@
             }
 
             $(function() {
+                $("#destination").change(function() {
+                    try
+                    {
+                        getAvailableTickets($("#source").val(), $("#destination").val());
+                        //alert('hi');
+                        setTimeout(function() {
+                            try
+                            {
+                                $('.datepicker').datepicker("show");
+                            }
+                            catch(e) {
+                                console.log(e);
+                                //alert(e);
+                            }
+                        }, 0);
+                    }
+                    catch(e) {
+                        console.log(e);
+                        //alert(e);
+                    }
+                });
+
                 getAvailableTickets($("#source").val(), $("#destination").val());
 
                 $('.datepicker').datepicker({
@@ -245,7 +267,7 @@
                                 addCSSRule('.ui-datepicker td a.' + className + ':after {content: "\\a0";}'); //&nbsp;
                             else {
                                 //console.log(value);
-                                addCSSRule('.ui-datepicker td a.' + className + ':after {content: "' + value + '";}');
+                                addCSSRule('.ui-datepicker td a.' + className + ':after {content: "' + "\\20b9 " + value + '";}');
                             }
 
                             $(this).addClass(className);
