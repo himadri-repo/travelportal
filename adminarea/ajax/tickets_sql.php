@@ -14,7 +14,8 @@ if(isset($_REQUEST["tag"]))
 					$dt_to=isset($_REQUEST['$dt_to'])?$_REQUEST['$dt_to']:"";
 					$field=trim($_REQUEST['field']);
 					$value=trim($_REQUEST['value']);
-					$allowEmptyStock=($_REQUEST['allowEmptyStock']==='true'?0:1);
+					$allowEmptyStock=($_REQUEST['allowEmptyStock']==='true'?0:999);
+					$greaterValue = ($allowEmptyStock>0?1:-1);
 					$start=$start*100;
 					$limit=100;
 					$total=0;
@@ -27,7 +28,7 @@ if(isset($_REQUEST["tag"]))
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE  $field='$value' and t.no_of_person>=$allowEmptyStock ORDER BY t.id DESC";
+								WHERE  $field='$value' and t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue ORDER BY t.id DESC";
 						}
 						else
 						{
@@ -36,7 +37,7 @@ if(isset($_REQUEST["tag"]))
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination
-								WHERE t.no_of_person>=$allowEmptyStock 
+								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue
 								ORDER BY t.id DESC";
 						}
 					}
@@ -52,7 +53,7 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE t.no_of_person>=$allowEmptyStock and $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
 					    }
 						else
 						{
@@ -61,7 +62,7 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE t.no_of_person>=$allowEmptyStock and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
 						}
 					}
 					//echo $sql;
