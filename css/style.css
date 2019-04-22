@@ -609,19 +609,22 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /* end of new nav bar style */
 
 /* new home header section */
+.navbar-brand {
+	background-color: #f1f1f1 !important;
+}
 .full-background {
 	margin: 0px;
 	/*padding:0px;*/
 }
 
 .bg {
-	background: #a0afea url(/images/random) no-repeat fixed content-box;
-	/*background: #a0afea url(/images/random) no-repeat center center fixed;*/
+	/*background: #a0afea url(/images/random) no-repeat fixed content-box;*/
+	background: #a0afea url(/images/random) no-repeat scroll center;
 	-webkit-background-size: cover;
 	-moz-background-size: cover;
 	-o-background-size: cover;	
 	background-size: cover;
-	min-height: 500px;
+	min-height: 600px;
 	top:0;
 	left:0;
 	width: 100%;
@@ -631,11 +634,13 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 @media(max-width:991px){
 	.bg {
+		background: #a0afea url(/images/random) no-repeat fixed content-box;
 		min-height: 37vh;
 	}
 }
 @media(max-width:768px){
 	.bg {
+		background: #a0afea url(/images/random) no-repeat fixed content-box;
 		min-height: 30vh;
 	}
 }
@@ -649,7 +654,8 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	font-size: 28px;
 }
 .new-typewriter a {
-    color: #faa61a;
+	color: #faa61a;
+	background-color: #ffffff;
 }
 @media(max-width:991px){
 	.new-typewriter {
@@ -668,7 +674,58 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	}
 }
 /* end of home header section */
+/************* Flex control ****************/
+#kpislides {
+	background-color: #f1f1f1;
+}
+.flexslider {
+	padding: 10px 0 0 0 !important;
+	margin: 0px !important;
+	border: 0px !important;
+	background-color: #f1f1f1 !important;
+	/*background: #00000000 url(/images/shadow.png) no-repeat scroll top !important;*/
+    z-index: 2;
+    /*background-position-y: -90px;	*/
+}
 
+.flex-control-nav {
+    background: none repeat scroll 0 0 #FFFFFF;
+    bottom: 0px !important;
+    display: block !important;
+    /*opacity: 0.66 !important;*/
+    padding: 5px !important;
+    position: relative;
+    text-align: center;
+    top: auto !important;
+    width: 100%;
+    z-index: 999 !important;
+}
+
+.flex-direction-nav {
+    display: block !important;
+    opacity: 1 !important;
+    top: 30% !important;
+    width: 100%;
+    z-index: 999 !important;
+}
+
+/*.flex-direction-nav a {
+    color: rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    display: block;
+    height: 40px;
+    margin: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 8px;
+    position: absolute;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+    top: 50%;
+    transition: all 0.3s ease 0s;
+    width: 40px;
+    z-index: 10;
+}*/
+/********** End of Flex Control ************/
 /************* CRUISE HOMEPAGE *************/
 
 #cruise-homepage #top-bar{

@@ -1,5 +1,5 @@
                		
-        <section class="flexslider-container" id="flexslider-container-2" style="display:none">
+        <!--<section class="flexslider-container" id="flexslider-container-2" style="display:none">
             <div class="flexslider slider" id="slider-2">
                 <ul class="slides">
                     <?php
@@ -22,7 +22,8 @@
 					?>                   										                                        
                 </ul>
             </div>                                  
-        </section><!-- end flexslider-container -->
+		</section>-->
+		<!-- end flexslider-container -->
 		<!--================= New Home - Header section ===================-->
 		<section id="head-container" class="head-container">
 			<div class="container-fluid full-background">
@@ -46,7 +47,59 @@
 			</div>
 		</section>
 		<!--================= END:: New Home - Header section ===================-->
-        <!--================= FLIGHT OFFERS =============-->
+		<!--================= KPI section =======================================-->
+		<section id="kpislides" class="container-fluid section-padding">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="page-heading">
+						<h2>Our Offerings</h2>
+						<hr class="heading-line" />
+					</div><!-- end page-heading -->					
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+				</div>
+				<div class="col-lg-10 col-md-10 col-sm-10 col-xs-10">
+					<div class="flexslider carousel">
+						<ul class="slides">
+							<li>
+								<img src="/images/flight_ads.png"/>
+							</li>
+							<li>
+								<img src="/images/tickets_ad.png"/>
+							</li>
+							<li>
+								<img src="/images/travelagent.png"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<li>
+								<img src="/images/trip-africa-2.jpg"/>
+							</li>
+							<!-- items mirrored twice, total of 12 -->
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+				</div>
+			</div>
+		</section>
+		<!--================= End of KPI section ================================-->
+		<!--================= FLIGHT OFFERS =============-->
         <section id="flight-offers" class="section-padding">
         	<div class="container">
         		<div class="row">
@@ -300,7 +353,16 @@
         css.type = "text/css";
         css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid #fff}";
         document.body.appendChild(css);
-    };
+	};
+	
+	// $(window).load(function() {
+	// 	$('.flexslider1').flexslider({
+	// 		animation: "slide",
+	// 		animationLoop: false,
+	// 		itemWidth: 210,
+	// 		itemMargin: 5
+	// 	});
+	// });	
 </script>
        
         
