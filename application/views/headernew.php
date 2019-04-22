@@ -79,7 +79,7 @@
         </div>
         <!-- end top-bar -->
         <!--<nav class="navbar navbar-default main-navbar navbar-custom navbar-white" id="mynavbar">-->
-        <nav class="new-navbar" id="mynavbar1">
+        <nav class="navbar navbar-default navbar-custom new-navbar" id="mynavbar1">
             <div class="container">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" id="menu-button">
@@ -87,26 +87,26 @@
                       <span class="icon-bar"></span>
                       <span class="icon-bar"></span>                        
                     </button>
-                    <div class="header-search hidden-lg">
+                    <!-- <div class="header-search hidden-lg">
                     	<a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a>
-                    </div>
+                    </div> -->
                     <a href="<?php echo base_url(); ?>" class="navbar-brand"><img src="<?php echo base_url(); ?>upload/<?php echo $setting[0]["logo"];?>" class="img-responsive" style="width: 125px; height: 50px;"></a>
                 </div><!-- end navbar-header -->
                 
                 <div class="collapse navbar-collapse" id="myNavbar1">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="<?php echo base_url(); ?>"><span><i class="fa fa-home fa-fw"></i></span>Home</a></li>
+                        <li><a href="<?php echo base_url(); ?>"><span><i class="fa fa-home"></i></span>Home</a></li>
 						<li><a href="<?php echo base_url(); ?>search"><span><i class="fa fa-search"></i></span>Search Flight</a></li>
                         <?php if(!$this->session->userdata('user_id')){ ?>
                             <li><a href="<?php echo base_url(); ?>login"><span><i class="fa fa-lock"></i></span>Login</a></li>
                             <li><a href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus"></i></span>Sign Up</a></li>
                         <?php } else {?>
-                            <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.$this->session->userdata('name');?></a></li>
+                            <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
                             <li><a href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off"></i></span>Log Out</a></li>
                         <?php } ?>
 					    <!--<li><a href="<?php echo base_url(); ?>terms-and-conditions">Term & Conditions</a></li>
 					    <li><a href="<?php echo base_url(); ?>faq">FAQ</a></li>
-                        <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li>-->
+                        <li><a href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone">Contact Us</a></li>-->
                         <!--<li><a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a></li>-->
                     </ul>
                 </div><!-- end navbar collapse -->
@@ -126,12 +126,16 @@
                     
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search"><i class="fa fa-plane link-icon"></i><span></span>Search Flight</a>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>
+						<!--<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>-->
+						<!--<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>-->
+                        <?php if(!$this->session->userdata('user_id')){ ?>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>login"><span><i class="fa fa-lock link-icon"></i></span>Login</a></li>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus link-icon"></i></span>Sign Up</a></li>
+                        <?php } else {?>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user"><span><i class="fa fa-user link-icon"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off link-icon"></i></span>Log Out</a></li>
+                        <?php } ?>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
-                        
-                        
-                    
                     </div><!-- end list-group -->
                 </div><!-- end main-menu -->
             </div><!-- end mySidenav -->

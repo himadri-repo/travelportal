@@ -403,7 +403,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /* -----------------------------------------------------
 		Navbar
    ----------------------------------------------------- */
-
+/*
 .navbar{
 	margin-bottom:0px;
 	z-index:200;
@@ -501,9 +501,10 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	padding-bottom: 9px;
 	font-size: 14px;
 }
+*/
 
 /* New */
-
+/*
 .main-navbar .navbar-nav .dropdown:hover > .dropdown-menu{
 	display:block;
 }
@@ -530,9 +531,9 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	margin-top:5px;
 	margin-right:-10px;
 }
-
+*/
 /* New */
-
+/*
 .main-navbar .mega-dropdown-menu{
 	padding:40px 20px 40px !important;
 }
@@ -564,11 +565,12 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	z-index:100;
 	width:100%;
 }
+*/
 
 /* new nav bar style */
 .new-navbar {
     position: fixed;
-    /*border: 1px solid #000000;*/
+    border: 0px solid #00000000;
     width: 100%;
     z-index: 9;
     background: #4f68c782;
@@ -600,6 +602,13 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 .new-navbar .nav > li > a > span{
 	padding: 0 3px;
 }
+
+#menu-button {
+	color: #ffffff;
+}
+#menu-button > .icon-bar {
+	background-color: #ffffff;
+}
 /* end of new nav bar style */
 
 /* new home header section */
@@ -607,13 +616,31 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	margin: 0px;
 	/*padding:0px;*/
 }
+
 .bg {
-	background: #a0afea url(/images/random) no-repeat fixed center;
-    min-height: 500px;
+	background: #a0afea url(/images/random) no-repeat fixed content-box;
+	background-size:cover;
+	min-height: 500px;
+	top:0;
+	left:0;
 	width: 100%;
 	margin: 0px;
 	padding:0px;
 }
+
+@media(max-width:991px){
+	.bg {
+		min-height: 37vh;
+		background-size: contain;
+	}
+}
+@media(max-width:768px){
+	.bg {
+		min-height: 30vh;
+		background-size: contain;
+	}
+}
+
 /* end of home header section */
 
 /************* CRUISE HOMEPAGE *************/

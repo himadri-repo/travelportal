@@ -59,7 +59,7 @@ class Home_Controller extends CI_Controller
 		$this->load->view('footer');
 	}
 	public function serveRandomImages() {
-		$arr = array("images/home_sea_bg.jpg", "images/home_sea_bg_01.jpg", "images/homepage-slider-1.jpg", "images/flight-slider-1.jpg", "images/newsletter.jpg", "images/video-banner.jpg", "images/cover-holiday.jpg");
+		$arr = array("images/home_sea_bg_1.jpg", "images/home_sea_bg_01_1.jpg", "images/cover-registration.jpg", "images/flight-slider-1.jpg", "images/newsletter.jpg", "images/video-banner.jpg", "images/cover-holiday.jpg");
 		$idx = rand(0, count($arr)-1);
 		$filename=FCPATH.$arr[$idx]; //<-- specify the image  file
 		if(file_exists($filename)){ 
