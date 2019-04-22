@@ -403,7 +403,6 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /* -----------------------------------------------------
 		Navbar
    ----------------------------------------------------- */
-/*
 .navbar{
 	margin-bottom:0px;
 	z-index:200;
@@ -501,10 +500,8 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	padding-bottom: 9px;
 	font-size: 14px;
 }
-*/
 
 /* New */
-/*
 .main-navbar .navbar-nav .dropdown:hover > .dropdown-menu{
 	display:block;
 }
@@ -519,7 +516,8 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .nav>li>a:focus, .nav>li>a:hover {
     background: #00000000;
-    border-bottom: 4px solid #ea860a;	
+	border-bottom: 4px solid #ea860a;
+	color: #ea860a !important;
 }
 
 .dropdown-submenu > a:after{
@@ -531,9 +529,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	margin-top:5px;
 	margin-right:-10px;
 }
-*/
 /* New */
-/*
 .main-navbar .mega-dropdown-menu{
 	padding:40px 20px 40px !important;
 }
@@ -565,7 +561,6 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	z-index:100;
 	width:100%;
 }
-*/
 
 /* new nav bar style */
 .new-navbar {
@@ -573,7 +568,9 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
     border: 0px solid #00000000;
     width: 100%;
     z-index: 9;
-    background: #4f68c782;
+	background: #4f68c782;
+	border-radius: 0px;
+    min-height: 55px;	
     /*opacity: 0.5;
     filter: alpha(opacity=50);*/
 }
@@ -643,6 +640,33 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	}
 }
 
+.new-typewriter {
+	display: inline-block;
+    position: absolute;
+    top: 15vh;
+    left: 10vw;
+    width: 80vw;
+	font-size: 28px;
+}
+.new-typewriter a {
+    color: #faa61a;
+}
+@media(max-width:991px){
+	.new-typewriter {
+		top: 10vh;
+	}
+	.new-typewriter a {
+		font-size: 22px;
+	}
+}
+@media(max-width:768px){
+	.new-typewriter {
+		top: 10vh;
+	}
+	.new-typewriter a {
+		font-size: 20px;
+	}
+}
 /* end of home header section */
 
 /************* CRUISE HOMEPAGE *************/
