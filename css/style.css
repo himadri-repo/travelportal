@@ -619,7 +619,11 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .bg {
 	background: #a0afea url(/images/random) no-repeat fixed content-box;
-	background-size:cover;
+	/*background: #a0afea url(/images/random) no-repeat center center fixed;*/
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;	
+	background-size: cover;
 	min-height: 500px;
 	top:0;
 	left:0;
@@ -631,13 +635,11 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 @media(max-width:991px){
 	.bg {
 		min-height: 37vh;
-		background-size: contain;
 	}
 }
 @media(max-width:768px){
 	.bg {
 		min-height: 30vh;
-		background-size: contain;
 	}
 }
 
