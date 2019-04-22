@@ -78,5 +78,6 @@ $route['404_override'] = 'Home_Controller/error';
 $route['contact'] = 'Home_Controller/contact';
 $route['faq'] = 'Home_Controller/faq';
 $route['terms-and-conditions'] = 'Home_Controller/terms';
+$route['images/random'] = 'Home_Controller/serveRandomImages';
 $route['sendmail'] = 'Contact_Controller/send';
 $route['translate_uri_dashes'] = FALSE;

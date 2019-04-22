@@ -224,7 +224,8 @@ class User_Controller extends Mail_Controller
 	
 	public function logout()
 	{		
-		$this->session->unset_userdata('user_id');		
+		$this->session->unset_userdata('user_id');
+		$this->session->unset_userdata('name');
 		$this->session->sess_destroy();
 		$this->output->set_header("Cache-Control: no-store, no-cache, must-revalidate, no-transform, max-age=0, post-check=0, pre-check=0");
 		$this->output->set_header("Pragma: no-cache");
@@ -616,7 +617,8 @@ class User_Controller extends Mail_Controller
 				 $result1 = $this->User_Model->login($arr1);
 				 if($result==true && $result1==true)
 				 {	
-                    $this->session->set_userdata('user_id',$result['user_id']); 			 
+					$this->session->set_userdata('user_id',$result['user_id']);
+					$this->session->set_userdata('name',$result['name']);
 					$json["success"]="Login Successfully";
 				 }
 				 else if($result==true && $result1==false)

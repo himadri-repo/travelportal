@@ -14,8 +14,6 @@ class Home_Controller extends CI_Controller
 		$this->load->database();
 		$this->load->model('Search_Model');
 		$this->load->model('User_Model');
-	   
-		
 	}
 	
 	public function index()
@@ -44,8 +42,10 @@ class Home_Controller extends CI_Controller
         
 		
         
-		$this->load->view('header',$result);
-		$this->load->view('home');
+		//$this->load->view('header',$result);
+		$this->load->view('headernew',$result);
+		//$this->load->view('home');
+		$this->load->view('homenew');
 		$this->load->view('footer');
 	}
 	public function terms()
@@ -57,6 +57,20 @@ class Home_Controller extends CI_Controller
 		$this->load->view('header',$result);
 		$this->load->view('term');
 		$this->load->view('footer');
+	}
+	public function serveRandomImages() {
+		$arr = array("images/home_sea_bg.jpg", "images/home_sea_bg_01.jpg", "images/homepage-slider-1.jpg", "images/flight-slider-1.jpg", "images/newsletter.jpg", "images/video-banner.jpg", "images/cover-holiday.jpg");
+		$idx = rand(0, count($arr)-1);
+		$filename=FCPATH.$arr[$idx]; //<-- specify the image  file
+		if(file_exists($filename)){ 
+		  $mime = mime_content_type($filename); //<-- detect file type
+		  header('Content-Length: '.filesize($filename)); //<-- sends filesize header
+		  header("Content-Type: $mime"); //<-- send mime-type header
+		  header('Content-Disposition: inline; filename="'.$filename.'";'); //<-- sends filename header
+		  readfile($filename); //<--reads and outputs the file onto the output buffer
+		  die(); //<--cleanup
+		  exit; //and exit
+		}
 	}
 	public function faq()
 	{

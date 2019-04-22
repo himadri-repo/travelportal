@@ -46,7 +46,7 @@ Class User_Model extends CI_Model
 			foreach ($query->result_array() as $row) 
 			{
 			  $data['user_id'] = $row['id'];
-			
+			  $data['name'] = $row['name'];
             }			
             return $data;
 			

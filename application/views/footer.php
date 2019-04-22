@@ -119,5 +119,20 @@
         <script src="<?php echo base_url(); ?>js/custom-video.js"></script>
 		<script src="<?php echo base_url(); ?>script/user_script.js"></script>
         <script src="<?php echo base_url(); ?>script/contact.js"></script>
+
+        <script language="javascript">
+            window.onscroll = function() {myFunction()};
+
+            var header = document.getElementById("mynavbar1");
+            var sticky = header.offsetTop;
+
+            function myFunction() {
+                if (window.pageYOffset > sticky) {
+                    header.classList.add("sticky");
+                } else {
+                    header.classList.remove("sticky");
+                }
+            }
+        </script>
     </body>
 </html>

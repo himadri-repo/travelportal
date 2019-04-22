@@ -516,6 +516,11 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	display:block;
 }
 
+.nav>li>a:focus, .nav>li>a:hover {
+    background: #00000000;
+    border-bottom: 4px solid #ea860a;	
+}
+
 .dropdown-submenu > a:after{
 	display:block;
 	content:" ";
@@ -559,6 +564,57 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	z-index:100;
 	width:100%;
 }
+
+/* new nav bar style */
+.new-navbar {
+    position: fixed;
+    /*border: 1px solid #000000;*/
+    width: 100%;
+    z-index: 9;
+    background: #4f68c782;
+    /*opacity: 0.5;
+    filter: alpha(opacity=50);*/
+}
+
+.new-navbar .nav {
+	top: 0;
+}
+.new-navbar .nav > li > a{
+	font-size:16px;
+	color: #ffffff;
+	top: 0;
+	left: 0;
+	/*font-weight:bold;*/
+	text-decoration: none;
+	/*text-transform:uppercase;*/
+}
+
+.nopadding {
+	padding: 0 !important;
+	margin: 0 !important;
+ }
+
+.sticky {
+    background: #4f68c7;
+}
+.new-navbar .nav > li > a > span{
+	padding: 0 3px;
+}
+/* end of new nav bar style */
+
+/* new home header section */
+.full-background {
+	margin: 0px;
+	/*padding:0px;*/
+}
+.bg {
+	background: #a0afea url(/images/random) no-repeat fixed center;
+    min-height: 500px;
+	width: 100%;
+	margin: 0px;
+	padding:0px;
+}
+/* end of home header section */
 
 /************* CRUISE HOMEPAGE *************/
 
