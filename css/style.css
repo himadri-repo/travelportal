@@ -634,13 +634,21 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 @media(max-width:991px){
 	.bg {
-		background: #a0afea url(/images/random) no-repeat fixed content-box;
+		background: #a0afea url(/images/random) no-repeat fixed center;
+		-webkit-background-size: cover;
+		-moz-background-size: cover;
+		-o-background-size: cover;
+		background-size: cover;
 		min-height: 37vh;
 	}
 }
 @media(max-width:768px){
 	.bg {
-		background: #a0afea url(/images/random) no-repeat fixed content-box;
+		background: #a0afea url(/images/random) no-repeat fixed center;
+		-webkit-background-size: cover;
+		-moz-background-size: cover;
+		-o-background-size: cover;	
+		background-size: cover;
 		min-height: 30vh;
 	}
 }

@@ -24,10 +24,10 @@
 			animationSpeed: 700,
 			initDelay: 0,
 			flexDirectionNav: true,
-			controlNav: true,
+			controlNav: false,
 			animationLoop: true,
-			prevText: "Previous",
-			nextText: "Next",
+			/*prevText: "Previous",
+			nextText: "Next",*/
 			itemWidth: 310,
 			itemMargin: 5
 		});
