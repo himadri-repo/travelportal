@@ -122,14 +122,13 @@ if(!in_array(5,$auth))
 												<thead>
 													<tr>
 														<th><input type="checkbox" id="chk_all"></th>	
-														<th>T.No.</th>
+														<th>T.No.<br/>Source<br/>Last.Sync</th>
 														<th>PNR</th>
-																										<th>Type</th>
+														<th>Type</th>
 														<th>Going Date</th>
 														<th>Returning Date</th>
 														<th>Journey</th>												
-														<th>Rate</th> 
-														
+														<th>Rate</th>
 														<th>Seats</th>
 														<th>Agent</th>
 														<th>Avl</th>	

@@ -144,10 +144,18 @@ function get_all(start)
                                							   
 							   else if(k!='no_records' && k!='records' && k!='total')
 							   {    
-							        var address='';
+									var address='';
+									var last_sync_key = data[k]['last_sync_key'].trim();
+									var syncData = '-';
+									if(last_sync_key.split('_').length===2) {
+										syncDate = last_sync_key.split('_')[1].trim();
+										syncDate = new Date(syncDate+'Z');
+										syncData = syncDate.toLocaleString('en-US', {hour12: false, year: '2-digit', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'});
+									}
+
 									$("#grid").append("<tr  id='grid_row"+k+"' ></tr>");
                                     $('#grid_row'+k+"").append("<td> <input type='checkbox' name='chk[]' value="+data[k]['id']+" ></td>");
-									$('#grid_row'+k+"").append("<td>"+data[k]['id']+'<br/>'+data[k]['data_collected_from']+"</td>");
+									$('#grid_row'+k+"").append("<td>"+data[k]['id']+'<br/>'+data[k]['data_collected_from'] + '<br/>(' + syncData +")</td>");
                                     //$('#grid_row'+k+"").append("<td>"+data[k]['id']+"</td>");
                                     $('#grid_row'+k+"").append("<td>"+data[k]['pnr']+"</td>");
 									$('#grid_row'+k+"").append("<td>"+data[k]['trip_type']+"<br/>"+data[k]['sale_type']+"</td>");
