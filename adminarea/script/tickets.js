@@ -18,12 +18,21 @@ $(document).ready(function ()
 	   {
 		   $("#div_status").show();
 		   $("#div_user").hide();
+		   $("#div_data_collected_from").hide();
 	   }
        if($(this).val()=="u.id")
 	   {
 		   $("#div_status").hide();
 		   $("#div_user").show();
-	   }		   
+		   $("#div_data_collected_from").hide();
+	   }
+       if($(this).val()=="t.data_collected_from")
+	   {
+		   $("#div_data_collected_from").show();
+		   $("#div_user").hide();
+		   $("#div_status").hide();
+	   }
+	   
 	});
 	
 	$("#chk_all").click(function()
@@ -67,6 +76,10 @@ function get_all(start)
 	else if($("#field").val()=="u.id")
 	{
 		value=$("#user_id").val();	
+	}
+	else if($("#field").val()=="t.data_collected_from")
+	{
+		value=$("#data_collected_from").val();	
 	}
 	else
 	{

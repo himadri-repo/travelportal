@@ -1,18 +1,43 @@
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://oxytra.com/ [L,R=301]
+
+#RewriteCond %{HTTP_HOST} !^www\. [NC]
+#RewriteCond %{HTTP_HOST} ^(.*)\.localhost:90
+
+#RewriteBase /
+#RewriteCond %{HTTP_HOST} !^www\. [NC]
+#RewriteCond %{HTTP_HOST} ^(.*)\.example\.com:90$ [NC]
+#RewriteRule ^(.*)$ http://localhost:90/%1 [P,NC,QSA]
+
+#This is right. Only problem is redirecting  [L,PT,NC]
+#RewriteRule ^(.*)$ http://localhost:90/$1/%1 [R=301,L]
+
+#perfectly working but url getting changed
+#RewriteRule "^(.*)$" "http://example.com:90/%1/$1" [L,NC,QSA] 
+#RewriteRule "^(.*)$" "http://example.com:90/%1/$1" [L,NE,P] 
+
+#RewriteRule "^/(.*)$" "http://example.com:90/%1/$1" [L]
+
+#====================== APACHE ROUTING - Working fine ======================#
+#Options +FollowSymLinks -MultiViews
+#RewriteEngine On
+#RewriteBase /
+#RewriteCond %{HTTP_HOST} !^www\. [NC]
+#RewriteCond %{HTTP_HOST} ^(.*)\.example\.com:90$ [NC]
+
+#RewriteRule "^(.*)$" "http://example.com:90/%1/$1" [L,NE,P] 
+#====================== END OF APACHE ROUTING ==============================#
+
 RewriteEngine on
 RewriteCond $1 !^(index\.php|public|\.txt)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php?$1
 
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://oxytra.com/ [L,R=301]
-
 <IfModule mod_headers.c>
 <FilesMatch "\.(svg|ttf|otf|eot|woff|woff2)$">
     Header set Access-Control-Allow-Origin "*"
 </FilesMatch>
 </IfModule>
-
-
 
 Options -Indexes 

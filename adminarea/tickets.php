@@ -57,10 +57,10 @@ if(!in_array(5,$auth))
 												<div class="col-sm-2" id="div_txt_name">
 													<!--<span class="block input-icon input-icon-left">
 													<input class="col-xs-12 col-sm-12" type="text" name="txt_search" id="txt_search" placeholder="Search..." value="" >-->
-																						<select  class="col-xs-12 col-sm-12" name="field" id="field">	
-													
-													<option value="t.approved">Status</option>
-													<option value="u.id">Agent ID</option>
+													<select  class="col-xs-12 col-sm-12" name="field" id="field">
+														<option value="t.approved">Status</option>
+														<option value="u.id">Agent ID</option>
+														<option value="t.data_collected_from">Data Source</option>
 													</select>
 												</div>
 												
@@ -73,6 +73,17 @@ if(!in_array(5,$auth))
 														<option value="3">Freezed</option>
 													</select>
 												</div> 
+
+												<div class="col-sm-2 col-xs-2 col-md-2" id="div_data_collected_from" style="display:none">
+													<select  class="col-xs-12 col-sm-12" name="data_collected_from" id="data_collected_from">	
+														<option value="">All</option>
+														<option value="airiq">AirIQ</option>
+														<option value="e2f">Ease2Fly</option>
+														<option value="doshi">Doshi Travels</option>
+														<option value="mair">Mittal Air</option>
+														<option value="moh">Make Our Holiday</option>
+													</select>
+												</div> 												
 												
 												<div class="col-sm-2 col-xs-2 col-md-2" id="div_user" style="display:none">
 													<select  class="col-xs-12 col-sm-12" name="user_id" id="user_id">
