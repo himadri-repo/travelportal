@@ -663,7 +663,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 }
 .new-typewriter a {
 	color: #faa61a;
-	background-color: #ffffff;
+	/*background-color: #ffffff;*/
 }
 @media(max-width:991px){
 	.new-typewriter {
