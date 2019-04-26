@@ -96,9 +96,6 @@
             </div><!-- end footer-bottom -->            
         </section><!-- end footer -->
         
-        
-       
-        <script src="<?php echo base_url(); ?>/adminassets/js/jquery.2.1.1.min.js"></script>
         <script src="<?php echo base_url(); ?>js/jquery.colorpanel.js"></script>
         <script src="<?php echo base_url(); ?>js/bootstrap.min.js"></script>
         <script src="<?php echo base_url(); ?>js/jquery.flexslider.js"></script>
@@ -112,7 +109,10 @@
         <script src="<?php echo base_url(); ?>js/owl.carousel.min.js"></script>
         <script src="<?php echo base_url(); ?>js/custom-owl.js"></script>
         <script src="<?php echo base_url(); ?>js/custom-video.js"></script>
-		<script type="text/javascript" src="<?php echo base_url(); ?>js/html2canvas.js"></script>
+        <!-- DHTMLX inports-->
+        <script src="<?php echo base_url(); ?>js/dhtmlx/dhtmlx.js"></script>
+
+        <script type="text/javascript" src="<?php echo base_url(); ?>js/html2canvas.js"></script>
 		<script type="text/javascript" src="<?php echo base_url(); ?>js/jspdf.min.js"></script>        
 		<script src="<?php echo base_url(); ?>script/search_flight.js"></script>
         <script src="<?php echo base_url(); ?>script/contact.js"></script>
@@ -124,7 +124,7 @@
             {
                 try
                 {
-                $('html, body').animate({
+                    $('html, body').animate({
                         scrollTop: $('#top_div').offset().top-200
                     }, 'slow');
                 }

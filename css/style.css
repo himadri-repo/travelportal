@@ -406,6 +406,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 .navbar{
 	margin-bottom:0px;
 	z-index:200;
+	min-height: 60px;
 }
 
 .affix{

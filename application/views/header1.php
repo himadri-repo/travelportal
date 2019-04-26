@@ -19,8 +19,11 @@
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/jquery.colorpanel.css">
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.carousel.css">
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.theme.css"> 
-         <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
-         <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
+        <link rel="stylesheet" href="<?php echo base_url(); ?>js/dhtmlx/skins/skyblue/dhtmlx.css">
+        <script src="<?php echo base_url(); ?>/adminassets/js/jquery.2.1.1.min.js"></script>
+
+        <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
          
         <script>
             var baseurl="<?php echo base_url(); ?>";
