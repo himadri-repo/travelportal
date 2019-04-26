@@ -245,11 +245,18 @@ class User_Controller extends Mail_Controller
 	public function login()
 	{
 		$result["setting"]=$this->Search_Model->setting();
-			$result["footer"]=$this->Search_Model->get_post(5);
-		$this->load->view('header',$result);
-		$this->load->view('login');
-		$this->load->view('footer');
-		
+		$result["footer"]=$this->Search_Model->get_post(5);
+
+		if(!NEW_FLOW) {
+			$this->load->view('header',$result);
+			$this->load->view('login');
+			$this->load->view('footer');
+		}
+		else {
+			$this->load->view('header',$result);
+			$this->load->view('login');
+			$this->load->view('footer');
+		}
 	}
 	
 	
@@ -586,7 +593,7 @@ class User_Controller extends Mail_Controller
 	{
 		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		 {
-			 $this->form_validation->set_rules('mobile','Mobile','required|numeric|xss_clean|max_length[10]|min_length[10]');		
+			 $this->form_validation->set_rules('mobile','Mobile','required|numeric|xss_clean|max_length[10]|min_length[10]');
 			 $this->form_validation->set_rules('password','Password','required|xss_clean');
 			 
 			 
@@ -596,38 +603,82 @@ class User_Controller extends Mail_Controller
 					'mobile' => form_error('mobile', '<div class="error">', '</div>'),                               
 					'password' => form_error('password', '<div class="error">', '</div>')											
 				);
-				
 			 }
 			 else
 			 {
-				 
-				 $arr = array(
-							 'mobile'=>$this->input->post('mobile'),						 
-							 'password'=>$this->input->post('password')						 
-							 );
-				 $result = $this->User_Model->login($arr);
-				 
-				 $arr1 = array(
-							 'mobile'=>$this->input->post('mobile'),						 
-							 'password'=>$this->input->post('password'),
- 							 'active'=>'1'	
-							 );
-							 
-				 $result = $this->User_Model->login($arr);
-				 $result1 = $this->User_Model->login($arr1);
-				 if($result==true && $result1==true)
-				 {	
-					$this->session->set_userdata('user_id',$result['user_id']);
-					$this->session->set_userdata('name',$result['name']);
-					$json["success"]="Login Successfully";
-				 }
-				 else if($result==true && $result1==false)
-					 $json["error"]="Your Account is not Approved";
-				 else
-					 $json["error"]="Wrong Mobile No. / Password";
+				if(!NEW_FLOW) {
+					$json = $this->do_checkLogin();
+				}
+				else {
+					$json = $this->do_checkNewLogin();
+				}
 			 }
 			 echo json_encode($json);	 
 		 }
+	}
+
+	private function do_checkNewLogin() {
+		try
+		{
+			$arr = array(
+				'mobile'=>$this->input->post('mobile'),						 
+				'password'=>$this->input->post('password')						 
+			);
+
+			$result = $this->User_Model->newlogin($arr);
+			if($result==true)
+			{	
+				$this->session->set_userdata('current_user',$result);
+				$this->session->set_userdata('user_id',$result['user_id']);
+				$this->session->set_userdata('name',$result['name']);
+				$json["success"]="Login Successfully";
+			}
+			else {
+				$json["error"]="Either wrong mobile number/email, password Or Your account is not yet approved";
+			}
+		}
+		catch(Exception $ex) {
+			var_dump($ex->getMessage());
+			$json["error"] = $ex->getMessage();
+		}
+
+		return $json;
+	}
+
+	private function do_checkLogin() {
+		try
+		{
+			$arr = array(
+				'mobile'=>$this->input->post('mobile'),						 
+				'password'=>$this->input->post('password')						 
+				);
+			//$result = $this->User_Model->login($arr);
+
+			$arr1 = array(
+						'mobile'=>$this->input->post('mobile'),						 
+						'password'=>$this->input->post('password'),
+						'active'=>'1'	
+						);
+						
+			$result = $this->User_Model->login($arr);
+			$result1 = $this->User_Model->login($arr1);
+			if($result==true && $result1==true)
+			{	
+			$this->session->set_userdata('user_id',$result['user_id']);
+			$this->session->set_userdata('name',$result['name']);
+			$json["success"]="Login Successfully";
+			}
+			else if($result==true && $result1==false)
+				$json["error"]="Your Account is not Approved";
+			else
+				$json["error"]="Wrong Mobile No. / Password";
+		}
+		catch(Exception $ex) {
+			var_dump($ex->getMessage());
+			$json["error"] = $ex->getMessage();
+		}
+
+		return $json;
 	}
 	
 	public function uploadimg()

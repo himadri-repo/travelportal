@@ -18,6 +18,31 @@ class Home_Controller extends CI_Controller
 	
 	public function index()
 	{
+			if ($this->session->userdata('user_id')) 
+			{ 
+				if(NEW_FLOW) {
+					$companyid = $this->session->userdata("current_user")["companyid"];
+					$cname = $this->session->userdata("current_user")["cname"];
+					$result['cname']=$cname;
+				}
+				else {
+					$companyid = NULL;
+					$cname = NULL;
+					$result['cname']='';
+				}
+				
+				if(NEW_FLOW && $companyid!=NULL)
+				{
+					$result['company_setting']=$this->Search_Model->company_setting($companyid);
+				}
+			}
+			else {
+				$companyid = NULL;
+				$cname = NULL;
+				$result['cname']='';
+				$result['company_setting'] = array();
+			}
+
 	   	$result["setting"]=$this->Search_Model->setting();
 	   	$result["slider"]=$this->User_Model->select("slider_tbl");
 	   	
@@ -33,20 +58,17 @@ class Home_Controller extends CI_Controller
 	   	$result["number"]=$this->Search_Model->best_offer_num($arr);
 	   	//echo $this->db->last_query();die();
 	   	$result["testimonial"]=$this->Search_Model->testimonial();
-        $result["first"]=$this->Search_Model->get_post(1);
-        $result["second"]=$this->Search_Model->get_post(2);
-        $result["third"]=$this->Search_Model->get_post(3);
-        $result["fourth"]=$this->Search_Model->get_post(4);
-        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["first"]=$this->Search_Model->get_post(1);
+			$result["second"]=$this->Search_Model->get_post(2);
+			$result["third"]=$this->Search_Model->get_post(3);
+			$result["fourth"]=$this->Search_Model->get_post(4);
+			$result["footer"]=$this->Search_Model->get_post(5);
         
-        
-		
-        
-		//$this->load->view('header',$result);
-		$this->load->view('headernew',$result);
-		//$this->load->view('home');
-		$this->load->view('homenew');
-		$this->load->view('footer');
+			//$this->load->view('header',$result);
+			$this->load->view('headernew',$result);
+			//$this->load->view('home');
+			$this->load->view('homenew');
+			$this->load->view('footer');
 	}
 	public function terms()
 	{

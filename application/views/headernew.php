@@ -20,9 +20,12 @@
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.carousel.css">
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.theme.css"> 
 		 <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
-        <script>var baseurl="<?php echo base_url(); ?>";</script>		
+         <script>
+            var baseurl="<?php echo base_url(); ?>";
+            var admin=parseInt("0<?php echo $this->session->userdata('current_user')['is_admin'] ?>");
+            var permission = parseInt("0<?php echo $this->session->userdata('current_user')['permission'] ?>");
+        </script>
     </head>
-    
     
     <body id="flight-homepage">
     
@@ -45,7 +48,20 @@
             </div>
         </div>-->
         
-        
+        <?php 
+            if($cname!=null && !empty($cname)) {
+                $phone = $company_setting["phone_no"];
+                $logo = $company_setting["logo"];
+                $admin = $this->session->userdata('current_user')['is_admin'];
+            }
+            else {
+                $cname = $setting[0]["address"];
+                $phone = $setting[0]["phone_no"];
+                $logo = $setting[0]["logo"];
+                $admin = 0;
+            }
+        ?>
+                
         <!--============= TOP-BAR ===========-->
         <div id="top-bar" class="tb-text-white" style="display:none">
             <div class="container">
@@ -53,8 +69,10 @@
                     <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
                         <div id="info">
                             <ul class="list-unstyled list-inline">
-                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"]; ?></li>
-                                <li><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"]; ?></li>
+                                <!-- <li><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"]; ?></li>
+                                <li><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"]; ?></li> -->
+                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $cname; ?></li>
+                                <li><span><i class="fa fa-phone"></i></span><?php echo $phone; ?></li>
                             </ul>
                         </div><!-- end info -->
                     </div><!-- end columns -->
@@ -90,7 +108,7 @@
                     <!-- <div class="header-search hidden-lg">
                     	<a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a>
                     </div> -->
-                    <a href="<?php echo base_url(); ?>" class="navbar-brand"><img src="<?php echo base_url(); ?>upload/<?php echo $setting[0]["logo"];?>" class="img-responsive" style="width: 125px; height: 50px;"></a>
+                    <a href="<?php echo base_url(); ?>" class="navbar-brand"><img src="<?php echo base_url(); ?>upload/<?php echo $logo;?>" class="img-responsive" style="width: 125px; height: 50px;"></a>
                 </div><!-- end navbar-header -->
                 
                 <div class="collapse navbar-collapse" id="myNavbar1">
@@ -101,9 +119,13 @@
                             <li><a href="<?php echo base_url(); ?>login"><span><i class="fa fa-lock"></i></span>Login</a></li>
                             <li><a href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus"></i></span>Sign Up</a></li>
                         <?php } else {?>
-                            <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
+                            <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?>&nbsp;<?php echo $admin?'(Admin)':'' ?></a></li>
+                            <?php if($this->session->userdata('user_id') && $admin) { ?>
+                                <li><a href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown"></i></span>Administration</a></li>
+                            <?php } ?>
                             <li><a href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off"></i></span>Log Out</a></li>
                         <?php } ?>
+
 					    <!--<li><a href="<?php echo base_url(); ?>terms-and-conditions">Term & Conditions</a></li>
 					    <li><a href="<?php echo base_url(); ?>faq">FAQ</a></li>
                         <li><a href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone">Contact Us</a></li>-->
@@ -115,7 +137,7 @@
 
 		<div class="sidenav-content">
             <div id="mySidenav" class="sidenav" >
-                <h2 id="web-name"><span><i class="fa fa-plane"></i></span>OXY TRA</h2>
+                <h2 id="web-name"><span><i class="fa fa-plane"></i></span>OXYTRA</h2>
 
                 <div id="main-menu">
                 	<div class="closebtn">
@@ -133,6 +155,9 @@
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus link-icon"></i></span>Sign Up</a></li>
                         <?php } else {?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user"><span><i class="fa fa-user link-icon"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
+                            <?php if($this->session->userdata('user_id') && $admin) { ?>
+                                <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown link-icon"></i></span>Administration</a></li>
+                            <?php } ?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off link-icon"></i></span>Log Out</a></li>
                         <?php } ?>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>

@@ -22,11 +22,28 @@ class Search extends Mail_Controller
 	public function index()
 	{  
 		if ($this->session->userdata('user_id')) 
-		{ 	
+		{ 
+			if(NEW_FLOW) {
+				$companyid = $this->session->userdata("current_user")["companyid"];
+				$cname = $this->session->userdata("current_user")["cname"];
+				$result['cname']=$cname;
+			}
+			else {
+				$companyid = NULL;
+				$cname = NULL;
+				$result['cname']='';
+			}
+			
 			$result['city']=$this->User_Model->filter_city("ONE");	
 			$result['city1']=$this->User_Model->filter_city("ROUND");
 			$result["flight"]="";
 			$result["footer"]=$this->Search_Model->get_post(5);
+			
+			if(NEW_FLOW && $companyid!=NULL)
+			{
+				$result['company_setting']=$this->Search_Model->company_setting($companyid);
+			}
+
 			$result["setting"]=$this->Search_Model->setting();
 			$this->load->view('header1',$result);
 			$this->load->view('search',$result);

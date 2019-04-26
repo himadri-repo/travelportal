@@ -74,6 +74,7 @@ $route['user/booking-orders'] = 'User_Controller/bookingorders';
 $route['user/booking-details/(:num)'] = 'User_Controller/booking_details/$1';
 $route['user/edit-booking/(:num)'] = 'User_Controller/edit_booking/$1';
 $route['user/cancel-request'] = 'User_Controller/cancelrequest';
+$route['admin'] = 'Admin_Controller';
 $route['404_override'] = 'Home_Controller/error';
 $route['contact'] = 'Home_Controller/contact';
 $route['faq'] = 'Home_Controller/faq';

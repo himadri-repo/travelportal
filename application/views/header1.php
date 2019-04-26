@@ -1,7 +1,7 @@
 <!Doctype html>
 <html lang="en">
     <head>
-        <title>Oxytra</title>
+        <title>Oxytra | Travel operation platform</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <link rel="icon" href="images/favicon.png" type="image/x-icon">                
@@ -22,7 +22,11 @@
          <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
          <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
          
-        <script>var baseurl="<?php echo base_url(); ?>";</script>
+        <script>
+            var baseurl="<?php echo base_url(); ?>";
+            var admin=parseInt("0<?php echo $this->session->userdata('current_user')['is_admin'] ?>");
+            var permission = parseInt("0<?php echo $this->session->userdata('current_user')['permission'] ?>");
+        </script>
         <style>
             .ui-datepicker .weekend .ui-state-default {
                 background: #FEA;
@@ -80,8 +84,32 @@
                 </div>
             </div>
         </div>-->
-        
-        
+        <?php 
+			if(NEW_FLOW) {
+				$companyid = $this->session->userdata("current_user")["companyid"];
+				$cname = $this->session->userdata("current_user")["cname"];
+			}
+			else {
+				$companyid = NULL;
+				$cname = NULL;
+			}
+			if(NEW_FLOW && $companyid!=NULL)
+			{
+				$company_setting=$this->Search_Model->company_setting($companyid);
+			}
+
+            if($cname!=null && !empty($cname)) {
+                $phone = $company_setting["phone_no"];
+                $logo = $company_setting["logo"];
+                $admin = $this->session->userdata('current_user')['is_admin'];
+            }
+            else {
+                $cname = $setting[0]["address"];
+                $phone = $setting[0]["phone_no"];
+                $logo = $setting["logo"];
+                $admin = 0;
+            }
+        ?>
         <!--============= TOP-BAR ===========-->
         <div id="top-bar" class="tb-text-white">
             <div class="container">
@@ -89,8 +117,8 @@
                     <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
                         <div id="info">
                            <ul class="list-unstyled list-inline">
-                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"]; ?></li>
-                                <li><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"]; ?></li>
+                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $cname; ?></li>
+                                <li><span><i class="fa fa-phone"></i></span><?php echo $phone; ?></li>
                             </ul>
                         </div><!-- end info -->
                     </div><!-- end columns -->
@@ -102,7 +130,7 @@
 									<li><a href="<?php echo base_url(); ?>login"><span><i class="fa fa-lock"></i></span>Login</a></li>
 									<li><a href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus"></i></span>Sign Up</a></li>
 								<?php } else {?>
-								    <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.$this->session->userdata('name');?></a></li>
+								    <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.$this->session->userdata('name');?>&nbsp;<?php echo $admin?'(Admin)':'' ?></a></li>
 									<li><a href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off"></i></span>Log Out</a></li>
 
 								<?php } ?>
@@ -125,7 +153,7 @@
                     <div class="header-search hidden-lg">
                     	<a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a>
                     </div>
-                     <a href="<?php echo base_url(); ?>" class="navbar-brand"><img src="<?php echo base_url(); ?>upload/<?php echo $setting[0]["logo"];?>" class="img-responsive" style="width: 125px; height: 50px;"></a>
+                     <a href="<?php echo base_url(); ?>" class="navbar-brand"><img src="<?php echo base_url(); ?>upload/<?php echo $logo;?>" class="img-responsive" style="width: 125px; height: 50px;"></a>
                 </div><!-- end navbar-header -->
                 
                 <div class="collapse navbar-collapse" id="myNavbar1">
@@ -134,7 +162,11 @@
 						<li><a href="<?php echo base_url(); ?>search">Search Flight</a></li>
 						<li><a href="<?php echo base_url(); ?>terms-and-conditions">Term & Conditions</a></li>
 					    <li><a href="<?php echo base_url(); ?>faq">FAQ</a></li>
-                        <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li>     	                                                                     
+                        <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li>
+                        <?php 
+                        if($this->session->userdata('user_id') && $admin) { ?>
+                            <li><a href="<?php echo base_url(); ?>admin">Administration</a></li>
+                        <?php } ?>
                         <!--<li><a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a></li>-->
                     </ul>
                 </div><!-- end navbar collapse -->
@@ -156,11 +188,11 @@
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search"><i class="fa fa-plane link-icon"></i><span></span>Search Flight</a>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
-                        
-                        
-                        
-                    
+                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
+                        <?php if($this->session->userdata('user_id') && $admin) { ?>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown link-icon"></i></span>Administration</a>
+                        <?php } ?>
+
                     </div><!-- end list-group -->
                 </div><!-- end main-menu -->
             </div><!-- end mySidenav -->

@@ -56,7 +56,46 @@ Class User_Model extends CI_Model
 			  return false;
 		}
          	
-    }
+	}
+	
+	public function newlogin($data) {
+		$mobile = $data['mobile'];
+		$email = $data['mobile'];
+		$pwd = $data['password'];
+
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type');
+		$this->db->from('user_tbl u');
+		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
+		$this->db->where('u.mobile=', $mobile);
+		$this->db->or_where('u.email=', $email);
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) 
+		{
+			$data = $query->result_array()[0];
+			if(sha1($data['password'])==$pwd || $data['password']==$pwd) {
+				unset($data['password']);
+
+				return $data;
+			}
+			else {
+				return false;
+			}
+			
+			// foreach ($query->result_array() as $row) 
+			// {
+			//   $data['user_id'] = $row['id'];
+			//   $data['name'] = $row['name'];
+            // }			
+            //return $data;
+			
+		}
+		else
+		{
+			  return false;
+		}
+	}
+
 	public function user_details() 
 	{    
         

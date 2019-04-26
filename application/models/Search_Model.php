@@ -123,7 +123,31 @@ Class Search_Model extends CI_Model
 			  return false;
 		}   
 	}
-     public function setting() 
+	
+	public function company_setting($companyid) {
+        $arr=array("target_object_type"=>"company", "target_object_id"=>$companyid);
+		$this->db->select('*');
+		$this->db->from('attributes_tbl');
+		$this->db->order_by('category asc, display_name asc');
+		
+		$this->db->where($arr);
+		$query = $this->db->get();					
+		$data = array();
+		
+		if ($query->num_rows() > 0) 
+		{	
+			foreach ($query->result_array() as $row) {
+				$data[$row['code']] = $row['datavalue'];
+			}
+			return $data;
+		}
+		else
+		{
+			  return false;
+		}         	
+	}
+
+	public function setting() 
 	{    
         $arr=array("setting_id"=>"2");  	
 		$this->db->select('*');
@@ -140,7 +164,8 @@ Class Search_Model extends CI_Model
 		{
 			  return false;
 		}         	
-    }	
+	}	
+	
     public function save($tbl,$data) 
 	{                      
 		if($this->db->insert($tbl,$data))
