@@ -38,10 +38,21 @@ class User_Controller extends Mail_Controller
 			$result['airline']=$this->User_Model->select("airline_tbl");
 			$result["footer"]=$this->Search_Model->get_post(5);
 			
-	        $result["setting"]=$this->Search_Model->setting();
-		    $this->load->view('header',$result);			
+			$result["setting"]=$this->Search_Model->setting();
+
+			if(NEW_FLOW)
+			{
+				$current_user = $this->session->userdata("current_user");
+				$companyid = $current_user["companyid"];
+				$result["companyid"] = $companyid;
+				$result["cname"] = $current_user["cname"];
+
+				$result["company_setting"]=$this->Search_Model->company_setting($companyid);
+			}
+
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_dashboard',$result);
-			$this->load->view('footer');
+			$this->load->view('footer1');
 		}
 		else
 		{
@@ -109,7 +120,7 @@ class User_Controller extends Mail_Controller
 			$result['testimonials']=$this->User_Model->testimonials();
 	        $result["setting"]=$this->Search_Model->setting();
 	        	$result["footer"]=$this->Search_Model->get_post(5);
-		    $this->load->view('header',$result);			
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_testimonials',$result);
 			$this->load->view('footer');
 		}
@@ -128,7 +139,7 @@ class User_Controller extends Mail_Controller
 			$result['sale_order']=$this->User_Model->my_booking_order();
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
-		    $this->load->view('header',$result);			
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking',$result);
 			$this->load->view('footer');
 		}
@@ -148,7 +159,7 @@ class User_Controller extends Mail_Controller
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
 			
-		    $this->load->view('header',$result);			
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_details',$result);
 			$this->load->view('footer');
 		}
@@ -167,7 +178,7 @@ class User_Controller extends Mail_Controller
 			$result['sale_order']=$this->User_Model->booking_orders();
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
-		    $this->load->view('header',$result);			
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_orders',$result);
 			$this->load->view('footer');
 		}
@@ -186,7 +197,7 @@ class User_Controller extends Mail_Controller
 			$result['sale_order']=$this->User_Model->cancel_request();
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
-		    $this->load->view('header',$result);			
+		    $this->load->view('header1',$result);			
 			$this->load->view('user_cancel_request',$result);
 			$this->load->view('footer');
 		}
@@ -236,7 +247,7 @@ class User_Controller extends Mail_Controller
 	{
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
-		$this->load->view('header',$result);
+		$this->load->view('header1',$result);
 		$this->load->view('register');
 		$this->load->view('footer');
 		
@@ -248,7 +259,7 @@ class User_Controller extends Mail_Controller
 		$result["footer"]=$this->Search_Model->get_post(5);
 
 		if(!NEW_FLOW) {
-			$this->load->view('header',$result);
+			$this->load->view('header1',$result);
 			$this->load->view('login');
 			$this->load->view('footer');
 		}
@@ -264,7 +275,7 @@ class User_Controller extends Mail_Controller
 	{
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
-		$this->load->view('header',$result);
+		$this->load->view('header1',$result);
 		$this->load->view('verify');
 		$this->load->view('footer');
 		
@@ -274,7 +285,7 @@ class User_Controller extends Mail_Controller
 	{
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
-		$this->load->view('header',$result);
+		$this->load->view('header1',$result);
 		$this->load->view('login_otp');
 		$this->load->view('footer');
 		
@@ -1725,7 +1736,7 @@ class User_Controller extends Mail_Controller
 			$result['wallet_transaction']=$this->User_Model->wallet_transaction();
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
-		    $this->load->view('header',$result);
+		    $this->load->view('header1',$result);
 			$this->load->view('user_transaction',$result);
 			$this->load->view('footer');
 		}

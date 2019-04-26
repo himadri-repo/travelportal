@@ -196,26 +196,31 @@
                                                     <div class="stat-block" style="float:left;width:100%">
 													    <div class="col-sm-4">
                                                         <span><i class="fa fa-bank"></i></span>
-                                                        <h3> OXYTRA BANK DETAILS</h3>                                                      
+                                                        <h3><?php echo strtoupper($cname);?> - BANK DETAILS</h3>
                                                         </div>
 
-													<div class="col-sm-4">                                                                                                               
-                                                        <p><b>BANK NAME : </b> <?php echo $setting[0]["bank_name"];?></p>
-														<p><b>BRANCH : </b> <?php echo $setting[0]["branch"];?></p>														
+													<div class="col-sm-4">
+														<?php 
+															$bank = isset($company_setting["bank_name"])?$company_setting["bank_name"]:$setting[0]["bank_name"];
+															$branch = isset($company_setting["bank_branch"])?$company_setting["bank_branch"]:$setting[0]["bank_branch"];
+															//$acc_name = $setting[0]["acc_name"]; //$company_setting["acc_name"]?'true':'false';
+															$acc_name = isset($company_setting["acc_name"])?$company_setting["acc_name"]:$setting[0]["acc_name"];
+															$acc_no = isset($company_setting["acc_no"])?$company_setting["acc_no"]:$setting[0]["acc_no"];
+															$ifsc = isset($company_setting["ifsc"])?$company_setting["ifsc"]:$setting[0]["ifsc"];
+														?>
+                                                        <p><b>BANK NAME : </b> <?php echo $bank;?></p>
+														<p><b>BRANCH : </b> <?php echo $branch;?></p>
                                                     </div>												
 													<div class="col-sm-4">
                                                       
-                                                        <p><b>A/C NAME : </b> <?php echo $setting[0]["acc_name"];?></p>
-														<p><b>A/C NO. : </b> <?php echo $setting[0]["acc_no"];?></p>
-														<p><b>IFSC : </b> <?php echo $setting[0]["ifsc"];?></p>
+                                                        <p><b>A/C NAME : </b> <?php echo $acc_name;?></p>
+														<p><b>A/C NO. : </b> <?php echo $acc_no;?></p>
+														<p><b>IFSC : </b> <?php echo $ifsc;?></p>
                                                     </div>
 													</div>	
                                                 </div><!-- end columns -->
                                                 
                                             </div>
-                                            
-                                            
-                                            
                                             
                                         </div><!-- end dashboard-content -->
                                     </div><!-- end dsh-dashboard -->
