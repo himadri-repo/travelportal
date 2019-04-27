@@ -84,7 +84,14 @@ if ( ! function_exists('base_url'))
 	 */
 	function base_url($uri = '', $protocol = NULL)
 	{
-		return get_instance()->config->base_url($uri, $protocol);
+		$url = $_SERVER["REQUEST_SCHEME"].'://'.$_SERVER["HTTP_HOST"].'/';
+		$baseurl = get_instance()->config->base_url($uri, $protocol);
+		if($url!=$baseurl) {
+			$config['base_url'] = $url;
+			return $url;
+		}
+		else
+			return get_instance()->config->base_url($uri, $protocol);
 	}
 }
 
