@@ -152,15 +152,15 @@
                                                     </div>
                                                 </div>
                                                 <?php if($user_details[0]["is_supplier"]==1){?>
-												<div class="col-sm-6 col-md-4">
-                                                    <div class="stat-block">
-													     <a style="color:#303030;text-decoration:none" href="<?php echo base_url(); ?>user/booking-orders">
-                                                        <span><i class="fa fa-users"></i></span>
-                                                        <h3><?php if(isset($ticket_sold[1]["no"])) echo $ticket_sold[0]["no"]+$ticket_sold[1]["no"]; else echo $ticket_sold[0]["no"];?></h3>
-                                                        <p>Booking Orders</p>
-														</a>
-                                                    </div>
-                                                </div>
+													<div class="col-sm-6 col-md-4">
+														<div class="stat-block">
+															<a style="color:#303030;text-decoration:none" href="<?php echo base_url(); ?>user/booking-orders">
+															<span><i class="fa fa-users"></i></span>
+															<h3><?php if(isset($ticket_sold[1]["no"])) echo $ticket_sold[0]["no"]+$ticket_sold[1]["no"]; else echo $ticket_sold[0]["no"];?></h3>
+															<p>Booking Orders</p>
+															</a>
+														</div>
+													</div>
 												<?php } ?>
 												<div class="col-sm-6 col-md-4">
 												    <a style="color:#303030;text-decoration:none;cursor:pointer" data-toggle="modal" data-target="#make-payment">

@@ -15,7 +15,8 @@ class Admin_Controller extends CI_Controller
 		$this->load->database();
 		$this->load->library('upload');
 		$this->load->model('User_Model');
-		$this->load->model('Search_Model');
+        $this->load->model('Search_Model');
+        $this->load->model('Admin_Model');
     }
 
     //Admin controller landing page
@@ -45,10 +46,14 @@ class Admin_Controller extends CI_Controller
                 }
     
                 $result["setting"]=$this->Search_Model->setting();
+                $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
     
-                $this->load->view('header1', $result);
+                //$this->load->view('header1', $result);
+                $this->load->view('adminheader', $result);
+                $this->load->view('adminsidebar', $result);
                 $this->load->view('admin', $result);
-                $this->load->view('footer1');
+                //$this->load->view('footer1');
+                $this->load->view('adminfooter');
             }
             else {
                 redirect('/login');

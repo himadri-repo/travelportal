@@ -18,8 +18,7 @@ class User_Controller extends Mail_Controller
 		$this->load->library('upload');
 		$this->load->model('User_Model');
 		$this->load->model('Search_Model');
-		
-		
+        $this->load->model('Admin_Model');
 	}
 	
 	

@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.carousel.css">
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/owl.theme.css"> 
         <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
+        <!--<link rel="stylesheet" href="<?php echo base_url(); ?>css/admin.css">-->
         <link rel="stylesheet" href="<?php echo base_url(); ?>js/dhtmlx/skins/skyblue/dhtmlx.css">
         <script src="<?php echo base_url(); ?>/adminassets/js/jquery.2.1.1.min.js"></script>
 
@@ -29,6 +30,27 @@
             var baseurl="<?php echo base_url(); ?>";
             var admin=parseInt("0<?php echo $this->session->userdata('current_user')['is_admin'] ?>");
             var permission = parseInt("0<?php echo $this->session->userdata('current_user')['permission'] ?>");
+
+            //Dynamically load js and css file
+            function loadResourceFile(filename, filetype){
+                var fileref = null;
+                if(!filename.startsWith('http'))
+                    filename = baseurl+filename;
+
+                if (filetype=="js"){ //if filename is a external JavaScript file
+                    fileref=document.createElement('script')
+                    fileref.setAttribute("type","text/javascript")
+                    fileref.setAttribute("src", filename)
+                }
+                else if (filetype=="css"){ //if filename is an external CSS file
+                    fileref=document.createElement("link")
+                    fileref.setAttribute("rel", "stylesheet")
+                    fileref.setAttribute("type", "text/css")
+                    fileref.setAttribute("href", filename)
+                }
+                if (typeof fileref!="undefined" && fileref!=null)
+                    document.getElementsByTagName("head")[0].appendChild(fileref)
+            }
         </script>
         <style>
             .ui-datepicker .weekend .ui-state-default {
@@ -109,7 +131,7 @@
             else {
                 $cname = $setting[0]["address"];
                 $phone = $setting[0]["phone_no"];
-                $logo = $setting[0]["logo"];
+                $logo = $setting["logo"];
                 $admin = 0;
             }
         ?>
@@ -200,3 +222,5 @@
                 </div><!-- end main-menu -->
             </div><!-- end mySidenav -->
         </div><!-- end sidenav-content -->
+        <div class="container-fluid" style="min-height:300px; margin: 10px 0px 15px 0px">
+            <div class="wrapper">

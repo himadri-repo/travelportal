@@ -14,6 +14,7 @@ class Home_Controller extends CI_Controller
 		$this->load->database();
 		$this->load->model('Search_Model');
 		$this->load->model('User_Model');
+		$this->load->model('Admin_Model');
 	}
 	
 	public function index()

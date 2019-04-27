@@ -75,6 +75,7 @@ Class User_Model extends CI_Model
 			$data = $query->result_array()[0];
 			if(sha1($data['password'])==$pwd || $data['password']==$pwd) {
 				unset($data['password']);
+				$data['user_id'] = $data['id'];
 
 				return $data;
 			}
