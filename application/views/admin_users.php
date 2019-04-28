@@ -9,6 +9,9 @@
                     <i class="glyphicon glyphicon-align-left"></i>
                     <span>Toggle Sidebar</span>
                 </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="float:right">
+                    <h1>Manage Users</h1>
+                </div>
             </div>
         </div>
     </nav>

@@ -107,6 +107,76 @@ class Admin_Controller extends CI_Controller
         }
     }
 
+    public function suppliers() {
+        //check is user having access rights
+        if($this->session->userdata('user_id') && $this->session->userdata('current_user')) {
+            $currentuser = $this->session->userdata('current_user');
+            //if($currentuser["is_admin"]) {
+            if(ADMIN_USERS & $currentuser["permission"]) {
+                $companyid = $this->session->userdata("current_user")["companyid"];
+                $cname = $this->session->userdata("current_user")["cname"];
+                $result['cname']=$cname;
+                
+                $result["footer"]=$this->Search_Model->get_post(5);
+                
+                $result['company_setting']=$this->Search_Model->company_setting($companyid);
+    
+                $result["setting"]=$this->Search_Model->setting();
+                $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
+                $result["suppliers"]=$this->Admin_Model->get_suppliers($companyid);
+                $result["active_module"]='admin/suppliers';
+    
+                //$this->load->view('header1', $result);
+                $this->load->view('adminheader', $result);
+                $this->load->view('adminsidebar', $result);
+                $this->load->view('admin_suppliers', $result);
+                //$this->load->view('footer1');
+                $this->load->view('adminfooter');
+            }
+            else {
+                redirect('/login');
+            }
+        }
+        else {
+            redirect('/login');
+        }
+    }
+
+    public function wholesalers() {
+        //check is user having access rights
+        if($this->session->userdata('user_id') && $this->session->userdata('current_user')) {
+            $currentuser = $this->session->userdata('current_user');
+            //if($currentuser["is_admin"]) {
+            if(ADMIN_USERS & $currentuser["permission"]) {
+                $companyid = $this->session->userdata("current_user")["companyid"];
+                $cname = $this->session->userdata("current_user")["cname"];
+                $result['cname']=$cname;
+                
+                $result["footer"]=$this->Search_Model->get_post(5);
+                
+                $result['company_setting']=$this->Search_Model->company_setting($companyid);
+    
+                $result["setting"]=$this->Search_Model->setting();
+                $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
+                $result["wholesalers"]=$this->Admin_Model->get_wholesalers($companyid);
+                $result["active_module"]='admin/wholesalers';
+    
+                //$this->load->view('header1', $result);
+                $this->load->view('adminheader', $result);
+                $this->load->view('adminsidebar', $result);
+                $this->load->view('admin_wholesalers', $result);
+                //$this->load->view('footer1');
+                $this->load->view('adminfooter');
+            }
+            else {
+                redirect('/login');
+            }
+        }
+        else {
+            redirect('/login');
+        }
+    }
+
     public function get_users($companyid) {
         //$companyid = $this->session->userdata("current_user")["companyid"];
         $result = array();
