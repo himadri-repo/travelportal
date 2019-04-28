@@ -74,7 +74,16 @@ $route['user/booking-orders'] = 'User_Controller/bookingorders';
 $route['user/booking-details/(:num)'] = 'User_Controller/booking_details/$1';
 $route['user/edit-booking/(:num)'] = 'User_Controller/edit_booking/$1';
 $route['user/cancel-request'] = 'User_Controller/cancelrequest';
+/*********** Admin Page related routing ***************/
 $route['admin'] = 'Admin_Controller';
+$route['admin/users'] = 'Admin_Controller/users';
+$route['admin/get_users/(:num)'] = 'Admin_Controller/get_users/$1';
+$route['admin/services'] = 'Admin_Controller/services';
+$route['admin/tickets'] = 'Admin_Controller/tickets';
+$route['admin/suppliers'] = 'Admin_Controller/suppliers';
+$route['admin/wholesalers'] = 'Admin_Controller/wholesalers';
+$route['admin/customer'] = 'Admin_Controller/customers';
+/*********** End of Admin Page related routing ***************/
 $route['404_override'] = 'Home_Controller/error';
 $route['contact'] = 'Home_Controller/contact';
 $route['faq'] = 'Home_Controller/faq';

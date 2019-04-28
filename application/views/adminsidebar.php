@@ -10,6 +10,7 @@
                 // active
                 $lastcat="NA";
                 $class = ($lastcat=="NA"?"active":"");
+                $active_menu=$active_module;
 
                 foreach ($modules as $module) { ?>
                     <?php 
@@ -23,7 +24,7 @@
                             <?php    
                             }
                             ?>
-                            <li class="<?php echo $class; ?>">
+                            <li class="<?php echo ($active_menu==$module["path"]?'active':''); ?>">
                                 <a href="#<?php echo $link?>" data-toggle="collapse" aria-expanded="false">
                                     <i class="glyphicon glyphicon-home"></i><?php echo $module["category"]?>
                                 </a>
@@ -31,7 +32,7 @@
                         <?php
                         }
                         ?>
-                            <li><a href="#"><?php echo $module["display_name"]?></a></li>
+                            <li class="<?php echo ($active_menu==$module["path"]?'active':''); ?>"><a href="/<?php echo $module["path"]?>"><?php echo $module["display_name"]?></a></li>
                             <?php 
                             $lastcat = $module["category"];
                             $class = ($lastcat=="NA"?"active":"");

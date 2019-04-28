@@ -22,5 +22,10 @@
 
 <script language="javascript">
     loadResourceFile('css/admin.css', 'css');
-    loadResourceFile('js/admin.js', 'js');
+    loadResourceFile('js/admin_users.js', 'js');
+    var companyid = <?php echo $this->session->userdata("current_user")["companyid"];?>;
+    // $(document).ready(function()
+    // {
+    //     loadUsers();
+    // });
 </script>

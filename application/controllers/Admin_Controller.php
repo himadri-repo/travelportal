@@ -1,6 +1,14 @@
 <?php
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
+
+defined('ADMIN_USERS') OR define('ADMIN_USERS', 1);
+defined('ADMIN_SERVICES') OR define('ADMIN_SERVICES', 4);
+defined('ADMIN_TICKETS') OR define('ADMIN_TICKETS', 8);
+defined('ADMIN_SUPPLIERS') OR define('ADMIN_SUPPLIERS', 16);
+defined('ADMIN_WHOLESALERS') OR define('ADMIN_WHOLESALERS', 64);
+defined('ADMIN_CUSTOMER') OR define('ADMIN_CUSTOMER', 4096);
+
 class Admin_Controller extends CI_Controller 
 {
 	 public function __construct()
@@ -47,7 +55,8 @@ class Admin_Controller extends CI_Controller
     
                 $result["setting"]=$this->Search_Model->setting();
                 $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
-    
+                $result["active_module"]='admin';
+
                 //$this->load->view('header1', $result);
                 $this->load->view('adminheader', $result);
                 $this->load->view('adminsidebar', $result);
@@ -62,6 +71,71 @@ class Admin_Controller extends CI_Controller
         else {
             redirect('/login');
         }
+    }
+
+    public function users() {
+        //check is user having access rights
+        if($this->session->userdata('user_id') && $this->session->userdata('current_user')) {
+            $currentuser = $this->session->userdata('current_user');
+            //if($currentuser["is_admin"]) {
+            if(ADMIN_USERS & $currentuser["permission"]) {
+                $companyid = $this->session->userdata("current_user")["companyid"];
+                $cname = $this->session->userdata("current_user")["cname"];
+                $result['cname']=$cname;
+                
+                $result["footer"]=$this->Search_Model->get_post(5);
+                
+                $result['company_setting']=$this->Search_Model->company_setting($companyid);
+    
+                $result["setting"]=$this->Search_Model->setting();
+                $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
+                $result["active_module"]='admin/users';
+    
+                //$this->load->view('header1', $result);
+                $this->load->view('adminheader', $result);
+                $this->load->view('adminsidebar', $result);
+                $this->load->view('admin_users', $result);
+                //$this->load->view('footer1');
+                $this->load->view('adminfooter');
+            }
+            else {
+                redirect('/login');
+            }
+        }
+        else {
+            redirect('/login');
+        }
+    }
+
+    public function get_users($companyid) {
+        //$companyid = $this->session->userdata("current_user")["companyid"];
+        $result = array();
+        $cid = $this->session->userdata("current_user")["companyid"];
+        header('Content-type: application/json');
+        if($cid==$companyid) {
+            $users = $this->User_Model->get_users($companyid);
+            $flag = true;
+        }
+        else {
+            $flag = false;
+            $users = array();
+        }
+        //$result->message = $flag?'Success':'Failed';
+        //$result->result = $users;
+
+        $idx = 0;
+        foreach($users as $user) {
+            $valarr = array();
+            foreach($user as $key => $val) {
+                array_push($valarr, ($val!=null?$val:''));
+            }
+            //$values = array_filter($userlist);
+            array_push($result, array('id'=>$idx, 'data'=>array_values($valarr)));
+            $idx++;
+        }
+
+        $json_data = json_encode(array('rows'=>$result));
+        echo $json_data;
     }
 }
 ?>

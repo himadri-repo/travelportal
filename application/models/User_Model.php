@@ -301,13 +301,9 @@ Class User_Model extends CI_Model
 			  return false;
 		}         	         
     }
-	
-	
-	
-	
+
 	public function my_booking_order() 
 	{    
-        
 		$arr=array("customer_id"=>$this->session->userdata('user_id')); 
 		$this->db->select('b.pnr,b.status,u.user_id,u.name,b.id,b.date,b.qty,b.rate,b.amount,b.total,c.city as source_city,ct.city as destination_city,t.trip_type,b.customer_id,b.seller_id,b.customer_cancel_request,b.supplier_cancel_request,b.reason_for_cancellation,b.cancel_request_date,b.cancel_date,b.booking_confirm_date');
 		$this->db->from('booking_tbl as b');	
@@ -636,10 +632,28 @@ Class User_Model extends CI_Model
 		{
 			  return false;
 			  echo $this->db->last_query();die();
-		}  
-		
-         	
-    }
+		}
+	}
 	
+	public function get_users($companyid) {
+		$arr = array('u.companyid'=>$companyid);
+
+		$this->db->select('u.id,u.user_id,u.name,u.email,u.mobile,u.is_supplier,u.is_customer,u.active,u.type,u.credit_ac,u.is_admin');
+		$this->db->from('user_tbl as u');
+        $this->db->where($arr);
+		$this->db->order_by("u.name", "ASC");
+		$query = $this->db->get();
+		
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			return false;
+			echo $this->db->last_query();
+			die();
+		}
+	}
 }	
 ?>
