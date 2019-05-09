@@ -27,8 +27,67 @@ class Admin_Controller extends CI_Controller
         $this->load->model('Admin_Model');
     }
 
-    //Admin controller landing page
     public function index() {
+        if($this->session->userdata('user_id') && $this->session->userdata('current_user')) {
+            $currentuser = $this->session->userdata('current_user');
+            if($currentuser["is_admin"]) {
+                if(NEW_FLOW) {
+                    $companyid = $this->session->userdata("current_user")["companyid"];
+                    $cname = $this->session->userdata("current_user")["cname"];
+                    $result['cname']=$cname;
+                }
+                else {
+                    $companyid = NULL;
+                    $cname = NULL;
+                    $result['cname']='';
+                }
+                
+                $result['city']=$this->User_Model->filter_city("ONE");	
+                $result['city1']=$this->User_Model->filter_city("ROUND");
+                $result["flight"]="";
+                $result["footer"]=$this->Search_Model->get_post(5);
+                
+                if(NEW_FLOW && $companyid!=NULL)
+                {
+                    $result['company_setting']=$this->Search_Model->company_setting($companyid);
+                }
+    
+                $result["setting"]=$this->Search_Model->setting();
+                $result["modules"]=$this->Admin_Model->get_modules($currentuser["permission"]);
+                $result["active_module"]='admin';
+
+                //$this->load->view('header1', $result);
+                //$this->load->view('adminheader', $result);
+                //$this->load->view('adminsidebar', $result);
+                //$this->load->view('../admin/index', $result);
+                $this->load->ext_view("admin/", "index", $result);
+                //$this->load->view('footer1');
+                //$this->load->view('adminfooter');
+            }
+            else {
+                redirect('/login');
+            }
+        }
+        else {
+            redirect('/login');
+        }
+    }    
+
+    public function rawfile($file) {
+		$filename="FCPATH".$file; //<-- specify the image  file
+		if(file_exists($filename)){ 
+		  $mime = mime_content_type($filename); //<-- detect file type
+		  header('Content-Length: '.filesize($filename)); //<-- sends filesize header
+		  header("Content-Type: $mime"); //<-- send mime-type header
+		  header('Content-Disposition: inline; filename="'.$filename.'";'); //<-- sends filename header
+		  readfile($filename); //<--reads and outputs the file onto the output buffer
+		  die(); //<--cleanup
+		  exit; //and exit
+		}
+    }
+
+    //Admin controller landing page
+    public function index1() {
         if($this->session->userdata('user_id') && $this->session->userdata('current_user')) {
             $currentuser = $this->session->userdata('current_user');
             if($currentuser["is_admin"]) {

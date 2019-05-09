@@ -498,6 +498,30 @@ class CI_Loader {
 	// --------------------------------------------------------------------
 
 	/**
+	 * View Loader
+	 *
+	 * Loads "view" files.
+	 *
+	 * @param	string	$view	View name
+	 * @param	array	$vars	An associative array of data
+	 *				to be extracted for use in the view
+	 * @param	bool	$return	Whether to return the view output
+	 *				or leave it to the Output class
+	 * @return	object|string
+	 */
+
+	function ext_view($folder, $view, $vars = array(), $return = FALSE) {
+		$this->_ci_view_paths = array_merge($this->_ci_view_paths, array(APPPATH . '../' . $folder . '/' => TRUE));
+		return $this->_ci_load(array(
+					'_ci_view' => $view,
+					'_ci_vars' => $this->_ci_prepare_view_vars($vars),
+					'_ci_return' => $return
+				));
+	}	
+
+	// --------------------------------------------------------------------
+
+	/**
 	 * Generic File Loader
 	 *
 	 * @param	string	$path	File path

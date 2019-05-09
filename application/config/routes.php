@@ -74,9 +74,15 @@ $route['user/booking-orders'] = 'User_Controller/bookingorders';
 $route['user/booking-details/(:num)'] = 'User_Controller/booking_details/$1';
 $route['user/edit-booking/(:num)'] = 'User_Controller/edit_booking/$1';
 $route['user/cancel-request'] = 'User_Controller/cancelrequest';
+/*********** TestNG ***********************************/
+
+/*********** End of TestNG ***********************************/
 /*********** Admin Page related routing ***************/
-$route['admin'] = 'Admin_Controller';
-$route['admin/users'] = 'Admin_Controller/users';
+//$route['admin1'] = 'Admin_Controller';
+//$route['admin1/([a-z]+)(.jpg|.JPG|.gif|.GIF|.doc|.DOC|.pdf|.PDF|.js|.css)$'] = "$1/id_$2";
+//$route['admin1/([a-z0-9A-Z.]+)(.jpg|.JPG|.gif|.GIF|.doc|.DOC|.pdf|.PDF|.js|.css)$'] = 'Admin_Controller/rawfile/$1';
+//$route['admin1/(:any)'] = 'Admin_Controller/rawfile/$1';
+//$route['admin1/users'] = 'Admin_Controller/users';
 $route['admin/get_users/(:num)'] = 'Admin_Controller/get_users/$1';
 $route['admin/services'] = 'Admin_Controller/services';
 $route['admin/tickets'] = 'Admin_Controller/tickets';
@@ -91,3 +97,6 @@ $route['terms-and-conditions'] = 'Home_Controller/terms';
 $route['images/random'] = 'Home_Controller/serveRandomImages';
 $route['sendmail'] = 'Contact_Controller/send';
 $route['translate_uri_dashes'] = FALSE;
+/*********** API routing *************/
+$route['api/users'] = 'api/users/users';
+$route['api/users/(:num)'] = 'api/users/user/$1';
