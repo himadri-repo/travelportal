@@ -100,3 +100,5 @@ $route['translate_uri_dashes'] = FALSE;
 /*********** API routing *************/
 $route['api/users'] = 'api/users/users';
 $route['api/users/(:num)'] = 'api/users/user/$1';
+$route['api/menus'] = 'api/common/menus';
+$route['api/user/(:any)'] = 'api/users/token/$1';
