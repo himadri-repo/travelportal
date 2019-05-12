@@ -50,15 +50,18 @@
         
         <?php 
             if($cname!=null && !empty($cname)) {
+                $current_user = $this->session->userdata('current_user');
                 $phone = $company_setting["phone_no"];
                 $logo = $company_setting["logo"];
-                $admin = $this->session->userdata('current_user')['is_admin'];
+                $admin = $current_user['is_admin'];
+                $uuid = $current_user['uid'];
             }
             else {
                 $cname = $setting[0]["address"];
                 $phone = $setting[0]["phone_no"];
                 $logo = $setting[0]["logo"];
                 $admin = 0;
+                $uuid = 0;
             }
         ?>
                 
@@ -121,7 +124,7 @@
                         <?php } else {?>
                             <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?>&nbsp;<?php echo $admin?'(Admin)':'' ?></a></li>
                             <?php if($this->session->userdata('user_id') && $admin) { ?>
-                                <li><a href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown"></i></span>Administration</a></li>
+                                <li><a href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid; ?>"><span><i class="fa user-crown"></i></span>Administration</a></li>
                             <?php } ?>
                             <li><a href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off"></i></span>Log Out</a></li>
                         <?php } ?>
@@ -156,7 +159,7 @@
                         <?php } else {?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user"><span><i class="fa fa-user link-icon"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
                             <?php if($this->session->userdata('user_id') && $admin) { ?>
-                                <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown link-icon"></i></span>Administration</a></li>
+                                <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid; ?>"><span><i class="fa user-crown link-icon"></i></span>Administration</a></li>
                             <?php } ?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off link-icon"></i></span>Log Out</a></li>
                         <?php } ?>

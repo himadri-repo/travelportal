@@ -37,7 +37,7 @@ else if(stristr($host, "localhost") !== FALSE || (stristr($host, '192.168.') !==
    $config['base_url'] = $protocol.$host;
 }
 else {
-    $allowed_hosts = ['example.com:90', 'www.example.com:90'];
+    $allowed_hosts = ['example.com:90', 'www.example.com:90', 'www.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
     $config['base_url'] = in_array($host, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
 }
 

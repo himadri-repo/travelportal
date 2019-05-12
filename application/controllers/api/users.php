@@ -25,12 +25,27 @@ class Users extends REST_Controller {
     {
         // Construct the parent class
         parent::__construct();
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+        $method = $_SERVER['REQUEST_METHOD'];
+        if($method == "OPTIONS") {
+            die();
+        }
 
         // Configure limits on our controller methods
         // Ensure you have created the 'limits' table and enabled 'limits' within application/config/rest.php
         $this->methods['users_get']['limit'] = 500; // 500 requests per hour per user/key
         $this->methods['users_post']['limit'] = 100; // 100 requests per hour per user/key
         $this->methods['users_delete']['limit'] = 50; // 50 requests per hour per user/key
+
+        //loading models
+        date_default_timezone_set('Asia/Calcutta');
+		$this->load->database();
+		$this->load->library('session');
+		$this->load->model('User_Model');
+        $this->load->model('Search_Model');
+        $this->load->model('Admin_Model');
     }
     
     public function user_get($id=0)
@@ -203,4 +218,18 @@ class Users extends REST_Controller {
         $this->set_response($message, REST_Controller::HTTP_NO_CONTENT); // NO_CONTENT (204) being the HTTP response code
     }
 
+    public function currentuser_get($uuid) {
+        //$current_user = $this->session->userdata("current_user");
+        $current_user = $this->User_Model->getUserByUUID($uuid);
+
+        if($current_user!=null) {
+            $this->response($current_user, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+        }
+        else {
+            $this->response([
+                'status' => FALSE,
+                'message' => 'User could not be found'
+            ], REST_Controller::HTTP_NOT_FOUND); // NOT_FOUND (404) being the HTTP response code
+        }
+    }
 }

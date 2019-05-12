@@ -98,7 +98,9 @@ $route['images/random'] = 'Home_Controller/serveRandomImages';
 $route['sendmail'] = 'Contact_Controller/send';
 $route['translate_uri_dashes'] = FALSE;
 /*********** API routing *************/
-$route['api/users'] = 'api/users/users';
-$route['api/users/(:num)'] = 'api/users/user/$1';
-$route['api/menus'] = 'api/common/menus';
-$route['api/user/(:any)'] = 'api/users/token/$1';
+$route['api/users'] = 'api/Users/users';
+$route['api/users/currentuser'] = 'api/Users/currentuser';
+$route['api/users/(:num)'] = 'api/Users/user/$1';
+$route['api/menus'] = 'api/Common/menus';
+$route['api/user/(:any)'] = 'api/Users/token/$1';
+$route['api/company/(:any)'] = 'api/Company/$1';

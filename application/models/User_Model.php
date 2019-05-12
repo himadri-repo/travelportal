@@ -21,7 +21,8 @@ Class User_Model extends CI_Model
 			return false;
 		}
          	
-    }
+	}
+	
 	public function del($tbl,$field,$value) 
 	{                      
 		    $this->db->where($field, $value);
@@ -63,6 +64,24 @@ Class User_Model extends CI_Model
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.id=', $uid);
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) 
+		{
+			$user = $query->result_array()[0];
+
+			return $user;
+		}
+		else {
+			return false;
+		}
+	}
+
+	public function getUserByUUID($uuid) {
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type');
+		$this->db->from('user_tbl u');
+		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
+		$this->db->where('u.uid=', $uuid);
 		$query = $this->db->get();
 
 		if ($query->num_rows() > 0) 

@@ -90,11 +90,13 @@
         <?php 
 			if(NEW_FLOW) {
 				$companyid = $this->session->userdata("current_user")["companyid"];
-				$cname = $this->session->userdata("current_user")["cname"];
+                $cname = $this->session->userdata("current_user")["cname"];
+                $uuid = $this->session->userdata("current_user")["uid"];
 			}
 			else {
 				$companyid = NULL;
-				$cname = NULL;
+                $cname = NULL;
+                $uuid = NULL;
 			}
 			if(NEW_FLOW && $companyid!=NULL)
 			{
@@ -168,7 +170,7 @@
                         <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li>
                         <?php 
                         if($this->session->userdata('user_id') && $admin) { ?>
-                            <li><a href="<?php echo base_url(); ?>admin">Administration</a></li>
+                            <li><a href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid?>">Administration</a></li>
                         <?php } ?>
                         <!--<li><a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a></li>-->
                     </ul>
@@ -193,7 +195,7 @@
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
                         <?php if($this->session->userdata('user_id') && $admin) { ?>
-                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin"><span><i class="fa user-crown link-icon"></i></span>Administration</a>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid?>"><span><i class="fa user-crown link-icon"></i></span>Administration</a>
                         <?php } ?>
 
                     </div><!-- end list-group -->
