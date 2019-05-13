@@ -178,4 +178,17 @@ class Company extends REST_Controller {
         $this->set_response($message, REST_Controller::HTTP_NO_CONTENT); // NO_CONTENT (204) being the HTTP response code
     }
 
+    public function wholesalers_post() {
+        $companyid = $this->post('companyid');
+        $wholesalers = $this->Admin_Model->get_wholesalers($companyid);
+
+        $this->set_response($wholesalers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function suppliers_post() {
+        $companyid = $this->post('companyid');
+        $suppliers = $this->Admin_Model->get_suppliers($companyid);
+
+        $this->set_response($suppliers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }

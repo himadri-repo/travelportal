@@ -104,3 +104,5 @@ $route['api/users/(:num)'] = 'api/Users/user/$1';
 $route['api/menus'] = 'api/Common/menus';
 $route['api/user/(:any)'] = 'api/Users/token/$1';
 $route['api/company/(:any)'] = 'api/Company/$1';
+$route['api/wholesalers'] = 'api/Company/wholesalers';
+$route['api/suppliers'] = 'api/Company/suppliers';
