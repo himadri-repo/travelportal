@@ -63,11 +63,30 @@ Class Admin_Model extends CI_Model
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
 		{					
-            return $query->result_array();		
+            	return $query->result_array();
 		}
 		else
 		{
-            return false;
+            	return false;
+		}
+	}
+
+	public function get_customers($companyid) {
+		$this->db->select("usr.*, cm.primary_user_id as primary_user, cm.type as company_type ");
+		$this->db->from('user_tbl usr');
+		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and usr.active=1 and cm.active=1', 'inner');
+		$this->db->where('usr.type in (\'B2C\', \'B2B\') and is_admin=0 and usr.companyid='.$companyid);
+		$this->db->order_by('name asc');
+
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
 		}
 	}
 

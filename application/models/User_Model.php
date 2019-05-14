@@ -673,7 +673,7 @@ Class User_Model extends CI_Model
 	}
 	
 	public function get_users($companyid) {
-		$arr = array('u.companyid'=>$companyid);
+		$arr = array('(u.type in (\'EMP\') or u.is_admin=1) and u.companyid='=>$companyid);
 
 		$this->db->select('u.id,u.user_id,u.name, u.profile_image, u.email, u.mobile, u.password, u.is_supplier, u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.permission, u.is_admin, u.uid');
 		$this->db->from('user_tbl as u');
