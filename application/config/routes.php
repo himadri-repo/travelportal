@@ -107,3 +107,4 @@ $route['api/company/(:any)'] = 'api/Company/$1';
 $route['api/wholesalers'] = 'api/Company/wholesalers';
 $route['api/suppliers'] = 'api/Company/suppliers';
 $route['api/customers'] = 'api/Company/customers';
+$route['api/tickets'] = 'api/Company/tickets';

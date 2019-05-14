@@ -198,4 +198,11 @@ class Company extends REST_Controller {
 
         $this->set_response($customers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function tickets_post() {
+        $companyid = $this->post('companyid');
+        $tickets = $this->Search_Model->get_tickets($companyid);
+
+        $this->set_response($tickets, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
