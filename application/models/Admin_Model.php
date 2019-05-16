@@ -106,5 +106,60 @@ Class Admin_Model extends CI_Model
 			return false;
 		}
 	}
+
+	public function set_customer($customer) {
+        if(!empty($customer["id"])){
+            $data = $this->db->get_where("user_tbl", ['id' => $customer["id"]])->row_array();
+        }else{
+            $data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$customer["id"] = null;
+			$this->db->insert('user_tbl', $customer);
+			$result = 'Item created successfully.';
+		}
+		else {
+			//update
+			try
+			{
+				$result = $this->db->update('user_tbl', $customer, array("id" => intval($customer["id"],10)));
+				$result = 'Item updated successfully.';
+			}
+			catch(Exception $ex) {
+				throw $ex;
+			}
+		}
+
+		return [$result];
+	}
+
+	public function get_customer($company, $customerid) {
+		$this->db->select("usr.* ");
+		$this->db->from('user_tbl usr');
+		$this->db->where('usr.id='.$customerid.' and usr.companyid='.$company);
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+
+        // if(!empty($company) && !empty($customerid)) {
+        //     $data = $this->db->get_where("user_tbl", ['id' => $customerid, 'companyid' => $company])->row_array();
+		// }
+		// else {
+		// 	$data = array();
+		// }
+
+		// return $data;
+	}
 }	
 ?>
