@@ -193,8 +193,24 @@ class Company extends REST_Controller {
     }
 
     public function customers_post() {
-        $companyid = $this->post('companyid');
-        $customers = $this->Admin_Model->get_customers($companyid);
+        $companyid = intval($this->post('companyid'));
+        $email = $this->post('email');
+        $mobile = $this->post('mobile');
+        $compid = intval($this->post('compid'));
+        $id = intval($this->post('id'));
+
+        if ($companyid>0) {
+            $customers = $this->Admin_Model->get_customers($companyid);
+        } else if ($email != null && $mobile != null) {
+            $customers = $this->Admin_Model->get_customersByEmailOrMobile($email, $mobile, $compid, $id);
+        }
+
+        $this->set_response($customers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    //Filter customers by email and mobile
+    public function customers_get($email, $mobile) {
+        $customers = $this->Admin_Model->get_customersByEmailOrMobile($email, $mobile);
 
         $this->set_response($customers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }

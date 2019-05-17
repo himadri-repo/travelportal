@@ -151,15 +151,23 @@ Class Admin_Model extends CI_Model
 		{
 			return false;
 		}
+	}
 
-        // if(!empty($company) && !empty($customerid)) {
-        //     $data = $this->db->get_where("user_tbl", ['id' => $customerid, 'companyid' => $company])->row_array();
-		// }
-		// else {
-		// 	$data = array();
-		// }
+	public function get_customersByEmailOrMobile($email, $mobile, $companyid, $id) {
+		$this->db->select("usr.* ");
+		$this->db->from('user_tbl usr');
+		$this->db->where('(usr.email=\''.$email.'\' or usr.mobile=\''.$mobile.'\') and usr.companyid='.$companyid.' and usr.id<>'.$id);
 
-		// return $data;
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
 	}
 }	
 ?>
