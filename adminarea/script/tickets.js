@@ -158,17 +158,18 @@ function get_all(start)
 							   else if(k!='no_records' && k!='records' && k!='total')
 							   {    
 									var address='';
-									var last_sync_key = data[k]['last_sync_key'].trim();
+									/*var last_sync_key = data[k]['last_sync_key'].trim();
 									var syncData = '-';
 									if(last_sync_key.split('_').length===2) {
 										syncDate = last_sync_key.split('_')[1].trim();
 										syncDate = new Date(syncDate+'Z');
 										syncData = syncDate.toLocaleString('en-US', {hour12: false, year: '2-digit', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'});
-									}
+									}*/
+									var syncData = new Date(data[k]['updated_on'].trim()+' UTC');
 
 									$("#grid").append("<tr  id='grid_row"+k+"' ></tr>");
                                     $('#grid_row'+k+"").append("<td> <input type='checkbox' name='chk[]' value="+data[k]['id']+" ></td>");
-									$('#grid_row'+k+"").append("<td>"+data[k]['id']+'<br/>'+data[k]['data_collected_from'] + '<br/>(' + syncData +")</td>");
+									$('#grid_row'+k+"").append("<td>"+data[k]['id']+'<br/>'+data[k]['data_collected_from'] + '<br/>(' + format(syncData) +")</td>");
                                     //$('#grid_row'+k+"").append("<td>"+data[k]['id']+"</td>");
                                     $('#grid_row'+k+"").append("<td>"+data[k]['pnr']+"</td>");
 									$('#grid_row'+k+"").append("<td>"+data[k]['trip_type']+"<br/>"+data[k]['sale_type']+"</td>");
@@ -248,4 +249,21 @@ function validate_ids()
    }
 }
 
+function format(dt) {
+	var dd = dt.getDate();
+	var mm = dt.getMonth() + 1; //January is 0!
+	
+	var yyyy = dt.getFullYear();
+	var hh = dt.getHours();
+	var mi = dt.getMinutes();
+	var ss = dt.getSeconds();
+	if (dd < 10) {
+	  dd = '0' + dd;
+	} 
+	if (mm < 10) {
+	  mm = '0' + mm;
+	} 
+	var dt = dd + '-' + mm + '-' + yyyy + ' ' + (hh<10?('0'+hh):hh) + ':' + (mi<10?('0'+mi):mi) + ':' + (ss<10?('0'+ss):ss);
 
+	return dt;
+}
