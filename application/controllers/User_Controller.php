@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 include_once(APPPATH.'core/Mail_Controller.php');
+define('PAGE_SIZE', 25);
+
 class User_Controller extends Mail_Controller 
 {
 
@@ -65,35 +67,106 @@ class User_Controller extends Mail_Controller
 		$result['user_details']=$this->User_Model->user_details();
 		if ($this->session->userdata('user_id') && $result['user_details'][0]["is_supplier"]==1) 
 		{ 
-	        $str="";
-	        if($_SERVER['REQUEST_METHOD'] == 'POST') 		  
+			$str="";
+			$pageindex = 0;
+			$pagesize = 0;
+			
+			if($this->input->get('pageindex') !== null) {
+				$pageindex = intval($this->input->get('pageindex'));
+			}
+
+			if($this->input->get('pagesize') !== null) {
+				$pagesize = intval($this->input->get('pagesize'));
+			}
+			
+	        if($_SERVER['REQUEST_METHOD'] == 'POST' || ($pageindex>0 && $pagesize>0))
 			{
-				$arr=array(
-				"DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="=>date('Y-m-d', strtotime($this->input->post('dt_from'))),
-				"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>date('Y-m-d', strtotime($this->input->post('dt_to'))),
-				"source"=>$this->input->post('source'),
-				"destination"=>$this->input->post('destination'),
-				"pnr"=>$this->input->post('pnr')
-				);
-				
+				$pageindex = $this->input->get('pageindex') !== null ? intval($this->input->get('pageindex')) : 1;
+				$pagesize = $this->input->get('pagesize') !== null ? intval($this->input->get('pagesize')) : PAGE_SIZE;
+				$arr = null;
+				if($this->session->userdata('ticket_qry') && $_SERVER['REQUEST_METHOD'] == 'GET') {
+					$arr = $this->session->userdata('ticket_qry');
+					if($arr === null) {
+						$arr=array(
+							"DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="=>'1970-01-01',
+							"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>'1970-01-01',
+							"source"=>'',
+							"destination"=>'',
+							"pnr"=>'',
+							"pageindex"=>$pageindex,
+							"pagesize"=>$pagesize
+						);		
+					}
+
+					$dt_from = $arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="]!=='1970-01-01'?$arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="]:'';
+					$dt_to = $arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="]!=='1970-01-01'?$arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="]:'';
+					$source = $arr["source"];
+					$destination = $arr["destination"];
+					$pnr = $arr["pnr"];
+				}
+				else {
+					$arr=array(
+						"DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="=>date('Y-m-d', strtotime($this->input->post('dt_from'))),
+						"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>date('Y-m-d', strtotime($this->input->post('dt_to'))),
+						"source"=>$this->input->post('source'),
+						"destination"=>$this->input->post('destination'),
+						"pnr"=>$this->input->post('pnr'),
+						"pageindex"=>$pageindex,
+						"pagesize"=>$pagesize
+					);
+
+					$this->session->set_userdata('ticket_qry', $arr);
+
+					$dt_from = $arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="]!=='1970-01-01'?$arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="]:'';
+					$dt_to = $arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="]!=='1970-01-01'?$arr["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="]:'';
+					$source = $arr["source"];
+					$destination = $arr["destination"];
+					$pnr = $arr["pnr"];
+				}
+
+				$result['page_size'] = $pagesize;
+				$result['page_index'] = $pageindex;
+				$result['total_tickets'] = $this->User_Model->total_ticket($arr);
 				
 				$result['ticket']=$this->User_Model->search_ticket($arr);
 				
-				$result['dt_from']=$this->input->post('dt_from');
-				$result['dt_to']=$this->input->post('dt_to');
-				$result['source']=$this->input->post('source');
-				$result['destination']=$this->input->post('destination');
-				$result['pnr']=$this->input->post('pnr');
+				$result['dt_from']=$dt_from;
+				$result['dt_to']=$dt_to;
+				$result['source']=$source;
+				$result['destination']=$destination;
+				$result['pnr']=$pnr;
+				$result['pageindex']=$pageindex;
+				$result['pagesize']=$pagesize;
 			}
 			else
 			{
-				$result['ticket']=$this->User_Model->ticket();
+				$this->session->unset_userdata('ticket_qry');
+
+				$pageindex = $this->input->get('pageindex') !== null ? intval($this->input->get('pageindex')) : 1;
+				$pagesize = $this->input->get('pagesize') !== null ? intval($this->input->get('pagesize')) : PAGE_SIZE;
+
+				$arr=array(
+					"DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="=>'1970-01-01',
+					"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>'1970-01-01',
+					"source"=>'',
+					"destination"=>'',
+					"pnr"=>'',
+					"pageindex"=>$pageindex,
+					"pagesize"=>$pagesize
+				);
+				$result['page_size'] = $pagesize;
+				$result['page_index'] = $pageindex;
+				$result['total_tickets'] = $this->User_Model->total_ticket($arr);
+	
+				$result['ticket']=$this->User_Model->ticket($pageindex, $pagesize);
 				
 				$result['dt_from']="";
 				$result['dt_to']="";
 				$result['source']="";
 				$result['destination']="";
 				$result['pnr']="";
+				$result['pageindex']=$pageindex;
+				$result['pagesize']=$pagesize;
 			}
 			
 			$result['city']=$this->User_Model->select("city_tbl");

@@ -10,15 +10,25 @@ Class Search_Model extends CI_Model
 	}
 	
 	public function search_one_way($arr) 
-	{            		  
-		$this->db->select('t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.total,t.price,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,t.no_of_person,t.class,a.image,t.user_id,t.no_of_stops, t.data_collected_from, t.aircode, t.flight_no');
+	{
+		//$this->db->select('t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.total,t.price,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,t.no_of_person,t.class,a.image,t.user_id,t.no_of_stops, t.data_collected_from, t.aircode,t.flight_no');
+		$this->db->select('t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.total,t.price,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,t.no_of_person,t.class,a.image,t.user_id,t.no_of_stops, t.data_collected_from, t.aircode,t.flight_no, 
+		max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airline, max(ltkt.adultbasefare) as adultbasefare, max(ltkt.adult_tax_fees) as adult_tax_fees, 
+		max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, max(ltkt.adultbasefare+ltkt.adult_tax_fees+200) as adult_total');
 		$this->db->from('tickets_tbl t');
-		$this->db->join('airline_tbl a', 'a.id = t.airline','left');
-		$this->db->join('city_tbl c', 'c.id = t.source');
-		$this->db->join('city_tbl ct', 'ct.id = t.destination');
+		$this->db->join('airline_tbl a', 'a.id = t.airline','inner');
+		$this->db->join('city_tbl c', 'c.id = t.source', 'inner');
+		$this->db->join('city_tbl ct', 'ct.id = t.destination', 'inner');
+		$this->db->join('live_tickets_tbl ltkt', 'ltkt.source=t.source and t.destination=ltkt.destination and a.aircode=ltkt.carrierid
+		and ltkt.departure_date_time>=DATE_SUB(t.departure_date_time, INTERVAL 15 MINUTE) 
+		and ltkt.departure_date_time<=DATE_ADD(t.departure_date_time, INTERVAL 15 MINUTE)
+		and ltkt.airline is not null', 'left');
 		$this->db->where($arr);
 		$this->db->order_by("(price + admin_markup + markup)", "asc"); //for ordering data in the list while searching one way
-		$query = $this->db->get();					
+		$this->db->group_by("t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.total,t.price,t.admin_markup,t.markup,
+		t.sale_type,t.refundable,c.city,ct.city,t.no_of_person,t.class,a.image,t.user_id,t.no_of_stops, t.data_collected_from, 
+		t.aircode, t.flight_no");
+		$query = $this->db->get();
 		//echo $this->db->last_query();die();
 		
 		if($query->num_rows() > 0) 
@@ -30,7 +40,9 @@ Class Search_Model extends CI_Model
 			  return false;
 		}         	
          	
-    }
+	}
+	
+
 	public function best_offer($arr) 
 	{            		  
 		$this->db->select('t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.total,t.price,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,t.no_of_person,t.class,a.image,t.user_id,t.no_of_stops,t.trip_type');

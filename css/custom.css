@@ -36,3 +36,21 @@
 	padding:4px;
 }
 .specialDate  a { background-color: #6F0 !important; }
+
+.pager {
+	list-style:none; 
+	display: inline-flex; 
+	float: right; 
+	margin: 0px 10px 0px 5px;
+}
+
+.pager li {
+	margin: 5px;
+	padding: 0px 5px;
+}
+
+.pager .active a {
+    background-color: #0000ff;
+    color: #ffffff;
+}
+

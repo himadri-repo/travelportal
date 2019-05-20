@@ -124,13 +124,16 @@
             window.onscroll = function() {myFunction()};
 
             var header = document.getElementById("mynavbar1");
-            var sticky = header.offsetTop;
+            var sticky = 0;
 
-            function myFunction() {
-                if (window.pageYOffset > sticky) {
-                    header.classList.add("sticky");
-                } else {
-                    header.classList.remove("sticky");
+            if(header!==null) {
+                sticky = header.offsetTop;
+                function myFunction() {
+                    if (window.pageYOffset > sticky) {
+                        header.classList.add("sticky");
+                    } else {
+                        header.classList.remove("sticky");
+                    }
                 }
             }
         </script>

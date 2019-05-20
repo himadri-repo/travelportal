@@ -535,21 +535,59 @@ Class User_Model extends CI_Model
         return $query->num_rows();		        
     }
 	
-	
-	public function ticket() 
+	public function total_ticket($data) {
+		$arr=array("user_id"=>$this->session->userdata('user_id'));
+		if($data["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="]!="1970-01-01")
+		{
+			$value=$data["DATE_FORMAT(departure_date_time, '%Y-%m-%d')<="];
+			$arr["DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')>="]=$value;
+			//$this->db->where($arr);
+		}
+		if($data["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="]!="1970-01-01")
+		{
+			 $value=$data["DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="];
+			 $arr["DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')<="]=$value;
+		}
+        if(!empty($data["source"]))
+		{
+			$arr["t.source"]=$data["source"];
+		}
+		if(!empty($data["destination"]))
+		{
+			$arr["t.destination"]=$data["destination"];
+		}
+		
+		if(!empty($data["pnr"]))
+		{
+			$arr["t.pnr"]=$data["pnr"];
+		}			
+
+		$query = $this->db->where($arr)->get('tickets_tbl t');
+		$total_count = $query->num_rows();
+		// $total_count = $this->db->count_all_results('tickets_tbl', $arr);
+
+		return $total_count;
+	}
+
+	public function ticket($pageindex=0, $pagesize=0) 
 	{    
-        $arr=array("user_id"=>$this->session->userdata('user_id'));  	
+		$arr=array("t.user_id"=>$this->session->userdata('user_id'));
+		
 		$this->db->select('t.id,t.trip_type,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.departure_date_time1,t.arrival_date_time1,t.total,t.sale_type,t.refundable,t.created_date,c.city as source,ct.city as destination,c1.city as source1,ct1.city as destination1,t.class,t.no_of_person,t.max_no_of_person,a.image,t.approved,t.price,t.markup,t.available');
-		$this->db->from('tickets_tbl as t');
-		$this->db->join('airline_tbl a', 'a.id = t.airline','left');
+		$this->db->from('tickets_tbl t');
 		$this->db->join('city_tbl c', 'c.id = t.source');
 		$this->db->join('city_tbl ct', 'ct.id = t.destination');
+		$this->db->join('airline_tbl a', 'a.id = t.airline','left');
 		$this->db->join('city_tbl c1', 'c1.id = t.source1','left');
 		$this->db->join('city_tbl ct1', 'ct1.id = t.destination1','left');
 		$this->db->where($arr);
 		$this->db->order_by("t.id","desc");
-		$query = $this->db->get();					
-		
+		if($pageindex>0 && $pagesize>0) {
+			$this->db->limit($pagesize, $pageindex-1);
+		}
+		$query = $this->db->get();
+		$sql = $this->db->last_query();
+
 		if ($query->num_rows() > 0) 
 		{					
             return $query->result_array();		

@@ -159,6 +159,21 @@
 															<div class="dashboard-listing invoices">
 																<!--<h3 class="dash-listing-heading">Invoices</h3>-->
 																<div class="table-responsive">
+																	<ul class="pager">
+																		<?php																			  
+																			if($total_tickets>0)
+																			{
+																				$ctr=1;	 
+																				for ($i=0; $i<ceil($total_tickets/$page_size); $i++) 
+																				{ 
+																					if(($i>=($page_index-3)) && ($i<=($page_index+3))) {
+																		?>
+																					<li class="<?php echo ($i==($page_index-1)? 'active' : ''); ?>"><a href='<?php echo base_url(); ?>user/tickets?pageindex=<?php echo ($i+1);?>&pagesize=<?php echo ($page_size)?>' title=''><?php echo ($i+1); ?></a></li>
+																		<?php 
+																					}
+																				}
+																			}?>
+																	</ul>
 																	<table class="table table-hover">
 																		<tbody>
 																			<tr>
