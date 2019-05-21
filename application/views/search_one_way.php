@@ -284,10 +284,10 @@
 											
 											//$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
 											if($flight[$key]["adult_total"]>0) {
-												$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+												$dateDiff = intval((strtotime($flight[$key]["arrv_date_time"])-strtotime($flight[$key]["dept_date_time"]))/60);
 											}
 											else {
-												$dateDiff = intval((strtotime($flight[$key]["arrv_date_time"])-strtotime($flight[$key]["dept_date_time"]))/60);
+												$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
 											}
 											
 											?>
@@ -301,12 +301,12 @@
 												
 												<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
 													<?php if($flight[$key]["adult_total"]>0) {?>
-														<li class="live-price blink_me"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
+														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
 													<?php }?>
 													<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["total"],2,".",","); ?></li>
 												<?php } else {?>
 													<?php if($flight[$key]["adult_total"]>0) {?>
-														<li class="live-price blink_me"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
+														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
 													<?php }?>
 													<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format(($flight[$key]["total"]+$flight[$key]["admin_markup"]),2,".",","); ?></li>
 												<?php } ?>
@@ -354,11 +354,11 @@
 												<span><?php if($flight[$key]["refundable"]=="Y") echo "Refundable";else echo "Non Refundable";?></span> 
 												<?php } ?>
 												<?php if($flight[$key]["sale_type"]=="request"){ ?>
-													<a style="margin-top:0" href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
+													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
 												<?php } ?>
 											
 												<?php if($flight[$key]["sale_type"]=="live"){ ?>
-													<a style="margin-top:0" href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
+													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
 												<?php } ?>
 												
 												<?php if($flight[$key]["sale_type"]=="quote"){ ?>

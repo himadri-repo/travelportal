@@ -112,6 +112,12 @@ p{
 	color:white;
 }
 
+@media(max-width:768px){
+	.block-minor .btn-orange {
+		margin-top: -15px;
+	}
+}
+
 .btn-black,
 .btn-black:focus{
 	background:#000;

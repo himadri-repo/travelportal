@@ -19,7 +19,7 @@ Class Search_Model extends CI_Model
 		$this->db->join('airline_tbl a', 'a.id = t.airline','inner');
 		$this->db->join('city_tbl c', 'c.id = t.source', 'inner');
 		$this->db->join('city_tbl ct', 'ct.id = t.destination', 'inner');
-		$this->db->join('live_tickets_tbl ltkt', 'ltkt.source=t.source and t.destination=ltkt.destination and a.aircode=ltkt.carrierid
+		$this->db->join('live_tickets_tbl ltkt', 'ltkt.source=t.source and t.destination=ltkt.destination and a.aircode=ltkt.carrierid and ltkt.active=1 
 		and ltkt.departure_date_time>=DATE_SUB(t.departure_date_time, INTERVAL 15 MINUTE) 
 		and ltkt.departure_date_time<=DATE_ADD(t.departure_date_time, INTERVAL 15 MINUTE)
 		and ltkt.airline is not null', 'left');
@@ -32,7 +32,7 @@ Class Search_Model extends CI_Model
 		//echo $this->db->last_query();die();
 		
 		if($query->num_rows() > 0) 
-		{					
+		{
             return $query->result_array();		
 		}
 		else

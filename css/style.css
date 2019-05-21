@@ -3522,13 +3522,19 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	margin-bottom:10px;
 }
 
-.list-block .list-info .btn{
+.list-block .list-info .btn {
 	padding:6px 21px 7px;
 	font-size:12px;
-	margin-top:15px;
 	float: right;
 	border-radius: 5px;
 }
+
+@media(min-width:769px){
+	.list-block .list-info .btn {
+		margin-top:0px; /* 15px */
+	}
+}
+
 
 /*********** FLIGHT-LIST BLOCK **********/
 
@@ -3550,14 +3556,25 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 }
 
 .f-list-info .btn{
-	margin-top:17px;
 	font-size:12px;
 	padding:6px 22px;
+}
+
+@media(min-width:769px){
+	.f-list-info .btn {
+		margin-top: 17px;
+	}	
 }
 
 .f-list-img .offer-price-1 .duration{
 	font-size:13px;
 	text-transform:none;
+}
+
+@media(max-width:768px){
+	.f-list-img .offer-price-1 .duration{
+		text-align: left;
+	}	
 }
 
 .f-list-img .offer-price-1 .duration i{
@@ -3575,7 +3592,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	margin-top:8px;
 }
 
-.f-list-img .offer-price-1 .live-price{
+.f-list-img .offer-price-1 .live-price {
 	float:right;
 	font-size: 15px;
 	font-weight: 500;
@@ -3585,8 +3602,20 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
     margin: -15px -10px;
 }
 
+@media(max-width:768px){
+	.f-list-img .offer-price-1 .price {
+		text-align: right;
+	}
+	
+	.f-list-img .offer-price-1 .live-price {
+		text-align: right;
+		margin-top: -20px;
+	}
+}
+
+
 .blink_me {
-	animation: blinker 2s linear infinite;
+	animation: blinker 4s linear infinite;
 }
   
 @keyframes blinker {
