@@ -61,4 +61,86 @@ class Admin extends REST_Controller {
 
         $this->set_response($suppliers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function communication_query_post() {
+        $inviteeid = $this->post('inviteeid');
+        $invitorid = $this->post('invitorid');
+
+        $communications = $this->Admin_Model->search_communications($inviteeid, $invitorid);
+
+        $this->set_response($communications, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function communication_query_get($communicationid) {
+        // $inviteeid = $this->post('inviteeid');
+        // $invitorid = $this->post('invitorid');
+
+        $communicationDetails = $this->Admin_Model->search_communication_details($communicationid);
+
+        $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function messages_inbox_get($companyid) {
+        $communicationDetails = $this->Admin_Model->messagesByCompanyid('inbox', $companyid);
+
+        $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function messages_outbox_get($companyid) {
+        $communicationDetails = $this->Admin_Model->messagesByCompanyid('outbox', $companyid);
+
+        $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function message_post() {
+        $message = $this->post('communication');
+        $result = array();
+
+        //$message = json_decode($communication, true);
+        $messageItem = array();
+        $messageDetail = array();
+
+        if($message["id"] > 0) {
+            $messageItem["id"] = $message["id"];
+        }
+        $messageItem["title"] = $message["title"];
+        $messageItem["active"] = $message["active"];
+        $messageItem["companyid"] = $message["companyid"];
+        $messageItem["created_by"] = $message["created_by"];
+
+        $this->db->trans_start();
+
+        try
+        {
+            $communication_update = $this->Admin_Model->message_add($messageItem);
+            $messageDetail["pid"] = $communication_update[0]["id"];
+            $result["id"] = $communication_update[0]["id"];
+        }
+        catch(Exception $ex) {
+
+        }
+
+        $communicationDetail = $message["details"][0];
+        $messageDetail["message"] = $communicationDetail["message"];
+        $messageDetail["from_companyid"] = intval($communicationDetail["from_companyid"]);
+        $messageDetail["to_companyid"] = $communicationDetail["to_companyid"];
+        $messageDetail["ref_no"] = $communicationDetail["ref_no"];
+        $messageDetail["type"] = $communicationDetail["type"];
+        $messageDetail["active"] = $communicationDetail["active"];
+        $messageDetail["created_by"] = $communicationDetail["created_by"];
+        // $messageDetail["created_on"] = $communicationDetail["created_on"];
+
+        try
+        {
+            $communication_detail_update = $this->Admin_Model->message_detail_add($messageDetail);
+            $result["child_id"] = $communication_detail_update[0]["id"];
+            $result["message"] = "Records inserted successfully";
+            $this->db->trans_complete();
+        }
+        catch(Exception $ex) {
+            $this->db->trans_rollback();
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }

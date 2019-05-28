@@ -213,5 +213,150 @@ Class Admin_Model extends CI_Model
 			return false;
 		}
 	}
+
+	public function search_communications($inviteeid, $invitorid) {
+		$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cm.created_by, cm.created_on, cm.updated_by, cm.updated_on, (select display_name from company_tbl where id=$inviteeid) as invitee, (select display_name from company_tbl where id=$invitorid) as invitor, count(cmd.id) as msgcount ");
+		$this->db->from('communication_tbl cm');
+		$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cm.active=1', 'inner');
+		$this->db->where("cmd.active=1 and (from_companyid=$inviteeid or to_companyid=$inviteeid) and (from_companyid=$invitorid or to_companyid=$invitorid)");
+		$this->db->group_by("cm.id, cm.title, cm.created_on");
+		$this->db->order_by("cm.created_on desc");
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function search_communication_details($communicationid) {
+		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on ");
+		$this->db->from('communication_detail_tbl cmd');
+		$this->db->join('company_tbl c1', 'cmd.from_companyid=c1.id', 'inner');
+		$this->db->join('company_tbl c2', 'cmd.to_companyid=c2.id', 'inner');
+		$this->db->where("cmd.active=1 and cmd.pid=1");
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function messagesByCompanyid($boxtype, $companyid)
+	{
+		if($boxtype === 'outbox') {
+			// this is for outbox
+			$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name ");
+			$this->db->from('communication_tbl cm');
+			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
+			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
+			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner');
+			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner');
+			$this->db->where("cmd.from_companyid=$companyid");
+			$this->db->order_by("cmd.created_on desc");
+	
+			$query = $this->db->get();
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else if($boxtype === 'inbox') {
+			// this is for inbox
+			$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name ");
+			$this->db->from('communication_tbl cm');
+			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
+			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
+			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner');
+			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner');
+			$this->db->where("cmd.to_companyid=$companyid");
+			$this->db->order_by("cmd.created_on desc");
+	
+			$query = $this->db->get();
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+
+	public function message_add($message) {
+        if(!empty($message["id"])){
+            $data = $this->db->get_where("communication_tbl", ['id' => $message["id"]])->row_array();
+        }else{
+            $data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$message["id"] = null;
+			$this->db->insert('communication_tbl', $message);
+			$result = array("message" => "Item created successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			try
+			{
+				$result = $this->db->update('communication_tbl', $message, array("id" => intval($message["id"],10)));
+				$result = array("message" => "Item updated successfully.", "id" => intval($message["id"],10));
+			}
+			catch(Exception $ex) {
+				throw $ex;
+			}
+		}
+
+		return [$result];
+	}
+
+	public function message_detail_add($messageDetail) {
+        if(!empty($messageDetail["id"])){
+            $data = $this->db->get_where("communication_detail_tbl", ['id' => $messageDetail["id"]])->row_array();
+        }else{
+            $data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$messageDetail["id"] = null;
+			$this->db->insert('communication_detail_tbl', $messageDetail);
+			$result = array("message" => "Item created successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			try
+			{
+				$result = $this->db->update('communication_detail_tbl', $messageDetail, array("id" => intval($messageDetail["id"],10)));
+				$result = array("message" => "Item updated successfully.", "id" => intval($messageDetail["id"],10));
+			}
+			catch(Exception $ex) {
+				throw $ex;
+			}
+		}
+
+		return [$result];
+	}
 }	
 ?>
