@@ -117,3 +117,4 @@ $route['api/admin/communications/(:num)'] = 'api/Admin/communication_query/$1';
 $route['api/admin/messages/inbox/(:num)'] = 'api/Admin/messages_inbox/$1';
 $route['api/admin/messages/outbox/(:num)'] = 'api/Admin/messages_outbox/$1';
 $route['api/admin/message'] = 'api/Admin/message';
+$route['api/admin/message/read'] = 'api/Admin/message_read';

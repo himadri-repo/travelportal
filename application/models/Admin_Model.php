@@ -215,7 +215,7 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_communications($inviteeid, $invitorid) {
-		$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cm.created_by, cm.created_on, cm.updated_by, cm.updated_on, (select display_name from company_tbl where id=$inviteeid) as invitee, (select display_name from company_tbl where id=$invitorid) as invitor, count(cmd.id) as msgcount ");
+		$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cm.created_by, cm.created_on, cm.updated_by, cm.updated_on, (select display_name from company_tbl where id=$inviteeid) as invitee, (select display_name from company_tbl where id=$invitorid) as invitor, count(cmd.id) as msgcount, max(cmd.read) as isread ");
 		$this->db->from('communication_tbl cm');
 		$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cm.active=1', 'inner');
 		$this->db->where("cmd.active=1 and (from_companyid=$inviteeid or to_companyid=$inviteeid) and (from_companyid=$invitorid or to_companyid=$invitorid)");
@@ -235,7 +235,7 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_communication_details($communicationid) {
-		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on ");
+		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on, cmd.read, cmd.last_read_on ");
 		$this->db->from('communication_detail_tbl cmd');
 		$this->db->join('company_tbl c1', 'cmd.from_companyid=c1.id', 'inner');
 		$this->db->join('company_tbl c2', 'cmd.to_companyid=c2.id', 'inner');
@@ -257,7 +257,7 @@ Class Admin_Model extends CI_Model
 	{
 		if($boxtype === 'outbox') {
 			// this is for outbox
-			$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on ");
 			$this->db->from('communication_tbl cm');
 			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
 			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
@@ -279,7 +279,7 @@ Class Admin_Model extends CI_Model
 		}
 		else if($boxtype === 'inbox') {
 			// this is for inbox
-			$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on ");
 			$this->db->from('communication_tbl cm');
 			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
 			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
@@ -354,6 +354,31 @@ Class Admin_Model extends CI_Model
 			catch(Exception $ex) {
 				throw $ex;
 			}
+		}
+
+		return [$result];
+	}
+
+	public function message_read($msgid, $userid) {
+        if(empty($msgid) || empty($userid)){
+			return array("message" => "Invalid msgid or userid passed", "status" => false);
+		}
+
+		$result = '';
+		//update
+		try
+		{
+			$where = array("id" => intval($msgid, 10));
+			// $fields = array("read" => 1, "last_read_on" => "$date()");
+			$this->db->set("read", 1);
+			$this->db->set("last_read_on", 'NOW()', FALSE);
+			$this->db->where($where);
+			$result = $this->db->update('communication_detail_tbl');
+			$qry = $this->db->last_query();
+			$result = array("message" => "Item updated successfully.", "id" => intval($msgid,10));
+		}
+		catch(Exception $ex) {
+			throw $ex;
 		}
 
 		return [$result];

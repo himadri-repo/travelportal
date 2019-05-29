@@ -92,6 +92,28 @@ class Admin extends REST_Controller {
         $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+    public function message_read_post() {
+        $msgid = $this->post('msgid');
+        $userid = $this->post('userid');
+
+        $result = array();
+        try
+        {
+            $returnvalue = $this->Admin_Model->message_read($msgid, $userid);
+            // $messageDetail["pid"] = $communication_update[0]["id"];
+            $result["id"] = $msgid;
+            $result["message"] = "Records updated successfully";
+            $result["status"] = true;
+        }
+        catch(Exception $ex) {
+            $result["id"] = $msgid;
+            $result["message"] = "Records updation failed $ex";
+            $result["status"] = false;
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
     public function message_post() {
         $message = $this->post('communication');
         $result = array();
