@@ -62,6 +62,76 @@ class Admin extends REST_Controller {
         $this->set_response($suppliers, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+    public function save_wholesaler_post() {
+        $wholesaler = $this->post('wholesaler');
+        $result = array();
+
+        $wholesalerDetail = NULL;
+        if($wholesaler['details']!==null && count($wholesaler['details'])) {
+            $wholesalerDetail = $wholesaler['details'][0];
+        }
+
+        $this->db->trans_start();
+        try
+        {
+            $wholesaler_update = $this->Admin_Model->wholesaler_save($wholesaler);
+            $wholesalerDetail["wholesaler_rel_id"] = $wholesaler_update[0]["id"];
+            $result["id"] = $wholesaler_update[0]["id"];
+            $result["parent_msg"] = "Wholesaler saved successfully";
+        }
+        catch(Exception $ex) {
+            console.log($ex);
+        }
+
+        try
+        {
+            $wholesaler_detail_update = $this->Admin_Model->wholesaler_detail_save($wholesalerDetail);
+            $result["detail_id"] = $wholesaler_detail_update[0]["id"];
+            $result["message"] = "Wholesaler details saved successfully";
+            $this->db->trans_complete();
+        }
+        catch(Exception $ex) {
+            $this->db->trans_rollback();
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function save_supplier_post() {
+        $supplier = $this->post('supplier');
+        $result = array();
+
+        $supplierDetail = NULL;
+        if($supplier['details']!==null && count($supplier['details'])) {
+            $supplierDetail = $supplier['details'][0];
+        }
+
+        $this->db->trans_start();
+        try
+        {
+            $supplier_update = $this->Admin_Model->supplier_save($supplier);
+            $supplierDetail["supplier_rel_id"] = $supplier_update[0]["id"];
+            $result["id"] = $supplier_update[0]["id"];
+            $result["parent_msg"] = "Supplier saved successfully";
+        }
+        catch(Exception $ex) {
+            console.log($ex);
+        }
+
+        try
+        {
+            $supplier_detail_update = $this->Admin_Model->supplier_detail_save($supplierDetail);
+            $result["detail_id"] = $supplier_detail_update[0]["id"];
+            $result["message"] = "Supplier details saved successfully";
+            $this->db->trans_complete();
+        }
+        catch(Exception $ex) {
+            $this->db->trans_rollback();
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
     public function communication_query_post() {
         $inviteeid = $this->post('inviteeid');
         $invitorid = $this->post('invitorid');
@@ -76,6 +146,15 @@ class Admin extends REST_Controller {
         // $invitorid = $this->post('invitorid');
 
         $communicationDetails = $this->Admin_Model->search_communication_details($communicationid);
+
+        $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function communication_detail_get($commdetailid) {
+        // $inviteeid = $this->post('inviteeid');
+        // $invitorid = $this->post('invitorid');
+
+        $communicationDetails = $this->Admin_Model->search_communication_detail($commdetailid);
 
         $this->set_response($communicationDetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
@@ -149,6 +228,8 @@ class Admin extends REST_Controller {
         $messageDetail["ref_no"] = $communicationDetail["ref_no"];
         $messageDetail["type"] = $communicationDetail["type"];
         $messageDetail["active"] = $communicationDetail["active"];
+        $messageDetail["invitation_type"] = intval($communicationDetail["invitation_type"]);
+        $messageDetail["serviceid"] = intval($communicationDetail["serviceid"]);
         $messageDetail["created_by"] = $communicationDetail["created_by"];
         // $messageDetail["created_on"] = $communicationDetail["created_on"];
 
@@ -164,5 +245,45 @@ class Admin extends REST_Controller {
         }
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function message_details_post() {
+        $communicationDetail = $this->post('communicationdetail');
+        $result = array();
+        try
+        {
+            $communication_detail_update = $this->Admin_Model->message_detail_add($communicationDetail);
+            $result["child_id"] = $communication_detail_update[0]["id"];
+            $result["message"] = "Records inserted successfully";
+            $result["status"] = true;
+        }
+        catch(Exception $ex) {
+            $result["message"] = "Record insertion failed";
+            $result["status"] = false;
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function rate_plan_post() {
+        $companyid = $this->post('companyid');
+        try
+        {
+            $rateplans = $this->Admin_Model->rateplanByCompanyid($companyid);
+        }
+        catch(Exception $ex) {
+        }
+        $this->set_response($rateplans, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function rate_plan_details_get($rateplanid) {
+        //$rateplanid = $this->post('rateplanid');
+        try
+        {
+            $rateplansdetails = $this->Admin_Model->rateplandetails($rateplanid);
+        }
+        catch(Exception $ex) {
+        }
+        $this->set_response($rateplansdetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 }

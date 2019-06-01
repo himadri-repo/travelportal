@@ -56,11 +56,11 @@ Class Admin_Model extends CI_Model
 		$this->db->join('company_tbl as sp', 'spl.salerid=sp.id and spl.active=1 and sp.active=1', 'inner');
 		$this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
 		$this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
-		$this->db->where('sp.type & 2 and spl.companyid='.$companyid);
+		$this->db->where('sp.type & 4 and spl.companyid='.$companyid);
 		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
 
 		$query = $this->db->get();
-		//echo $this->db->last_query();die();
+		$qry = $this->db->last_query();
 		if ($query->num_rows() > 0) 
 		{					
             	return $query->result_array();
@@ -235,11 +235,30 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_communication_details($communicationid) {
-		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on, cmd.read, cmd.last_read_on ");
+		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
 		$this->db->from('communication_detail_tbl cmd');
 		$this->db->join('company_tbl c1', 'cmd.from_companyid=c1.id', 'inner');
 		$this->db->join('company_tbl c2', 'cmd.to_companyid=c2.id', 'inner');
-		$this->db->where("cmd.active=1 and cmd.pid=1");
+		$this->db->where("cmd.active=1 and cmd.pid=$communicationid");
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function search_communication_detail($msgdetailid) {
+		$this->db->select("cmd.id, cmd.pid, cmd.message, cmd.from_companyid, c1.display_name as fromcompany, cmd.to_companyid, c2.display_name as tocompany, cmd.ref_no, cmd.type, cmd.active, cmd.created_by, cmd.created_on, cmd.updated_by, cmd.updated_on, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
+		$this->db->from('communication_detail_tbl cmd');
+		$this->db->join('company_tbl c1', 'cmd.from_companyid=c1.id', 'inner');
+		$this->db->join('company_tbl c2', 'cmd.to_companyid=c2.id', 'inner');
+		$this->db->where("cmd.active=1 and cmd.id=$msgdetailid");
 
 		$query = $this->db->get();
 		//echo $this->db->last_query();die();
@@ -257,7 +276,7 @@ Class Admin_Model extends CI_Model
 	{
 		if($boxtype === 'outbox') {
 			// this is for outbox
-			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
 			$this->db->from('communication_tbl cm');
 			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
 			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
@@ -279,7 +298,7 @@ Class Admin_Model extends CI_Model
 		}
 		else if($boxtype === 'inbox') {
 			// this is for inbox
-			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
 			$this->db->from('communication_tbl cm');
 			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
 			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
@@ -374,11 +393,251 @@ Class Admin_Model extends CI_Model
 			$this->db->set("last_read_on", 'NOW()', FALSE);
 			$this->db->where($where);
 			$result = $this->db->update('communication_detail_tbl');
-			$qry = $this->db->last_query();
 			$result = array("message" => "Item updated successfully.", "id" => intval($msgid,10));
 		}
 		catch(Exception $ex) {
 			throw $ex;
+		}
+
+		return [$result];
+	}
+
+	public function rateplanByCompanyid($companyid) {
+        if(empty($companyid)){
+			return array("message" => "Invalid company id passed", "status" => false);
+		}
+
+		$result = '';
+		//update
+		try
+		{
+			$this->db->select("distinct rp.id, rp.display_name as planname, rp.assigned_to, rp.companyid, cmp.display_name, rp.active, rp.created_by, rp.created_on, rp.updated_by, rp.updated_on, usr.name as created_by_name ", FALSE);
+			$this->db->from('rateplan_tbl rp');
+			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
+			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);
+			$this->db->join('user_tbl usr', 'rp.created_by=usr.id', 'inner', FALSE);
+			$this->db->where("rp.companyid=$companyid", NULL, FALSE);
+			$this->db->order_by("rp.display_name", NULL, FALSE);
+	
+			$query = $this->db->get();
+			$qry = $this->db->last_query();
+
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+		catch(Exception $ex) {
+			throw $ex;
+		}
+
+		return [$result];
+	}
+
+	public function rateplandetails($rateplanid) {
+        if(empty($rateplanid)){
+			return array("message" => "Invalid rate plan id passed", "status" => false);
+		}
+
+		$result = '';
+		//update
+		try
+		{
+			$this->db->select("rp.id, rp.display_name as planname, rp.assigned_to, rp.companyid, rpd.rateplanid, rpd.serialno, rpd.head_name, rpd.head_code, rpd.amount, rpd.amount_type, rpd.operation, rpd.calculation, rpd.active, rpd.created_by, rpd.created_on, usr.name as created_by_name ", FALSE);
+			$this->db->from('rateplan_tbl rp');
+			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
+			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);
+			$this->db->join('user_tbl usr', 'rpd.created_by=usr.id', 'inner', FALSE);
+			$this->db->where("rp.id=$rateplanid", NULL, FALSE);
+			$this->db->order_by("rp.display_name, rpd.serialno", NULL, FALSE);
+	
+			$query = $this->db->get();
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+		catch(Exception $ex) {
+			throw $ex;
+		}
+
+		return [$result];
+	}
+
+	public function get_services($companyid) {
+        if(empty($companyid)){
+			return array("message" => "Invalid company id passed", "status" => false);
+		}
+
+		$result = '';
+		//update
+		try
+		{
+			$this->db->select("cmsrv.id, cmsrv.companyid, cmsrv.active, cmsrv.serviceid, md.datavalue as service_name, cm.display_name as company_name ", FALSE);
+			$this->db->from("company_services_tbl cmsrv");
+			$this->db->join("metadata_tbl md", "md.id=cmsrv.serviceid and md.associated_object_type='services' and name='name'", 'inner', FALSE);
+			$this->db->join("company_tbl cm", "cmsrv.companyid=cm.id", "inner", FALSE);
+			$this->db->where("cmsrv.companyid = $companyid", NULL, FALSE);
+			$this->db->order_by("md.datavalue", NULL, FALSE);
+	
+			$query = $this->db->get();
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+		catch(Exception $ex) {
+			throw $ex;
+		}
+
+		return [$result];
+	}
+
+	public function wholesaler_save($wholesaler) {
+        if(!empty($wholesaler["id"])) {
+            $data = $this->db->get_where("wholesaler_tbl", ['id' => $wholesaler["id"]])->row_array();
+        } else if(!empty($wholesaler["salerid"]) && !empty($wholesaler["companyid"])){
+            $data = $this->db->get_where("wholesaler_tbl", ['salerid' => $wholesaler["salerid"], 'companyid' => $wholesaler["companyid"]])->row_array();
+		}
+		else {
+			$data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$wholesaler["id"] = null;
+			unset($wholesaler["details"]);
+			$this->db->insert('wholesaler_tbl', $wholesaler);
+			$result = array("message" => "Wholesaler registered successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			if(!empty($wholesaler["id"])) {
+				try
+				{
+					$result = $this->db->update('wholesaler_tbl', $wholesaler, array("id" => intval($wholesaler["id"],10)));
+					$result = array("message" => "Wholesaler updated successfully.", "id" => intval($wholesaler["id"],10));
+				}
+				catch(Exception $ex) {
+					throw $ex;
+				}
+			}
+		}
+
+		return [$result];
+	}
+
+	public function wholesaler_detail_save($wholesalerDetail) {
+        if(!empty($wholesalerDetail["id"])) {
+            $data = $this->db->get_where("wholesaler_services_tbl", ['id' => $wholesalerDetail["id"]])->row_array();
+        } else if(!empty($wholesalerDetail["wholesaler_rel_id"])) {
+            $data = $this->db->get_where("wholesaler_services_tbl", ['wholesaler_rel_id' => $wholesalerDetail["wholesaler_rel_id"]])->row_array();
+		} else {
+			$data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$wholesalerDetail["id"] = null;
+			$this->db->insert('wholesaler_services_tbl', $wholesalerDetail);
+			$result = array("message" => "Wholesaler services registered successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			if(!empty($wholesalerDetail["id"])) {
+				try
+				{
+					$result = $this->db->update('wholesaler_services_tbl', $wholesalerDetail, array("id" => intval($wholesalerDetail["id"],10)));
+					$result = array("message" => "Wholesaler services updated successfully.", "id" => intval($wholesalerDetail["id"],10));
+				}
+				catch(Exception $ex) {
+					throw $ex;
+				}
+			}
+		}
+
+		return [$result];
+	}
+
+	public function supplier_save($supplier) {
+        if(!empty($supplier["id"])) {
+            $data = $this->db->get_where("supplier_tbl", ['id' => $supplier["id"]])->row_array();
+        } else if(!empty($supplier["salerid"]) && !empty($supplier["companyid"])){
+            $data = $this->db->get_where("supplier_tbl", ['salerid' => $supplier["salerid"], 'companyid' => $supplier["companyid"]])->row_array();
+		}
+		else {
+			$data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$supplier["id"] = null;
+			unset($supplier["details"]);
+			$this->db->insert('supplier_tbl', $supplier);
+			$result = array("message" => "Supplier registered successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			if(!empty($supplier["id"])) {
+				try
+				{
+					$result = $this->db->update('supplier_tbl', $supplier, array("id" => intval($supplier["id"],10)));
+					$result = array("message" => "Supplier updated successfully.", "id" => intval($supplier["id"],10));
+				}
+				catch(Exception $ex) {
+					throw $ex;
+				}
+			}
+		}
+
+		return [$result];
+	}
+
+	public function supplier_detail_save($supplierDetail) {
+        if(!empty($supplierDetail["id"])) {
+            $data = $this->db->get_where("supplier_services_tbl", ['id' => $supplierDetail["id"]])->row_array();
+        } else if(!empty($supplierDetail["supplier_rel_id"])) {
+            $data = $this->db->get_where("supplier_services_tbl", ['supplier_rel_id' => $supplierDetail["supplier_rel_id"]])->row_array();
+		} else {
+			$data = null;
+		}
+
+		$result = '';
+		if($data==null) {
+			//insert
+			$supplierDetail["id"] = null;
+			$this->db->insert('supplier_services_tbl', $supplierDetail);
+			$result = array("message" => "Supplier services registered successfully.", "id" => $this->db->insert_id());
+		}
+		else {
+			//update
+			if(!empty($supplierDetail["id"])) {
+				try
+				{
+					$result = $this->db->update('supplier_services_tbl', $supplierDetail, array("id" => intval($supplierDetail["id"],10)));
+					$result = array("message" => "Supplier services updated successfully.", "id" => intval($supplierDetail["id"],10));
+				}
+				catch(Exception $ex) {
+					throw $ex;
+				}
+			}
 		}
 
 		return [$result];
