@@ -28,17 +28,28 @@ Class Admin_Model extends CI_Model
 	}
 	
 	public function get_suppliers($companyid) {
-		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, group_concat(distinct concat(mt.datavalue,' (Markup=>',sspl.markup_rate,')') order by mt.datavalue) as services");
+		// $this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, group_concat(distinct concat(mt.datavalue,' (Markup=>',sspl.markup_rate,')') order by mt.datavalue) as services");
+		// $this->db->from('supplier_tbl as spl');
+		// $this->db->join('supplier_services_tbl as sspl', 'spl.id=sspl.supplier_rel_id and sspl.active=1', 'inner');
+		// $this->db->join('company_tbl as sp', 'spl.supplierid=sp.id and spl.active=1 and sp.active=1', 'inner');
+		// $this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
+		// $this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
+		// $this->db->where('sp.type & 2 and spl.companyid='.$companyid);
+		// $this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
+
+		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.display_name as rateplan_name, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ");
 		$this->db->from('supplier_tbl as spl');
 		$this->db->join('supplier_services_tbl as sspl', 'spl.id=sspl.supplier_rel_id and sspl.active=1', 'inner');
 		$this->db->join('company_tbl as sp', 'spl.supplierid=sp.id and spl.active=1 and sp.active=1', 'inner');
 		$this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
 		$this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
-		$this->db->where('sp.type & 2 and spl.companyid='.$companyid);
-		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
-
+		$this->db->join('rateplan_tbl rp', 'sspl.rate_plan_id=rp.id and rp.active=1', 'left');
+		$this->db->join('rateplan_detail_tbl rpd', 'rpd.rateplanid=rp.id and rpd.active=1', 'left');
+		$this->db->where("sp.type & 2 and spl.companyid=$companyid");
+		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.display_name');
+		
 		$query = $this->db->get();
-		//echo $this->db->last_query();die();
+		$qry = $this->db->last_query();
 		if ($query->num_rows() > 0) 
 		{					
             return $query->result_array();		
@@ -50,14 +61,25 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_wholesalers($companyid) {
-		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, group_concat(distinct concat(mt.datavalue,' (Markup=>',sspl.markup_rate,')') order by mt.datavalue) as services");
+		// $this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, group_concat(distinct concat(mt.datavalue,' (Markup=>',sspl.markup_rate,')') order by mt.datavalue) as services");
+		// $this->db->from('wholesaler_tbl spl');
+		// $this->db->join('wholesaler_services_tbl sspl', 'spl.id=sspl.wholesaler_rel_id and sspl.active=1', 'inner');
+		// $this->db->join('company_tbl as sp', 'spl.salerid=sp.id and spl.active=1 and sp.active=1', 'inner');
+		// $this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
+		// $this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
+		// $this->db->where('sp.type & 4 and spl.companyid='.$companyid);
+		// $this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
+
+		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.display_name as rateplan_name, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ");
 		$this->db->from('wholesaler_tbl spl');
 		$this->db->join('wholesaler_services_tbl sspl', 'spl.id=sspl.wholesaler_rel_id and sspl.active=1', 'inner');
-		$this->db->join('company_tbl as sp', 'spl.salerid=sp.id and spl.active=1 and sp.active=1', 'inner');
-		$this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
+		$this->db->join('company_tbl sp', 'spl.salerid=sp.id and spl.active=1 and sp.active=1', 'inner');
+		$this->db->join('user_tbl u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
 		$this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
-		$this->db->where('sp.type & 4 and spl.companyid='.$companyid);
-		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
+		$this->db->join('rateplan_tbl rp', 'sspl.rate_plan_id=rp.id and rp.active=1', 'left');
+		$this->db->join('rateplan_detail_tbl rpd', 'rpd.rateplanid=rp.id and rpd.active=1', 'left');
+		$this->db->where("sp.type & 4 and spl.companyid = $companyid");
+		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.display_name');
 
 		$query = $this->db->get();
 		$qry = $this->db->last_query();
@@ -527,11 +549,13 @@ Class Admin_Model extends CI_Model
 		}
 		else {
 			//update
-			if(!empty($wholesaler["id"])) {
+			if(!empty($data["id"])) {
 				try
 				{
-					$result = $this->db->update('wholesaler_tbl', $wholesaler, array("id" => intval($wholesaler["id"],10)));
-					$result = array("message" => "Wholesaler updated successfully.", "id" => intval($wholesaler["id"],10));
+					$wholesalerDetails = $wholesaler["details"];
+					unset($wholesaler["details"]);
+					$result = $this->db->update('wholesaler_tbl', $wholesaler, array("id" => intval($data["id"],10)));
+					$result = array("message" => "Wholesaler updated successfully.", "id" => intval($data["id"],10));
 				}
 				catch(Exception $ex) {
 					throw $ex;
@@ -560,11 +584,11 @@ Class Admin_Model extends CI_Model
 		}
 		else {
 			//update
-			if(!empty($wholesalerDetail["id"])) {
+			if(!empty($data["id"])) {
 				try
 				{
-					$result = $this->db->update('wholesaler_services_tbl', $wholesalerDetail, array("id" => intval($wholesalerDetail["id"],10)));
-					$result = array("message" => "Wholesaler services updated successfully.", "id" => intval($wholesalerDetail["id"],10));
+					$result = $this->db->update('wholesaler_services_tbl', $wholesalerDetail, array("id" => intval($data["id"],10)));
+					$result = array("message" => "Wholesaler services updated successfully.", "id" => intval($data["id"],10));
 				}
 				catch(Exception $ex) {
 					throw $ex;
@@ -578,8 +602,8 @@ Class Admin_Model extends CI_Model
 	public function supplier_save($supplier) {
         if(!empty($supplier["id"])) {
             $data = $this->db->get_where("supplier_tbl", ['id' => $supplier["id"]])->row_array();
-        } else if(!empty($supplier["salerid"]) && !empty($supplier["companyid"])){
-            $data = $this->db->get_where("supplier_tbl", ['salerid' => $supplier["salerid"], 'companyid' => $supplier["companyid"]])->row_array();
+        } else if(!empty($supplier["supplierid"]) && !empty($supplier["companyid"])){
+            $data = $this->db->get_where("supplier_tbl", ['supplierid' => $supplier["supplierid"], 'companyid' => $supplier["companyid"]])->row_array();
 		}
 		else {
 			$data = null;
@@ -595,11 +619,13 @@ Class Admin_Model extends CI_Model
 		}
 		else {
 			//update
-			if(!empty($supplier["id"])) {
+			if(!empty($data["id"])) {
 				try
 				{
-					$result = $this->db->update('supplier_tbl', $supplier, array("id" => intval($supplier["id"],10)));
-					$result = array("message" => "Supplier updated successfully.", "id" => intval($supplier["id"],10));
+					$supplierDetails = $supplier["details"];
+					unset($supplier["details"]);
+					$result = $this->db->update('supplier_tbl', $supplier, array("id" => intval($data["id"],10)));
+					$result = array("message" => "Supplier updated successfully.", "id" => intval($data["id"],10));
 				}
 				catch(Exception $ex) {
 					throw $ex;
@@ -628,16 +654,82 @@ Class Admin_Model extends CI_Model
 		}
 		else {
 			//update
-			if(!empty($supplierDetail["id"])) {
+			if(!empty($data["id"])) {
 				try
 				{
-					$result = $this->db->update('supplier_services_tbl', $supplierDetail, array("id" => intval($supplierDetail["id"],10)));
-					$result = array("message" => "Supplier services updated successfully.", "id" => intval($supplierDetail["id"],10));
+					$result = $this->db->update('supplier_services_tbl', $supplierDetail, array("id" => intval($data["id"],10)));
+					$result = array("message" => "Supplier services updated successfully.", "id" => intval($data["id"],10));
 				}
 				catch(Exception $ex) {
 					throw $ex;
 				}
 			}
+		}
+
+		return [$result];
+	}
+
+	public function save_rateplan($rateplan) {
+		$result = array();
+		if(empty($rateplan)) {
+			$result["message"] = "Invalid rateplan passed";
+			$result["status"] = -1;
+
+			//return [$result];
+			throw new Exception('Invalid rateplan passed');
+		}
+
+		try
+		{
+			if(!empty($rateplan["id"])) {
+				//update
+				$this->db->update('rateplan_tbl', $rateplan, array("id" => intval($rateplan["id"], 10)));
+				$result = array("message" => "Rateplan updated successfully.", "id" => intval($rateplan["id"],10));
+			}
+			else {
+				$rateplan["id"] = NULL;
+				$this->db->insert('rateplan_tbl', $rateplan);
+				$rateplan["id"] = $this->db->insert_id();
+				$result = array("message" => "Rateplan updated successfully.", "id" => $this->db->insert_id());
+			}
+		}
+		catch(Exception $ex) {
+			throw $ex;
+		}
+
+		return [$result];
+	}
+
+	public function save_rateplan_details($rateplandetails) {
+		$result = array();
+		if(empty($rateplandetails) || count($rateplandetails)==0) {
+			$result["message"] = "Invalid rateplan details passed";
+			$result["status"] = -1;
+
+			// return [$result];
+			throw new Exception('Invalid rateplan details passed');
+		}
+
+		try
+		{
+			for ($i=0; $i<count($rateplandetails); $i++) { 
+				$rateplandetail = $rateplandetails[$i];
+				if(!empty($rateplandetail["id"])) {
+					//update
+					$this->db->update('rateplan_detail_tbl', $rateplandetail, array("id" => intval($rateplandetail["id"], 10)));
+					array_push($result, array("message-$i" => "Rateplan detaiils updated successfully.", "id" => intval($rateplandetail["id"],10)));
+				}
+				else {
+					//insert
+					$rateplandetail["id"] = NULL;
+					$this->db->insert('rateplan_detail_tbl', $rateplandetail);
+					$rateplandetail["id"] = $this->db->insert_id();
+					array_push($result, array("message-$i" => "Rateplan details updated successfully.", "id" => $this->db->insert_id()));
+				}
+			}
+		}
+		catch(Exception $ex) {
+			throw $ex;
 		}
 
 		return [$result];

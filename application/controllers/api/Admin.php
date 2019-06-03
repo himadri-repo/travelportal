@@ -286,4 +286,46 @@ class Admin extends REST_Controller {
         }
         $this->set_response($rateplansdetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function save_rateplan_post() {
+        $rateplan = $this->post('rateplan');
+        $rateplanDetail = NULL;
+        if($rateplan["details"]!=null && count($rateplan["details"]))
+        {
+            $rateplanDetail = $rateplan["details"];
+            unset($rateplan["details"]);
+        }
+
+        try
+        {
+            $this->db->trans_start();
+            $rateplan_info = $this->Admin_Model->save_rateplan($rateplan);
+            $rateplan["id"] = $rateplan_info[0]["id"];
+            $result["id"] = $rateplan_info[0]["id"];
+
+            for ($i=0; $i<count($rateplanDetail); $i++) { 
+                $rateplanDetail[$i]["rateplanid"] = intval($rateplan["id"]);
+            }
+
+            $rateplan_detail_info = $this->Admin_Model->save_rateplan_details($rateplanDetail);
+            if($rateplan_detail_info!=null && count($rateplan_detail_info)>0) {
+                $rateplan_detail_info = $rateplan_detail_info[0];
+                for ($i=0; $i<count($rateplanDetail) ; $i++) { 
+                    $rateplanDetail[$i]["id"] = intval($rateplan_detail_info[$i]["id"]);
+                    $result["child.id-$i"] = $rateplan_detail_info[$i]["id"];
+                    $result["child.id-$i-message"] = "$i - Rateplan details saved successfully";
+                }
+            }
+
+            $result["message"] = "Rateplan with details saved successfully";
+
+            $this->db->trans_commit();
+        }
+        catch(Exception $ex) {
+            $result["message"] = "Rateplan with details failed to saved <$ex>";
+            $this->db->trans_rollback();
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }

@@ -125,3 +125,4 @@ $route['api/admin/rateplans/(:num)'] = 'api/Admin/rate_plan_details/$1';
 $route['api/company/(:num)/services'] = 'api/Company/services/$1';
 $route['api/admin/wholesaler/save'] = 'api/Admin/save_wholesaler';
 $route['api/admin/supplier/save'] = 'api/Admin/save_supplier';
+$route['api/admin/rateplan/save'] = 'api/Admin/save_rateplan';
