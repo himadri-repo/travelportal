@@ -487,30 +487,64 @@ Class Search_Model extends CI_Model
 		$dt_from = date("Y-m-d H:i:s");
 		// inner join user_tbl usr on usr.id=tkt.user_id
 
+		// $sql = "select tkt.id, ct1.city source, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no
+		// 			,tkt.terminal, tkt.no_of_person, tkt.class, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, tkt.admin_markup, cm.id, tkt.user_id
+		// 			,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, sl1.markup_rate, sl1.markup_type, sl1.allowfeed, sl1.service, sl1.owner_companyid
+		// 		from tickets_tbl tkt 
+		// 		inner join city_tbl ct1 on tkt.source=ct1.id
+		// 		inner join city_tbl ct2 on tkt.destination=ct2.id
+		// 		inner join airline_tbl al on al.id=tkt.airline
+		// 		inner join company_tbl cm on tkt.companyid=cm.id
+		// 		inner join
+		// 		(
+		// 			select sl.code, sl.primary_user_id, supplierid, cm.display_name, slr.markup_rate, slr.markup_type, slr.allowfeed,  srv.datavalue as service, sl.companyid as owner_companyid
+		// 			from supplier_tbl sl 
+		// 			inner join company_tbl cm on sl.supplierid=cm.id and cm.active=1
+		// 			inner join supplier_services_tbl slr on sl.id=slr.supplier_rel_id and slr.active=1
+		// 			inner join metadata_tbl srv on srv.id=slr.serviceid and srv.active=1 and srv.code='FSRV0001'
+		// 			where sl.companyid=$companyid and slr.allowfeed=1
+		// 			union all
+		// 			select cm1.code, cm1.primary_user_id, cm1.id as supplierid, cm1.display_name, 0 as markup_rate, 1 as markup_type, 1 as allowfeed, 'Coupon Flight Tickets' as service, cm1.id as owner_companyid
+		// 			from company_tbl cm1
+		// 			where cm1.id=$companyid and active=1
+		// 		) as sl1 on sl1.supplierid=cm.id
+		// 		where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
+		// 		order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
 
 		$sql = "select tkt.id, ct1.city source, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no
-					,tkt.terminal, tkt.no_of_person, tkt.class, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, tkt.admin_markup, cm.id, tkt.user_id
-					,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, sl1.markup_rate, sl1.markup_type, sl1.allowfeed, sl1.service, sl1.owner_companyid
-				from tickets_tbl tkt 
-				inner join city_tbl ct1 on tkt.source=ct1.id
-				inner join city_tbl ct2 on tkt.destination=ct2.id
-				inner join airline_tbl al on al.id=tkt.airline
-				inner join company_tbl cm on tkt.companyid=cm.id
-				inner join
-				(
-					select sl.code, sl.primary_user_id, supplierid, cm.display_name, slr.markup_rate, slr.markup_type, slr.allowfeed,  srv.datavalue as service, sl.companyid as owner_companyid
-					from supplier_tbl sl 
-					inner join company_tbl cm on sl.supplierid=cm.id and cm.active=1
-					inner join supplier_services_tbl slr on sl.id=slr.supplier_rel_id and slr.active=1
-					inner join metadata_tbl srv on srv.id=slr.serviceid and srv.active=1 and srv.code='FSRV0001'
-					where sl.companyid=$companyid and slr.allowfeed=1
-					union all
-					select cm1.code, cm1.primary_user_id, cm1.id as supplierid, cm1.display_name, 0 as markup_rate, 1 as markup_type, 1 as allowfeed, 'Coupon Flight Tickets' as service, cm1.id as owner_companyid
-					from company_tbl cm1
-					where cm1.id=$companyid and active=1
-				) as sl1 on sl1.supplierid=cm.id
-				where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
-				order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
+				,tkt.terminal, tkt.no_of_person, tkt.class, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, cm.id, tkt.user_id
+				,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, 
+				sl1.slr_markup_rate as markup_rate, sl1.markup_type, sl1.cgst_rate, sl1.sgst_rate, sl1.igst_rate, sl1.allowfeed, sl1.service, sl1.owner_companyid
+			from tickets_tbl tkt 
+			inner join city_tbl ct1 on tkt.source=ct1.id
+			inner join city_tbl ct2 on tkt.destination=ct2.id
+			inner join airline_tbl al on al.id=tkt.airline
+			inner join company_tbl cm on tkt.companyid=cm.id
+			inner join
+			(
+				select sl.code, sl.primary_user_id, supplierid, cm.display_name, slr.markup_type
+				,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount)) from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='markup'), 0) as wsl_markup_rate
+				,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount)) from rateplan_detail_tbl rpd where rpd.rateplanid=slr.rate_plan_id and rpd.head_code='markup'), 0) as slr_markup_rate
+				, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='cgst') as cgst_rate
+				, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='sgst') as sgst_rate
+				, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='igst') as igst_rate
+				,slr.allowfeed,  srv.datavalue as service, sl.companyid as owner_companyid
+				, slr.rate_plan_id as wholesaler_rateplan, wsl.rate_plan_id as supplier_rateplan
+				from supplier_tbl sl 
+				inner join company_tbl cm on sl.supplierid=cm.id and cm.active=1
+				inner join supplier_services_tbl slr on sl.id=slr.supplier_rel_id and slr.active=1
+				inner join metadata_tbl srv on srv.id=slr.serviceid and srv.active=1 and srv.code='FSRV0001'
+				inner join wholesaler_services_tbl wsl on wsl.id=slr.tracking_id and wsl.tracking_id=slr.id
+				where sl.companyid=$companyid and slr.allowfeed=1
+				union all
+				select cm1.code, cm1.primary_user_id, cm1.id as supplierid, cm1.display_name, 1 as markup_type, 0 as wsl_markup_rate, 0 as slr_markup_rate, 0 as cgst_rate, 0 as sgst_rate, 0 as igst_rate,
+				1 as allowfeed, 'Coupon Flight Tickets' as service, cm1.id as owner_companyid
+				,1 as supplier_rateplan, 1 as wholesaler_rateplan
+				from company_tbl cm1
+				where cm1.id=$companyid and active=1
+			) as sl1 on sl1.supplierid=cm.id
+			where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
+			order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
 
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();

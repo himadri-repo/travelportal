@@ -88,6 +88,11 @@ class Admin extends REST_Controller {
             $wholesaler_detail_update = $this->Admin_Model->wholesaler_detail_save($wholesalerDetail);
             $result["detail_id"] = $wholesaler_detail_update[0]["id"];
             $result["message"] = "Wholesaler details saved successfully";
+            if(isset($wholesalerDetail["tracking_id"])) {
+                // tracking id passed so lets save it into supplier_services_tbl also.
+                $supplier_detail = array("id" => $wholesalerDetail["tracking_id"], "tracking_id" => $result["detail_id"]);
+                $this->Admin_Model->supplier_detail_save($supplier_detail);
+            }
             $this->db->trans_complete();
         }
         catch(Exception $ex) {
@@ -123,6 +128,11 @@ class Admin extends REST_Controller {
             $supplier_detail_update = $this->Admin_Model->supplier_detail_save($supplierDetail);
             $result["detail_id"] = $supplier_detail_update[0]["id"];
             $result["message"] = "Supplier details saved successfully";
+            if(isset($supplierDetail["tracking_id"])) {
+                // tracking id passed so lets save it into supplier_services_tbl also.
+                $wholesaler_detail = array("id" => $supplierDetail["tracking_id"], "tracking_id" => $result["detail_id"]);
+                $this->Admin_Model->supplier_detail_save($wholesaler_detail);
+            }
             $this->db->trans_complete();
         }
         catch(Exception $ex) {
