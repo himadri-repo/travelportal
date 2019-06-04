@@ -503,7 +503,7 @@ Class Search_Model extends CI_Model
 					inner join company_tbl cm on sl.supplierid=cm.id and cm.active=1
 					inner join supplier_services_tbl slr on sl.id=slr.supplier_rel_id and slr.active=1
 					inner join metadata_tbl srv on srv.id=slr.serviceid and srv.active=1 and srv.code='FSRV0001'
-					where sl.companyid=$companyid
+					where sl.companyid=$companyid and slr.allowfeed=1
 					union all
 					select cm1.code, cm1.primary_user_id, cm1.id as supplierid, cm1.display_name, 0 as markup_rate, 1 as markup_type, 1 as allowfeed, 'Coupon Flight Tickets' as service, cm1.id as owner_companyid
 					from company_tbl cm1

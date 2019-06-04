@@ -8,7 +8,7 @@ Class Admin_Model extends CI_Model
 		date_default_timezone_set("Asia/Calcutta");   
 	}
 
-    	public function get_modules($permision)
+    public function get_modules($permision)
 	{
         //$arr=array("m.code"=>$id);
 		$this->db->select('m.*');
@@ -298,17 +298,17 @@ Class Admin_Model extends CI_Model
 	{
 		if($boxtype === 'outbox') {
 			// this is for outbox
-			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid, (select max(type) as type1 from communication_detail_tbl cmd1 where cmd1.pid=cm.id) as finaltype ", FALSE);
 			$this->db->from('communication_tbl cm');
-			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
-			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
-			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner');
-			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner');
-			$this->db->where("cmd.from_companyid=$companyid");
-			$this->db->order_by("cmd.created_on desc");
+			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner', FALSE);
+			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner', FALSE);
+			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner', FALSE);
+			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner', FALSE);
+			$this->db->where("cmd.from_companyid=$companyid", NULL, FALSE);
+			$this->db->order_by("cmd.created_on desc", NULL, FALSE);
 	
 			$query = $this->db->get();
-			//echo $this->db->last_query();die();
+			$qry = $this->db->last_query();
 			if ($query->num_rows() > 0) 
 			{					
 				return $query->result_array();
@@ -320,17 +320,17 @@ Class Admin_Model extends CI_Model
 		}
 		else if($boxtype === 'inbox') {
 			// this is for inbox
-			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid ");
+			$this->db->select("cmd.id, cm.title, cm.active, cm.companyid, cmd.from_companyid, c1.display_name as from_company_name, cmd.to_companyid, c2.display_name as to_company_name, cmd.ref_no, cmd.message, cmd.type, cmd.created_on, cmd.created_by, usr.name, cmd.read, cmd.last_read_on, cmd.invitation_type, cmd.serviceid, (select max(type) as type1 from communication_detail_tbl cmd1 where cmd1.pid=cm.id) as finaltype ", FALSE);
 			$this->db->from('communication_tbl cm');
-			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner');
-			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner');
-			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner');
-			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner');
-			$this->db->where("cmd.to_companyid=$companyid");
-			$this->db->order_by("cmd.created_on desc");
+			$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cmd.active=1', 'inner', FALSE);
+			$this->db->join('company_tbl c1', 'c1.id=cmd.from_companyid', 'inner', FALSE);
+			$this->db->join('company_tbl c2', 'c2.id=cmd.to_companyid', 'inner', FALSE);
+			$this->db->join('user_tbl usr', 'cmd.created_by=usr.id', 'inner', FALSE);
+			$this->db->where("cmd.to_companyid=$companyid", NULL, FALSE);
+			$this->db->order_by("cmd.created_on desc", NULL, FALSE);
 	
 			$query = $this->db->get();
-			//echo $this->db->last_query();die();
+			$qry = $this->db->last_query();
 			if ($query->num_rows() > 0) 
 			{					
 				return $query->result_array();
