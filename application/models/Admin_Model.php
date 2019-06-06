@@ -37,16 +37,16 @@ Class Admin_Model extends CI_Model
 		// $this->db->where('sp.type & 2 and spl.companyid='.$companyid);
 		// $this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
 
-		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.display_name as rateplan_name, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ");
+		$this->db->select("sspl.id as relationid, sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.id as rateplanid, rp.display_name as rateplan_name, sspl.transaction_type, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ", FALSE);
 		$this->db->from('supplier_tbl as spl');
-		$this->db->join('supplier_services_tbl as sspl', 'spl.id=sspl.supplier_rel_id and sspl.active=1', 'inner');
-		$this->db->join('company_tbl as sp', 'spl.supplierid=sp.id and spl.active=1 and sp.active=1', 'inner');
-		$this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner');
-		$this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner');
-		$this->db->join('rateplan_tbl rp', 'sspl.rate_plan_id=rp.id and rp.active=1', 'left');
-		$this->db->join('rateplan_detail_tbl rpd', 'rpd.rateplanid=rp.id and rpd.active=1', 'left');
-		$this->db->where("sp.type & 2 and spl.companyid=$companyid");
-		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.display_name');
+		$this->db->join('supplier_services_tbl as sspl', 'spl.id=sspl.supplier_rel_id and sspl.active=1', 'inner', FALSE);
+		$this->db->join('company_tbl as sp', 'spl.supplierid=sp.id and spl.active=1 and sp.active=1', 'inner', FALSE);
+		$this->db->join('user_tbl as u', 'sp.primary_user_id=u.id and u.active=1', 'inner', FALSE);
+		$this->db->join('metadata_tbl mt', 'mt.id=sspl.serviceid and mt.active=1', 'inner', FALSE);
+		$this->db->join('rateplan_tbl rp', 'sspl.rate_plan_id=rp.id and rp.active=1', 'left', FALSE);
+		$this->db->join('rateplan_detail_tbl rpd', 'rpd.rateplanid=rp.id and rpd.active=1', 'left', FALSE);
+		$this->db->where("sp.type & 2 and spl.companyid=$companyid", NULL, FALSE);
+		$this->db->group_by('sspl.id, sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.id, rp.display_name, sspl.transaction_type', FALSE);
 		
 		$query = $this->db->get();
 		$qry = $this->db->last_query();
@@ -70,7 +70,7 @@ Class Admin_Model extends CI_Model
 		// $this->db->where('sp.type & 4 and spl.companyid='.$companyid);
 		// $this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email');
 
-		$this->db->select("sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.display_name as rateplan_name, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ");
+		$this->db->select("sspl.id as relationid, sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name as primary_user_name, u.mobile as primary_user_mobile, u.email as primary_user_email, sspl.allowfeed, rp.id as rateplanid, rp.display_name as rateplan_name, sspl.transaction_type, group_concat(distinct concat(mt.datavalue) order by mt.datavalue) as services, group_concat(distinct concat(rpd.head_name, '-', rpd.amount, if(rpd.amount_type=1, '', '%'), ' ') order by rpd.head_name) as rateplandetails ");
 		$this->db->from('wholesaler_tbl spl');
 		$this->db->join('wholesaler_services_tbl sspl', 'spl.id=sspl.wholesaler_rel_id and sspl.active=1', 'inner');
 		$this->db->join('company_tbl sp', 'spl.salerid=sp.id and spl.active=1 and sp.active=1', 'inner');
@@ -79,7 +79,7 @@ Class Admin_Model extends CI_Model
 		$this->db->join('rateplan_tbl rp', 'sspl.rate_plan_id=rp.id and rp.active=1', 'left');
 		$this->db->join('rateplan_detail_tbl rpd', 'rpd.rateplanid=rp.id and rpd.active=1', 'left');
 		$this->db->where("sp.type & 4 and spl.companyid = $companyid");
-		$this->db->group_by('sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.display_name');
+		$this->db->group_by('sspl.id, sp.id, sp.name, sp.display_name, sp.tenent_code, sp.primary_user_id, sp.type, sp.baseurl, u.name, u.mobile, u.email, rp.id, rp.display_name, sspl.transaction_type');
 
 		$query = $this->db->get();
 		$qry = $this->db->last_query();
@@ -733,6 +733,42 @@ Class Admin_Model extends CI_Model
 		}
 
 		return [$result];
+	}
+
+	public function get_supplier($supplierid, $wholesalerid) {
+		$this->db->select("spd.* ", FALSE);
+		$this->db->from('supplier_services_tbl spd');
+		$this->db->join('supplier_tbl sp', 'spd.supplier_rel_id=sp.id', 'inner', FALSE);
+		$this->db->where("sp.supplierid=$supplierid and sp.companyid=$wholesalerid", NULL, FALSE);
+		
+		$query = $this->db->get();
+		// $qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+            return false;
+		}
+	}
+
+	public function get_wholesaler($supplierid, $wholesalerid) {
+		$this->db->select("wsd.* ", FALSE);
+		$this->db->from('wholesaler_services_tbl wsd');
+		$this->db->join('wholesaler_tbl ws', 'wsd.wholesaler_rel_id=ws.id', 'inner', FALSE);
+		$this->db->where("ws.salerid=$supplierid and ws.companyid=$wholesalerid", NULL, FALSE);
+		
+		$query = $this->db->get();
+		// $qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+            return false;
+		}
 	}
 }	
 ?>

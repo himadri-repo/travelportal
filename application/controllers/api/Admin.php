@@ -338,4 +338,48 @@ class Admin extends REST_Controller {
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function save_supplier_details_post($supplierid, $wholesalerid) {
+        $supplierDetail = $this->post('detail');
+        $result = array();
+
+        try
+        {
+            $supplier = $this->Admin_Model->get_supplier($supplierid, $wholesalerid);
+            $supplier = $supplier[0];
+            $supplierDetail["id"] = $supplier["id"];
+            $changedSupplierDetail = $this->Admin_Model->supplier_detail_save($supplierDetail);
+
+            $result["id"] = $supplier["id"];
+            $result["message"] = "Records successfully saved";
+        }
+        catch(Exception $ex) {
+            $result["id"] = -1;
+            $result["message"] = "Record failed to saved <$ex>";
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function save_wholesaler_details_post($supplierid, $wholesalerid) {
+        $wholesalerDetail = $this->post('detail');
+        $result = array();
+
+        try
+        {
+            $wholesaler = $this->Admin_Model->get_wholesaler($supplierid, $wholesalerid);
+            $wholesaler = $wholesaler[0];
+            $wholesalerDetail["id"] = $wholesaler["id"];
+            $changedWholesalerDetail = $this->Admin_Model->wholesaler_detail_save($wholesalerDetail);
+
+            $result["id"] = $wholesaler["id"];
+            $result["message"] = "Records successfully saved";
+        }
+        catch(Exception $ex) {
+            $result["id"] = -1;
+            $result["message"] = "Record failed to saved <$ex>";
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
