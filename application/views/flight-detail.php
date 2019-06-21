@@ -177,7 +177,7 @@
                                 	<h3>Book Flight</h3>
                                     <p>Find your dream flight today</p>
                                     
-                                    <form method="POST" action="<?php echo base_url(); ?>search/beforebook/<?php echo $flight[0]["id"];?>">
+                                    <form method="POST" id="bookticket" action="<?php echo base_url(); ?>search/beforebook/<?php echo $flight[0]["id"];?>">
                                     	
 									
 										<input type="hidden" name="refundable" value="<?php echo $flight[0]["refundable"]; ?>">
@@ -192,7 +192,7 @@
 										</div>-->	 
                                         <div class="form-group">
 										    <label>Booking Date</label>
-                                    		<input type="text" value="<?php echo date("d-m-Y");?>" class="form-control" placeholder="Booking Date" name="date" readonly required/>                                       
+                                    		<input type="text" value="<?php echo date("d-m-Y");?>" class="form-control" placeholder="Booking Date" name="date" readonly required/>
                                         </div>
 										
                                         <div class="form-group">
@@ -212,14 +212,14 @@
 											?>
 											<div class="form-group">
 										    <label>Service Charge</label>
-                                    		<input type="text" name="service_charge" id="service_charge" value="0" class="form-control" readonly/>                                       
+                                    		<input type="text" name="service_charge" id="service_charge" value="0" class="form-control" readonly/>
                                         </div>
 											<?php
 										} else 
 										{?>
 									     <div class="form-group">
 										    <label>Service Charge</label>
-                                    		<input type="text" name="service_charge" id="service_charge" value="<?php echo $setting[0]["service_charge"]; ?>" class="form-control" readonly/>                                       
+                                    		<input type="text" name="service_charge" id="service_charge" value="<?php echo $setting[0]["service_charge"]; ?>" class="form-control" <?php echo ($user_type=='B2C' ? 'readonly' : '') ?>/> <!-- readonly -->
                                         </div>
 										<?php 
 										} ?>
@@ -308,4 +308,23 @@
         </section><!-- end innerpage-wrapper -->
         
         
-       
+		<script language="javascript">
+            $(document).ready(function()
+            {
+                try
+                {
+                    $('#bookticket').submit(function() {
+						var checked = $('#check01').is(':checked');
+
+						if(!checked) {
+							alert('Please accept terms and condition.');
+						}
+						return checked;
+                    });
+                }
+                catch(e) {
+                    console.log(e);
+                }
+            });
+
+        </script>

@@ -217,338 +217,359 @@ class Search extends Mail_Controller
 	
 	public function flightdetails($id)
 	{
-		    if ($this->session->userdata('user_id') && isset($id)) 
-	        {			  
-		      $result["flight"]=$this->Search_Model->flight_details($id); 
-			  $result["setting"]=$this->Search_Model->setting();
-			  
-			  $result['user_details']=$this->User_Model->user_details();
-			  if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
-			  {
-				    if(isset($_REQUEST["back_end_qty"]))
-					{					  
-					   $this->session->set_userdata('no_of_person',$_REQUEST["back_end_qty"]);
-					}
-				    else
-					{						
-						
-					}
+		$current_user = $this->session->userdata('current_user');
+		if ($this->session->userdata('user_id') && isset($id)) 
+		{			  
+			$result["flight"]=$this->Search_Model->flight_details($id); 
+			$result["setting"]=$this->Search_Model->setting();
+			$result["user_type"]=strtoupper($current_user["type"]);
+			
+			$result['user_details']=$this->User_Model->user_details();
+			if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
+			{
+				if(isset($_REQUEST["back_end_qty"]))
+				{					  
+					$this->session->set_userdata('no_of_person',$_REQUEST["back_end_qty"]);
+				}
+				else
+				{						
 					
-				   $result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];				   				   
-				   if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
-				   {					  					 
-					 $result["flight"][0]["total"]=$result["flight"][0]["total"];
-				   }					 
-				   else	
-				   {					  
-					 $result["flight"][0]["price"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
-					 $result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];
-				   }
-				   
-				   $result["setting"]=$this->Search_Model->setting();
-				   	$result["footer"]=$this->Search_Model->get_post(5);
-		           $this->load->view('header1',$result);
-				   $this->load->view('flight-detail',$result);
-				   $this->load->view('footer1');
-			  }
-			  else
-			  {
-				  redirect("/search");
-			  }
+				}
+				
+				$result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];				   				   
+				if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+				{					  					 
+					$result["flight"][0]["total"]=$result["flight"][0]["total"];
+				}					 
+				else	
+				{					  
+					$result["flight"][0]["price"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
+					$result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];
+				}
+				
+				$result["setting"]=$this->Search_Model->setting();
+				$result["footer"]=$this->Search_Model->get_post(5);
+				$this->load->view('header1',$result);
+				$this->load->view('flight-detail',$result);
+				$this->load->view('footer1');
 			}
+			else
+			{
+				redirect("/search");
+			}
+		}
 	}
 	
 	public function beforebook($id)
 	{
+		$current_user = $this->session->userdata('current_user');
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{	
 		   $result["flight"]=$this->Search_Model->flight_details($id); 
 		   if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
 		   {
-				  $result1["user"]=$this->User_Model->user_details();				
-				  $result["setting"]=$this->Search_Model->setting(); 	
-				  if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
-					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $this->input->post('markup'));	
-				  else
-					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$this->input->post('markup'));	 
-				  
-				  $result["flight"][0]["markup"]=$this->input->post('markup');
-				  $result["flight"][0]["total"]=$this->input->post('total');
-				  $result["flight"][0]["qty"]=$this->input->post('qty');
-				  $result["flight"][0]["id"]=$id;	
-				  $result["flight"][0]["user_email"]=$result1["user"][0]["email"];
-				  $result["flight"][0]["mobile_no"]=$result1["user"][0]["mobile"];			
-				  $result["flight"][0]["first_name"]=$result1["user"][0]["name"];
-				
-									  
-					  if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["no_of_person"]>=$this->input->post('qty'))
-					  {					  			  			  
-						  $result["setting"]=$this->Search_Model->setting();
-						  $result["footer"]=$this->Search_Model->get_post(5);
-						  $this->load->view('header1',$result);;
-						  $this->load->view('customer-information',$result);						
-						  $this->load->view('footer1');
-					  }
-					  else
-					  {
-						  redirect("/search");
-					  }
+				$service_charge = floatval($this->input->post('service_charge'));
+				$result1["user"]=$this->User_Model->user_details();
+				$result["setting"]=$this->Search_Model->setting(); 	
+				// if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $this->input->post('markup'));	
+				// else
+				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$this->input->post('markup'));	 
+
+				if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $service_charge);	
+				else
+					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$service_charge);
+					
+				//$result["flight"][0]["markup"]=$this->input->post('markup');
+				$result["flight"][0]["markup"]=$service_charge;
+				$result["flight"][0]["total"]=$this->input->post('total');
+				$result["flight"][0]["qty"]=$this->input->post('qty');
+				$result["flight"][0]["wallet_balance"]=$this->get_wallet_balance($this->session->userdata('user_id'));
+				$result["flight"][0]["id"]=$id;	
+				$result["flight"][0]["user_email"]=$result1["user"][0]["email"];
+				$result["flight"][0]["mobile_no"]=$result1["user"][0]["mobile"];			
+				$result["flight"][0]["first_name"]=$result1["user"][0]["name"];
+				$result["flight"][0]["user"]=$result1["user"][0];
+			
+									
+				if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["no_of_person"]>=$this->input->post('qty'))
+				{					  			  			  
+					//$result["setting"]=$this->Search_Model->setting();
+					$result["footer"]=$this->Search_Model->get_post(5);
+					$this->load->view('header1',$result);;
+					$this->load->view('customer-information',$result);						
+					$this->load->view('footer1');
+				}
+				else
+				{
+					redirect("/search");
+				}
 			}
 		    else
 		    {
 			  redirect("/search");
 		    }  
-			  
-			  
 		}
 	}
 	
-	
-	
 	public function book($id)
 	{
-	        $result["footer"]=$this->Search_Model->get_post(5);
-		    $wallet_amount=0;
-		    if ($this->input->post('date') && $this->input->post('qty')) 
-	        {
-				$CI =   &get_instance();        
-				$check = $CI->db->get_where('wallet_tbl', array('user_id' => $this->session->userdata('user_id')));				
-				$result=$check->result_array();
-				
-				$ticket = $CI->db->get_where('tickets_tbl', array('id' => $id));				
-				$result1=$ticket->result_array();
-                $no_of_person=$result1[0]["no_of_person"];								 
-				$user_id=$result1[0]["user_id"];
-				$pnr=$result1[0]["pnr"];
-				$amount=$this->input->post('total');
-				$user['user_details']=$this->User_Model->user_details();
-				
-				
-				foreach($result as $key=>$value)
-				{
-					$wallet_amount+=$result[$key]["amount"];
-				}				
-				if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
-				{
-					  $result["setting"]=$this->Search_Model->setting();
-		              $this->load->view('header1',$result);
-					  $this->load->view('insufficient_amount',$result);
-					  $this->load->view('footer1'); 					
-				}
-				else
-				{
-					
-						$result=$this->User_Model->user_details();
-						if($pnr!="" && $this->session->userdata('user_id')==$user_id)
-							$status="CONFIRM";
-						else
-							$status="PENDING";	
-
-						
-						$arr=array(
-						"date"=>date("Y-m-d h:i:s"),
-						"ticket_id"=>$id,
-						"seller_id"=>$result1[0]["user_id"],
-						"pnr"=>$result1[0]["pnr"],
-						"customer_id"=>$this->session->userdata('user_id'),
-						"qty"=>$this->input->post('qty'),
-						"available_qty"=>$this->input->post('qty'),
-						"rate"=>$this->input->post('price'),
-						"amount"=>$this->input->post('price')*$this->input->post('qty'),
-						"service_charge"=>$this->input->post('service_charge'),						
-						"igst"=>$this->input->post('igst'),
-						"total"=>$amount,
-						"type"=>$user['user_details'][0]["type"],
-						"status"=>$status
-						);
-					     
-					     $booking_id = $this->Search_Model->save("booking_tbl",$arr);
-						 $result["flight"]=$this->Search_Model->flight_details($id); 
-						 if($result["flight"][0]["trip_type"]=="ONE")
-							 $trip="ONE WAY";
-						 else
-							 $trip="RETURN";
-						 if($booking_id)	
-						 {
-							  if($result["flight"][0]["sale_type"]=="live")
-							  {
-								 // FOR LIVE BOOKING
-								  $arr=array(
-									"date"=>date("Y-m-d h:i:s"),
-									"ticket_id"=>$id,
-									"seller_id"=>$result1[0]["user_id"],
-									"pnr"=>$result1[0]["pnr"],
-									"customer_id"=>$this->session->userdata('user_id'),
-									"qty"=>$this->input->post('qty'),
-									
-									"rate"=>$this->input->post('price'),
-									"amount"=>$this->input->post('price')*$this->input->post('qty'),
-									"service_charge"=>$this->input->post('service_charge'),						
-									"igst"=>$this->input->post('igst'),
-									"total"=>$amount,
-									"type"=>$user['user_details'][0]["type"],
-									"status"=>$status,
-									"booking_id"=>$booking_id
-									);
-								  $refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
-								   // FOR LIVE BOOKING
-							  }
-							  
-					         if($this->session->userdata('user_id')==$user_id)
-							 {
-								 $amount=$this->input->post('total');
-								 $arr=array(
-								 'date'=>date("Y-m-d h:i:s"),
-								 'user_id'=>$this->session->userdata('user_id'),
-								 'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
-								 'booking_id'=>$booking_id,
-								 'type'=>'DR'
-								 );					 
-								 $this->Search_Model->save("wallet_tbl",$arr);
-								 
-								 
-								 $amount=$this->input->post('total');
-								 $arr=array(
-								 'date'=>date("Y-m-d h:i:s"),
-								 'user_id'=>$result1[0]["user_id"],
-								 'amount'=>($amount),
-								 'booking_id'=>$booking_id,
-								 'type'=>'CR'
-								 );	
-								 
-								 $this->Search_Model->save("wallet_tbl",$arr);
-								 $where=array("id"=>$id);
-								 $current_no_of_person=$no_of_person-$this->input->post('qty');
-							     $data=array("no_of_person"=>$current_no_of_person);
-							     $this->Search_Model->update("tickets_tbl",$data,$where);
-								 
-								 
-								 $user['user_details']=$this->User_Model->user_details();	          							
-							     $data = array(				            
-									 'name' => "OXYTRA",
-									 'email'=>$user['user_details'][0]["email"],
-									 'msg'=>"You have Booked  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id.")",
-									 'msg1'=>' You booking is confirm',
-									 'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-									 );
-							      $this->send("Booking",$data);
-							
-							
-							       $data1 = array(				            
-									 'name' => $user['user_details'][0]["name"],
-									 'email'=>$user['user_details'][0]["email"],
-									 'mobile'=>$user['user_details'][0]["mobile"],
-									 'msg'=>"A New Booking done by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id.")",
-									 'user_id'=> $user['user_details'][0]["user_id"],
-									 'msg1'=>'',
-									 'msg2'=>""							 
-									 );									 
-							        $this->adminsend("Booking",$data1);
-								    $no=$user['user_details'][0]["mobile"];
-									$msg="You have Booked a trip Booking No. ".$booking_id." Thanks, OXYTRA";
-									$this->send_message($no,$msg);
-									
-								
-									$no="9800412356";
-									$msg="A New Booking done by User ID : ".$user['user_details'][0]["user_id"]." Booking No. ".$booking_id."";
-									$this->send_message($no,$msg);
-							 }							 
-							 else
-							 {		
-                                 $amount=($this->input->post('total'));
-								 $arr=array(
-								 'date'=>date("Y-m-d h:i:s"),
-								 'user_id'=>$this->session->userdata('user_id'),
-								 'amount'=>(0-$amount),
-								 'booking_id'=>$booking_id,
-								 'type'=>'DR'
-								 );					 
-								 $this->Search_Model->save("wallet_tbl",$arr);
-								 
-								 
-								 
-								 $user['user_details']=$this->User_Model->user_details();	          							
-							     $data = array(				            
-									 'name' => "OXYTRA",
-									 'email'=>$user['user_details'][0]["email"],
-									 'msg'=>"You have requested for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id.")",
-									 'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> You booking will be confirm',
-									 'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-									 );
-							      $this->send("Booking",$data);
-							
-							
-							       $data1 = array(				            
-									 'name' => $user['user_details'][0]["name"],
-									 'email'=>$user['user_details'][0]["email"],
-									 'mobile'=>$user['user_details'][0]["mobile"],
-									 'msg'=>"A New Booking Request by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id.")",
-									 'user_id'=> $user['user_details'][0]["user_id"],
-									 'msg1'=>'',
-									 'msg2'=>""							 
-									 );									 
-							       $this->adminsend("Booking",$data1);
-
-								    $no=$user['user_details'][0]["mobile"];
-									$msg="You have Requested for a trip Request No. ".$booking_id." Thanks, OXYTRA";
-									$this->send_message($no,$msg);
-									
-								
-									$no="9800412356";
-									$msg="A New Booking Requested done by User ID : ".$user['user_details'][0]["user_id"]." Request No. ".$booking_id."";
-								 
-								
-							 }
-							 							 							 							 							
-							 $where=array("id"=>$id);
-							 
-							 if($result["flight"][0]["sale_type"]=="live")
-							  {
-								   foreach($_REQUEST["prefix"] as $key=>$value)
-								 {
-									  $arr=array("prefix"=>$_REQUEST["prefix"][$key],
-												 "first_name"=>$_REQUEST["first_name"][$key],
-												 "last_name"=>$_REQUEST["last_name"][$key],
-												 "mobile_no"=>$_REQUEST["mobile_no"][$key],
-												 "age"=>$_REQUEST["age"][$key],
-												 "email"=>$_REQUEST["email"][$key],
-												 "booking_id"=>$booking_id,
-												  "refrence_id"=>$refrence_id,
-												 "pnr"=>$result1[0]["pnr"]
-												 );
-									  $this->Search_Model->save("customer_information_tbl",$arr);
-								 }
-								 
-								  $current_no_of_person=$no_of_person-$this->input->post('qty');
-							      $data=array("no_of_person"=>$current_no_of_person);
-							      $this->Search_Model->update("tickets_tbl",$data,$where);
-							  }
-							  else
-							  {
-								  foreach($_REQUEST["prefix"] as $key=>$value)
-								 {
-									  $arr=array("prefix"=>$_REQUEST["prefix"][$key],
-												 "first_name"=>$_REQUEST["first_name"][$key],
-												 "last_name"=>$_REQUEST["last_name"][$key],
-												 "mobile_no"=>$_REQUEST["mobile_no"][$key],
-												 "age"=>$_REQUEST["age"][$key],
-												 "email"=>$_REQUEST["email"][$key],
-												 "booking_id"=>$booking_id,
-												 "pnr"=>$result1[0]["pnr"]
-												 );
-									  $this->Search_Model->save("customer_information_tbl",$arr);
-								 }
-							  }
-							 
-							 redirect("/search/thankyou/".$booking_id."");
-						 }
-						 else
-							 echo $this->db->last_query();die();
-				}					
-					
-			}		      		
+		$result["footer"]=$this->Search_Model->get_post(5);
+		$wallet_amount=0;
+		if ($this->input->post('date') && $this->input->post('qty')) 
+		{
+			$CI =   &get_instance();
+			$check = $CI->db->get_where('wallet_tbl', array('user_id' => $this->session->userdata('user_id')));				
+			$result=$check->result_array();
 			
+			$ticket = $CI->db->get_where('tickets_tbl', array('id' => $id));				
+			$result1=$ticket->result_array();
+			$no_of_person=$result1[0]["no_of_person"];								 
+			$user_id=$result1[0]["user_id"];
+			$pnr=$result1[0]["pnr"];
+			$amount=$this->input->post('total');
+			$user['user_details']=$this->User_Model->user_details();
+			
+			
+			foreach($result as $key=>$value)
+			{
+				$wallet_amount+=$result[$key]["amount"];
+			}				
+			if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
+			{
+				$result["setting"]=$this->Search_Model->setting();
+				$this->load->view('header1',$result);
+				$this->load->view('insufficient_amount',$result);
+				$this->load->view('footer1'); 					
+			}
+			else
+			{
+					$result=$this->User_Model->user_details();
+					if($pnr!="" && $this->session->userdata('user_id')==$user_id)
+						$status="CONFIRM";
+					else
+						$status="PENDING";	
+
+					
+					$arr=array(
+					"date"=>date("Y-m-d h:i:s"),
+					"ticket_id"=>$id,
+					"seller_id"=>$result1[0]["user_id"],
+					"pnr"=>$result1[0]["pnr"],
+					"customer_id"=>$this->session->userdata('user_id'),
+					"qty"=>$this->input->post('qty'),
+					"available_qty"=>$this->input->post('qty'),
+					"rate"=>$this->input->post('price'),
+					"amount"=>$this->input->post('price')*$this->input->post('qty'),
+					"service_charge"=>$this->input->post('service_charge'),
+					"igst"=>$this->input->post('igst'),
+					"total"=>$amount,
+					"type"=>$user['user_details'][0]["type"],
+					"status"=>$status
+					);
+						
+						$booking_id = $this->Search_Model->save("booking_tbl",$arr);
+						$result["flight"]=$this->Search_Model->flight_details($id); 
+						if($result["flight"][0]["trip_type"]=="ONE")
+							$trip="ONE WAY";
+						else
+							$trip="RETURN";
+						if($booking_id)	
+						{
+							if($result["flight"][0]["sale_type"]=="live")
+							{
+								// FOR LIVE BOOKING
+								$arr=array(
+								"date"=>date("Y-m-d h:i:s"),
+								"ticket_id"=>$id,
+								"seller_id"=>$result1[0]["user_id"],
+								"pnr"=>$result1[0]["pnr"],
+								"customer_id"=>$this->session->userdata('user_id'),
+								"qty"=>$this->input->post('qty'),
+								
+								"rate"=>$this->input->post('price'),
+								"amount"=>$this->input->post('price')*$this->input->post('qty'),
+								"service_charge"=>$this->input->post('service_charge'),						
+								"igst"=>$this->input->post('igst'),
+								"total"=>$amount,
+								"type"=>$user['user_details'][0]["type"],
+								"status"=>$status,
+								"booking_id"=>$booking_id
+								);
+								$refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
+								// FOR LIVE BOOKING
+							}
+							
+							if($this->session->userdata('user_id')==$user_id)
+							{
+								$amount=$this->input->post('total');
+								$arr=array(
+								'date'=>date("Y-m-d h:i:s"),
+								'user_id'=>$this->session->userdata('user_id'),
+								'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
+								'booking_id'=>$booking_id,
+								'type'=>'DR'
+								);					 
+								$this->Search_Model->save("wallet_tbl",$arr);
+								
+								
+								$amount=$this->input->post('total');
+								$arr=array(
+								'date'=>date("Y-m-d h:i:s"),
+								'user_id'=>$result1[0]["user_id"],
+								'amount'=>($amount),
+								'booking_id'=>$booking_id,
+								'type'=>'CR'
+								);	
+								
+								$this->Search_Model->save("wallet_tbl",$arr);
+								$where=array("id"=>$id);
+								$current_no_of_person=$no_of_person-$this->input->post('qty');
+								$data=array("no_of_person"=>$current_no_of_person);
+								$this->Search_Model->update("tickets_tbl",$data,$where);
+								
+								
+								$user['user_details']=$this->User_Model->user_details();	          							
+								$data = array(				            
+									'name' => "OXYTRA",
+									'email'=>$user['user_details'][0]["email"],
+									'msg'=>"You have Booked  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id.")",
+									'msg1'=>' You booking is confirm',
+									'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
+									);
+								$this->send("Booking",$data);
+						
+						
+								$data1 = array(				            
+									'name' => $user['user_details'][0]["name"],
+									'email'=>$user['user_details'][0]["email"],
+									'mobile'=>$user['user_details'][0]["mobile"],
+									'msg'=>"A New Booking done by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id.")",
+									'user_id'=> $user['user_details'][0]["user_id"],
+									'msg1'=>'',
+									'msg2'=>""							 
+									);									 
+								$this->adminsend("Booking",$data1);
+								$no=$user['user_details'][0]["mobile"];
+								$msg="You have Booked a trip Booking No. ".$booking_id." Thanks, OXYTRA";
+								$this->send_message($no,$msg);
+								
+							
+								$no="9800412356";
+								$msg="A New Booking done by User ID : ".$user['user_details'][0]["user_id"]." Booking No. ".$booking_id."";
+								$this->send_message($no,$msg);
+							}							 
+							else
+							{		
+								$amount=($this->input->post('total'));
+								$arr=array(
+								'date'=>date("Y-m-d h:i:s"),
+								'user_id'=>$this->session->userdata('user_id'),
+								'amount'=>(0-$amount),
+								'booking_id'=>$booking_id,
+								'type'=>'DR'
+								);					 
+								$this->Search_Model->save("wallet_tbl",$arr);
+								
+								
+								
+								$user['user_details']=$this->User_Model->user_details();	          							
+								$data = array(				            
+									'name' => "OXYTRA",
+									'email'=>$user['user_details'][0]["email"],
+									'msg'=>"You have requested for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id.")",
+									'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> You booking will be confirm',
+									'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
+									);
+								$this->send("Booking",$data);
+						
+						
+								$data1 = array(				            
+									'name' => $user['user_details'][0]["name"],
+									'email'=>$user['user_details'][0]["email"],
+									'mobile'=>$user['user_details'][0]["mobile"],
+									'msg'=>"A New Booking Request by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id.")",
+									'user_id'=> $user['user_details'][0]["user_id"],
+									'msg1'=>'',
+									'msg2'=>""							 
+									);									 
+								$this->adminsend("Booking",$data1);
+
+								$no=$user['user_details'][0]["mobile"];
+								$msg="You have Requested for a trip Request No. ".$booking_id." Thanks, OXYTRA";
+								$this->send_message($no,$msg);
+								
+							
+								$no="9800412356";
+								$msg="A New Booking Requested done by User ID : ".$user['user_details'][0]["user_id"]." Request No. ".$booking_id."";
+								
+							
+							}
+																																		
+							$where=array("id"=>$id);
+							
+							if($result["flight"][0]["sale_type"]=="live")
+							{
+								foreach($_REQUEST["prefix"] as $key=>$value)
+								{
+									$arr=array("prefix"=>$_REQUEST["prefix"][$key],
+												"first_name"=>$_REQUEST["first_name"][$key],
+												"last_name"=>$_REQUEST["last_name"][$key],
+												"mobile_no"=>$_REQUEST["mobile_no"][$key],
+												"age"=>$_REQUEST["age"][$key],
+												"email"=>$_REQUEST["email"][$key],
+												"booking_id"=>$booking_id,
+												"refrence_id"=>$refrence_id,
+												"pnr"=>$result1[0]["pnr"]
+												);
+									$this->Search_Model->save("customer_information_tbl",$arr);
+								}
+								
+								$current_no_of_person=$no_of_person-$this->input->post('qty');
+								$data=array("no_of_person"=>$current_no_of_person);
+								$this->Search_Model->update("tickets_tbl",$data,$where);
+							}
+							else
+							{
+								foreach($_REQUEST["prefix"] as $key=>$value)
+								{
+									$arr=array("prefix"=>$_REQUEST["prefix"][$key],
+												"first_name"=>$_REQUEST["first_name"][$key],
+												"last_name"=>$_REQUEST["last_name"][$key],
+												"mobile_no"=>$_REQUEST["mobile_no"][$key],
+												"age"=>$_REQUEST["age"][$key],
+												"email"=>$_REQUEST["email"][$key],
+												"booking_id"=>$booking_id,
+												"pnr"=>$result1[0]["pnr"]
+												);
+									$this->Search_Model->save("customer_information_tbl",$arr);
+								}
+							}
+							
+							redirect("/search/thankyou/".$booking_id."");
+						}
+						else
+							echo $this->db->last_query();die();
+			}					
+				
+		}
 	}
+
+	private function get_wallet_balance($userid) {
+		$CI =   &get_instance();
+		$check = $CI->db->get_where('wallet_tbl', array('user_id' => $userid));
+		$result=$check->result_array();
+		$wallet_amount = 0;
+		
+		foreach($result as $key=>$value)
+		{
+			$wallet_amount+=$result[$key]["amount"];
+		}
+
+		return $wallet_amount;
+	}
+
 	public function sendquote($id)
 	{
 	    if($_SERVER['REQUEST_METHOD'] == 'POST') 		  

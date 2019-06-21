@@ -6126,3 +6126,27 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 .hide-agent-fields {
 	display: none;
 }
+.circle {
+	font-size: 22px;
+	font-weight: 700;
+	color: #ffffff;
+}
+.circle > .down {
+	transform: rotate(83deg);
+}
+.circle i {
+	margin: 0px 10px 0px 10px;
+}
+.tripway {
+	font-size: 12px;
+	font-weight: 400;
+	color: #ffffff;
+	margin: 10px 0px 0px 0px;
+}
+.warning {
+	color: #ff0000;
+	font-size: 22px;
+	font-weight: 700;
+	margin: 5px 10px 5px 10px;
+	text-align: left;
+}

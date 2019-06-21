@@ -40,9 +40,11 @@
 									</div><!-- end detail-img -->
 
 									<div class="detail-title">
-									  <h4><a href="#"> <?php echo $flight[0]["source_city"]; ?> To <?php echo $flight[0]["destination_city"]; ?></a></h4>
-									  <p><?php if($flight[0]["trip_type"]=="ONE") echo $flight[0]["trip_type"]." Way"; if($flight[0]["trip_type"]=="ROUND") echo $flight[0]["trip_type"]." Trip";  ?></p>
-									  
+										<div class="circle"><i class="fa fa-plane" aria-hidden="true"></i><?php echo $flight[0]["source_city"]; ?></div>
+										<div class="circle"><i class="fa fa-plane down" aria-hidden="true"></i><?php echo $flight[0]["destination_city"]; ?></div>
+									  	<div class="tripway">
+											<?php if($flight[0]["trip_type"]=="ONE") echo $flight[0]["trip_type"]." Way"; if($flight[0]["trip_type"]=="ROUND") echo $flight[0]["trip_type"]." Trip";?>
+										</div>
 									</div><!-- end detail-title -->
 
 									<div class="table-responsive">
@@ -161,10 +163,22 @@
 										  <tr>
 											<td>Total</td>
 											<?php $grand_total=($flight[0]["price"]*$this->session->userdata('no_of_person'))+$service_charge+($service_charge*$gst/100);?>
-											<td><?php echo number_format($grand_total,2,".",""); ?></td>
+											<td>
+												<?php echo number_format($grand_total,2,".",""); 
+												$allow_credit = $flight[0]["user"]["credit_ac"];
+												$show_alarm = false;
+												if($grand_total>$flight[0]["wallet_balance"] && $allow_credit==0) { 
+													$show_alarm = true; ?>
+													<span class="warning">*</span>
+												<?php }
+												?>
+											</td>
 										  </tr>
 										</tbody>
 									  </table>
+									  	<?php if($show_alarm) { ?>
+											<span class="warning">* Insufficient wallet balance (<?php echo $flight[0]["wallet_balance"] ?>)</span>
+										<?php } ?>
 									</div><!-- end table-responsive -->
 								  </div><!-- end side-bar-block -->
 								</div>
