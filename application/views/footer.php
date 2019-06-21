@@ -136,6 +136,9 @@
                     }
                 }
             }
+            else {
+                function myFunction() {};
+            }
         </script>
     </body>
 </html>

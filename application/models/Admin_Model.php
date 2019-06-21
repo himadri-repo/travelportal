@@ -129,6 +129,23 @@ Class Admin_Model extends CI_Model
 		}
 	}
 
+	public function get_companies() {
+		$this->db->select("cm.* ");
+		$this->db->from('company_tbl cm');
+		$this->db->where('cm.active=1');
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public function set_customer($customer) {
         if(!empty($customer["id"])){
             $data = $this->db->get_where("user_tbl", ['id' => $customer["id"]])->row_array();

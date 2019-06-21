@@ -8,7 +8,7 @@
                     	<h1 class="page-title">Verify MObile No.</h1>
                         <ul class="breadcrumb">
                             <li><a href="#">Home</a></li>
-                            <li class="active">Verify MObile No</li>
+                            <li class="active">Verify Mobile No</li>
                         </ul>
                     </div>
                 </div>

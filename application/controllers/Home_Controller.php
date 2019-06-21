@@ -1,5 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+include_once(APPPATH.'core/Common.php');
 
 class Home_Controller extends CI_Controller 
 {
@@ -19,30 +20,41 @@ class Home_Controller extends CI_Controller
 	
 	public function index()
 	{
-			if ($this->session->userdata('user_id')) 
-			{ 
-				if(NEW_FLOW) {
-					$companyid = $this->session->userdata("current_user")["companyid"];
-					$cname = $this->session->userdata("current_user")["cname"];
-					$result['cname']=$cname;
-				}
-				else {
-					$companyid = NULL;
-					$cname = NULL;
-					$result['cname']='';
-				}
-				
-				if(NEW_FLOW && $companyid!=NULL)
-				{
-					$result['company_setting']=$this->Search_Model->company_setting($companyid);
-				}
+		$companies = $this->Admin_Model->get_companies();
+		$company = null;
+		$siteUrl = siteURL();
+
+		for($idx=0; $idx<count($companies); $idx++) {
+			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+				$company = $companies[$idx];
+				break;
+			}
+		}
+
+		if ($this->session->userdata('user_id')) 
+		{ 
+			if(NEW_FLOW) {
+				$companyid = $this->session->userdata("current_user")["companyid"];
+				$cname = $this->session->userdata("current_user")["cname"];
+				$result['cname']=$cname;
 			}
 			else {
 				$companyid = NULL;
 				$cname = NULL;
 				$result['cname']='';
-				$result['company_setting'] = array();
 			}
+			
+			if(NEW_FLOW && $companyid!=NULL)
+			{
+				$result['company_setting']=$this->Search_Model->company_setting($companyid);
+			}
+		}
+		else {
+			$companyid = NULL;
+			$cname = NULL;
+			$result['cname']='';
+			$result['company_setting'] = array();
+		}
 
 	   	$result["setting"]=$this->Search_Model->setting();
 	   	$result["slider"]=$this->User_Model->select("slider_tbl");
@@ -68,7 +80,10 @@ class Home_Controller extends CI_Controller
 			//$this->load->view('header',$result);
 			$this->load->view('headernew',$result);
 			//$this->load->view('home');
-			$this->load->view('homenew');
+			if($company!==null) {
+				$this->session->set_userdata('company', $company);
+				$this->load->view('homenew');
+			}
 			$this->load->view('footer');
 	}
 	public function terms()

@@ -247,7 +247,12 @@ $( document ).ready(function()
 								  
 							});
 							
-						}
+						},
+						error: function(xhr, status, error){
+							var errorMessage = xhr.status + ': ' + xhr.statusText;
+							//alert('Error - ' + errorMessage);
+							console.log(errorMessage);
+						}						
 					});
 					return false;
 				

@@ -30,15 +30,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 $protocol = is_https() ? "https://" : "http://";
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "";
+$servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
 if(is_cli()) {
    $config['base_url'] = '';
 }
-else if(stristr($host, "localhost") !== FALSE || (stristr($host, '192.168.') !== FALSE) || (stristr($host, '127.0.0') !== FALSE)) {
+else if(stristr($servername, "localhost") !== FALSE || (stristr($servername, '192.168.') !== FALSE) || (stristr($servername, '127.0.0') !== FALSE)) {
    $config['base_url'] = $protocol.$host;
 }
 else {
-    $allowed_hosts = ['example.com', 'www.example.com', 'www.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
-    $config['base_url'] = in_array($host, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
+    $allowed_hosts = ['oxytra.pankh.com', 'airiq.pankh.com','wholesaler.example.com', 'supplier.example.com', 'example.com', 'www.example.com', 'www.oxytra.com', 'wholesaler.oxytra.com', 'supplier.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
+    $config['base_url'] = in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
 }
 
 //$config['base_url'] = '';

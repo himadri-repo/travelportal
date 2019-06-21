@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 include_once(APPPATH.'core/Mail_Controller.php');
+include_once(APPPATH.'core/Common.php');
 define('PAGE_SIZE', 25);
 
 class User_Controller extends Mail_Controller 
@@ -309,6 +310,7 @@ class User_Controller extends Mail_Controller
 	{		
 		$this->session->unset_userdata('user_id');
 		$this->session->unset_userdata('name');
+		$this->session->unset_userdata('company');
 		$this->session->sess_destroy();
 		$this->output->set_header("Cache-Control: no-store, no-cache, must-revalidate, no-transform, max-age=0, post-check=0, pre-check=0");
 		$this->output->set_header("Pragma: no-cache");
@@ -317,16 +319,41 @@ class User_Controller extends Mail_Controller
 	
 	public function register()
 	{
+		$companies = $this->Admin_Model->get_companies();
+		$company = null;
+		$siteUrl = siteURL();
+
+		for($idx=0; $idx<count($companies); $idx++) {
+			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+				$company = $companies[$idx];
+				break;
+			}
+		}
+
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$this->load->view('header1',$result);
-		$this->load->view('register');
+		if($company!==null) {
+			$this->session->set_userdata('company', $company);
+			$this->load->view('register');
+		}
 		$this->load->view('footer');
 		
 	}
 	
 	public function login()
 	{
+		$companies = $this->Admin_Model->get_companies();
+		$company = null;
+		$siteUrl = siteURL();
+
+		for($idx=0; $idx<count($companies); $idx++) {
+			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+				$company = $companies[$idx];
+				break;
+			}
+		}
+
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
 
@@ -337,7 +364,10 @@ class User_Controller extends Mail_Controller
 		}
 		else {
 			$this->load->view('header',$result);
-			$this->load->view('login');
+			if($company!==null) {
+				$this->session->set_userdata('company', $company);
+				$this->load->view('login');
+			}
 			$this->load->view('footer');
 		}
 	}
@@ -371,6 +401,9 @@ class User_Controller extends Mail_Controller
 			 $this->form_validation->set_rules('name', 'Name', 'required|trim|xss_clean');
 			 $this->form_validation->set_rules('email','Email','required|trim|xss_clean|valid_email|callback_unique_email');
 			 $this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]|callback_unique_mobile');
+			 $this->form_validation->set_rules('type','Register As.','required|xss_clean');
+			//  $this->form_validation->set_rules('pan','PAN.','trim|xss_clean|max_length[10]|min_length[10]');
+			//  $this->form_validation->set_rules('gst','GST.','trim|xss_clean|max_length[15]|min_length[15]');
 			 $this->form_validation->set_rules('password','Password','required|xss_clean|min_length[6]');
 			 $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[password]');
 			 
@@ -380,6 +413,7 @@ class User_Controller extends Mail_Controller
 					'name' => form_error('name', '<div class="error">', '</div>'),
 					'email' => form_error('email', '<div class="error">', '</div>'),                
 					'mobile' => form_error('mobile', '<div class="error">', '</div>'),
+					'type' => form_error('type', '<div class="error">', '</div>'),
 					'password' => form_error('password', '<div class="error">', '</div>'),
 					'confirm_password' => form_error('confirm_password', '<div class="error">', '</div>')								
 				);
@@ -387,31 +421,46 @@ class User_Controller extends Mail_Controller
 			 }
 			 else
 			 {
-				   
-				  $CI =   &get_instance();        
-                  $query  =   $CI->db->get('user_tbl');
-				  $num=$query->num_rows();
-				  $num++;
-				  $user_id="OXY".sprintf('%03d',$num);
-				  $arr = array(
-				             'user_id'=> $user_id,
-				             'name' => $this->input->post('name'),
-							 'email'=>$this->input->post('email'),
-							 'mobile'=>$this->input->post('mobile'),
-							 'password'=>$this->input->post('password'),
-							 'doj'=>date("Y-m-d")
-							 );
-				 $otp=rand(111111,999999);
-				 $this->session->set_userdata('otp',$otp);
-				 $this->session->set_userdata('data',$arr);
-				 $this->session->set_userdata('email',$this->input->post('email'));
-				 $this->session->set_userdata('name',$this->input->post('name'));
-				 $this->session->set_userdata('mobile',$this->input->post('mobile'));
-				 $this->session->set_userdata('reg_user_id',$user_id);
-				 $no=$this->input->post('mobile');
-				 $msg='Dear '.$this->input->post('name').', OTP for mobile number verification is '.$otp.'. Thanks OXYTRA';
-				 $this->send_message($no,$msg);
-				 $json["success"]=true;
+				$type = $this->input->post('type');
+				if($type=='traveller') {
+					$type = 'B2C';
+				}
+				else if($type=='agent') {
+					$type = 'B2B';
+				}
+				$company = $this->session->userdata('company');
+				$CI =   &get_instance();
+				$query  =   $CI->db->get('user_tbl');
+				$num=$query->num_rows();
+				$num++;
+				$user_id="USR".sprintf('%03d',$num); //prefix was OXY changed to USR just to make it company indipendent
+				$arr = array(
+							'user_id'=> $user_id,
+							'name' => $this->input->post('name'),
+							'email'=>$this->input->post('email'),
+							'mobile'=>$this->input->post('mobile'),
+							'password'=>$this->input->post('password'),
+							'companyid'=>$company['id'],
+							'type'=>$type,
+							'pan'=>$this->input->post('pan'),
+							'gst'=>$this->input->post('gst'),
+							'doj'=>date("Y-m-d")
+							);
+
+				$otp=rand(111111,999999);
+				$this->session->set_userdata('otp',$otp);
+				$this->session->set_userdata('data',$arr);
+				$this->session->set_userdata('email',$this->input->post('email'));
+				$this->session->set_userdata('type',$type);
+				$this->session->set_userdata('pan',$this->input->post('pan'));
+				$this->session->set_userdata('gst',$this->input->post('gst'));
+				$this->session->set_userdata('name',$this->input->post('name'));
+				$this->session->set_userdata('mobile',$this->input->post('mobile'));
+				$this->session->set_userdata('reg_user_id',$user_id);
+				$no=$this->input->post('mobile');
+				$msg='Dear '.$this->input->post('name').', OTP for mobile number verification is '.$otp.'. Thanks '.$company['display_name'];
+				$this->send_message($no,$msg);
+				$json["success"]=true;
 				 
 			 }
 			 echo json_encode($json);	
@@ -423,19 +472,34 @@ class User_Controller extends Mail_Controller
 	{
 		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		{
+			$company=$this->session->userdata('company');
 			$otp=$this->input->post('otp');
 			if ($otp==$this->session->userdata('otp')) 
 			{
+				$CI =   &get_instance();	
+
+				$query  =   $CI->db->get('user_tbl');
+				$num=$query->num_rows();
+				$num++;
+				$user_id="USR".sprintf('%03d',$num); //prefix was OXY changed to USR just to make it company indipendent
+
+				$query = $CI->db->get_where('user_tbl', array('id' => $company["primary_user_id"]));
+				$admin_user=$query->result_array();
+
 				$data=$this->session->userdata('data');
+				$data["uid"] = gen_uuid();
+				$data["user_id"] = $user_id;
+				$data["is_supplier"] = 0;
+				$data["permission"] = $this->get_default_permission($company, $data);
 				$result = $this->User_Model->save("user_tbl",$data);
 				if($result==true)
 				{
 					   			 
 						$data = array(				            
-								 'name' => "OXYTRA",
+								 'name' => $company['display_name'], // "OXYTRA",
 								 'email'=>$this->session->userdata('email'),
 								 'msg'=>"Your Registration Completed Successfully",
-								 'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> you can login to this site',
+								 'msg1'=>'After Admin Approval of <span class="il">'.$company['display_name'].'</span> you can login to this site',
 								 'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
 								 );
 						$this->send("Registration",$data);
@@ -450,15 +514,27 @@ class User_Controller extends Mail_Controller
 								 'msg2'=>""
 								 
 								 );
-								 
-						$this->adminsend("Registration",$data);
+				
+						try
+						{
+							$this->adminsend("Registration",$data);
+						}
+						catch(Exception $ex1) {
+							
+						}
 												
-						$no="9800412356";
-						$msg="A New User Register with OXYTRA. User ID : ".$this->session->userdata('reg_user_id')."";
+						if($admin_user!=null && count($admin_user)>0 && $admin_user[0]["mobile"]!='') {
+							$no=$admin_user[0]["mobile"];
+						}
+						else {
+							$no="9800412356";
+						}
+						$msg="A New User Register with ".$company['display_name'].". User ID : ".$this->session->userdata('reg_user_id')."";
 						$this->send_message($no,$msg);
 						$this->session->set_userdata('otp',"");
 					    $this->session->set_userdata('data',"");
 						$this->session->set_userdata('email',"");
+						$this->session->set_userdata('type',"");
 						$this->session->set_userdata('name',"");
 						$this->session->set_userdata('mobile',"");
 						$this->session->set_userdata('reg_user_id',"");
@@ -640,11 +716,13 @@ class User_Controller extends Mail_Controller
 		 }		 
 	}
 	
-	
 	public function unique_email($email)
     {
-        $CI =   &get_instance();        
-        $check = $CI->db->get_where('user_tbl', array('email' => $email));
+		$company = $this->session->userdata('company');
+
+		$CI =   &get_instance();        
+		//$check = $CI->db->get_where('user_tbl', array('email' => $email));
+        $check = $CI->db->get_where('user_tbl', array('email' => $email, 'companyid' => $company['id']));
         
         if ($check->num_rows() > 0) 
 		{
@@ -658,8 +736,11 @@ class User_Controller extends Mail_Controller
 	
 	public function unique_mobile($mobile)
     {
-        $CI =   &get_instance();        
-        $check = $CI->db->get_where('user_tbl', array('mobile' => $mobile));
+		$company = $this->session->userdata('company');
+
+		$CI =   &get_instance();        
+		//$check = $CI->db->get_where('user_tbl', array('mobile' => $mobile));
+		$check = $CI->db->get_where('user_tbl', array('mobile' => $mobile, 'companyid' => $company['id']));
         
         if ($check->num_rows() > 0) 
 		{
@@ -703,9 +784,12 @@ class User_Controller extends Mail_Controller
 	private function do_checkNewLogin() {
 		try
 		{
+			$company = $this->session->userdata('company');
+
 			$arr = array(
 				'mobile'=>$this->input->post('mobile'),						 
-				'password'=>$this->input->post('password')						 
+				'password'=>$this->input->post('password'),
+				'companyid'=>$company["id"]
 			);
 
 			$result = $this->User_Model->newlogin($arr);
@@ -1929,5 +2013,10 @@ class User_Controller extends Mail_Controller
 			 echo json_encode($json);	
 			
 		 }		 		 		
+	}
+
+	private function get_default_permission($company, $data) {
+		// we need to put some logic here. If needed we can query table and get the default value set to any company
+		return 255;
 	}
 }

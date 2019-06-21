@@ -32,10 +32,28 @@
                                              <input type="text" class="form-control" placeholder="Name"  id="name" name="name" autocomplete="off" value=""/>
                                              <span><i class="fa fa-user"></i></span>
                                         </div>
-        
+
                                         <div class="form-group">
                                              <input type="email" class="form-control" placeholder="Email" id="email"  name="email" autocomplete="off" value=""/>
                                              <span><i class="fa fa-envelope"></i></span>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <div class="form-input-section">
+                                                <span for="type" class="form-title">Registering as *</span>
+                                                <div class="form-field"><input type="radio" id="type" name="type" value="traveller"> Me a Traveller</div>
+                                                <div class="form-field"><input type="radio" id="type" name="type" value="agent"> Me a Travel Agent</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group hide-agent-fields" alias="fortraveller">
+                                             <input type="text" class="form-control" placeholder="PAN" id="pan"  name="pan" autocomplete="off" value=""/>
+                                             <span><i class="fa fa-address-card-o"></i></span>
+                                        </div>
+
+                                        <div class="form-group hide-agent-fields" alias="fortraveller">
+                                             <input type="text" class="form-control" placeholder="GST #" id="gst"  name="gst" autocomplete="off" value=""/>
+                                             <span><i class="fa fa-id-card-o"></i></span>
                                         </div>
 										
 										<div class="form-group">
@@ -74,8 +92,26 @@
                 </div><!-- end container -->         
             </div><!-- end registration -->
         </section><!-- end innerpage-wrapper -->
-        
-        
-        
-        
-        
+
+        <script language="javascript">
+            $(document).ready(function()
+            {
+                try
+                {
+                    $('input[type=radio][name=type]').change(function() {
+                        if (this.value == 'traveller') {
+                            // alert("I am a traveller");
+                            $('div[alias=fortraveller]').addClass("hide-agent-fields");
+                        }
+                        else if (this.value == 'agent') {
+                            //alert("I am a travel agent");
+                            $('div[alias=fortraveller]').removeClass("hide-agent-fields");
+                        }
+                    });
+                }
+                catch(e) {
+                    console.log(e);
+                }
+            });
+
+        </script>
