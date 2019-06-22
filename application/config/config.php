@@ -30,7 +30,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 $protocol = is_https() ? "https://" : "http://";
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "";
+$host = str_replace('www.', '', $host);
 $servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
+$servername = str_replace('www.', '', $servername);
 if(is_cli()) {
    $config['base_url'] = '';
 }

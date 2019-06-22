@@ -4,6 +4,7 @@ function siteURL() {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     //$domainName = $_SERVER['HTTP_HOST'] . '/';
     $domainName = $_SERVER['HTTP_HOST'];
+    $domainName = str_replace('www.', '', $domainName);
     return $protocol . $domainName;
 }
 

@@ -787,5 +787,23 @@ Class Admin_Model extends CI_Model
             return false;
 		}
 	}
+
+	public function get_metadata($metadatacode, $companyid) {
+		$this->db->select("mt.* ", FALSE);
+		$this->db->from('metadata_tbl mt');
+		$this->db->where("mt.active=1 and mt.associated_object_type = '$metadatacode' and (mt.companyid = 0 or mt.companyid = $companyid)", NULL, FALSE);
+
+		$query = $this->db->get();
+		$qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+            	return $query->result_array();
+		}
+		else
+		{
+            	return false;
+		}
+	}
+
 }	
 ?>

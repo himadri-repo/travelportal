@@ -37,7 +37,34 @@
                                              <input type="email" class="form-control" placeholder="Email" id="email"  name="email" autocomplete="off" value=""/>
                                              <span><i class="fa fa-envelope"></i></span>
                                         </div>
-                                        
+
+                                        <div class="form-group">
+                                            <span for="address" class="form-title">Address *</span>
+                                            <textarea id="address" class="form-control" name="address" rows="3"></textarea>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <span for="state" class="form-title">State *</span>
+                                            <select id="state" class="form-control" name="state">
+                                                <option value="-1">Select your state</option>
+                                                <?php
+                                                foreach ($states as $state) { ?>
+                                                    <option value="<?php echo $state["id"] ?>"><?php echo $state["datavalue"]?></option>
+                                                <?php }?>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <span for="country" class="form-title">Country *</span>
+                                            <select id="country" class="form-control" name="country">
+                                                <option value="-1">Select your country</option>
+                                                <?php
+                                                foreach ($countries as $country) { ?>
+                                                    <option value="<?php echo $country["id"] ?>"><?php echo $country["datavalue"]?></option>
+                                                <?php }?>
+                                            </select>
+                                        </div>
+
                                         <div class="form-group">
                                             <div class="form-input-section">
                                                 <span for="type" class="form-title">Registering as *</span>

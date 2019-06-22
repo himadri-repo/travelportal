@@ -334,8 +334,15 @@ class User_Controller extends Mail_Controller
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$this->load->view('header1',$result);
 		if($company!==null) {
+			$states = $this->Admin_Model->get_metadata('state', $company["id"]);
+			$country = $this->Admin_Model->get_metadata('country', $company["id"]);
+			$payload = array(
+				'states' => $states,
+				'countries' => $country
+			);
+
 			$this->session->set_userdata('company', $company);
-			$this->load->view('register');
+			$this->load->view('register', $payload);
 		}
 		$this->load->view('footer');
 		
@@ -399,6 +406,9 @@ class User_Controller extends Mail_Controller
 		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		 {
 			 $this->form_validation->set_rules('name', 'Name', 'required|trim|xss_clean');
+			 $this->form_validation->set_rules('address', 'Address', 'required|trim|xss_clean');
+			 $this->form_validation->set_rules('state', 'State', 'required|callback_validate_state');
+			 $this->form_validation->set_rules('country', 'Country', 'required|callback_validate_country');
 			 $this->form_validation->set_rules('email','Email','required|trim|xss_clean|valid_email|callback_unique_email');
 			 $this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]|callback_unique_mobile');
 			 $this->form_validation->set_rules('type','Register As.','required|xss_clean');
@@ -411,6 +421,9 @@ class User_Controller extends Mail_Controller
 			 {
 				$json = array(
 					'name' => form_error('name', '<div class="error">', '</div>'),
+					'address' => form_error('address', '<div class="error">', '</div>'),
+					'state' => form_error('state', '<div class="error">', '</div>'),
+					'country' => form_error('country', '<div class="error">', '</div>'),
 					'email' => form_error('email', '<div class="error">', '</div>'),                
 					'mobile' => form_error('mobile', '<div class="error">', '</div>'),
 					'type' => form_error('type', '<div class="error">', '</div>'),
@@ -437,6 +450,9 @@ class User_Controller extends Mail_Controller
 				$arr = array(
 							'user_id'=> $user_id,
 							'name' => $this->input->post('name'),
+							'address' => $this->input->post('address'),
+							'state' => $this->input->post('state'),
+							'country' => $this->input->post('country'),
 							'email'=>$this->input->post('email'),
 							'mobile'=>$this->input->post('mobile'),
 							'password'=>$this->input->post('password'),
@@ -716,6 +732,24 @@ class User_Controller extends Mail_Controller
 		 }		 
 	}
 	
+	public function validate_state($state) {
+		$flag = intval($state)>0;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_state', 'Please select state you stay');
+
+		return intval($state)>0;
+	}
+
+	public function validate_country($country) {
+		$flag = intval($country)>0;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_country', 'Please select country you stay');
+
+		return intval($country)>0;
+	}
+
 	public function unique_email($email)
     {
 		$company = $this->session->userdata('company');
