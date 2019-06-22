@@ -201,12 +201,12 @@
 
 													<div class="col-sm-4">
 														<?php 
-															$bank = isset($company_setting["bank_name"])?$company_setting["bank_name"]:$setting[0]["bank_name"];
-															$branch = isset($company_setting["bank_branch"])?$company_setting["bank_branch"]:$setting[0]["bank_branch"];
+															$bank = isset($company_setting[0]["bank_name"])?$company_setting[0]["bank_name"]:$setting[0]["bank_name"];
+															$branch = isset($company_setting[0]["bank_branch"])?$company_setting[0]["bank_branch"]:$setting[0]["bank_branch"];
 															//$acc_name = $setting[0]["acc_name"]; //$company_setting["acc_name"]?'true':'false';
-															$acc_name = isset($company_setting["acc_name"])?$company_setting["acc_name"]:$setting[0]["acc_name"];
-															$acc_no = isset($company_setting["acc_no"])?$company_setting["acc_no"]:$setting[0]["acc_no"];
-															$ifsc = isset($company_setting["ifsc"])?$company_setting["ifsc"]:$setting[0]["ifsc"];
+															$acc_name = isset($company_setting[0]["acc_name"])?$company_setting[0]["acc_name"]:$setting[0]["acc_name"];
+															$acc_no = isset($company_setting[0]["acc_no"])?$company_setting[0]["acc_no"]:$setting[0]["acc_no"];
+															$ifsc = isset($company_setting[0]["ifsc"])?$company_setting[0]["ifsc"]:$setting[0]["ifsc"];
 														?>
                                                         <p><b>BANK NAME : </b> <?php echo $bank;?></p>
 														<p><b>BRANCH : </b> <?php echo $branch;?></p>

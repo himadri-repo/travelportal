@@ -44,7 +44,9 @@ class Search extends Mail_Controller
 				$result['company_setting']=$this->Search_Model->company_setting($companyid);
 			}
 
-			$result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
+			$result['setting']=$this->Search_Model->company_setting($companyid);
+			
 			$this->load->view('header1',$result);
 			$this->load->view('search',$result);
 			$this->load->view('footer1');

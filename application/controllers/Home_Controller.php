@@ -56,7 +56,8 @@ class Home_Controller extends CI_Controller
 			$result['company_setting'] = array();
 		}
 
-	   	$result["setting"]=$this->Search_Model->setting();
+		//$result["setting"]=$this->Search_Model->setting();
+		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 	   	$result["slider"]=$this->User_Model->select("slider_tbl");
 	   	
 	   	$today=date("Y-m-d H:i:s");

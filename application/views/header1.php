@@ -104,12 +104,13 @@
 			}
 
             if($cname!=null && !empty($cname)) {
-                $phone = $company_setting["phone_no"];
-                $logo = $company_setting["logo"];
+                $phone = $company_setting[0]["phone_no"];
+                $logo = $company_setting[0]["logo"];
                 $admin = $this->session->userdata('current_user')['is_admin'];
             }
             else {
-                $cname = $setting[0]["address"];
+                //$cname = $setting[0]["address"];
+                $cname = $setting[0]["site_title"];
                 $phone = $setting[0]["phone_no"];
                 $logo = $setting[0]["logo"];
                 $admin = 0;

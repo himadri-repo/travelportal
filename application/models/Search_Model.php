@@ -144,14 +144,38 @@ Class Search_Model extends CI_Model
 		
 		$this->db->where($arr);
 		$query = $this->db->get();					
-		$data = array();
+		$data = array(
+			'setting_id' => $companyid,
+			'site_title' => '',
+			'phone_no' => '',
+			'fax' => '',
+			'email' => '',
+			'address' => '',
+			'logo' => '',
+			'site_banner' => '',
+			'facebook_link' => '',
+			'twitter_link' => '',
+			'youtube_link' => '',
+			'pinterest_link' => '',
+			'instagram_link' => '',
+			'google_link' => '',
+			'bank_name' => '',
+			'branch' => '',
+			'acc_no' => '',
+			'acc_name' => '',
+			'ifsc' => '',
+			'map' => '',
+			'service_charge' => 0.00,
+			'cgst' => 0.00,
+			'igst' => 0.00
+		);
 		
 		if ($query->num_rows() > 0) 
 		{	
 			foreach ($query->result_array() as $row) {
 				$data[$row['code']] = $row['datavalue'];
 			}
-			return $data;
+			return array($data);
 		}
 		else
 		{
@@ -170,7 +194,8 @@ Class Search_Model extends CI_Model
 		
 		if ($query->num_rows() > 0) 
 		{					
-            return $query->result_array();		
+			$result = $query->result_array();
+            return $result;
 		}
 		else
 		{

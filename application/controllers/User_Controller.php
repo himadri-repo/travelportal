@@ -39,8 +39,11 @@ class User_Controller extends Mail_Controller
 			$result['city']=$this->User_Model->select("city_tbl");	
 			$result['airline']=$this->User_Model->select("airline_tbl");
 			$result["footer"]=$this->Search_Model->get_post(5);
+
+			$company = $this->session->userdata("company");
 			
-			$result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 			if(NEW_FLOW)
 			{
@@ -330,7 +333,9 @@ class User_Controller extends Mail_Controller
 			}
 		}
 
-		$result["setting"]=$this->Search_Model->setting();
+		//$result["setting"]=$this->Search_Model->setting();
+		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$this->load->view('header1',$result);
 		if($company!==null) {
@@ -361,7 +366,9 @@ class User_Controller extends Mail_Controller
 			}
 		}
 
-		$result["setting"]=$this->Search_Model->setting();
+		//$result["setting"]=$this->Search_Model->setting();
+		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+
 		$result["footer"]=$this->Search_Model->get_post(5);
 
 		if(!NEW_FLOW) {
