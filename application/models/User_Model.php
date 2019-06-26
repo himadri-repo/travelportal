@@ -164,11 +164,11 @@ Class User_Model extends CI_Model
     }
 	public function filter_city($trip_type) 
 	{       
-        $today=date("Y-m-d");	
-		$arr=array("t.trip_type"=>$trip_type,"DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')>="=>$today,"t.approved"=>1,"available"=>"YES");  	
+        $today=date("Y-m-d");
+		$arr=array("t.trip_type"=>$trip_type,"DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')>="=>$today,"t.approved"=>1,"available"=>"YES");
 		$this->db->select('DISTINCT(c.city),c.id');
-		$this->db->from('tickets_tbl as t');		
-		$this->db->join('city_tbl as c', 't.source=c.id');				
+		$this->db->from('tickets_tbl as t');
+		$this->db->join('city_tbl as c', 't.source=c.id');
 		$this->db->where($arr);
 		
 		$query = $this->db->get();					

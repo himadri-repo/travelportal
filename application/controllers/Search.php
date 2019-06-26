@@ -38,7 +38,7 @@ class Search extends Mail_Controller
 			$result['city1']=$this->User_Model->filter_city("ROUND");
 			$result["flight"]="";
 			$result["footer"]=$this->Search_Model->get_post(5);
-			
+
 			if(NEW_FLOW && $companyid!=NULL)
 			{
 				$result['company_setting']=$this->Search_Model->company_setting($companyid);
@@ -57,85 +57,287 @@ class Search extends Mail_Controller
 	
 	public function search_one_way()
 	{ 
-	  //$diff = intval((strtotime($this->input->post('departure_date_time'))-strtotime(date("d-m-Y")))/60);
-	  $diff = intval((strtotime($this->input->post('departure_date'))-strtotime(date("d-m-Y")))/60);
-	  $diff=intval($diff/60);
-	  $days=$diff/24;
-	 
-      if ($this->session->userdata('user_id')) 
-	  {	
-          if($_SERVER['REQUEST_METHOD'] == 'POST') 
-		  {			  
-			  //if($this->input->post('departure_date_time')==date("d-m-Y")) 
-			  if($this->input->post('departure_date')==date("d-m-Y")) 
-			  {	
-				 $departure_date_time=date("Y-m-d H:i:s");			  
-				 $arr=array(
-				 "t.source"=>$this->input->post('source'),
-				 "t.destination"=>$this->input->post('destination'),
-				 "t.departure_date_time > "=>$departure_date_time,
-				 "DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')<"=>date('Y-m-d', strtotime(date("Y-m-d").' +1 day')),
-				 "t.trip_type"=>"ONE",
-				 "t.approved"=>"1",
-				 "t.available"=>"YES",
-				 "t.no_of_person>="=>$this->input->post('no_of_person')
-				 //"t.availibility>="=>$days
-				 );
-			  }
-			  else
-			  {
-				 //$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date_time')));		  
-				 $departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date')));
-				 $arr=array(
-				 "t.source"=>$this->input->post('source'),
-				 "t.destination"=>$this->input->post('destination'),
-				 "DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')="=>$departure_date_time,
-				 "t.trip_type"=>"ONE",
-				 "t.approved"=>"1",
-				 "t.available"=>"YES",
-				 "t.no_of_person>="=>$this->input->post('no_of_person')
-				 //"t.availibility>="=>$days
+		if ($this->session->userdata('user_id')) 
+		{	
+			if($_SERVER['REQUEST_METHOD'] == 'POST') 
+			{			  
+				$company = $this->session->userdata('company');
+
+				//if($this->input->post('departure_date_time')==date("d-m-Y")) 
+				if($this->input->post('departure_date')==date("d-m-Y")) 
+				{	
+					$departure_date_time=date("Y-m-d H:i:s");
+					$arr=array(
+					"companyid" => $company["id"],
+					"source"=>$this->input->post('source'),
+					"destination"=>$this->input->post('destination'),
+					"from_date"=>$departure_date_time,
+					"to_date"=>date('Y-m-d', strtotime(date("Y-m-d").' +1 day')),
+					"trip_type"=>"ONE",
+					"approved"=>"1",
+					"available"=>"YES",
+					"no_of_person"=>$this->input->post('no_of_person')
+					//"t.availibility>="=>$days
+					);
+				}
+				else
+				{
+					//$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date_time')));		  
+					$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date')));
+					$arr=array(
+					"companyid" => $company["id"],
+					"source"=>$this->input->post('source'),
+					"destination"=>$this->input->post('destination'),
+					"from_date"=>$departure_date_time,
+					"to_date"=>strtotime($departure_date_time.' +1 day'),
+					"trip_type"=>"ONE",
+					"approved"=>"1",
+					"available"=>"YES",
+					"no_of_person"=>$this->input->post('no_of_person')
+					//"t.availibility>="=>$days
 				
-				 );
-			  }
-			  $result['city']=$this->User_Model->filter_city("ONE");
-			  $result['city1']=$this->Search_Model->filter_city($this->input->post('source'),"ONE"); 
-			  $result['city2']=$this->User_Model->filter_city("ROUND");
-			  $result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE");
-			  $result["flight"]=$this->Search_Model->search_one_way($arr);
-			  
-			  $this->session->set_userdata('no_of_person',$this->input->post('no_of_person'));
-			  
-			  $result["post"][0]["source"]=$this->input->post('source');
-			  $result["post"][0]["destination"]=$this->input->post('destination');
+					);
+				}
+				$result['company']=$company;
+				$result['city']=$this->User_Model->filter_city("ONE");
+				$result['city1']=$this->Search_Model->filter_city($this->input->post('source'),"ONE"); 
+				$result['city2']=$this->User_Model->filter_city("ROUND");
+				$result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE", $company["id"]);
+				//$result["flight"]=$this->Search_Model->search_one_way($arr);
+				$tickets = $this->Search_Model->search_one_wayV2($arr);
+				$default_rp = $this->Admin_Model->rateplanByCompanyid($company["id"], array('rp.default' => 1));
+				$default_rp_detail = [];
+				if(count($default_rp)>0) {
+					$default_rp_detail = $this->Admin_Model->rateplandetails($default_rp[0]["id"]);
+				}
+
+				for ($i=0; $tickets && $i < count($tickets); $i++) { 
+					$ticket = &$tickets[$i];
+					$total = $ticket['total'];
+					$ticket["wsl_markup"] = 0;
+					$ticket["wsl_srvchg"] = 0;
+					$ticket["splr_markup"] = 0;
+					$ticket["splr_srvchg"] = 0;
+					$ticket["cgst"] = 0;
+					$ticket["sgst"] = 0;
+					$ticket["igst"] = 0;
+					$ticket["new"] = 0;
+
+					if($company["id"]==$ticket["companyid"] && count($default_rp_detail)>0) {
+						// This is own ticket to rate should be picked from default rate plan
+
+						$rateplandetail = $this->get_rateplan_detail_by_head('markup', $default_rp_detail);
+						if($rateplandetail!=NULL) {
+							if($rateplandetail["amount_type"]==1) {
+								//Fixed amount
+								$wsl_markup = $rateplandetail["amount"];
+							}
+							else {
+								$wsl_markup = round(($total * ($rateplandetail["amount"]/100)),0);
+							}
+
+							$ticket["wsl_markup"] = $wsl_markup;
+						}
+
+						$rateplandetail = $this->get_rateplan_detail_by_head('srvchg', $default_rp_detail);
+						if($rateplandetail!=NULL) {
+							if($rateplandetail["amount_type"]==1) {
+								//Fixed amount
+								$wsl_srvchg = $rateplandetail["amount"];
+							}
+							else {
+								$wsl_srvchg = round(($total * ($rateplandetail["amount"]/100)),0);
+							}
+							$ticket["wsl_srvchg"] = $wsl_srvchg;
+						}
+
+						$rateplandetail = $this->get_rateplan_detail_by_head('cgst', $default_rp_detail);
+						if($rateplandetail!=NULL) {
+							$cgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+							$ticket["cgst"] = $cgst;
+						}
+						$rateplandetail = $this->get_rateplan_detail_by_head('sgst', $default_rp_detail);
+						if($rateplandetail!=NULL) {
+							$sgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+							$ticket["sgst"] = $sgst;
+						}
+						$rateplandetail = $this->get_rateplan_detail_by_head('igst', $default_rp_detail);
+						if($rateplandetail!=NULL) {
+							$igst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+							$ticket["igst"] = $igst;
+						}
+					}
+					else {
+						//This is supplier's ticket to both rate should be applied as supplier and wholesaler
+						//now for supplier's commision
+						if($ticket["markup_rate"]<=0) {
+							$splr_markup = round(($total * $ticket["markup_rate"]),0);
+						}
+						else {
+							$splr_markup = round(($ticket["markup_rate"]),0);
+						}
+						if($ticket["srvchg_rate"]<=0) {
+							$splr_srvchg = round(($total * $ticket["srvchg_rate"]),0);
+						}
+						else {
+							$splr_srvchg = round(($ticket["srvchg_rate"]),0);
+						}
+						$ticket["splr_markup"] = $splr_markup;
+						$ticket["splr_srvchg"] = $splr_srvchg;
+
+						//now for wholesaler's commision
+						if($ticket["admin_markup"]<=0) {
+							$wsl_markup = round(($total * $ticket["admin_markup"]),0);
+						}
+						else {
+							$wsl_markup = round(($ticket["admin_markup"]),0);
+						}
+						if($ticket["admin_crvchg"]<=0) {
+							$wsl_srvchg = round(($total * $ticket["admin_crvchg"]),0);
+						}
+						else {
+							$wsl_srvchg = round(($ticket["admin_crvchg"]),0);
+						}
+						$ticket["wsl_markup"] = $wsl_markup;
+						$ticket["wsl_srvchg"] = $wsl_srvchg;
+						$cgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["cgst_rate"]),0);
+						$sgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["sgst_rate"]),0);
+						$igst = round((($wsl_srvchg+$splr_srvchg) * $ticket["igst_rate"]),0);
+						$ticket["cgst"] = $cgst;
+						$ticket["sgst"] = $sgst;
+						$ticket["igst"] = $igst;
+					}
+				}
+				
+				$result["flight"]=$tickets;
+				$result["rateplan"]=$default_rp;
+				
+				$this->session->set_userdata('no_of_person',$this->input->post('no_of_person'));
+				
+				$result["post"][0]["source"]=$this->input->post('source');
+				$result["post"][0]["destination"]=$this->input->post('destination');
 				$result["post"][0]["departure_date_time"]=$this->input->post('departure_date_time');
 				$result["post"][0]["departure_date"]=$this->input->post('departure_date');
-			  $result["post"][0]["no_of_person"]=$this->input->post('no_of_person');
-			  $result["post"][0]["hid_trip_type"]="ONE";
-			  //echo $this->db->last_query();die(); 
-			  /*if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
-			  {					  				 
-				 $result["flight"][0]["total"]=$result["flight"][0]["total"];
-			  }					 
-			  else	
-			  {					  
-				 $result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
+				$result["post"][0]["no_of_person"]=$this->input->post('no_of_person');
+				$result["post"][0]["hid_trip_type"]="ONE";
+				//echo $this->db->last_query();die(); 
+				$result["post"][0]["qty"]=$this->input->post('no_of_person');
+				$result["setting"]=$this->Search_Model->setting();
+				$result["footer"]=$this->Search_Model->get_post(5);
+				$this->load->view('header1',$result);
+				$this->load->view('search_one_way',$result);
+				$this->load->view('footer1');
+			}
+			else
+				redirect("/search");  
+		}
+		else
+			redirect("/login");  
+	}
+
+	private function get_rateplan_detail_by_head($headname, $rateplandetails) {
+		if($rateplandetails==null) return NULL;
+		if($headname==null || $headname=='') return NULL;
+		$rateplandetail = NULL;
+
+		try
+		{
+			for ($i=0; $rateplandetails && $i < count($rateplandetails); $i++) { 
+				if($rateplandetails[$i]["head_code"]==$headname) {
+					$rateplandetail = $rateplandetails[$i];
+					break;
+				}
+			}
+		}
+		catch(Exception $ex) {
+
+		}
+
+		return $rateplandetail;
+	}
+	
+	public function search_one_wayV1()
+	{ 
+		//$diff = intval((strtotime($this->input->post('departure_date_time'))-strtotime(date("d-m-Y")))/60);
+		$diff = intval((strtotime($this->input->post('departure_date'))-strtotime(date("d-m-Y")))/60);
+		$diff=intval($diff/60);
+		$days=$diff/24;
+		
+		if ($this->session->userdata('user_id')) 
+		{	
+			if($_SERVER['REQUEST_METHOD'] == 'POST') 
+			{	
+				$company = $this->session->userdata('company');
+		  
+				//if($this->input->post('departure_date_time')==date("d-m-Y")) 
+				if($this->input->post('departure_date')==date("d-m-Y")) 
+				{	
+					$departure_date_time=date("Y-m-d H:i:s");			  
+					$arr=array(
+					"t.source"=>$this->input->post('source'),
+					"t.destination"=>$this->input->post('destination'),
+					"t.departure_date_time > "=>$departure_date_time,
+					"DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')<"=>date('Y-m-d', strtotime(date("Y-m-d").' +1 day')),
+					"t.trip_type"=>"ONE",
+					"t.approved"=>"1",
+					"t.available"=>"YES",
+					"t.no_of_person>="=>$this->input->post('no_of_person')
+					//"t.availibility>="=>$days
+					);
+				}
+				else
+				{
+					//$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date_time')));		  
+					$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date')));
+					$arr=array(
+					"t.source"=>$this->input->post('source'),
+					"t.destination"=>$this->input->post('destination'),
+					"DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')="=>$departure_date_time,
+					"t.trip_type"=>"ONE",
+					"t.approved"=>"1",
+					"t.available"=>"YES",
+					"t.no_of_person>="=>$this->input->post('no_of_person')
+					//"t.availibility>="=>$days
 				
-			  }*/
-			  //echo $this->db->last_query();die(); 
-			  $result["post"][0]["qty"]=$this->input->post('no_of_person');
-			  $result["setting"]=$this->Search_Model->setting();
-			  $result["footer"]=$this->Search_Model->get_post(5);
-		      $this->load->view('header1',$result);
-			  $this->load->view('search_one_way',$result);
-			  $this->load->view('footer1');
-		  }
-		  else
-			  redirect("/search");  
-	  }
-	  else
-		redirect("/login");  
-	   
+					);
+				}
+				$result['city']=$this->User_Model->filter_city("ONE");
+				$result['city1']=$this->Search_Model->filter_city($this->input->post('source'),"ONE"); 
+				$result['city2']=$this->User_Model->filter_city("ROUND");
+				$result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE", $company["id"]);
+				$result["flight"]=$this->Search_Model->search_one_way($arr);
+				
+				$this->session->set_userdata('no_of_person',$this->input->post('no_of_person'));
+				
+				$result["post"][0]["source"]=$this->input->post('source');
+				$result["post"][0]["destination"]=$this->input->post('destination');
+				$result["post"][0]["departure_date_time"]=$this->input->post('departure_date_time');
+				$result["post"][0]["departure_date"]=$this->input->post('departure_date');
+				$result["post"][0]["no_of_person"]=$this->input->post('no_of_person');
+				$result["post"][0]["hid_trip_type"]="ONE";
+				//echo $this->db->last_query();die(); 
+				/*if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+				{					  				 
+					$result["flight"][0]["total"]=$result["flight"][0]["total"];
+				}					 
+				else	
+				{					  
+					$result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
+				
+				}*/
+				//echo $this->db->last_query();die(); 
+				$result["post"][0]["qty"]=$this->input->post('no_of_person');
+				$result["setting"]=$this->Search_Model->setting();
+				$result["footer"]=$this->Search_Model->get_post(5);
+				$this->load->view('header1',$result);
+				$this->load->view('search_one_way',$result);
+				$this->load->view('footer1');
+			}
+			else
+				redirect("/search");  
+		}
+		else
+			redirect("/login");  
 	}
 	
 	
@@ -180,10 +382,12 @@ class Search extends Mail_Controller
 				 
 				 );
 			  }
+			  $company = $this->session->userdata('company');
+
 			  $result['city']=$this->User_Model->filter_city("ROUND");
 			  $result['city1']=$this->Search_Model->filter_city($this->input->post('source1'),"ROUND"); 
 			  $result['city2']=$this->User_Model->filter_city("ONE");
-			  $result['availalble']=$this->Search_Model->search_available_date($this->input->post('source1'),$this->input->post('destination1'),"ROUND");
+			  $result['availalble']=$this->Search_Model->search_available_date($this->input->post('source1'),$this->input->post('destination1'),"ROUND", $company["id"]);
 			  $result["flight"]=$this->Search_Model->search_round_trip($arr);	
 			  $this->session->set_userdata('no_of_person',$this->input->post('no_of_person1'));
 			  $result["post"][0]["source"]=$this->input->post('source1');
@@ -903,13 +1107,15 @@ class Search extends Mail_Controller
 	
 	public function search_available_date()
 	{		
-         $response["success"]=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'));        
-		 echo json_encode($response);	
+		$company = $this->session->userdata('company');
+		$response["success"]=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $company["id"]);
+		echo json_encode($response);	
 	}
 	public function search_available_date1()
-	{		
-         $response["success"]=$this->Search_Model->search_available_date1($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'));        
-		 echo json_encode($response);	
+	{	
+		$company = $this->session->userdata('company');
+		$response["success"]=$this->Search_Model->search_available_date1($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $company["id"]);
+		echo json_encode($response);	
 	}
 	public function pdf($id)
 	{

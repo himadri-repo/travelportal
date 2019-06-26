@@ -306,12 +306,24 @@
 													<?php if($flight[$key]["adult_total"]>0) {?>
 														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
 													<?php }?>
-													<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["total"],2,".",","); ?></li>
+													<?php if($flight[$key]["new"]==0) {?>
+														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["total"],2,".",","); ?></li>
+													<?php } else {
+														$final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
+														?>
+														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
+													<?php }?>
 												<?php } else {?>
 													<?php if($flight[$key]["adult_total"]>0) {?>
 														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
 													<?php }?>
-													<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format(($flight[$key]["total"]+$flight[$key]["admin_markup"]),2,".",","); ?></li>
+													<?php if($flight[$key]["new"]==0) {?>
+														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format(($flight[$key]["total"]+$flight[$key]["admin_markup"]),2,".",","); ?></li>
+														<?php } else {
+														$final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
+														?>
+														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
+													<?php }?>
 												<?php } ?>
 												
 											</ul>

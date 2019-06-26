@@ -96,7 +96,8 @@ Class Admin_Model extends CI_Model
 	public function get_customers($companyid) {
 		$this->db->select("usr.*, cm.primary_user_id as primary_user, cm.type as company_type ");
 		$this->db->from('user_tbl usr');
-		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and usr.active=1 and cm.active=1', 'inner');
+		// $this->db->join('company_tbl cm', 'usr.companyid=cm.id and usr.active=1 and cm.active=1', 'inner');
+		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and cm.active=1', 'inner');
 		$this->db->where('usr.type in (\'B2C\', \'B2B\') and is_admin=0 and usr.companyid='.$companyid);
 		$this->db->order_by('name asc');
 
@@ -441,7 +442,7 @@ Class Admin_Model extends CI_Model
 		return [$result];
 	}
 
-	public function rateplanByCompanyid($companyid) {
+	public function rateplanByCompanyid($companyid, $arv=NULL) {
         if(empty($companyid)){
 			return array("message" => "Invalid company id passed", "status" => false);
 		}
@@ -450,12 +451,15 @@ Class Admin_Model extends CI_Model
 		//update
 		try
 		{
-			$this->db->select("distinct rp.id, rp.display_name as planname, rp.assigned_to, rp.companyid, cmp.display_name, rp.active, rp.created_by, rp.created_on, rp.updated_by, rp.updated_on, usr.name as created_by_name ", FALSE);
+			$this->db->select("distinct rp.default, rp.id, rp.display_name as planname, rp.assigned_to, rp.companyid, cmp.display_name, rp.active, rp.created_by, rp.created_on, rp.updated_by, rp.updated_on, usr.name as created_by_name ", FALSE);
 			$this->db->from('rateplan_tbl rp');
 			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
 			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);
 			$this->db->join('user_tbl usr', 'rp.created_by=usr.id', 'inner', FALSE);
 			$this->db->where("rp.companyid=$companyid", NULL, FALSE);
+			if($arv!=NULL) {
+				$this->db->where($arv, NULL, FALSE);
+			}
 			$this->db->order_by("rp.display_name", NULL, FALSE);
 	
 			$query = $this->db->get();

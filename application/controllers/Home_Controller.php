@@ -72,20 +72,20 @@ class Home_Controller extends CI_Controller
 	   	$result["number"]=$this->Search_Model->best_offer_num($arr);
 	   	//echo $this->db->last_query();die();
 	   	$result["testimonial"]=$this->Search_Model->testimonial();
-			$result["first"]=$this->Search_Model->get_post(1);
-			$result["second"]=$this->Search_Model->get_post(2);
-			$result["third"]=$this->Search_Model->get_post(3);
-			$result["fourth"]=$this->Search_Model->get_post(4);
-			$result["footer"]=$this->Search_Model->get_post(5);
-        
-			//$this->load->view('header',$result);
-			$this->load->view('headernew',$result);
-			//$this->load->view('home');
-			if($company!==null) {
-				$this->session->set_userdata('company', $company);
-				$this->load->view('homenew');
-			}
-			$this->load->view('footer');
+		$result["first"]=$this->Search_Model->get_post(1);
+		$result["second"]=$this->Search_Model->get_post(2);
+		$result["third"]=$this->Search_Model->get_post(3);
+		$result["fourth"]=$this->Search_Model->get_post(4);
+		$result["footer"]=$this->Search_Model->get_post(5);
+	
+		//$this->load->view('header',$result);
+		$this->load->view('headernew',$result);
+		//$this->load->view('home');
+		if($company!==null) {
+			$this->session->set_userdata('company', $company);
+			$this->load->view('homenew');
+		}
+		$this->load->view('footer');
 	}
 	public function terms()
 	{

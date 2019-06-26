@@ -81,7 +81,8 @@
 				</div><!-- end row -->
 				<div class="row">
 					<div class="col-sm-12">
-						<div class="welcome_title">Hi <?php echo $user_details[0]["name"];?>, Welcome to OXYTRA</div>
+						<!-- <div class="welcome_title">Hi <?php echo $user_details[0]["name"];?>, Welcome to <?php echo $setting[0]["site_title"]?></div> -->
+						<div class="welcome_title">Hi <?php echo $user_details[0]["name"];?>, Welcome to <?php echo $cname?></div>
 					</div><!-- end columns -->
 				</div><!-- end row -->
             </div><!-- end container -->
