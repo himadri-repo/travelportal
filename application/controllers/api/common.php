@@ -81,4 +81,18 @@ class Common extends REST_Controller {
 
         $this->response($menus, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
     }
+
+    public function metadata_get($object_type, $companyid=0) {
+        $result = array();
+
+        try
+        {
+            $result = $this->Admin_Model->get_metadata($object_type, $companyid);
+        }
+        catch(Exception $ex) {
+            
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK);
+    }
 }
