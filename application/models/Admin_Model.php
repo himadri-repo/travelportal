@@ -94,11 +94,12 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_customers($companyid) {
-		$this->db->select("usr.*, cm.primary_user_id as primary_user, cm.type as company_type ");
+		$this->db->select("usr.*, cm.primary_user_id as primary_user, cm.type as company_type, rp.display_name as rateplan_name, rp.assigned_to, rp.default ", FALSE);
 		$this->db->from('user_tbl usr');
 		// $this->db->join('company_tbl cm', 'usr.companyid=cm.id and usr.active=1 and cm.active=1', 'inner');
-		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and cm.active=1', 'inner');
-		$this->db->where('usr.type in (\'B2C\', \'B2B\') and is_admin=0 and usr.companyid='.$companyid);
+		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and cm.active=1', 'inner', FALSE);
+		$this->db->join('rateplan_tbl rp', 'usr.rateplanid=rp.id and rp.active=1', 'left', FALSE);
+		$this->db->where('usr.type in (\'B2C\', \'B2B\') and is_admin=0 and usr.companyid='.$companyid, NULL, FALSE);
 		$this->db->order_by('name asc');
 
 		$query = $this->db->get();
@@ -177,8 +178,9 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_customer($company, $customerid) {
-		$this->db->select("usr.* ");
+		$this->db->select("usr.*, rp.display_name as rateplan_name, rp.assigned_to, rp.default ");
 		$this->db->from('user_tbl usr');
+		$this->db->join('rateplan_tbl rp', 'usr.rateplanid=rp.id and rp.active=1', 'left', FALSE);
 		$this->db->where('usr.id='.$customerid.' and usr.companyid='.$company);
 
 		$query = $this->db->get();
@@ -194,9 +196,10 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_customersByEmailOrMobile($email, $mobile, $companyid, $id) {
-		$this->db->select("usr.* ");
+		$this->db->select("usr.*, rp.display_name as rateplan_name, rp.assigned_to, rp.default ", FALSE);
 		$this->db->from('user_tbl usr');
-		$this->db->where('(usr.email=\''.$email.'\' or usr.mobile=\''.$mobile.'\') and usr.companyid='.$companyid.' and usr.id<>'.$id);
+		$this->db->join('rateplan_tbl rp', 'usr.rateplanid=rp.id and rp.active=1', 'left', FALSE);
+		$this->db->where('(usr.email=\''.$email.'\' or usr.mobile=\''.$mobile.'\') and usr.companyid='.$companyid.' and usr.id<>'.$id, NULL, FALSE);
 
 		$query = $this->db->get();
 		//echo $this->db->last_query();die();
@@ -490,7 +493,7 @@ Class Admin_Model extends CI_Model
 		//update
 		try
 		{
-			$this->db->select("rp.id, rp.display_name as planname, rp.assigned_to, rp.companyid, rpd.rateplanid, rpd.serialno, rpd.head_name, rpd.head_code, rpd.amount, rpd.amount_type, rpd.operation, rpd.calculation, rpd.active, rpd.created_by, rpd.created_on, usr.name as created_by_name ", FALSE);
+			$this->db->select("rpd.id, rp.display_name as planname, rp.assigned_to, rp.companyid, rpd.rateplanid, rpd.serialno, rpd.head_name, rpd.head_code, rpd.amount, rpd.amount_type, rpd.operation, rpd.calculation, rpd.active, rpd.created_by, rpd.created_on, usr.name as created_by_name ", FALSE);
 			$this->db->from('rateplan_tbl rp');
 			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
 			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);

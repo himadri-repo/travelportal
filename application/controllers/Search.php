@@ -121,7 +121,7 @@ class Search extends Mail_Controller
 					$ticket["cgst"] = 0;
 					$ticket["sgst"] = 0;
 					$ticket["igst"] = 0;
-					$ticket["new"] = 0;
+					$ticket["new"] = 1;
 
 					if($company["id"]==$ticket["companyid"] && count($default_rp_detail)>0) {
 						// This is own ticket to rate should be picked from default rate plan
