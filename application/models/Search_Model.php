@@ -183,12 +183,24 @@ Class Search_Model extends CI_Model
 		}         	
          	
     }
-	public function flight_details($id) 
-	{    
-        
-		$arr=array("t.id"=>$id);  	
-		$this->db->select('u.id as user_id,t.user_id as uid,t.id,t.source,t.destination,t.source1,t.destination1,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.flight_no,t.flight_no1,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.departure_date_time1,t.arrival_date_time1,t.flight_no1,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.class,t.class1,t.no_of_person,a.image,t.airline,t.airline1,t.trip_type,t.price,t.baggage,t.meal,t.markup,t.discount,t.availibility,t.aircode,t.aircode1,t.no_of_stops,t.no_of_stops1,t.remarks,t.approved,t.remarks,t.stops_name,t.stops_name1,t.available', FALSE);
+	public function flight_details($id, $companyid=-1)
+	{
+		$arr=array("t.id"=>$id);
+		$this->db->select('u.id as user_id,t.user_id as uid,t.id,t.source,t.destination,t.source1,t.destination1,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.flight_no,t.flight_no1,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.departure_date_time1,t.arrival_date_time1,t.flight_no1,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.class,t.class1,t.no_of_person,a.image,t.airline,t.airline1,t.trip_type,t.price,t.baggage,t.meal,t.markup,t.discount,t.availibility,t.aircode,t.aircode1,t.no_of_stops,t.no_of_stops1,t.remarks,t.approved,t.remarks,t.stops_name,t.stops_name1,t.available, rpt.rate_plan_id, rpt.supplierid', FALSE);
 		$this->db->from('tickets_tbl t');
+		$this->db->join("(
+				(select spl.companyid as supplierid, spd.rate_plan_id
+				from wholesaler_tbl spl 
+				inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and `spd`.`active` = 1 and spd.allowfeed=1
+				inner join metadata_tbl mtd on mtd.id=spd.serviceid and `mtd`.`active` = 1 and mtd.associated_object_type='services'
+				where spl.salerid=$companyid)
+				union all
+				(select cm.id as supplierid, rp.id as rate_plan_id
+				from company_tbl cm
+				inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1
+				where cm.id=$companyid
+				limit 1)
+			) as rpt", 'companyid = rpt.supplierid', 'inner', FALSE);
 		$this->db->join('airline_tbl a', 'a.id = t.airline','left', FALSE);
 		$this->db->join('city_tbl c', 'c.id = t.source', 'inner', FALSE);
 		$this->db->join('city_tbl ct', 'ct.id = t.destination', 'inner', FALSE);
@@ -448,8 +460,22 @@ Class Search_Model extends CI_Model
 		"approved"=>1,
 		"available"=>"YES");  
 		
-		$this->db->select("DATE_FORMAT(departure_date_time, '%d-%m-%Y') as departure_date_time, (price + admin_markup + markup) as price");
+		//$this->db->select("DATE_FORMAT(departure_date_time, '%d-%m-%Y') as departure_date_time, (price + admin_markup + markup) as price, rpt.rate_plan_id");
+		$this->db->select("DATE_FORMAT(departure_date_time, '%d-%m-%Y') as departure_date_time, (price) as price, rpt.rate_plan_id, rpt.supplierid");
 		$this->db->from('tickets_tbl');					
+		$this->db->join("(
+			(select spl.companyid as supplierid, spd.rate_plan_id
+			from wholesaler_tbl spl 
+			inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and `spd`.`active` = 1 and spd.allowfeed=1
+			inner join metadata_tbl mtd on mtd.id=spd.serviceid and `mtd`.`active` = 1 and mtd.associated_object_type='services'
+			where spl.salerid=$companyid)
+			union all
+			select cm.id as supplierid, rp.id as rate_plan_id
+			from company_tbl cm
+			inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1
+			where cm.id=$companyid
+			limit 1
+		) as rpt", 'companyid = rpt.supplierid', 'inner');
 		$this->db->where($arr);
 		$this->db->where("(companyid in (
 			select spl.supplierid
@@ -460,7 +486,8 @@ Class Search_Model extends CI_Model
 		) or companyid=$companyid)");
 		$this->db->order_by("(price + admin_markup + markup)", "asc"); //for ordering data in the list while searching one way
 		
-		$query = $this->db->get();							
+		$query = $this->db->get();
+		$qry = $this->db->last_query();
 		//return $this->db->last_query();
 
 		if ($query->num_rows() > 0) 

@@ -484,7 +484,7 @@ Class Admin_Model extends CI_Model
 		return [$result];
 	}
 
-	public function rateplandetails($rateplanid) {
+	public function rateplandetails($rateplanid=0) {
         if(empty($rateplanid)){
 			return array("message" => "Invalid rate plan id passed", "status" => false);
 		}
@@ -498,7 +498,9 @@ Class Admin_Model extends CI_Model
 			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
 			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);
 			$this->db->join('user_tbl usr', 'rpd.created_by=usr.id', 'inner', FALSE);
-			$this->db->where("rp.id=$rateplanid", NULL, FALSE);
+			if($rateplanid>0) {
+				$this->db->where("rp.id=$rateplanid", NULL, FALSE);
+			}
 			$this->db->order_by("rp.display_name, rpd.serialno", NULL, FALSE);
 	
 			$query = $this->db->get();

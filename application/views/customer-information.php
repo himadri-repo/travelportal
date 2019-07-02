@@ -115,7 +115,9 @@
 										 
 										  <tr>
 											<td>Service Charge</td>
-											<td><?php echo number_format($setting[0]["service_charge"],2,".",""); ?></td>
+											
+											<!-- <td><?php //echo number_format($setting[0]["service_charge"],2,".",""); ?></td> -->
+											<td><?php echo number_format($flight[0]["service_charge"],2,".",""); ?></td>
 										  </tr>
 										  <?php
 										  }
@@ -140,8 +142,9 @@
 											<?php 
 											$gst=0; 
 											$service_charge=0;
-											echo $gst;?> % </td>
-											<td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td>
+											//echo $gst;?> % </td>
+											<!-- <td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
+											<td><?php echo number_format($flight[0]["gst"],2,".",""); ?></td>
 										    </tr>
 											<?php
 										  }
@@ -153,8 +156,9 @@
 											<?php 
 											$gst=($setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]); 
 											$service_charge=$setting[0]["service_charge"];
-											echo $gst;?> % </td>
-											<td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td>
+											//echo $gst;?> % </td>
+											<!-- <td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
+											<td><?php echo number_format($flight[0]["gst"],2,".",""); ?></td>
 										    </tr>
 											<?php
 										  }

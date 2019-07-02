@@ -169,10 +169,17 @@
                         </div><!-- end columns -->
                                                 
                         <div class="col-xs-12 col-sm-12 col-md-3 side-bar right-side-bar">
+							<?php
+								$baserate = ($flight[0]["total"] - $flight[0]["admin_markup"]) + $flight[0]["whl_markup"] + $flight[0]["spl_markup"];
+								$srvchg = $flight[0]["whl_srvchg"] - $flight[0]["spl_srvchg"];
+								$gst = $flight[0]["whl_cgst"] + $flight[0]["spl_cgst"] + $flight[0]["whl_sgst"] + $flight[0]["spl_sgst"];
+								$total = $baserate + $srvchg + $gst;
+							?>
                             
                             <div class="side-bar-block booking-form-block">
-                            	<h2 class="selected-price"><i class="fa fa-inr"></i><?php echo number_format($flight[0]["total"],2,".",","); ?> <span><?php //echo $flight[0]["ticket_no"];?></span></h2>
-                            
+                            	<!-- <h2 class="selected-price"><i class="fa fa-inr"></i><?php echo number_format($flight[0]["total"],2,".",","); ?> <span><?php //echo $flight[0]["ticket_no"];?></span></h2> -->
+								<h2 class="selected-price"><i class="fa fa-inr"></i><?php echo number_format($total,2,".",","); ?> <span><?php //echo $flight[0]["ticket_no"];?></span></h2>
+								
                             	<div class="booking-form">
                                 	<h3>Book Flight</h3>
                                     <p>Find your dream flight today</p>
@@ -203,23 +210,28 @@
 										<div class="form-group">
 										
 										    <label>Ticket Fare / Per Person</label>
-											<?php $price=($this->session->userdata('no_of_person')*$flight[0]["total"]);?>
-											<input type="text" id="calc_price" name="calc_price" value="<?php echo $flight[0]["total"]; ?>" class="form-control" readonly/>
-                                    		<input type="hidden" name="price" id="price" value="<?php echo $flight[0]["total"]; ?>" class="form-control"/>                                       
+											<?php // $price=($this->session->userdata('no_of_person')*$flight[0]["total"]);?>
+											<?php $price=($this->session->userdata('no_of_person') * $baserate);?>
+											<!-- <input type="text" id="calc_price" name="calc_price" value="<?php echo $flight[0]["total"]; ?>" class="form-control" readonly/> -->
+											<input type="text" id="calc_price" name="calc_price" value="<?php echo $price; ?>" class="form-control" readonly/>
+                                    		<!-- <input type="hidden" name="price" id="price" value="<?php echo $flight[0]["total"]; ?>" class="form-control"/> -->
+                                    		<input type="hidden" name="price" id="price" value="<?php echo $total; ?>" class="form-control"/>
                                         </div>
 										<?php if($this->session->userdata('user_id')==$flight[0]["uid"])
 										{
 											?>
 											<div class="form-group">
 										    <label>Service Charge</label>
-                                    		<input type="text" name="service_charge" id="service_charge" value="0" class="form-control" readonly/>
+                                    		<!-- <input type="text" name="service_charge" id="service_charge" value="0" class="form-control" readonly/> -->
+                                    		<input type="text" name="service_charge" id="service_charge" value="<?php echo $srvchg; ?>" class="form-control" readonly/>
                                         </div>
 											<?php
 										} else 
 										{?>
 									     <div class="form-group">
 										    <label>Service Charge</label>
-                                    		<input type="text" name="service_charge" id="service_charge" value="<?php echo $setting[0]["service_charge"]; ?>" class="form-control" <?php echo ($user_type=='B2C' ? 'readonly' : '') ?>/> <!-- readonly -->
+                                    		<!-- <input type="text" name="service_charge" id="service_charge" value="<?php echo $setting[0]["service_charge"]; ?>" class="form-control" <?php echo ($user_type=='B2C' ? 'readonly' : '') ?>/> readonly -->
+                                    		<input type="text" name="service_charge" id="service_charge" value="<?php echo $srvchg; ?>" class="form-control" <?php echo ($user_type=='B2C' ? 'readonly' : '') ?>/> <!-- readonly -->
                                         </div>
 										<?php 
 										} ?>
@@ -244,14 +256,17 @@
 											?>
 											<div class="form-group">
 										    <label>GST <?php $gst=0;$service_charge=0; echo $gst;?> %</label>
-                                    		<input type="text" name="igst" id="igst" value="0" class="form-control" readonly/>                                       
+                                    		<!-- <input type="text" name="igst" id="igst" value="0" class="form-control" readonly/> -->
+                                    		<input type="text" name="igst" id="igst" value="<?php echo number_format($gst,2,".",""); ?>" class="form-control" readonly/>
                                         </div>
 											<?php
 										} else 
 										{?>
 										<div class="form-group">
-										    <label>GST <?php $gst=$setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]; $service_charge=$setting[0]["service_charge"];echo $gst;?> %</label>
-                                    		<input type="text" name="igst" id="igst" value="<?php echo number_format(($setting[0]["service_charge"]*$gst/100),2,".",""); ?>" class="form-control" readonly/>                                       
+										    <!-- <label>GST <?php $gst=$setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]; $service_charge=$setting[0]["service_charge"];echo $gst;?> %</label> -->
+										    <label>GST</label>
+                                    		<!-- <input type="text" name="igst" id="igst" value="<?php echo number_format(($setting[0]["service_charge"]*$gst/100),2,".",""); ?>" class="form-control" readonly/> -->
+                                    		<input type="text" name="igst" id="igst" value="<?php echo number_format($gst,2,".",""); ?>" class="form-control" readonly/>
                                         </div>	
 										<?php 
 										} ?>
@@ -264,11 +279,11 @@
 										<div class="form-group">
 										    <label>Total</label>
 											<?php
-											$total=$price+$service_charge+($service_charge*$gst/100);
+											// $total=$price+$service_charge+($service_charge*$gst/100);
 											
 											?>
 											<input type="text" name="calc_total" id="calc_total" value="<?php echo $total; ?>" class="form-control" min="0"/>    
-                                    		<input type="hidden" name="total" id="total" value="<?php echo $flight[0]["price"]; ?>" class="form-control" min="0"/>                                       
+                                    		<input type="hidden" name="total" id="total" value="<?php echo $total; ?>" class="form-control" min="0"/>                                       
                                         </div>
                                         <!--<div class="row">
                                         	<div class="col-sm-12 col-md-12 col-lg-12 no-sp-r">
@@ -285,9 +300,6 @@
                                             
                                            
                                         </div>-->
-                                        
-                                       
-                                        
                                         <div class="checkbox custom-check">
                                         	<input type="checkbox" id="check01" name="checkbox"/>
                                             <label for="check01"><span><i class="fa fa-check"></i></span>By continuing, you are agree to the <a href="#">Terms & Conditions.</a></label>

@@ -200,9 +200,9 @@ class Search extends Mail_Controller
 						}
 						$ticket["wsl_markup"] = $wsl_markup;
 						$ticket["wsl_srvchg"] = $wsl_srvchg;
-						$cgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["cgst_rate"]),0);
-						$sgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["sgst_rate"]),0);
-						$igst = round((($wsl_srvchg+$splr_srvchg) * $ticket["igst_rate"]),0);
+						$cgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["cgst_rate"]/100),0);
+						$sgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["sgst_rate"]/100),0);
+						$igst = round((($wsl_srvchg+$splr_srvchg) * $ticket["igst_rate"]/100),0);
 						$ticket["cgst"] = $cgst;
 						$ticket["sgst"] = $sgst;
 						$ticket["igst"] = $igst;
@@ -426,44 +426,150 @@ class Search extends Mail_Controller
 		$current_user = $this->session->userdata('current_user');
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{			  
-			$result["flight"]=$this->Search_Model->flight_details($id); 
-			$result["setting"]=$this->Search_Model->setting();
-			$result["user_type"]=strtoupper($current_user["type"]);
+			$company = $this->session->userdata('company');
+			$companyid = $company["id"];
+			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+			$defaultRP = NULL;
+			$defaultRPD = NULL;
+			if(count($rateplans)>0) {
+				$defaultRP = $rateplans[0];
+				$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+			}
+	
+			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
+	
+			$tickets = $this->Search_Model->flight_details($id, $companyid);
 			
-			$result['user_details']=$this->User_Model->user_details();
-			if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
-			{
-				if(isset($_REQUEST["back_end_qty"]))
-				{					  
-					$this->session->set_userdata('no_of_person',$_REQUEST["back_end_qty"]);
+			if($tickets && count($tickets)>0) {
+				$ticket = $tickets[0];
+
+				$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+
+				$result["flight"]=array($ticket); 
+				$result["setting"]=$this->Search_Model->setting();
+				$result["user_type"]=strtoupper($current_user["type"]);
+				
+				$result['user_details']=$this->User_Model->user_details();
+				if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
+				{
+					if(isset($_REQUEST["back_end_qty"]))
+					{					  
+						$this->session->set_userdata('no_of_person',$_REQUEST["back_end_qty"]);
+					}
+					else
+					{						
+						
+					}
+					
+					$result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];
+					if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+					{					  					 
+						$result["flight"][0]["total"]=$result["flight"][0]["total"];
+					}					 
+					else	
+					{					  
+						$result["flight"][0]["price"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
+						$result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];
+					}
+					
+					$result["setting"]=$this->Search_Model->setting();
+					$result["footer"]=$this->Search_Model->get_post(5);
+					$this->load->view('header1',$result);
+					$this->load->view('flight-detail',$result);
+					$this->load->view('footer1');
 				}
 				else
-				{						
-					
+				{
+					redirect("/search");
 				}
-				
-				$result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];				   				   
-				if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
-				{					  					 
-					$result["flight"][0]["total"]=$result["flight"][0]["total"];
-				}					 
-				else	
-				{					  
-					$result["flight"][0]["price"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
-					$result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];
-				}
-				
-				$result["setting"]=$this->Search_Model->setting();
-				$result["footer"]=$this->Search_Model->get_post(5);
-				$this->load->view('header1',$result);
-				$this->load->view('flight-detail',$result);
-				$this->load->view('footer1');
-			}
-			else
-			{
-				redirect("/search");
 			}
 		}
+	}
+
+	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid) {
+		$rateplanid = $ticket['rate_plan_id'];
+		$price = $ticket['price'];
+		
+		$ticket['whl_markup'] = 0;
+		$ticket['whl_srvchg'] = 0;
+		$ticket['whl_cgst'] = 0;
+		$ticket['whl_sgst'] = 0;
+		$ticket['whl_igst'] = 0;
+		$ticket['whl_disc'] = 0;
+
+		$ticket['spl_markup'] = 0;
+		$ticket['spl_srvchg'] = 0;
+		$ticket['spl_cgst'] = 0;
+		$ticket['spl_sgst'] = 0;
+		$ticket['spl_igst'] = 0;
+		$ticket['spl_disc'] = 0;
+
+		$tax_others = 0;
+
+		try
+		{
+			if($ticket['supplierid'] !== $companyid) {
+				//sourced tickets
+				for ($j=0; $j < count($rateplan_details); $j++) { 
+					$rpdetail = $rateplan_details[$j];
+					if($rpdetail['rateplanid'] == $rateplanid) {
+						$achead = 'whl_'.$rpdetail['head_code'];
+						// array_push($ticket, [$achead => '']);
+						if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+							if($rpdetail['operation'] == 1) {
+								$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+								$tax_others = $tax_others + $ticket[$achead];
+							}
+							else {
+								$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+								$tax_others = $tax_others - $ticket[$achead];
+							}
+						}
+					}
+				}
+			}
+			// $ticket['price'] += $tax_others;
+			$tax_others = 0;
+			
+			if($defaultRPD !== NULL) {
+				//add wholesaler's part
+				for ($j=0; $j < count($defaultRPD); $j++) { 
+					$rpdetail = $defaultRPD[$j];
+					$achead = 'spl_'.$rpdetail['head_code'];
+					// array_push($ticket, [$achead => '']);
+					if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+						if($rpdetail['operation'] == 1) {
+							$ticket[$achead] += $this->getProcessedValue($rpdetail, $price, $ticket);
+							$tax_others += $ticket[$achead];
+						}
+						else {
+							$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+							$tax_others -= $ticket[$achead];
+						}
+					}
+				}
+			}
+		}
+		catch(Exception $ex) {
+
+		}
+
+		// $ticket['finalvalue'] = $tax_others;
+		// $ticket['price'] += $tax_others;
+
+		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
+			+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_cgst'] / 100)
+			+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_sgst'] / 100));
+
+		$ticket['whl_cgst'] = 0;
+		$ticket['whl_sgst'] = 0;
+		$ticket['whl_igst'] = 0;
+
+		$ticket['spl_cgst'] = 0;
+		$ticket['spl_sgst'] = 0;
+		$ticket['spl_igst'] = 0;
+
+		return $ticket;
 	}
 	
 	public function beforebook($id)
@@ -471,25 +577,54 @@ class Search extends Mail_Controller
 		$current_user = $this->session->userdata('current_user');
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{	
-		   $result["flight"]=$this->Search_Model->flight_details($id); 
-		   if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
-		   {
+			$company = $this->session->userdata('company');
+			$companyid = $company["id"];
+			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+			$defaultRP = NULL;
+			$defaultRPD = NULL;
+			if(count($rateplans)>0) {
+				$defaultRP = $rateplans[0];
+				$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+			}
+	
+			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
+
+			$tickets = $this->Search_Model->flight_details($id, $companyid);
+			$result["flight"]=$tickets;
+			if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
+			{
+				$ticket = $tickets[0];
+
+				$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();
 				$result["setting"]=$this->Search_Model->setting(); 	
+
+				$baserate = ($ticket["total"]) + $ticket["whl_markup"] + $ticket["spl_markup"];
+				$srvchg = $ticket["whl_srvchg"] - $ticket["spl_srvchg"];
+				$gst = $ticket["whl_cgst"] + $ticket["spl_cgst"] + $ticket["whl_sgst"] + $ticket["spl_sgst"];
+				$total = $baserate + $srvchg + $gst;
+
 				// if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
 				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $this->input->post('markup'));	
 				// else
 				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$this->input->post('markup'));	 
 
-				if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
-					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $service_charge);	
-				else
-					$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$service_charge);
+				// if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
+				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $service_charge);	
+				// else
+				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$service_charge);
+				$result["flight"][0]["price"]= $baserate + $gst;
+				$result["flight"][0]["service_charge"]= $srvchg;
+				$result["flight"][0]["gst"]= $gst;
+
 					
 				//$result["flight"][0]["markup"]=$this->input->post('markup');
-				$result["flight"][0]["markup"]=$service_charge;
-				$result["flight"][0]["total"]=$this->input->post('total');
+				// $result["flight"][0]["markup"]=$service_charge;
+				// $result["flight"][0]["total"]=$this->input->post('total');
+				$result["flight"][0]["markup"]=$srvchg;
+				$result["flight"][0]["total"]=$total;
 				$result["flight"][0]["qty"]=$this->input->post('qty');
 				$result["flight"][0]["wallet_balance"]=$this->get_wallet_balance($this->session->userdata('user_id'));
 				$result["flight"][0]["id"]=$id;	
@@ -1108,9 +1243,137 @@ class Search extends Mail_Controller
 	public function search_available_date()
 	{		
 		$company = $this->session->userdata('company');
-		$response["success"]=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $company["id"]);
+		$companyid = $company["id"];
+		$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+		$defaultRP = NULL;
+		$defaultRPD = NULL;
+		if(count($rateplans)>0) {
+			$defaultRP = $rateplans[0];
+			$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+		}
+
+		$rateplan_details = $this->Admin_Model->rateplandetails(-1);
+		$tickets=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $companyid);
+
+		for ($i=0; $tickets && $i < count($tickets); $i++) { 
+			$ticket = &$tickets[$i];
+			$rateplanid = $ticket['rate_plan_id'];
+			$price = $ticket['price'];
+			
+			$ticket['whl_markup'] = 0;
+			$ticket['whl_srvchg'] = 0;
+			$ticket['whl_cgst'] = 0;
+			$ticket['whl_sgst'] = 0;
+			$ticket['whl_igst'] = 0;
+			$ticket['whl_disc'] = 0;
+
+			$ticket['spl_markup'] = 0;
+			$ticket['spl_srvchg'] = 0;
+			$ticket['spl_cgst'] = 0;
+			$ticket['spl_sgst'] = 0;
+			$ticket['spl_igst'] = 0;
+			$ticket['spl_disc'] = 0;
+
+			$tax_others = 0;
+
+			try
+			{
+				if($ticket['supplierid'] !== $companyid) {
+					//sourced tickets
+					for ($j=0; $j < count($rateplan_details); $j++) { 
+						$rpdetail = $rateplan_details[$j];
+						if($rpdetail['rateplanid'] == $rateplanid) {
+							$achead = 'whl_'.$rpdetail['head_code'];
+							// array_push($ticket, [$achead => '']);
+							if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+								if($rpdetail['operation'] == 1) {
+									$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+									$tax_others = $tax_others + $ticket[$achead];
+								}
+								else {
+									$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+									$tax_others = $tax_others - $ticket[$achead];
+								}
+							}
+						}
+					}
+				}
+				// $ticket['price'] += $tax_others;
+				$tax_others = 0;
+				
+				if($defaultRPD !== NULL) {
+					//add wholesaler's part
+					for ($j=0; $j < count($defaultRPD); $j++) { 
+						$rpdetail = $defaultRPD[$j];
+						$achead = 'spl_'.$rpdetail['head_code'];
+						// array_push($ticket, [$achead => '']);
+						if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+							if($rpdetail['operation'] == 1) {
+								$ticket[$achead] += $this->getProcessedValue($rpdetail, $price, $ticket);
+								$tax_others += $ticket[$achead];
+							}
+							else {
+								$ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+								$tax_others -= $ticket[$achead];
+							}
+						}
+					}
+				}
+			}
+			catch(Exception $ex) {
+
+			}
+
+			// $ticket['finalvalue'] = $tax_others;
+			// $ticket['price'] += $tax_others;
+
+			$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
+				+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_cgst'] / 100)
+				+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_sgst'] / 100));
+
+			if ($ticket['whl_srvchg'] === 0 && $ticket['spl_srvchg'] === 0) {
+				$ticket['whl_cgst'] = 0;
+				$ticket['whl_sgst'] = 0;
+				$ticket['whl_igst'] = 0;
+
+				$ticket['spl_cgst'] = 0;
+				$ticket['spl_sgst'] = 0;
+				$ticket['spl_igst'] = 0;
+			}
+		}
+		
+		$response["success"] = $tickets;
+		// ob_end_clean();
+		// header('Content-type: application/json; charset=utf-8');
 		echo json_encode($response);	
 	}
+
+	private function getProcessedValue($rpdetail, $price, $ticket) {
+		$operation = NULL;
+		if(!($rpdetail['calculation']=='' || $rpdetail['calculation']==NULL)) {
+			$operation = str_replace('}', '', str_replace('{', '', $rpdetail['calculation']));
+		}
+		if($operation !== NULL) {
+			if(isset($ticket[$operation])) {
+				$price = $ticket[$operation];
+			}
+			else {
+				$price = 0;
+			}
+		}
+
+		if($rpdetail['amount_type'] == 1) { //value
+			return $rpdetail['amount'];
+		}
+		else if($rpdetail['amount_type'] == 2) { //%
+			// return $price * ($rpdetail['amount'] / 100); // this is the right approach but let us think how to implement it.
+			return $rpdetail['amount'];
+		}
+		else {
+			return 0;
+		}
+	}
+
 	public function search_available_date1()
 	{	
 		$company = $this->session->userdata('company');
