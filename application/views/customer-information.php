@@ -46,7 +46,19 @@
 											<?php if($flight[0]["trip_type"]=="ONE") echo $flight[0]["trip_type"]." Way"; if($flight[0]["trip_type"]=="ROUND") echo $flight[0]["trip_type"]." Trip";?>
 										</div>
 									</div><!-- end detail-title -->
+									<?php 
+										$qty = $this->session->userdata('no_of_person');
+										$price = $flight[0]["price"];
+										$total = $flight[0]["total"];
+										$admin_markup = 0;
 
+										if($currentuser["is_admin"]!=='1' && $currentuser["type"]=='B2B') {
+											$admin_markup = $flight[0]["admin_markup"];
+
+											$price += $admin_markup;
+											$total += $admin_markup;
+										}
+									?>
 									<div class="table-responsive">
 									  <table class="table table-hover">
 										<tbody>
@@ -90,22 +102,23 @@
 										  
 										  <tr>
 											<td>Price</td>
-											<td><?php echo number_format($flight[0]["price"],2,".",""); ?></td>
+											<td><?php echo number_format($price,2,".",""); ?></td>
 										  </tr>
 										  <tr>
 											<td>Qty</td>
-											<td><?php echo $this->session->userdata('no_of_person'); ?></td>
+											<td><?php echo $qty; ?></td>
 										  </tr>
 										  <tr>
 											<td>Sub Total</td>
-											<td><?php echo number_format($flight[0]["price"]*$this->session->userdata('no_of_person'),2,".",""); ?></td>
+											<td><?php echo number_format($price * $qty,2,".",""); ?></td>
 										  </tr>
 										  <?php if($this->session->userdata('user_id')==$flight[0]["uid"])
 										  {
 											?>
 										   <tr>
 											<td>Service Charge</td>
-											<td>0</td>
+											<td><?php echo number_format($flight[0]["service_charge"] * $qty,2,".",""); ?></td>
+											<!-- <td>0</td> -->
 										  </tr>
 										  <?php
 										  }
@@ -117,7 +130,7 @@
 											<td>Service Charge</td>
 											
 											<!-- <td><?php //echo number_format($setting[0]["service_charge"],2,".",""); ?></td> -->
-											<td><?php echo number_format($flight[0]["service_charge"],2,".",""); ?></td>
+											<td><?php echo number_format($flight[0]["service_charge"] * $qty,2,".",""); ?></td>
 										  </tr>
 										  <?php
 										  }
@@ -140,11 +153,11 @@
 											?>
 											<td>GST 
 											<?php 
-											$gst=0; 
-											$service_charge=0;
+											//$gst=0; 
+											//$service_charge=0;
 											//echo $gst;?> % </td>
-											<!-- <td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
-											<td><?php echo number_format($flight[0]["gst"],2,".",""); ?></td>
+											<!-- <td><?php //echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
+											<td><?php echo number_format($flight[0]["gst"] * $qty,2,".",""); ?></td>
 										    </tr>
 											<?php
 										  }
@@ -154,11 +167,13 @@
 											<tr>
 											<td>GST 
 											<?php 
-											$gst=($setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]); 
-											$service_charge=$setting[0]["service_charge"];
+											//$gst=($setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]); 
+											//$service_charge=$setting[0]["service_charge"];
+											$gst=$flight[0]["gst"]; 
+											$service_charge=$flight[0]["service_charge"];
 											//echo $gst;?> % </td>
-											<!-- <td><?php echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
-											<td><?php echo number_format($flight[0]["gst"],2,".",""); ?></td>
+											<!-- <td><?php //echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
+											<td><?php echo number_format($flight[0]["gst"] * $qty,2,".",""); ?></td>
 										    </tr>
 											<?php
 										  }
@@ -166,7 +181,8 @@
 										 
 										  <tr>
 											<td>Total</td>
-											<?php $grand_total=($flight[0]["price"]*$this->session->userdata('no_of_person'))+$service_charge+($service_charge*$gst/100);?>
+											<?php //$grand_total=($flight[0]["price"]*$this->session->userdata('no_of_person'))+$service_charge+($service_charge*$gst/100);?>
+											<?php $grand_total=($total * $qty);?>
 											<td>
 												<?php echo number_format($grand_total,2,".",""); 
 												$allow_credit = $flight[0]["user"]["credit_ac"];

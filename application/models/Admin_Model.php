@@ -463,7 +463,8 @@ Class Admin_Model extends CI_Model
 			if($arv!=NULL) {
 				$this->db->where($arv, NULL, FALSE);
 			}
-			$this->db->order_by("rp.display_name", NULL, FALSE);
+			//$this->db->order_by("rp.display_name", NULL, FALSE);
+			$this->db->order_by("rp.created_on", NULL, FALSE);
 	
 			$query = $this->db->get();
 			$qry = $this->db->last_query();
@@ -501,7 +502,8 @@ Class Admin_Model extends CI_Model
 			if($rateplanid>0) {
 				$this->db->where("rp.id=$rateplanid", NULL, FALSE);
 			}
-			$this->db->order_by("rp.display_name, rpd.serialno", NULL, FALSE);
+			//$this->db->order_by("rp.display_name, rpd.serialno", NULL, FALSE);
+			$this->db->order_by("rpd.serialno", NULL, FALSE);
 	
 			$query = $this->db->get();
 			//echo $this->db->last_query();die();

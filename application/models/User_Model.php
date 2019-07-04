@@ -101,7 +101,7 @@ Class User_Model extends CI_Model
 		$pwd = $data['password'];
 		$companyid = $data['companyid'];
 
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.companyid=', $companyid);

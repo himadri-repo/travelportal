@@ -1389,6 +1389,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /************** OFFER-PRICE-1 *************/
 
 .offer-price-1{
+	height: 100%;
 	font-size:14px;
 	margin:0px;
 	text-transform:uppercase;
@@ -3357,6 +3358,10 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	font-size:22px;
 }
 
+.grid-block .offer-price-1 li.costprice{
+	font-size:18px;
+}
+
 .grid-block .offer-price-1 li.price .pkg{
 	font-size:14px;
 	top:-3px;
@@ -3590,6 +3595,13 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 .f-list-img .offer-price-1 .price{
 	float:right;
 	margin-top:8px;
+}
+
+.f-list-img .offer-price-1 .costprice{
+	float:right;
+	color: #ffffff;
+	text-transform: none;
+	/*margin-top:8px;*/
 }
 
 .f-list-img .offer-price-1 .live-price {

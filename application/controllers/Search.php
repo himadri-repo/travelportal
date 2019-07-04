@@ -62,6 +62,7 @@ class Search extends Mail_Controller
 			if($_SERVER['REQUEST_METHOD'] == 'POST') 
 			{			  
 				$company = $this->session->userdata('company');
+				$currentuser = $this->session->userdata('current_user');
 
 				//if($this->input->post('departure_date_time')==date("d-m-Y")) 
 				if($this->input->post('departure_date')==date("d-m-Y")) 
@@ -104,113 +105,134 @@ class Search extends Mail_Controller
 				$result['city2']=$this->User_Model->filter_city("ROUND");
 				$result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE", $company["id"]);
 				//$result["flight"]=$this->Search_Model->search_one_way($arr);
-				$tickets = $this->Search_Model->search_one_wayV2($arr);
-				$default_rp = $this->Admin_Model->rateplanByCompanyid($company["id"], array('rp.default' => 1));
-				$default_rp_detail = [];
-				if(count($default_rp)>0) {
-					$default_rp_detail = $this->Admin_Model->rateplandetails($default_rp[0]["id"]);
+
+				$company = $this->session->userdata('company');
+				$companyid = $company["id"];
+				$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+				$defaultRP = NULL;
+				$defaultRPD = NULL;
+				if(count($rateplans)>0) {
+					$defaultRP = $rateplans[0];
+					$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
 				}
+				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
+
+				$tickets = $this->Search_Model->search_one_wayV2($arr);
+
+				//$default_rp = $this->Admin_Model->rateplanByCompanyid($company["id"], array('rp.default' => 1));
+				// $default_rp_detail = [];
+				// if(count($default_rp)>0) {
+				// 	$default_rp_detail = $this->Admin_Model->rateplandetails($default_rp[0]["id"]);
+				// }
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
+
+					$ticket = $tickets[0];
+
+					$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+	
 					$total = $ticket['total'];
-					$ticket["wsl_markup"] = 0;
-					$ticket["wsl_srvchg"] = 0;
-					$ticket["splr_markup"] = 0;
-					$ticket["splr_srvchg"] = 0;
-					$ticket["cgst"] = 0;
-					$ticket["sgst"] = 0;
-					$ticket["igst"] = 0;
+					// $ticket["wsl_markup"] = 0;
+					// $ticket["wsl_srvchg"] = 0;
+					// $ticket["splr_markup"] = 0;
+					// $ticket["splr_srvchg"] = 0;
+					// $ticket["cgst"] = 0;
+					// $ticket["sgst"] = 0;
+					// $ticket["igst"] = 0;
 					$ticket["new"] = 1;
 
-					if($company["id"]==$ticket["companyid"] && count($default_rp_detail)>0) {
-						// This is own ticket to rate should be picked from default rate plan
+					#region Comments
+					// if($company["id"]==$ticket["companyid"] && count($default_rp_detail)>0) {
+					// 	// This is own ticket to rate should be picked from default rate plan
 
-						$rateplandetail = $this->get_rateplan_detail_by_head('markup', $default_rp_detail);
-						if($rateplandetail!=NULL) {
-							if($rateplandetail["amount_type"]==1) {
-								//Fixed amount
-								$wsl_markup = $rateplandetail["amount"];
-							}
-							else {
-								$wsl_markup = round(($total * ($rateplandetail["amount"]/100)),0);
-							}
+					// 	$rateplandetail = $this->get_rateplan_detail_by_head('markup', $default_rp_detail);
+					// 	if($rateplandetail!=NULL) {
+					// 		if($rateplandetail["amount_type"]==1) {
+					// 			//Fixed amount
+					// 			$wsl_markup = $rateplandetail["amount"];
+					// 		}
+					// 		else {
+					// 			$wsl_markup = round(($total * ($rateplandetail["amount"]/100)),0);
+					// 		}
 
-							$ticket["wsl_markup"] = $wsl_markup;
-						}
+					// 		$ticket["wsl_markup"] = $wsl_markup;
+					// 	}
 
-						$rateplandetail = $this->get_rateplan_detail_by_head('srvchg', $default_rp_detail);
-						if($rateplandetail!=NULL) {
-							if($rateplandetail["amount_type"]==1) {
-								//Fixed amount
-								$wsl_srvchg = $rateplandetail["amount"];
-							}
-							else {
-								$wsl_srvchg = round(($total * ($rateplandetail["amount"]/100)),0);
-							}
-							$ticket["wsl_srvchg"] = $wsl_srvchg;
-						}
+					// 	$rateplandetail = $this->get_rateplan_detail_by_head('srvchg', $default_rp_detail);
+					// 	if($rateplandetail!=NULL) {
+					// 		if($rateplandetail["amount_type"]==1) {
+					// 			//Fixed amount
+					// 			$wsl_srvchg = $rateplandetail["amount"];
+					// 		}
+					// 		else {
+					// 			$wsl_srvchg = round(($total * ($rateplandetail["amount"]/100)),0);
+					// 		}
+					// 		$ticket["wsl_srvchg"] = $wsl_srvchg;
+					// 	}
 
-						$rateplandetail = $this->get_rateplan_detail_by_head('cgst', $default_rp_detail);
-						if($rateplandetail!=NULL) {
-							$cgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
-							$ticket["cgst"] = $cgst;
-						}
-						$rateplandetail = $this->get_rateplan_detail_by_head('sgst', $default_rp_detail);
-						if($rateplandetail!=NULL) {
-							$sgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
-							$ticket["sgst"] = $sgst;
-						}
-						$rateplandetail = $this->get_rateplan_detail_by_head('igst', $default_rp_detail);
-						if($rateplandetail!=NULL) {
-							$igst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
-							$ticket["igst"] = $igst;
-						}
-					}
-					else {
-						//This is supplier's ticket to both rate should be applied as supplier and wholesaler
-						//now for supplier's commision
-						if($ticket["markup_rate"]<=0) {
-							$splr_markup = round(($total * $ticket["markup_rate"]),0);
-						}
-						else {
-							$splr_markup = round(($ticket["markup_rate"]),0);
-						}
-						if($ticket["srvchg_rate"]<=0) {
-							$splr_srvchg = round(($total * $ticket["srvchg_rate"]),0);
-						}
-						else {
-							$splr_srvchg = round(($ticket["srvchg_rate"]),0);
-						}
-						$ticket["splr_markup"] = $splr_markup;
-						$ticket["splr_srvchg"] = $splr_srvchg;
+					// 	$rateplandetail = $this->get_rateplan_detail_by_head('cgst', $default_rp_detail);
+					// 	if($rateplandetail!=NULL) {
+					// 		$cgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+					// 		$ticket["cgst"] = $cgst;
+					// 	}
+					// 	$rateplandetail = $this->get_rateplan_detail_by_head('sgst', $default_rp_detail);
+					// 	if($rateplandetail!=NULL) {
+					// 		$sgst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+					// 		$ticket["sgst"] = $sgst;
+					// 	}
+					// 	$rateplandetail = $this->get_rateplan_detail_by_head('igst', $default_rp_detail);
+					// 	if($rateplandetail!=NULL) {
+					// 		$igst = round(($ticket["wsl_srvchg"] * ($rateplandetail["amount"]/100)),0);
+					// 		$ticket["igst"] = $igst;
+					// 	}
+					// }
+					// else {
+					// 	//This is supplier's ticket to both rate should be applied as supplier and wholesaler
+					// 	//now for supplier's commision
+					// 	if($ticket["markup_rate"]<=0) {
+					// 		$splr_markup = round(($total * $ticket["markup_rate"]),0);
+					// 	}
+					// 	else {
+					// 		$splr_markup = round(($ticket["markup_rate"]),0);
+					// 	}
+					// 	if($ticket["srvchg_rate"]<=0) {
+					// 		$splr_srvchg = round(($total * $ticket["srvchg_rate"]),0);
+					// 	}
+					// 	else {
+					// 		$splr_srvchg = round(($ticket["srvchg_rate"]),0);
+					// 	}
+					// 	$ticket["splr_markup"] = $splr_markup;
+					// 	$ticket["splr_srvchg"] = $splr_srvchg;
 
-						//now for wholesaler's commision
-						if($ticket["admin_markup"]<=0) {
-							$wsl_markup = round(($total * $ticket["admin_markup"]),0);
-						}
-						else {
-							$wsl_markup = round(($ticket["admin_markup"]),0);
-						}
-						if($ticket["admin_crvchg"]<=0) {
-							$wsl_srvchg = round(($total * $ticket["admin_crvchg"]),0);
-						}
-						else {
-							$wsl_srvchg = round(($ticket["admin_crvchg"]),0);
-						}
-						$ticket["wsl_markup"] = $wsl_markup;
-						$ticket["wsl_srvchg"] = $wsl_srvchg;
-						$cgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["cgst_rate"]/100),0);
-						$sgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["sgst_rate"]/100),0);
-						$igst = round((($wsl_srvchg+$splr_srvchg) * $ticket["igst_rate"]/100),0);
-						$ticket["cgst"] = $cgst;
-						$ticket["sgst"] = $sgst;
-						$ticket["igst"] = $igst;
-					}
+					// 	//now for wholesaler's commision
+					// 	if($ticket["admin_markup"]<=0) {
+					// 		$wsl_markup = round(($total * $ticket["admin_markup"]),0);
+					// 	}
+					// 	else {
+					// 		$wsl_markup = round(($ticket["admin_markup"]),0);
+					// 	}
+					// 	if($ticket["admin_crvchg"]<=0) {
+					// 		$wsl_srvchg = round(($total * $ticket["admin_crvchg"]),0);
+					// 	}
+					// 	else {
+					// 		$wsl_srvchg = round(($ticket["admin_crvchg"]),0);
+					// 	}
+					// 	$ticket["wsl_markup"] = $wsl_markup;
+					// 	$ticket["wsl_srvchg"] = $wsl_srvchg;
+					// 	$cgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["cgst_rate"]/100),0);
+					// 	$sgst = round((($wsl_srvchg+$splr_srvchg) * $ticket["sgst_rate"]/100),0);
+					// 	$igst = round((($wsl_srvchg+$splr_srvchg) * $ticket["igst_rate"]/100),0);
+					// 	$ticket["cgst"] = $cgst;
+					// 	$ticket["sgst"] = $sgst;
+					// 	$ticket["igst"] = $igst;
+					// }
+					#endregion
 				}
 				
 				$result["flight"]=$tickets;
-				$result["rateplan"]=$default_rp;
+				$result["rateplan"]=$rateplans; // $default_rp;
+				$result["currentuser"]=$currentuser;
 				
 				$this->session->set_userdata('no_of_person',$this->input->post('no_of_person'));
 				
@@ -446,6 +468,7 @@ class Search extends Mail_Controller
 				$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
 
 				$result["flight"]=array($ticket); 
+				$result["currentuser"]=$current_user;
 				$result["setting"]=$this->Search_Model->setting();
 				$result["user_type"]=strtoupper($current_user["type"]);
 				
@@ -464,7 +487,9 @@ class Search extends Mail_Controller
 					$result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];
 					if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
 					{					  					 
-						$result["flight"][0]["total"]=$result["flight"][0]["total"];
+						// $result["flight"][0]["total"]=$result["flight"][0]["total"];
+						$result["flight"][0]["price"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];	
+						$result["flight"][0]["total"]=$result["flight"][0]["total"]+$result["flight"][0]["admin_markup"];
 					}					 
 					else	
 					{					  
@@ -558,16 +583,22 @@ class Search extends Mail_Controller
 		// $ticket['price'] += $tax_others;
 
 		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
-			+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_cgst'] / 100)
-			+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_sgst'] / 100));
+				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
+				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)
+				+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
+				+ ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
 
-		$ticket['whl_cgst'] = 0;
-		$ticket['whl_sgst'] = 0;
-		$ticket['whl_igst'] = 0;
+		if ($ticket['whl_srvchg'] === 0) {
+			$ticket['whl_cgst'] = 0;
+			$ticket['whl_sgst'] = 0;
+			$ticket['whl_igst'] = 0;
+		}
 
-		$ticket['spl_cgst'] = 0;
-		$ticket['spl_sgst'] = 0;
-		$ticket['spl_igst'] = 0;
+		if ($ticket['spl_srvchg'] === 0) {
+			$ticket['spl_cgst'] = 0;
+			$ticket['spl_sgst'] = 0;
+			$ticket['spl_igst'] = 0;
+		}
 
 		return $ticket;
 	}
@@ -599,10 +630,11 @@ class Search extends Mail_Controller
 
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();
+				$result["currentuser"] = $current_user;
 				$result["setting"]=$this->Search_Model->setting(); 	
 
 				$baserate = ($ticket["total"]) + $ticket["whl_markup"] + $ticket["spl_markup"];
-				$srvchg = $ticket["whl_srvchg"] - $ticket["spl_srvchg"];
+				$srvchg = $ticket["whl_srvchg"] + $ticket["spl_srvchg"];
 				$gst = $ticket["whl_cgst"] + $ticket["spl_cgst"] + $ticket["whl_sgst"] + $ticket["spl_sgst"];
 				$total = $baserate + $srvchg + $gst;
 
@@ -615,7 +647,8 @@ class Search extends Mail_Controller
 				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $service_charge);	
 				// else
 				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $result["flight"][0]["admin_markup"]+$service_charge);
-				$result["flight"][0]["price"]= $baserate + $gst;
+				//$result["flight"][0]["price"]= $baserate + $gst;
+				$result["flight"][0]["price"]= $baserate;
 				$result["flight"][0]["service_charge"]= $srvchg;
 				$result["flight"][0]["gst"]= $gst;
 
@@ -1243,6 +1276,8 @@ class Search extends Mail_Controller
 	public function search_available_date()
 	{		
 		$company = $this->session->userdata('company');
+		$current_user = $this->session->userdata('current_user');
+
 		$companyid = $company["id"];
 		$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 		$defaultRP = NULL;
@@ -1259,6 +1294,7 @@ class Search extends Mail_Controller
 			$ticket = &$tickets[$i];
 			$rateplanid = $ticket['rate_plan_id'];
 			$price = $ticket['price'];
+			$adminmarkup = 0;
 			
 			$ticket['whl_markup'] = 0;
 			$ticket['whl_srvchg'] = 0;
@@ -1273,6 +1309,11 @@ class Search extends Mail_Controller
 			$ticket['spl_sgst'] = 0;
 			$ticket['spl_igst'] = 0;
 			$ticket['spl_disc'] = 0;
+
+			if($current_user['is_admin']!=='1' && $current_user['type']=='B2B') {
+				$adminmarkup = $ticket['admin_markup'];
+				$price += $adminmarkup;
+			}
 
 			$tax_others = 0;
 
@@ -1328,14 +1369,19 @@ class Search extends Mail_Controller
 			// $ticket['price'] += $tax_others;
 
 			$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
-				+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_cgst'] / 100)
-				+ (($ticket['whl_srvchg'] + $ticket['spl_srvchg']) * $ticket['whl_sgst'] / 100));
+				+ $adminmarkup 
+				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
+				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)
+				+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
+				+ ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
 
-			if ($ticket['whl_srvchg'] === 0 && $ticket['spl_srvchg'] === 0) {
+			if ($ticket['whl_srvchg'] === 0) {
 				$ticket['whl_cgst'] = 0;
 				$ticket['whl_sgst'] = 0;
 				$ticket['whl_igst'] = 0;
+			}
 
+			if ($ticket['spl_srvchg'] === 0) {
 				$ticket['spl_cgst'] = 0;
 				$ticket['spl_sgst'] = 0;
 				$ticket['spl_igst'] = 0;
