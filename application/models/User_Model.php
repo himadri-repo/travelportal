@@ -140,16 +140,27 @@ Class User_Model extends CI_Model
 	public function user_details() 
 	{    
         
-		$arr=array("u.id"=>$this->session->userdata('user_id'));  	
-		$this->db->select('u.*,count(t.id) as total_ticket,count(seller.id) as sold,count(customer.id) as purchased');
-		$this->db->from('user_tbl as u');
+		// $arr=array("u.id"=>$this->session->userdata('user_id'));  	
+		$userid = $this->session->userdata('user_id');
+		// $this->db->select('u.*,count(t.id) as total_ticket,count(seller.id) as sold,count(customer.id) as purchased');
+		// $this->db->from('user_tbl as u');
 		
-		$this->db->join('tickets_tbl as t', 't.user_id = u.id','left');		
-		$this->db->join('booking_tbl as seller', 'seller.seller_id = u.id','left');
-		$this->db->join('booking_tbl as customer', 'customer.customer_id = u.id','left');
-		$this->db->where($arr);
+		// $this->db->join('tickets_tbl as t', 't.user_id = u.id','left');		
+		// $this->db->join('booking_tbl as seller', 'seller.seller_id = u.id','left');
+		// $this->db->join('booking_tbl as customer', 'customer.customer_id = u.id','left');
+		// $this->db->where($arr);
 		//$this->db->group_by('t.ticket_no'); 
-		$query = $this->db->get();					
+		// $query = $this->db->get();
+
+		$sql = "select 	u.id, u.user_id, u.name, u.profile_image, u.email, u.mobile, u.address, u.state, u.country, u.password, u.is_supplier, 
+						u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
+        				(select count(t.id) from tickets_tbl t where t.user_id=$userid) as total_ticket, 
+        				(select count(seller.id) from booking_tbl seller where seller.seller_id=$userid) as sold,
+        				(select count(customer.id) from booking_tbl customer where customer.customer_id=$userid) as purchased
+				FROM user_tbl as u
+				WHERE u.id = $userid";
+
+		$query = $this->db->query($sql);
 		
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
@@ -159,8 +170,7 @@ Class User_Model extends CI_Model
 		else
 		{
 			  return false;
-		}         	
-         	
+		}
     }
 	public function filter_city($trip_type) 
 	{       

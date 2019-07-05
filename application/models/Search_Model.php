@@ -490,29 +490,37 @@ Class Search_Model extends CI_Model
 	{		
 	    $today=date("Y-m-d");
 		
-        $arr=array(
-		"source"=>$source,
-		"destination"=>$destination,
-		"trip_type"=>$trip_type,
-		"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>$today,
-		"approved"=>1,
-		"available"=>"YES");  
-		
+        // $arr=array(
+		// "source"=>$source,
+		// "destination"=>$destination,
+		// "trip_type"=>$trip_type,
+		// "DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>$today,
+		// "approved"=>1,
+		// "available"=>"YES");  
+
+		$arr=array(
+			"source"=>$source,
+			"destination"=>$destination,
+			"trip_type"=>$trip_type,
+			"DATE_FORMAT(departure_date_time, '%Y-%m-%d')>="=>$today,
+			"approved"=>1,
+			"no_of_person>"=>0);  
+			
 		//$this->db->select("DATE_FORMAT(departure_date_time, '%d-%m-%Y') as departure_date_time, (price + admin_markup + markup) as price, rpt.rate_plan_id");
 		$this->db->select("DATE_FORMAT(departure_date_time, '%d-%m-%Y') as departure_date_time, (price) as price, admin_markup, rpt.rate_plan_id, rpt.supplierid");
 		$this->db->from('tickets_tbl');					
 		$this->db->join("( 
-			select spl.companyid as supplierid, spd.rate_plan_id  
+			(select spl.companyid as supplierid, spd.rate_plan_id  
 			from wholesaler_tbl spl 
 			inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and `spd`.`active` = 1 and spd.allowfeed=1 
 			inner join metadata_tbl mtd on mtd.id=spd.serviceid and `mtd`.`active` = 1 and mtd.associated_object_type='services' 
-			where spl.salerid=$companyid     
+			where spl.salerid=$companyid)     
 			union all 
-			select cm.id as supplierid, rp.id as rate_plan_id 
+			(select cm.id as supplierid, rp.id as rate_plan_id 
 			from company_tbl cm 
 			inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1 
 			where cm.id=$companyid 
-			limit 1
+			limit 1)
 		
 		) as rpt", 'companyid = rpt.supplierid', 'inner');
 		$this->db->where($arr);

@@ -200,7 +200,10 @@ class Search extends Mail_Controller
 	{
 		    if ($this->session->userdata('user_id') && isset($id)) 
 	        {			  
-		      $result["flight"]=$this->Search_Model->flight_details($id); 
+				$company = $this->session->userdata('company');
+				$companyid = $company["id"];
+					
+		      $result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 			  $result["setting"]=$this->Search_Model->setting();
 			  
 			  $result['user_details']=$this->User_Model->user_details();
@@ -243,7 +246,10 @@ class Search extends Mail_Controller
 	{
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{	
-		   $result["flight"]=$this->Search_Model->flight_details($id); 
+			$company = $this->session->userdata('company');
+			$companyid = $company["id"];
+			
+		   $result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 		   if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
 		   {
 				  $result1["user"]=$this->User_Model->user_details();				
@@ -289,6 +295,9 @@ class Search extends Mail_Controller
 	
 	public function book($id)
 	{
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+
 	        $result["footer"]=$this->Search_Model->get_post(5);
 		    $wallet_amount=0;
 		    if ($this->input->post('date') && $this->input->post('qty')) 
@@ -345,7 +354,7 @@ class Search extends Mail_Controller
 						);
 					     
 					     $booking_id = $this->Search_Model->save("booking_tbl",$arr);
-						 $result["flight"]=$this->Search_Model->flight_details($id); 
+						 $result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 						 if($result["flight"][0]["trip_type"]=="ONE")
 							 $trip="ONE WAY";
 						 else
@@ -535,8 +544,11 @@ class Search extends Mail_Controller
 	{
 	    if($_SERVER['REQUEST_METHOD'] == 'POST') 		  
 		{
+			$company = $this->session->userdata('company');
+			$companyid = $company["id"];
+			
 		$user['user_details']=$this->User_Model->user_details();
-		$result["flight"]=$this->Search_Model->flight_details($id);
+		$result["flight"]=$this->Search_Model->flight_details($id, $companyid);
 		
 		if($result["flight"][0]["trip_type"]=="ONE")
 			 $trip="ONE WAY";
@@ -724,12 +736,15 @@ class Search extends Mail_Controller
 	{
 		    if ($this->session->userdata('user_id') && isset($id) && ($_SERVER['REQUEST_METHOD'] == 'POST')) 
 	        {	
+				$company = $this->session->userdata('company');
+				$companyid = $company["id"];
+	
     		      $reason_for_cancellation=$this->input->post('reason_for_cancellation');
     			  $arr=array("reason_for_cancellation"=>$reason_for_cancellation,"status"=>"REQUESTED FOR CANCEL","customer_cancel_request"=>1,"cancel_request_date"=>date("Y-m-d h:i:s"));
     		      $result["booking"]=$this->Search_Model->refrence_booking_details($id); 
     			  $ticket_id=$result["booking"][0]["ticket_id"];
     			  $qty=$result["booking"][0]["qty"];
-    			  $ticket_details["result"]=$this->Search_Model->flight_details($ticket_id); 
+    			  $ticket_details["result"]=$this->Search_Model->flight_details($ticket_id, $companyid); 
     			  $no_of_person=$ticket_details["result"][0]["no_of_person"]+$qty;
                   $journey_date = strtotime($result["booking"][0]["departure_date_time"]);				
                   $cancel_time = strtotime(date("Y-m-d H:i:s"));

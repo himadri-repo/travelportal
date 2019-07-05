@@ -114,6 +114,7 @@
 										  </tr>
 										  <?php if($this->session->userdata('user_id')==$flight[0]["uid"])
 										  {
+											$service_charge=$flight[0]["service_charge"];
 											?>
 										   <tr>
 											<td>Service Charge</td>
@@ -124,14 +125,13 @@
 										  }
 										  else
 										  {
-										  ?>
-										 
-										  <tr>
-											<td>Service Charge</td>
-											
-											<!-- <td><?php //echo number_format($setting[0]["service_charge"],2,".",""); ?></td> -->
-											<td><?php echo number_format($flight[0]["service_charge"] * $qty,2,".",""); ?></td>
-										  </tr>
+											$service_charge=$flight[0]["service_charge"];?>
+											<tr>
+												<td>Service Charge</td>
+												
+												<!-- <td><?php //echo number_format($setting[0]["service_charge"],2,".",""); ?></td> -->
+												<td><?php echo number_format($flight[0]["service_charge"] * $qty,2,".",""); ?></td>
+											</tr>
 										  <?php
 										  }
 										  ?>
@@ -153,6 +153,7 @@
 											?>
 											<td>GST 
 											<?php 
+											$gst=$flight[0]["gst"]; 
 											//$gst=0; 
 											//$service_charge=0;
 											//echo $gst;?> % </td>
@@ -170,7 +171,6 @@
 											//$gst=($setting[0]["igst"]+$setting[0]["cgst"]+$setting[0]["sgst"]); 
 											//$service_charge=$setting[0]["service_charge"];
 											$gst=$flight[0]["gst"]; 
-											$service_charge=$flight[0]["service_charge"];
 											//echo $gst;?> % </td>
 											<!-- <td><?php //echo number_format(($service_charge*$gst/100),2,".",""); ?></td> -->
 											<td><?php echo number_format($flight[0]["gst"] * $qty,2,".",""); ?></td>
@@ -231,9 +231,11 @@
 								<input type="hidden" name="pnr" value="<?php echo $flight[0]["pnr"]; ?>">
 								<input type="hidden" name="airline" value="<?php echo $flight[0]["airline"]; ?>">
 								<input type="hidden" name="sale_type" value="<?php echo $flight[0]["sale_type"]; ?>">								
-								<input type="hidden" name="price" value="<?php echo number_format($flight[0]["price"],2,".",""); ?>">
+								<!-- <input type="hidden" name="price" value="<?php echo number_format($flight[0]["price"],2,".",""); ?>"> -->
+								<input type="hidden" name="price" value="<?php echo number_format($price,2,".",""); ?>">
 								<input type="hidden" name="qty" value="<?php echo $this->session->userdata('no_of_person'); ?>">
 								<input type="hidden" name="service_charge" value="<?php echo number_format($service_charge,2,".",""); ?>">
+								<input type="hidden" name="costprice" value="<?php echo number_format($flight[0]["costprice"],2,".",""); ?>">
 							
 								<input type="hidden" name="igst" value="<?php echo number_format(($service_charge*$gst/100),2,".",""); ?>">
 								<input type="hidden" name="total" value="<?php echo number_format($grand_total,2,".",""); ?>">

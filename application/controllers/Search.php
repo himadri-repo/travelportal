@@ -128,8 +128,6 @@ class Search extends Mail_Controller
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
 
-					$ticket = $tickets[0];
-
 					$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
 	
 					$total = $ticket['total'];
@@ -637,6 +635,16 @@ class Search extends Mail_Controller
 				$srvchg = $ticket["whl_srvchg"] + $ticket["spl_srvchg"];
 				$gst = $ticket["whl_cgst"] + $ticket["spl_cgst"] + $ticket["whl_sgst"] + $ticket["spl_sgst"];
 				$total = $baserate + $srvchg + $gst;
+				$costprice = 0;
+				if($current_user["is_admin"]==='1' || $current_user["type"]==='EMP')
+				{
+					//this is company admin or employee
+					//$flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
+					$costprice = $ticket["total"] + $ticket["whl_markup"] + $ticket["whl_srvchg"] + ($ticket["whl_srvchg"] * $ticket["whl_cgst"]/100) + ($ticket["whl_srvchg"] * $ticket["whl_sgst"]/100);
+				}
+				else if($current_user["type"]==='B2B') {
+					$costprice = $ticket["price"];
+				}
 
 				// if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
 				// 	$result["flight"][0]["price"]=floatval( $result["flight"][0]["price"]-$result["flight"][0]["discount"]+ $result["flight"][0]["markup"] + $this->input->post('markup'));	
@@ -651,6 +659,7 @@ class Search extends Mail_Controller
 				$result["flight"][0]["price"]= $baserate;
 				$result["flight"][0]["service_charge"]= $srvchg;
 				$result["flight"][0]["gst"]= $gst;
+				$result["flight"][0]["costprice"]= $costprice;
 
 					
 				//$result["flight"][0]["markup"]=$this->input->post('markup');
@@ -689,6 +698,9 @@ class Search extends Mail_Controller
 	
 	public function book($id)
 	{
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$wallet_amount=0;
 		if ($this->input->post('date') && $this->input->post('qty')) 
@@ -703,6 +715,7 @@ class Search extends Mail_Controller
 			$user_id=$result1[0]["user_id"];
 			$pnr=$result1[0]["pnr"];
 			$amount=$this->input->post('total');
+			$costprice=$this->input->post('costprice');
 			$user['user_details']=$this->User_Model->user_details();
 			
 			
@@ -710,7 +723,9 @@ class Search extends Mail_Controller
 			{
 				$wallet_amount+=$result[$key]["amount"];
 			}				
-			if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
+
+			//if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
+			if($costprice>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
 			{
 				$result["setting"]=$this->Search_Model->setting();
 				$this->load->view('header1',$result);
@@ -739,12 +754,13 @@ class Search extends Mail_Controller
 					"service_charge"=>$this->input->post('service_charge'),
 					"igst"=>$this->input->post('igst'),
 					"total"=>$amount,
+					"costprice"=>$costprice,
 					"type"=>$user['user_details'][0]["type"],
 					"status"=>$status
 					);
 						
 						$booking_id = $this->Search_Model->save("booking_tbl",$arr);
-						$result["flight"]=$this->Search_Model->flight_details($id); 
+						$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 						if($result["flight"][0]["trip_type"]=="ONE")
 							$trip="ONE WAY";
 						else
@@ -767,6 +783,7 @@ class Search extends Mail_Controller
 								"service_charge"=>$this->input->post('service_charge'),						
 								"igst"=>$this->input->post('igst'),
 								"total"=>$amount,
+								"costprice"=>$costprice,
 								"type"=>$user['user_details'][0]["type"],
 								"status"=>$status,
 								"booking_id"=>$booking_id
@@ -781,7 +798,8 @@ class Search extends Mail_Controller
 								$arr=array(
 								'date'=>date("Y-m-d h:i:s"),
 								'user_id'=>$this->session->userdata('user_id'),
-								'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
+								//'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
+								'amount'=>(0-$costprice),
 								'booking_id'=>$booking_id,
 								'type'=>'DR'
 								);					 
@@ -840,7 +858,8 @@ class Search extends Mail_Controller
 								$arr=array(
 								'date'=>date("Y-m-d h:i:s"),
 								'user_id'=>$this->session->userdata('user_id'),
-								'amount'=>(0-$amount),
+								//'amount'=>(0-$amount),
+								'amount'=>(0-$costprice),
 								'booking_id'=>$booking_id,
 								'type'=>'DR'
 								);					 
@@ -895,6 +914,8 @@ class Search extends Mail_Controller
 												"email"=>$_REQUEST["email"][$key],
 												"booking_id"=>$booking_id,
 												"refrence_id"=>$refrence_id,
+												"ticket_fare"=>($amount),
+												"costprice"=>($costprice),
 												"pnr"=>$result1[0]["pnr"]
 												);
 									$this->Search_Model->save("customer_information_tbl",$arr);
@@ -913,6 +934,8 @@ class Search extends Mail_Controller
 												"last_name"=>$_REQUEST["last_name"][$key],
 												"mobile_no"=>$_REQUEST["mobile_no"][$key],
 												"age"=>$_REQUEST["age"][$key],
+												"ticket_fare"=>($amount),
+												"costprice"=>($costprice),
 												"email"=>$_REQUEST["email"][$key],
 												"booking_id"=>$booking_id,
 												"pnr"=>$result1[0]["pnr"]
@@ -948,8 +971,11 @@ class Search extends Mail_Controller
 	{
 	    if($_SERVER['REQUEST_METHOD'] == 'POST') 		  
 		{
+			$company = $this->session->userdata('company');
+			$companyid = $company["id"];
+
 		$user['user_details']=$this->User_Model->user_details();
-		$result["flight"]=$this->Search_Model->flight_details($id);
+		$result["flight"]=$this->Search_Model->flight_details($id, $companyid);
 		
 		if($result["flight"][0]["trip_type"]=="ONE")
 			 $trip="ONE WAY";
@@ -1139,8 +1165,11 @@ class Search extends Mail_Controller
     			  $arr=array("reason_for_cancellation"=>$reason_for_cancellation,"status"=>"REQUESTED FOR CANCEL","customer_cancel_request"=>1,"cancel_request_date"=>date("Y-m-d h:i:s"));
     		      $result["booking"]=$this->Search_Model->refrence_booking_details($id); 
     			  $ticket_id=$result["booking"][0]["ticket_id"];
-    			  $qty=$result["booking"][0]["qty"];
-    			  $ticket_details["result"]=$this->Search_Model->flight_details($ticket_id); 
+				  $qty=$result["booking"][0]["qty"];
+				  $company = $this->session->userdata('company');
+				  $companyid = $company["id"];
+						
+    			  $ticket_details["result"]=$this->Search_Model->flight_details($ticket_id, $companyid); 
     			  $no_of_person=$ticket_details["result"][0]["no_of_person"]+$qty;
                   $journey_date = strtotime($result["booking"][0]["departure_date_time"]);				
                   $cancel_time = strtotime(date("Y-m-d H:i:s"));

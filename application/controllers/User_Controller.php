@@ -1124,7 +1124,9 @@ class User_Controller extends Mail_Controller
 	
 	public function submit_ticket()
 	{
-		
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+	
 		if(($_SERVER['REQUEST_METHOD'] == 'POST') && $this->session->userdata('user_id'))
 		 {
 			if(isset($_POST["refundable"]))
@@ -1205,7 +1207,7 @@ class User_Controller extends Mail_Controller
 						 if($ticket_id)
 						 {
 							    $user['user_details']=$this->User_Model->user_details();
-					            $result["flight"]=$this->Search_Model->flight_details($ticket_id);  
+					            $result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
 								$data = array(				            
 										 'name' => "OXYTRA",
 										 'email'=>$user['user_details'][0]["email"],
@@ -1331,7 +1333,7 @@ class User_Controller extends Mail_Controller
 				 if($ticket_id)
 				 {
 					            $user['user_details']=$this->User_Model->user_details();
-					            $result["flight"]=$this->Search_Model->flight_details($ticket_id);  
+					            $result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
 								$data = array(				            
 										 'name' => "OXYTRA",
 										 'email'=>$user['user_details'][0]["email"],
@@ -1383,7 +1385,9 @@ class User_Controller extends Mail_Controller
 	}
 	public function import_request_ticket()
 	{
-		
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+	
 		if(($_SERVER['REQUEST_METHOD'] == 'POST') && $this->session->userdata('user_id'))
 		{									
 			$sale_type="quote";			
@@ -1449,7 +1453,7 @@ class User_Controller extends Mail_Controller
 									}
 									
 									$user['user_details']=$this->User_Model->user_details();
-									$result["flight"]=$this->Search_Model->flight_details($ticket_id);  
+									$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
 									$data = array(				            
 											 'name' => "OXYTRA",
 											 'email'=>$user['user_details'][0]["email"],
@@ -1559,7 +1563,7 @@ class User_Controller extends Mail_Controller
 									
 									
 									$user['user_details']=$this->User_Model->user_details();
-									$result["flight"]=$this->Search_Model->flight_details($ticket_id);  
+									$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
 									$data = array(				            
 											 'name' => "OXYTRA",
 											 'email'=>$user['user_details'][0]["email"],
@@ -1832,6 +1836,9 @@ class User_Controller extends Mail_Controller
 	
 	public function edit_ticket($id)
 	{
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+
 		if ($this->session->userdata('user_id')) 
 		{
 			$CI =   &get_instance();        
@@ -1843,7 +1850,7 @@ class User_Controller extends Mail_Controller
 				$result["footer"]=$this->Search_Model->get_post(5);
 				$result['city']=$this->User_Model->select("city_tbl");	
 				$result['airline']=$this->User_Model->select("airline_tbl");
-				$result["flight"]=$this->Search_Model->flight_details($id); 
+				$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 				if($result["flight"][0]["trip_type"]=="ONE")
 				{
 					$this->load->view('header1',$result);
