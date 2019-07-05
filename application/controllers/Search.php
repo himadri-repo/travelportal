@@ -108,12 +108,20 @@ class Search extends Mail_Controller
 
 				$company = $this->session->userdata('company');
 				$companyid = $company["id"];
+				$usertype = $currentuser["type"];
+				$is_admin = $currentuser["is_admin"];
 				$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 				$defaultRP = NULL;
 				$defaultRPD = NULL;
 				if(count($rateplans)>0) {
 					$defaultRP = $rateplans[0];
-					$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+					$rateplanid = $defaultRP['id'];
+
+					if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $currentuser["rateplanid"]!==null) {
+						$rateplanid = intval($currentuser["rateplanid"]);
+					}
+
+					$defaultRPD = $this->Admin_Model->rateplandetails($rateplanid);
 				}
 				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
@@ -453,7 +461,13 @@ class Search extends Mail_Controller
 			$defaultRPD = NULL;
 			if(count($rateplans)>0) {
 				$defaultRP = $rateplans[0];
-				$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+				$rateplanid = $defaultRP['id'];
+
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+					$rateplanid = intval($current_user["rateplanid"]);
+				}
+					
+				$defaultRPD = $this->Admin_Model->rateplandetails($rateplanid);
 			}
 	
 			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
@@ -613,7 +627,13 @@ class Search extends Mail_Controller
 			$defaultRPD = NULL;
 			if(count($rateplans)>0) {
 				$defaultRP = $rateplans[0];
-				$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+				$rateplanid = $defaultRP['id'];
+				
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+					$rateplanid = intval($current_user["rateplanid"]);
+				}
+	
+				$defaultRPD = $this->Admin_Model->rateplandetails($rateplanid);
 			}
 	
 			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
@@ -1313,7 +1333,13 @@ class Search extends Mail_Controller
 		$defaultRPD = NULL;
 		if(count($rateplans)>0) {
 			$defaultRP = $rateplans[0];
-			$defaultRPD = $this->Admin_Model->rateplandetails($defaultRP['id']);
+			$rateplanid = $defaultRP['id'];
+
+			if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+				$rateplanid = intval($current_user["rateplanid"]);
+			}
+
+			$defaultRPD = $this->Admin_Model->rateplandetails($rateplanid);
 		}
 
 		$rateplan_details = $this->Admin_Model->rateplandetails(-1);
