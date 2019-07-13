@@ -28,21 +28,25 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 //$config['base_url'] = 'http://localhost:90';
 //$config['base_url'] = 'http://example.com:90';
 
-$protocol = is_https() ? "https://" : "http://";
-$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "";
-$host = str_replace('www.', '', $host);
-$servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
-$servername = str_replace('www.', '', $servername);
-if(is_cli()) {
-   $config['base_url'] = '';
-}
-else if(stristr($servername, "localhost") !== FALSE || (stristr($servername, '192.168.') !== FALSE) || (stristr($servername, '127.0.0') !== FALSE)) {
-   $config['base_url'] = $protocol.$host;
-}
-else {
-    $allowed_hosts = ['oxytra.pankh.com', 'airiq.pankh.com','wholesaler.example.com', 'supplier.example.com', 'example.com', 'www.example.com', 'www.oxytra.com', 'wholesaler.oxytra.com', 'supplier.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
-    $config['base_url'] = in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
-}
+// $CI =   &get_instance();
+// $check = $CI->db->get_where('company_tbl', array('active' => 1));
+// $result=$check->result_array();
+
+// $protocol = is_https() ? "https://" : "http://";
+// $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : "";
+// $host = str_replace('www.', '', $host);
+// $servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
+// $servername = str_replace('www.', '', $servername);
+// if(is_cli()) {
+//    $config['base_url'] = '';
+// }
+// else if(stristr($servername, "localhost") !== FALSE || (stristr($servername, '192.168.') !== FALSE) || (stristr($servername, '127.0.0') !== FALSE)) {
+//    $config['base_url'] = $protocol.$host;
+// }
+// else {
+//     $allowed_hosts = ['oxytra.pankh.com', 'airiq.pankh.com','wholesaler.example.com', 'supplier.example.com', 'example.com', 'www.example.com', 'www.oxytra.com', 'wholesaler.oxytra.com', 'supplier.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
+//     $config['base_url'] = in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
+// }
 
 //$config['base_url'] = '';
 
@@ -121,7 +125,7 @@ $config['charset'] = 'UTF-8';
 | setting this variable to TRUE (boolean).  See the user guide for details.
 |
 */
-$config['enable_hooks'] = FALSE;
+$config['enable_hooks'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------

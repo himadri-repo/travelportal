@@ -57,7 +57,7 @@
                 $uuid = $current_user['uid'];
             }
             else {
-                $cname = $setting[0]["address"];
+                $cname = $setting[0]["site_title"];
                 $phone = $setting[0]["phone_no"];
                 $logo = $setting[0]["logo"];
                 $admin = 0;

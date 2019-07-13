@@ -236,6 +236,7 @@
 								<input type="hidden" name="qty" value="<?php echo $this->session->userdata('no_of_person'); ?>">
 								<input type="hidden" name="service_charge" value="<?php echo number_format($service_charge,2,".",""); ?>">
 								<input type="hidden" name="costprice" value="<?php echo number_format($flight[0]["costprice"],2,".",""); ?>">
+								<input type="hidden" name="rateplanid" value="<?php echo $flight[0]["rateplanid"]; ?>">
 							
 								<input type="hidden" name="igst" value="<?php echo number_format(($service_charge*$gst/100),2,".",""); ?>">
 								<input type="hidden" name="total" value="<?php echo number_format($grand_total,2,".",""); ?>">

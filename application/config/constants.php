@@ -86,3 +86,5 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 
 /*********** Application specific constants ***************/
 defined('NEW_FLOW')        OR define('NEW_FLOW', true); // no errors
+defined('SEND_EMAIL')      OR define('SEND_EMAIL', true); // no errors
+defined('SEND_SMS')      OR define('SEND_SMS', true); // no errors

@@ -352,20 +352,43 @@ if (!isset($_GET["id"])) {
 	</script>
 <?php
 } else {
-		$sql = "SELECT `cus`.`prefix`, `cus`.`age`, `cus`.`first_name`, `cus`.`last_name`, `cus`.`email`, `cus`.`mobile_no`, 
-	`u`.`name`, `u`.`email`, `u`.`mobile`, `b`.`id`, `t`.`ticket_no`,t.price,t.discount,t.markup,t.admin_markup, `b`.`pnr`, 
-	`b`.`date`, `c`.`city` as `source`, `c1`.`city` as `source1`, `ct`.`city` as `destination`, `ct1`.`city` as `destination1`, 
-	`a`.`airline`, `a1`.`airline` as `airline1`, `t`.`class`, `t`.`class1`, `t`.`departure_date_time`, `t`.`departure_date_time1`, 
-	`t`.`arrival_date_time`, `t`.`arrival_date_time1`, `t`.`trip_type`, `t`.`terminal`, `t`.`terminal1`, `t`.`terminal2`, `t`.`terminal3`, 
-	`t`.`flight_no`, `t`.`flight_no1`, `b`.`service_charge`, `b`.`sgst`, `b`.`cgst`, `b`.`igst`, `b`.`rate`, `b`.`qty`, `b`.`amount`, `b`.`total`, 
-	`b`.`type`, `b`.`status`,b.supplier_cancel_charge,b.cancel_request_date,b.admin_cancel_charge,b.cancel_date,b.refund_amount,b.customer_id,b.seller_id,
-	 b.admin_cancel_charge, t.source as src, t.destination as dest	 
-	 FROM `tickets_tbl` as `t` JOIN `booking_tbl` `b` ON `b`.`ticket_id` = `t`.`id` 
-	 JOIN `airline_tbl` `a` ON `a`.`id` = `t`.`airline` LEFT JOIN `airline_tbl` `a1` ON `a1`.`id` = `t`.`airline1` 
-	 JOIN `city_tbl` `c` ON `c`.`id` = `t`.`source` JOIN `city_tbl` `ct` ON `ct`.`id` = `t`.`destination` 
-	 LEFT JOIN `city_tbl` `c1` ON `c1`.`id` = `t`.`source1` LEFT JOIN `city_tbl` `ct1` ON `ct1`.`id` = `t`.`destination1` 
-	 JOIN `user_tbl` `u` ON `b`.`customer_id` =`u`.`id` LEFT JOIN `customer_information_tbl` `cus` ON `b`.`id` =`cus`.`booking_id` 
-	 WHERE `b`.`id` ='" . $_GET["id"] . "'";
+	// 	$sql = "SELECT `cus`.`prefix`, `cus`.`age`, `cus`.`first_name`, `cus`.`last_name`, `cus`.`email`, `cus`.`mobile_no`, 
+	// `u`.`name`, `u`.`email`, `u`.`mobile`, `b`.`id`, `t`.`ticket_no`,t.price,t.discount,t.markup,t.admin_markup, `b`.`pnr`, 
+	// `b`.`date`, `c`.`city` as `source`, `c1`.`city` as `source1`, `ct`.`city` as `destination`, `ct1`.`city` as `destination1`, 
+	// `a`.`airline`, `a1`.`airline` as `airline1`, `t`.`class`, `t`.`class1`, `t`.`departure_date_time`, `t`.`departure_date_time1`, 
+	// `t`.`arrival_date_time`, `t`.`arrival_date_time1`, `t`.`trip_type`, `t`.`terminal`, `t`.`terminal1`, `t`.`terminal2`, `t`.`terminal3`, 
+	// `t`.`flight_no`, `t`.`flight_no1`, `b`.`service_charge`, `b`.`sgst`, `b`.`cgst`, `b`.`igst`, `b`.`rate`, `b`.`qty`, `b`.`amount`, `b`.`total`, 
+	// `b`.`type`, `b`.`status`,b.supplier_cancel_charge,b.cancel_request_date,b.admin_cancel_charge,b.cancel_date,b.refund_amount,b.customer_id,b.seller_id,
+	//  b.admin_cancel_charge, t.source as src, t.destination as dest	 
+	//  FROM `tickets_tbl` as `t` JOIN `booking_tbl` `b` ON `b`.`ticket_id` = `t`.`id` 
+	//  JOIN `airline_tbl` `a` ON `a`.`id` = `t`.`airline` LEFT JOIN `airline_tbl` `a1` ON `a1`.`id` = `t`.`airline1` 
+	//  JOIN `city_tbl` `c` ON `c`.`id` = `t`.`source` JOIN `city_tbl` `ct` ON `ct`.`id` = `t`.`destination` 
+	//  LEFT JOIN `city_tbl` `c1` ON `c1`.`id` = `t`.`source1` LEFT JOIN `city_tbl` `ct1` ON `ct1`.`id` = `t`.`destination1` 
+	//  JOIN `user_tbl` `u` ON `b`.`customer_id` =`u`.`id` LEFT JOIN `customer_information_tbl` `cus` ON `b`.`id` =`cus`.`booking_id` 
+	//  WHERE `b`.`id` ='" . $_GET["id"] . "'";
+		$sql = "SELECT 	cus.prefix, cus.age, cus.first_name, cus.last_name, cus.email, cus.mobile_no, 
+						u.name, u.email, u.mobile, b.id, t.ticket_no,t.price,t.discount,t.markup,t.admin_markup, b.pnr, 
+						b.booking_date as date, c.city as source, c1.city as source1, ct.city as destination, ct1.city as destination1, 
+						a.airline, a1.airline as airline1, t.class, t.class1, t.departure_date_time, t.departure_date_time1, 
+						t.arrival_date_time, t.arrival_date_time1, t.trip_type, t.terminal, t.terminal1, t.terminal2, t.terminal3, 
+						t.flight_no, t.flight_no1, b.srvchg as service_charge, b.sgst, b.cgst, b.igst, b.price as rate, b.qty, (b.price * b.qty) as amount, b.total, 
+						u.type as type, case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status, 
+						ifnull(spl_ba.charge_amount, 0) as supplier_cancel_charge,cus_ba.activity_date as cancel_request_date, ifnull(whl_ba.charge_amount,0) as admin_cancel_charge,
+						whl_ba.activity_date as cancel_date, ifnull(b.refund_amount, 0) as refund_amount, b.refund_date, b.refundid, b.customer_userid as customer_id, b.seller_userid as seller_id,t.source as src, t.destination as dest	 
+				FROM tickets_tbl as t 
+				INNER JOIN bookings_tbl b ON b.ticket_id = t.id 
+				INNER JOIN airline_tbl a ON a.id = t.airline 
+				INNER JOIN city_tbl c ON c.id = t.source 
+				INNER JOIN city_tbl ct ON ct.id = t.destination 
+				INNER JOIN user_tbl u ON b.customer_userid =u.id 
+				LEFT JOIN airline_tbl a1 ON a1.id = t.airline1 
+				LEFT JOIN city_tbl c1 ON c1.id = t.source1 
+				LEFT JOIN city_tbl ct1 ON ct1.id = t.destination1 
+				LEFT JOIN customer_information_tbl cus ON b.id =cus.booking_id
+				LEFT JOIN booking_activity_tbl whl_ba on b.id=whl_ba.booking_id and (whl_ba.requesting_by & 4)=4 and whl_ba.status=8
+				LEFT JOIN booking_activity_tbl spl_ba on b.id=spl_ba.booking_id and (whl_ba.requesting_by & 8)=8 and whl_ba.status=8
+				LEFT JOIN booking_activity_tbl cus_ba on b.id=cus_ba.booking_id and (whl_ba.requesting_by & 3) in (1,2) and whl_ba.status=8
+				WHERE b.id=".$_GET["id"];
 
 		$qty = 0;
 		$triptype = "ONE";

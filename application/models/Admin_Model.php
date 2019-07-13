@@ -459,7 +459,9 @@ Class Admin_Model extends CI_Model
 			$this->db->join('rateplan_detail_tbl rpd', 'rp.id=rpd.rateplanid and rp.active=1', 'inner', FALSE);
 			$this->db->join('company_tbl cmp', 'cmp.id=rp.companyid and cmp.active=1', 'inner', FALSE);
 			$this->db->join('user_tbl usr', 'rp.created_by=usr.id', 'inner', FALSE);
-			$this->db->where("rp.companyid=$companyid", NULL, FALSE);
+			if($companyid!==-1) {
+				$this->db->where("rp.companyid=$companyid", NULL, FALSE);
+			}
 			if($arv!=NULL) {
 				$this->db->where($arv, NULL, FALSE);
 			}

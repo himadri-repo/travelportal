@@ -123,8 +123,8 @@
                     <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6">
                         <div id="info">
                            <ul class="list-unstyled list-inline">
-                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $cname; ?></li>
-                                <li><span><i class="fa fa-phone"></i></span><?php echo $phone; ?></li>
+                                <li><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["site_title"]; ?></li>
+                                <li><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"]; ?></li>
                             </ul>
                         </div><!-- end info -->
                     </div><!-- end columns -->

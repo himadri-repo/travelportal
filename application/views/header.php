@@ -107,7 +107,7 @@
 
 		<div class="sidenav-content">
             <div id="mySidenav" class="sidenav" >
-                <h2 id="web-name"><span><i class="fa fa-plane"></i></span>OXY TRA</h2>
+                <h2 id="web-name"><span><i class="fa fa-plane"></i></span><?php echo $setting[0]["site_title"]; ?></h2>
 
                 <div id="main-menu">
                 	<div class="closebtn">

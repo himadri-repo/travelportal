@@ -25,22 +25,26 @@ if (!empty($tag)) {
 			$total = 0;
 			if (empty($dt_from) && empty($dt_to)) {
 				if (!empty($value)) {
-					$sql = "SELECT t.departure_date_time,b.id,b.date,b.pnr,b.status,b.rate,b.qty,b.amount,b.igst,b.service_charge,b.total,t.trip_type,u.user_id,u.name,us.name as seller,us.user_id as seller_id,source.city as source_city,destination.city as destination_city
-									FROM booking_tbl b
-									INNER JOIN tickets_tbl t ON b.ticket_id = t.id
-									INNER JOIN user_tbl u ON b.customer_id = u.id
-									INNER JOIN user_tbl us ON b.seller_id = us.id
-									INNER JOIN city_tbl source ON source.id = t.source
-									INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE  $field='$value' AND (b.status='PENDING') AND (t.sale_type!='live') ORDER BY b.id DESC";
+					$sql = "SELECT t.departure_date_time,b.id,b.booking_date as date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,b.igst,b.srvchg as service_charge,b.total,t.trip_type,u.user_id,u.name,
+								us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city,
+								case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status
+								FROM bookings_tbl b
+								INNER JOIN tickets_tbl t ON b.ticket_id = t.id
+								INNER JOIN user_tbl u ON b.customer_userid = u.id
+								INNER JOIN user_tbl us ON b.seller_userid = us.id
+								INNER JOIN city_tbl source ON source.id = t.source
+								INNER JOIN city_tbl destination ON destination.id = t.destination												
+								WHERE  $field='$value' AND (b.status=0) AND (t.sale_type!='live') ORDER BY b.id DESC";
 				} else {
-					$sql = "SELECT t.departure_date_time,b.id,b.date,b.pnr,b.status,b.rate,b.qty,b.amount,b.igst,b.service_charge,b.total,t.trip_type,u.user_id,u.name,us.name as seller,us.user_id as seller_id,source.city as source_city,destination.city as destination_city
-									FROM booking_tbl b
+					$sql = "SELECT 	t.departure_date_time,b.id,b.booking_date as date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,b.igst,b.srvchg as service_charge,b.total,t.trip_type,u.user_id,u.name,
+									us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city,
+									case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status
+									FROM bookings_tbl b
 									INNER JOIN tickets_tbl t ON b.ticket_id = t.id
-									INNER JOIN user_tbl u ON b.customer_id = u.id
-									INNER JOIN user_tbl us ON b.seller_id = us.id
+									INNER JOIN user_tbl u ON b.customer_userid = u.id
+									INNER JOIN user_tbl us ON b.seller_userid = us.id
 									INNER JOIN city_tbl source ON source.id = t.source
-									INNER JOIN city_tbl destination ON destination.id = t.destination	WHERE 1		 AND (b.status='PENDING')  AND (t.sale_type!='live')				
+									INNER JOIN city_tbl destination ON destination.id = t.destination WHERE (b.status=0)  AND (t.sale_type!='live')				
 								ORDER BY b.id DESC";
 				}
 			} else {
@@ -48,23 +52,27 @@ if (!empty($tag)) {
 				$dt_from = date("Y-m-d", strtotime($_POST['dt_from']));
 				$dt_to = date("Y-m-d", strtotime($_POST['dt_to']));
 				if (!empty($value)) {
-					$sql = "SELECT t.departure_date_time,b.id,b.date,b.pnr,b.status,b.rate,b.qty,b.amount,b.igst,b.service_charge,b.total,t.trip_type,u.user_id,u.name,us.name as seller,us.user_id as seller_id,source.city as source_city,destination.city as destination_city
-									FROM booking_tbl b
+					$sql = "SELECT 	t.departure_date_time,b.id,b.booking_date as date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,b.igst,b.srvchg as service_charge,b.total,t.trip_type,u.user_id,u.name,
+									us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city,
+									case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status
+									FROM bookings_tbl b
 									INNER JOIN tickets_tbl t ON b.ticket_id = t.id
-									INNER JOIN user_tbl u ON b.customer_id = u.id
-									INNER JOIN user_tbl us ON b.seller_id = us.id
+									INNER JOIN user_tbl u ON b.customer_userid = u.id
+									INNER JOIN user_tbl us ON b.seller_userid = us.id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE  $field='$value'  AND (b.status='PENDING')  AND (t.sale_type!='live') AND DATE_FORMAT(b.date,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(b.date,'%Y-%m-%d')<='$dt_to' ORDER BY b.id DESC";
+								WHERE  $field='$value'  AND (b.status=0)  AND (t.sale_type!='live') AND DATE_FORMAT(b.booking_date,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(b.booking_date,'%Y-%m-%d')<='$dt_to' ORDER BY b.id DESC";
 				} else {
-					$sql = "SELECT t.departure_date_time,b.id,b.date,b.pnr,b.status,b.rate,b.qty,b.amount,b.igst,b.service_charge,b.total,t.trip_type,u.user_id,u.name,us.name as seller,us.user_id as seller_id,source.city as source_city,destination.city as destination_city
-									FROM booking_tbl b
+					$sql = "SELECT 	t.departure_date_time,b.id,b.booking_date as date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,b.igst,b.srvchg as service_charge,b.total,t.trip_type,u.user_id,u.name,
+									us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city,
+									case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status
+									FROM bookings_tbl b
 									INNER JOIN tickets_tbl t ON b.ticket_id = t.id
-									INNER JOIN user_tbl u ON b.customer_id = u.id
-									INNER JOIN user_tbl us ON b.seller_id = us.id
+									INNER JOIN user_tbl u ON b.customer_userid = u.id
+									INNER JOIN user_tbl us ON b.seller_userid = us.id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination								
-							        WHERE 1  AND (b.status='PENDING')  AND (t.sale_type!='live') AND ( DATE_FORMAT(b.date,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(b.date,'%Y-%m-%d')<='$dt_to' )
+							        WHERE 1  AND (b.status=0)  AND (t.sale_type!='live') AND ( DATE_FORMAT(b.booking_date,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(b.booking_date,'%Y-%m-%d')<='$dt_to' )
 									ORDER BY b.id DESC";
 				}
 			}

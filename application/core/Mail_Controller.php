@@ -17,6 +17,8 @@ class Mail_Controller  extends CI_Controller
 
 	public function send($subject,$data)
 	{	
+		if(!SEND_EMAIL)
+			return true;
         	
 		 $config['protocol'] = "smtp";		
 		 $config['smtp_host'] = "ssl://smtp.gmail.com";
@@ -170,6 +172,9 @@ class Mail_Controller  extends CI_Controller
 
     public function adminsend($subject,$data)
 	{     		
+		if(!SEND_EMAIL)
+			return true;
+
 		 $config['protocol'] = "smtp";		
 		 $config['smtp_host'] = "ssl://smtp.gmail.com";
 		 $config['smtp_port'] = "465";		
@@ -200,6 +205,9 @@ class Mail_Controller  extends CI_Controller
 
     public function send_message($no,$msg)
 	{
+		if(!SEND_SMS)
+			return true;
+			
 		  $msg=urlencode($msg);
 		  $no="91".$no;
 		  $curl = curl_init();

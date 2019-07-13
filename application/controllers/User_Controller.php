@@ -370,6 +370,7 @@ class User_Controller extends Mail_Controller
 		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		$result["footer"]=$this->Search_Model->get_post(5);
+		$result["company"]=$company;
 
 		if(!NEW_FLOW) {
 			$this->load->view('header1',$result);

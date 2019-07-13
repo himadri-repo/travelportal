@@ -131,7 +131,7 @@ function get_all(start)
 									$('#grid_row'+k+"").append("<td>"+data[k]['name']+"<br> ("+data[k]['user_id']+")</td>");
 									$('#grid_row'+k+"").append("<td>"+data[k]['seller']+"<br> ("+data[k]['seller_id']+")</td>");
 									$('#grid_row'+k+"").append("<td>"+data[k]['status']+"</td>");
-									if(data[k]['user_id']!=data[k]['seller_id'])
+									//if(data[k]['user_id']!=data[k]['seller_id'])
 									{
 										$('#grid_row'+k+"").append("<td>"+									
 										 "<div class='hidden-sm hidden-xs action-buttons'>"+														
@@ -143,10 +143,10 @@ function get_all(start)
 										
 										"</td>");
 									}
-									else
-									{
-										$('#grid_row'+k+"").append("<td></td>");
-									}
+									// else
+									// {
+									// 	$('#grid_row'+k+"").append("<td></td>");
+									// }
 									
 														
 									  ctr++;								

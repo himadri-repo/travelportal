@@ -240,4 +240,54 @@ class Company extends REST_Controller {
 
         $this->set_response($services, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function bookings_get($companyid, $userid) {
+        if($userid === NULL || $userid==='') {
+            $userid = -1;
+        }
+        if($companyid === NULL || $companyid==='') {
+            $companyid = -1;
+        }
+        $rateplans = $this->Admin_Model->rateplanByCompanyid(-1);
+
+        $customers = $this->Search_Model->get_booking_customers(-1, intval($companyid), intval($userid));
+
+        $bookings = $this->Search_Model->get_bookings(intval($companyid), intval($userid));
+
+        $tickets = $this->Search_Model->get_tickets(intval($companyid));
+
+        for ($i=0; $bookings && $i < count($bookings); $i++) { 
+            $booking = &$bookings[$i];
+            $objrateplan = NULL;
+            foreach ($rateplans as $rateplan) {
+                if($booking['rateplanid']===$rateplan['id']) {
+                    $objrateplan = $rateplan;
+                    break;
+                }
+            }
+
+            $booking['rateplan'] = $objrateplan;
+
+            $booking_activities = $this->Search_Model->get_booking_activity(intval($booking['id']));
+            if($booking_activities) {
+                $booking['booking_activities'] = $booking_activities;
+            }
+
+            $customer_list = array();
+            foreach ($customers as $customer) {
+                if(intval($customer['booking_id']) === intval($booking['id'])) {
+                    $customer_list[] = $customer;
+                }
+            }
+            $booking['customers'] = $customer_list;
+
+            $ticket = $this->Search_Model->get_ticket(intval($booking['ticket_id']));
+            if($ticket && count($ticket)>0)
+                $booking['ticket'] = $ticket[0];
+        }
+
+        $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
+
+?>
