@@ -288,6 +288,22 @@ class Company extends REST_Controller {
 
         $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function open_tickets_post() {
+        $tickets = NULL;
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $arg = json_decode($stream_clean, true);
+
+        try
+        {
+            $tickets = $this->Search_Model->search_one_wayV2($arg);
+        }
+        catch(Exception $ex) {
+            
+        }
+
+        $this->set_response($tickets, REST_Controller::HTTP_OK);
+    }
 }
 
 ?>
