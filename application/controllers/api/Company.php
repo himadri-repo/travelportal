@@ -296,13 +296,179 @@ class Company extends REST_Controller {
 
         try
         {
+            $rateplan_details = $this->Admin_Model->rateplandetails(-1);
+            $companyid = intval($arg["companyid"]);
+
             $tickets = $this->Search_Model->search_one_wayV2($arg);
+
+            for ($i=0; $tickets && $i < count($tickets); $i++) { 
+                $ticket = &$tickets[$i];
+                $suprpd = [];
+                $sellrpd = [];
+                $suprpid = intval($ticket["rate_plan_id"]);
+                $sellrpid = intval($ticket["seller_rateplan_id"]);
+                
+                if($rateplan_details && count($rateplan_details)>0) {
+                    foreach ($rateplan_details as $rateplan_detail) {
+                        $rpid = intval($rateplan_detail["rateplanid"]);
+    
+                        if($rpid === $suprpid) {
+                            $suprpd[] = $rateplan_detail;
+                        }
+                        if($rpid === $sellrpid) {
+                            $sellrpd[] = $rateplan_detail;
+                        }
+                    }
+    
+                    if(count($suprpd)>0 || count($sellrpd)>0) {
+                        $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid);
+                    }
+                }
+            }
         }
         catch(Exception $ex) {
             
         }
 
         $this->set_response($tickets, REST_Controller::HTTP_OK);
+    }
+
+	private function calculationTicketValue(&$ticket, $supplier_rpdetails, $seller_rpdetails, $companyid) {
+		$rateplanid = $ticket['rate_plan_id'];
+		$price = $ticket['price'];
+		
+		$ticket['whl_markup'] = 0;
+		$ticket['whl_srvchg'] = 0;
+		$ticket['whl_cgst'] = 0;
+		$ticket['whl_sgst'] = 0;
+		$ticket['whl_igst'] = 0;
+		$ticket['whl_disc'] = 0;
+
+		$ticket['spl_markup'] = 0;
+		$ticket['spl_srvchg'] = 0;
+		$ticket['spl_cgst'] = 0;
+		$ticket['spl_sgst'] = 0;
+		$ticket['spl_igst'] = 0;
+		$ticket['spl_disc'] = 0;
+
+		$ticket['cost_price'] = 0;
+
+		$tax_others = 0;
+
+		try
+		{
+            //accomodate supplier rateplan
+            for ($j=0; $j < count($supplier_rpdetails); $j++) { 
+                $rpdetail = $supplier_rpdetails[$j];
+                $achead = 'spl_'.$rpdetail['head_code'];
+                // array_push($ticket, [$achead => '']);
+                //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+                    if($rpdetail['operation'] == 1) {
+                        // add operation
+                        $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+                        $tax_others = $tax_others + $ticket[$achead];
+                    }
+                    else {
+                        // subtraction operation
+                        $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+                        $tax_others = $tax_others - $ticket[$achead];
+                    }
+                //}
+            }
+
+			// $ticket['price'] += $tax_others;
+			$tax_others = 0;
+			
+            //accomodate wholesaler rateplan
+            for ($j=0; $j < count($seller_rpdetails); $j++) { 
+                $rpdetail = $seller_rpdetails[$j];
+                $achead = 'whl_'.$rpdetail['head_code'];
+                // array_push($ticket, [$achead => '']);
+                //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+                    if($rpdetail['operation'] == 1) {
+                        $ticket[$achead] += $this->getProcessedValue($rpdetail, $price, $ticket);
+                        $tax_others += $ticket[$achead];
+                    }
+                    else {
+                        $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+                        $tax_others -= $ticket[$achead];
+                    }
+                //}
+            }
+		}
+		catch(Exception $ex) {
+
+		}
+
+		// $ticket['finalvalue'] = $tax_others;
+        // $ticket['price'] += $tax_others;
+        
+        $price = $ticket['price'];
+
+		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
+				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
+				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)
+				+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
+                + ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
+                
+        $ticket['cost_price'] = (($price + $ticket['spl_markup'] + $ticket['spl_srvchg'])
+                                + ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
+                                + ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
+
+		if ($ticket['whl_srvchg'] === 0) {
+			$ticket['whl_cgst'] = 0;
+			$ticket['whl_sgst'] = 0;
+			$ticket['whl_igst'] = 0;
+		}
+
+		if ($ticket['spl_srvchg'] === 0) {
+			$ticket['spl_cgst'] = 0;
+			$ticket['spl_sgst'] = 0;
+			$ticket['spl_igst'] = 0;
+		}
+
+		return $ticket;
+    }
+    
+	private function getProcessedValue($rpdetail, $price, $ticket) {
+		$operation = NULL;
+		if(!($rpdetail['calculation']=='' || $rpdetail['calculation']==NULL)) {
+			$operation = str_replace('}', '', str_replace('{', '', $rpdetail['calculation']));
+		}
+		if($operation !== NULL) {
+			if(isset($ticket[$operation])) {
+				$price = $ticket[$operation];
+			}
+			else {
+				$price = 0;
+			}
+		}
+
+		if($rpdetail['amount_type'] == 1) { //value
+			return floatval($rpdetail['amount']);
+		}
+		else if($rpdetail['amount_type'] == 2) { //%
+			// return $price * ($rpdetail['amount'] / 100); // this is the right approach but let us think how to implement it.
+			return floatval($rpdetail['amount']);
+		}
+		else {
+			return 0;
+		}
+    }
+
+    public function bookingsquery_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $arg = json_decode($stream_clean, true);
+
+        try
+        {
+            $bookings = $this->Search_Model->get_bookings_by_query($arg);
+        }
+        catch(Exception $ex) {
+            $bookings = array();
+        }
+
+        $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 }
 

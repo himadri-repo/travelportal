@@ -131,3 +131,4 @@ $route['api/admin/supplier/(:num)/wholesaler/(:num)'] = 'api/Admin/save_supplier
 $route['api/admin/wholesaler/(:num)/supplier/(:num)'] = 'api/Admin/save_wholesaler_details/$1/$2';
 $route['api/metadata/(:any)/(:num)'] = 'api/Common/metadata/$1/$2';
 $route['api/bookings/?(:num)?/?(:num)?'] = 'api/Company/bookings/$1/$2';
+$route['api/query/bookings'] = 'api/Company/bookingsquery';

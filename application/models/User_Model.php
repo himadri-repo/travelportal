@@ -60,7 +60,7 @@ Class User_Model extends CI_Model
 	}
 
 	public function get_userbyid($uid) {
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.id=', $uid);
@@ -78,7 +78,7 @@ Class User_Model extends CI_Model
 	}
 
 	public function getUserByUUID($uuid) {
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.uid=', $uuid);
@@ -155,8 +155,8 @@ Class User_Model extends CI_Model
 		$sql = "select 	u.id, u.user_id, u.name, u.profile_image, u.email, u.mobile, u.address, u.state, u.country, u.password, u.is_supplier, 
 						u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
         				(select count(t.id) from tickets_tbl t where t.user_id=$userid) as total_ticket, 
-        				(select count(seller.id) from booking_tbl seller where seller.seller_id=$userid) as sold,
-        				(select count(customer.id) from booking_tbl customer where customer.customer_id=$userid) as purchased
+        				(select count(seller.id) from bookings_tbl seller where seller.seller_userid=$userid) as sold,
+        				(select count(customer.id) from bookings_tbl customer where customer.customer_userid=$userid) as purchased
 				FROM user_tbl as u
 				WHERE u.id = $userid";
 
@@ -271,9 +271,9 @@ Class User_Model extends CI_Model
 	
 	public function my_booking() 
 	{            
-		$arr=array("customer_id"=>$this->session->userdata('user_id'));  	
+		$arr=array("customer_userid"=>$this->session->userdata('user_id'));  	
 		$this->db->select('count(id) as no');
-		$this->db->from('booking_tbl');		
+		$this->db->from('bookings_tbl');		
 		$this->db->where($arr);		
 		$query = $this->db->get();							
 		//echo $this->db->last_query();die();

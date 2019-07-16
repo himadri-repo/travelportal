@@ -21,59 +21,6 @@ Class Search_Model extends CI_Model
 		$available = $arr["available"];
 		$no_of_person = $arr["no_of_person"];
 
-		#region commented
-		// $sql = "select tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city as source_city, ct2.city as destination_city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, 
-			// 	tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, tkt.total, 
-			// 	al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, sl1.wsl_srvchg_rate as admin_crvchg, cm.id as companyid, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, 
-			// 	tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, sl1.slr_markup_rate as markup_rate, sl1.slr_srvchg_rate as srvchg_rate, sl1.markup_type, sl1.cgst_rate, sl1.sgst_rate, sl1.igst_rate, sl1.allowfeed, 
-			// 	sl1.service, sl1.owner_companyid,
-			// 	max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airline, max(ltkt.adultbasefare) as adultbasefare, max(ltkt.adult_tax_fees) as adult_tax_fees, 
-			// 	max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, max(ltkt.adultbasefare+ltkt.adult_tax_fees+200) as adult_total
-			// from tickets_tbl tkt 
-			// inner join city_tbl ct1 on tkt.source=ct1.id
-			// inner join city_tbl ct2 on tkt.destination=ct2.id
-			// inner join airline_tbl al on al.id=tkt.airline
-			// inner join company_tbl cm on tkt.companyid=cm.id
-			// inner join
-			// (
-			// 	select sl.code, sl.primary_user_id, supplierid, cm.display_name, slr.markup_type
-			// 	,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount/100)) from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='markup'), 0) as wsl_markup_rate
-			// 	,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount/100)) from rateplan_detail_tbl rpd where rpd.rateplanid=slr.rate_plan_id and rpd.head_code='markup'), 0) as slr_markup_rate
-			// 	,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount/100)) from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='srvchg'), 0) as wsl_srvchg_rate
-			// 	,ifnull((select sum(if(rpd.amount_type=1, rpd.amount, rpd.amount/100)) from rateplan_detail_tbl rpd where rpd.rateplanid=slr.rate_plan_id and rpd.head_code='srvchg'), 0) as slr_srvchg_rate
-			// 	, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='cgst') as cgst_rate
-			// 	, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='sgst') as sgst_rate
-			// 	, (select rpd.amount from rateplan_detail_tbl rpd where rpd.rateplanid=wsl.rate_plan_id and rpd.head_code='igst') as igst_rate
-			// 	,slr.allowfeed,  srv.datavalue as service, sl.companyid as owner_companyid
-			// 	, slr.rate_plan_id as wholesaler_rateplan, wsl.rate_plan_id as supplier_rateplan
-			// 	from supplier_tbl sl 
-			// 	inner join company_tbl cm on sl.supplierid=cm.id and cm.active=1
-			// 	inner join supplier_services_tbl slr on sl.id=slr.supplier_rel_id and slr.active=1
-			// 	inner join metadata_tbl srv on srv.id=slr.serviceid and srv.active=1 and srv.code='FSRV0001'
-			// 	inner join wholesaler_services_tbl wsl on wsl.id=slr.tracking_id and wsl.tracking_id=slr.id
-			// 	where sl.companyid=$companyid and slr.allowfeed=1
-			// union all
-			// 	select cm1.code, cm1.primary_user_id, cm1.id as supplierid, cm1.display_name, 1 as markup_type, 0 as wsl_markup_rate, 0 as slr_markup_rate, 0 as wsl_srvchg_rate, 0 as slr_srvchg_rate, 
-			// 	0 as cgst_rate, 0 as sgst_rate, 0 as igst_rate, 1 as allowfeed, 'Coupon Flight Tickets' as service, cm1.id as owner_companyid, 1 as supplier_rateplan, 1 as wholesaler_rateplan
-			// 	from company_tbl cm1
-			// 	where cm1.id=$companyid and active=1
-			// ) as sl1 on sl1.supplierid=cm.id
-			// left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1 
-			// 	and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE) 
-			// 	and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE)
-			// 	and ltkt.airline is not null 
-			// where tkt.source=$source and tkt.destination=$destination and tkt.trip_type='$triptype' and tkt.available='$available' and tkt.approved=$approved and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')='$from_date' and tkt.no_of_person>=$no_of_person and sl1.owner_companyid=$companyid
-			// group by tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, 
-			// 	tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate, cm.id, tkt.user_id ,tkt.data_collected_from, 
-			// 	tkt.total, tkt.refundable, tkt.sale_type, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name, sl1.slr_markup_rate, sl1.markup_type, sl1.cgst_rate, sl1.sgst_rate, sl1.igst_rate, sl1.allowfeed, 
-			// 	sl1.service, sl1.owner_companyid, sl1.wsl_srvchg_rate, sl1.slr_srvchg_rate
-			// order by (price + admin_markup + markup) asc";
-
-		#endregion
-		
-		// order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
-		// where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
-
 		$sql = "select 	tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city as source_city, ct2.city as destination_city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, 
 						tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, tkt.total, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id as companyid, cm.display_name as companyname, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, 
 						tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, 
@@ -739,7 +686,7 @@ Class Search_Model extends CI_Model
 		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.display_name as customer_company, sc.display_name as seller_company, t.id as ticket_id,
-						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'REJECTED' when b.status=8 then 'CANCELLED' end as status, 
+						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid
 				FROM bookings_tbl b 
 				INNER JOIN tickets_tbl t ON b.ticket_id = t.id 
@@ -765,13 +712,41 @@ Class Search_Model extends CI_Model
 		}         	
 	}
 
+	public function get_bookings_by_query($argv) {
+		$this->db->select("t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+			b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
+			cc.display_name as customer_company, sc.display_name as seller_company, t.id as ticket_id,
+			case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
+			ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid");
+		$this->db->from("bookings_tbl b");
+		$this->db->join("tickets_tbl t", "b.ticket_id = t.id", FALSE);
+		$this->db->join("user_tbl u", "b.customer_userid = u.id", FALSE);
+		$this->db->join("user_tbl us", "b.seller_userid = us.id", FALSE);
+		$this->db->join("company_tbl cc", "b.customer_companyid = cc.id", FALSE);
+		$this->db->join("company_tbl sc", "b.seller_companyid = sc.id", FALSE);
+		$this->db->join("city_tbl source", "source.id = t.source", FALSE);
+		$this->db->join("city_tbl destination", "destination.id = t.destination", FALSE);
+		$this->db->where("(b.status=0)  AND (t.sale_type!='live')");
+		$this->db->where($argv);
+
+		$query = $this->db->get();
+		if ($query->num_rows() > 0)
+		{					
+            return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public function get_booking_activity($bookingid=-1) {
 		$sql = "select 	ba.activity_id, ba.pactivity_id, ba.booking_id, ba.activity_date, ba.source_userid, srcusr.name as source_username, ba.target_userid, tgtusr.name as target_username, ba.source_companyid, 
 						src.display_name as source_companyname, ba.target_companyid, tgt.display_name as target_companyname, srcusr.name as activity_done_by, tgtusr.name as activity_done_to, ba.created_by, ba.created_on, 
 						ba.updated_by, ba.updated_on, ba.charge_amount, ba.charge_desc,
 						case when (ba.requesting_by & 1)=1 then 'Customer' when (ba.requesting_by & 2)=2 then 'Travel Agent' when (ba.requesting_by & 4)=4 then 'Wholesaler' when (ba.requesting_by & 8)=8 then 'Supplier' end as requesting_by,
 						case when (ba.requesting_to & 1)=1 then 'Customer' when (ba.requesting_to & 2)=2 then 'Travel Agent' when (ba.requesting_to & 4)=4 then 'Wholesaler' when (ba.requesting_to & 8)=8 then 'Supplier' end as requesting_to,
-						case when ba.status=0 then 'Pending' when ba.status=1 then 'Hold' when ba.status=2 then 'Processed' when ba.status=4 then 'Rejected' when ba.status=8 then 'Cancelled' end as status
+						case when ba.status=0 then 'Pending' when ba.status=1 then 'Hold' when ba.status=2 then 'Rejected' when ba.status=4 then 'Requesy for Cancel' when ba.status=8 then 'Cancelled' when ba.status=16 then 'Revised' when ba.status=32 then 'Processed' when ba.status=64 then 'Processing' end as status
 				from booking_activity_tbl ba
 				inner join bookings_tbl b on ba.booking_id=b.id
 				inner join company_tbl src on src.id=ba.source_companyid and src.active=1
@@ -793,7 +768,9 @@ Class Search_Model extends CI_Model
 	}
 
 	public function get_booking_customers($bookingid=-1, $companyid=-1, $userid=-1) {
-		$sql = "select cus.*, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, b.status booking_status, b.total, b.costprice
+		$sql = "select cus.*, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, 
+				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as booking_status, 
+				b.total, b.costprice
 			from customer_information_tbl cus
 			inner join bookings_tbl b on b.id=cus.booking_id
 			inner join tickets_tbl t on t.id = b.ticket_id
