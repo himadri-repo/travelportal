@@ -274,11 +274,15 @@ class Company extends REST_Controller {
             }
 
             $customer_list = array();
-            foreach ($customers as $customer) {
-                if(intval($customer['booking_id']) === intval($booking['id'])) {
-                    $customer_list[] = $customer;
+
+            if($customers) {
+                foreach ($customers as $customer) {
+                    if(intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id']))) {
+                        $customer_list[] = $customer;
+                    }
                 }
             }
+            
             $booking['customers'] = $customer_list;
 
             $ticket = $this->Search_Model->get_ticket(intval($booking['ticket_id']));
@@ -469,6 +473,26 @@ class Company extends REST_Controller {
         }
 
         $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function upsert_bookings_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $bookings = json_decode($stream_clean, true);
+
+        $idx = 1;
+        $feedbacks = array();
+
+        try
+        {
+            foreach ($bookings as $booking) {
+                $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking));
+            }
+        }
+        catch(Exception $ex) {
+            // $bookings = array();
+        }
+
+        $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 }
 

@@ -292,7 +292,20 @@ Class Search_Model extends CI_Model
 			return false;
 		}
          	
-    }
+	}
+	
+	// public function update($tbl, $data, $filter) {
+	// 	// $this->db->update('employee_master',$data,array('emp_ID' => 1));
+	// 	if($this->db->update($tbl, $data, $filter)) {
+	// 		return array('effected_rows' => $this->db->affected_rows(), 'id' => -1);
+	// 	}
+	// 	else
+	// 	{
+	// 		echo $this->db->last_query();die();
+	// 		return false;
+	// 	}
+	// }
+
     public function booking_details($id) 
 	{    
 	    
@@ -542,21 +555,19 @@ Class Search_Model extends CI_Model
 		{
 			  return false;
 		}         	
-    }
+	}
+	
     public function update($tbl,$data,$arr) 
 	{    
-       
-        $this->db->where($arr);		
+        $this->db->where($arr);
 		if ($this->db->update($tbl,$data)) 
 		{					
             return true;
-			
 		}
 		else
 		{
-			  return false;
+			return false;
 		}
-         	
     }
 
      public function get_post($id)
@@ -683,9 +694,10 @@ Class Search_Model extends CI_Model
 	 }
 
 	public function get_bookings($companyid=-1, $userid=-1) {
-		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
+		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
-						cc.display_name as customer_company, sc.display_name as seller_company, t.id as ticket_id,
+						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid
 				FROM bookings_tbl b 
@@ -696,9 +708,8 @@ Class Search_Model extends CI_Model
 				INNER JOIN company_tbl sc ON b.seller_companyid = sc.id 
 				INNER JOIN city_tbl source ON source.id = t.source 
 				INNER JOIN city_tbl destination ON destination.id = t.destination 
-				WHERE (b.status=0)  AND (t.sale_type!='live') and 				
-					(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
-					((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid)))
+				WHERE (t.sale_type!='live') and 				
+					((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid))
 				ORDER BY b.id DESC";
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();
@@ -713,9 +724,9 @@ Class Search_Model extends CI_Model
 	}
 
 	public function get_bookings_by_query($argv) {
-		$this->db->select("t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,b.price as rate,b.qty,(b.price * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+		$this->db->select("t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
 			b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
-			cc.display_name as customer_company, sc.display_name as seller_company, t.id as ticket_id,
+			cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 			case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 			ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid");
 		$this->db->from("bookings_tbl b");
@@ -726,7 +737,7 @@ Class Search_Model extends CI_Model
 		$this->db->join("company_tbl sc", "b.seller_companyid = sc.id", FALSE);
 		$this->db->join("city_tbl source", "source.id = t.source", FALSE);
 		$this->db->join("city_tbl destination", "destination.id = t.destination", FALSE);
-		$this->db->where("(b.status=0)  AND (t.sale_type!='live')");
+		$this->db->where("(t.sale_type!='live')");
 		$this->db->where($argv);
 
 		$query = $this->db->get();
@@ -768,13 +779,14 @@ Class Search_Model extends CI_Model
 	}
 
 	public function get_booking_customers($bookingid=-1, $companyid=-1, $userid=-1) {
-		$sql = "select cus.*, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, 
+		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.age, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status, 
+				b.id as booking_id, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, 
 				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as booking_status, 
 				b.total, b.costprice
 			from customer_information_tbl cus
-			inner join bookings_tbl b on b.id=cus.booking_id
+			inner join bookings_tbl b on (b.id=cus.booking_id or b.id=cus.refrence_id)
 			inner join tickets_tbl t on t.id = b.ticket_id
-			where (cus.booking_id=$bookingid or $bookingid=-1) and (b.status=0)  AND (t.sale_type!='live') and 
+			where (cus.booking_id=$bookingid or $bookingid=-1) and (t.sale_type!='live') and 
 				(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
 				((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid)))";
 		
@@ -805,6 +817,49 @@ Class Search_Model extends CI_Model
 		{
 			return false;
 		}
+	}
+
+	public function upsert_booking($booking) {
+		if($booking === NULL) return;
+		$returnedValue = NULL;
+		$tbl = 'bookings_tbl';
+
+		if($booking['id']>0) {
+			// this is old booking. so needs to be updated
+			$returnedValue = $this->update($tbl, $booking, array('id' => $booking['id']));
+		}
+		else {
+			// this is new booking. so needs to be inserted
+			$bookingactivity = null; 
+			if(isset($booking['activity']) && count($booking['activity'])>0) {
+				$bookingactivity = $booking['activity'][0];
+				unset($booking['activity']);
+			}
+
+			$customers = null; 
+			if(isset($booking['customers']) && count($booking['customers'])>0) {
+				$customers = $booking['customers'];
+				unset($booking['customers']);
+			}
+
+			unset($booking['id']);
+			unset($bookingactivity['activity_id']);
+			$returnedValue = $this->save($tbl, $booking);
+			if($returnedValue!==null) {
+				$tbl = 'booking_activity_tbl';
+				$bookingactivity['booking_id'] = $returnedValue;
+
+				for ($i=0; $i < count($customers); $i++) { 
+					$customer = &$customers[$i];
+					$customer['refrence_id'] = $returnedValue;
+
+					$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
+				}
+				$returnedValue = $this->save($tbl, $bookingactivity);
+			}
+		}
+
+		return $returnedValue;
 	}
 }
 ?>

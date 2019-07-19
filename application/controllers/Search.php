@@ -575,7 +575,7 @@ class Search extends Mail_Controller
 					//$flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
 					$costprice = $ticket["total"] + $ticket["whl_markup"] + $ticket["whl_srvchg"] + ($ticket["whl_srvchg"] * $ticket["whl_cgst"]/100) + ($ticket["whl_srvchg"] * $ticket["whl_sgst"]/100);
 				}
-				else if($current_user["type"]==='B2B') {
+				else if($current_user["type"]==='B2B' || $current_user["type"]==='B2C') {
 					$costprice = $ticket["price"];
 				}
 
@@ -694,14 +694,30 @@ class Search extends Mail_Controller
 				$booking_id = $this->Search_Model->save("booking_tbl",$arr);
 
 				$requesting_by = 1;
+				$requesting_to = 4;
+				$seller_userid = $user['supplier_user_details']['id'];
+				$seller_companyid = $user['supplier_user_details']['companyid'];
 				$adminmarkup = 0;
-				if($current_user["is_admin"]!=='1' && $current_user["type"]!=='EMP' && $current_user["type"]==='B2B')
+				if($current_user["is_admin"]!=='1' && $current_user["type"]!=='EMP' && ($current_user["type"]==='B2B' || $current_user["type"]==='B2C'))
 				{
-					$adminmarkup = $result1[0]["admin_markup"];
-					$requesting_by = 2;
+					if($current_user["type"]==='B2B') {
+						$adminmarkup = $result1[0]["admin_markup"];
+						$requesting_by = 2;
+						$seller_userid = $company['primary_user_id'];
+						$seller_companyid = $company['id'];
+					}
+					else {
+						$adminmarkup = 0;
+						$requesting_by = 1;
+						$seller_userid = $company['primary_user_id'];
+						$seller_companyid = $company['id'];
+					}
 				}
 				if($current_user["is_admin"]==='1' || $current_user["type"]==='EMP') {
 					$requesting_by = 4;
+					// $requesting_to = 4;
+					$seller_userid = $company['primary_user_id'];
+					$seller_companyid = $company['id'];
 				}
 
 				//insert data into bookings_tbl
@@ -711,8 +727,8 @@ class Search extends Mail_Controller
 					"pnr"=>$result1[0]["pnr"],
 					"customer_userid"=>$this->session->userdata('user_id'),
 					"customer_companyid"=>$companyid,
-					"seller_userid"=>$user['supplier_user_details']['id'],
-					"seller_companyid"=>$user['supplier_user_details']['companyid'],
+					"seller_userid"=>$seller_userid,
+					"seller_companyid"=>$seller_companyid,
 					"status"=>0,
 					"price"=>$this->input->post('price')*$this->input->post('qty'),
 					"admin_markup"=>$adminmarkup,
@@ -738,9 +754,9 @@ class Search extends Mail_Controller
 					"source_userid"=>$this->session->userdata('user_id'),
 					"source_companyid"=>$companyid,
 					"requesting_by"=>$requesting_by,
-					"target_userid"=>$user['supplier_user_details']['id'],
-					"target_companyid"=>$user['supplier_user_details']['companyid'],
-					"requesting_to"=>4,
+					"target_userid"=>$seller_userid,
+					"target_companyid"=>$seller_companyid,
+					"requesting_to"=>$requesting_to,
 					"status"=>0,
 					"notes"=>'',
 					"created_by"=>$this->session->userdata('user_id'),
