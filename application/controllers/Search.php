@@ -926,7 +926,9 @@ class Search extends Mail_Controller
 										"refrence_id"=>$refrence_id,
 										"ticket_fare"=>($amount),
 										"costprice"=>($costprice),
-										"pnr"=>$result1[0]["pnr"]
+										"pnr"=>$result1[0]["pnr"],
+										"created_by"=>$this->session->userdata('user_id'),
+										"created_on"=>date("Y-m-d h:i:s")
 										);
 							$this->Search_Model->save("customer_information_tbl",$arr);
 						}
@@ -949,8 +951,10 @@ class Search extends Mail_Controller
 										"email"=>$_REQUEST["email"][$key],
 										"companyid"=> $companyid,
 										"booking_id"=>$booking_id_new,
-										"pnr"=>$result1[0]["pnr"]
-										);
+										"pnr"=>$result1[0]["pnr"],
+										"created_by"=>$this->session->userdata('user_id'),
+										"created_on"=>date("Y-m-d h:i:s")
+									);
 							$this->Search_Model->save("customer_information_tbl",$arr);
 						}
 					}

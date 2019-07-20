@@ -825,8 +825,55 @@ Class Search_Model extends CI_Model
 		$tbl = 'bookings_tbl';
 
 		if($booking['id']>0) {
+			$bookingStatus = $booking['status'];
+			if(isset($booking['ticket'])) {
+				$ticket = $this->get_ticket($booking['ticket']['id'])[0];
+			}
+
 			// this is old booking. so needs to be updated
-			$returnedValue = $this->update($tbl, $booking, array('id' => $booking['id']));
+			$returnedValue = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
+			$bookingactivity = null; 
+			if(isset($booking['activity']) && count($booking['activity'])>0) {
+				$bookingactivity = $booking['activity'][0];
+				unset($booking['activity']);
+				$tbl = 'booking_activity_tbl';
+
+				$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
+			}
+
+			$customers = null; 
+			$no_of_tickets = 0;
+			if(isset($booking['customers']) && count($booking['customers'])>0) {
+				$customers = $booking['customers'];
+				unset($booking['customers']);
+				$tbl = 'customer_information_tbl';
+
+				for ($i=0; $i < count($customers); $i++) { 
+					if($customers[$i]['status'] == 2)
+					{
+						$no_of_tickets++;
+					}
+					if(intval($ticket['no_of_person'])>=$no_of_tickets) {
+						$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
+					}
+				}
+			}
+
+			if(($booking['status'] == 2 || $booking['status'] == 1) && $no_of_tickets>0) {
+				// deduct stock if 'Approved' or 'Hold'
+				// Means if the booking is approved then reduce the available ticekt count and dr./cr. wallet balance.
+
+				// reduce available tickets count.
+				$tbl = 'tickets_tbl';
+				$no_of_person = intval($ticket['no_of_person']);
+
+				if(intval($ticket['no_of_person'])>=$no_of_tickets) {
+					$available = (intval($ticket['no_of_person']) - $no_of_tickets)>0 ? 'YES' : 'NO';
+					$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
+				}
+
+				// new dr./cr. wallet money
+			}
 		}
 		else {
 			// this is new booking. so needs to be inserted
