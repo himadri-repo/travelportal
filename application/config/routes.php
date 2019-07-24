@@ -133,3 +133,6 @@ $route['api/metadata/(:any)/(:num)'] = 'api/Common/metadata/$1/$2';
 $route['api/bookings/?(:num)?/?(:num)?'] = 'api/Company/bookings/$1/$2';
 $route['api/query/bookings'] = 'api/Company/bookingsquery';
 $route['api/save/bookings'] = 'api/Company/upsert_bookings';
+$route['api/company/ticket/(:num)'] = 'api/Company/getticket/$1';
+$route['api/admin/cities'] = 'api/Admin/cities';
+$route['api/admin/airlines'] = 'api/Admin/airlines';

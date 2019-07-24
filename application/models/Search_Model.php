@@ -328,7 +328,9 @@ Class Search_Model extends CI_Model
 		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,u.type,
-						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,b.price as rate,b.qty,(b.price * b.qty) as amount,b.total, b.costprice, b.rateplanid, b.status,b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
+						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price+b.admin_markup+b.markup) as rate,b.qty,((b.price+b.admin_markup+b.markup) * b.qty) as amount,b.total, b.costprice, b.rateplanid, 
+						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
+						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
 						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status
 				from tickets_tbl as t 
 				inner join bookings_tbl b on b.ticket_id = t.id
@@ -646,10 +648,10 @@ Class Search_Model extends CI_Model
 
 	 public function get_tickets($companyid) {
 		$dt_from = date("Y-m-d H:i:s");
-		$sql = "select tkt.id, ct1.city source, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no
-				,tkt.terminal, tkt.no_of_person, tkt.class, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, cm.id, tkt.user_id
-				,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, 
-				sl1.slr_markup_rate as markup_rate, sl1.markup_type, sl1.cgst_rate, sl1.sgst_rate, sl1.igst_rate, sl1.allowfeed, sl1.service, sl1.owner_companyid
+		$sql = "select tkt.id, tkt.source sourceid, ct1.city source, tkt.destination destinationid, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no 
+				,tkt.terminal, tkt.no_of_person, tkt.class, tkt.airline airlineid, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, cm.id as companyid, tkt.user_id 
+				,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, tkt.sale_type, tkt.refundable, 
+				sl1.slr_markup_rate as markup_rate, sl1.markup_type, sl1.cgst_rate, sl1.sgst_rate, sl1.igst_rate, sl1.allowfeed, sl1.service, sl1.owner_companyid 
 			from tickets_tbl tkt 
 			inner join city_tbl ct1 on tkt.source=ct1.id
 			inner join city_tbl ct2 on tkt.destination=ct2.id
@@ -803,9 +805,15 @@ Class Search_Model extends CI_Model
 	}
 
 	public function get_ticket($ticketid = -1) {
-		$sql = "select t.*
-			from tickets_tbl t
-			where t.id=$ticketid";
+		$sql = "select t.*, u.name, c.display_name supplier, c1.city source_city, c2.city destination_city, al.airline airline_name, al.image airline_image, al.aircode  
+				from tickets_tbl t 
+				inner join company_tbl c on c.id = t.companyid 
+				inner join user_tbl u on t.user_id=u.id 
+				inner join city_tbl c1 on t.source=c1.id 
+				inner join city_tbl c2 on t.destination=c2.id 
+				inner join airline_tbl al on t.airline=al.id 
+				where t.id=$ticketid
+				order by t.departure_date_time ASC, t.price ASC";
 		
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();

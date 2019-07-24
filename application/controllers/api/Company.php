@@ -275,11 +275,14 @@ class Company extends REST_Controller {
 
             $customer_list = array();
 
-            if($customers) {
+            if($customers && count($customers)>0) {
+                $lastcustid = 0;
                 foreach ($customers as $customer) {
-                    if(intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id']))) {
+                    if((intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id'])))
+                        && $lastcustid !== intval($customer['id'])) {
                         $customer_list[] = $customer;
                     }
+                    $lastcustid = intval($customer['id']);
                 }
             }
             
@@ -493,6 +496,19 @@ class Company extends REST_Controller {
         }
 
         $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function getticket_get($ticketid = -1) {
+        
+        try
+        {
+            $ticket = $this->Search_Model->get_ticket($ticketid);
+        }
+        catch(Exception $ex) {
+
+        }
+
+        $this->set_response($ticket, REST_Controller::HTTP_OK);
     }
 }
 

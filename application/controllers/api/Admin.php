@@ -382,4 +382,28 @@ class Admin extends REST_Controller {
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function cities_get() {
+        try
+        {
+            $cities = $this->Admin_Model->get_cities();
+        }
+        catch(Exception $ex) {
+
+        }
+
+        $this->set_response($cities, REST_Controller::HTTP_OK);
+    }
+
+    public function airlines_get() {
+        try
+        {
+            $airlines = $this->Admin_Model->get_airlines();
+        }
+        catch(Exception $ex) {
+
+        }
+
+        $this->set_response($airlines, REST_Controller::HTTP_OK);
+    }
 }

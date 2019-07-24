@@ -818,5 +818,36 @@ Class Admin_Model extends CI_Model
 		}
 	}
 
+	public function get_cities() {
+		$this->db->select("ct.* ", FALSE);
+		$this->db->from('city_tbl c1');
+
+		$query = $this->db->get();
+		$qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function get_airlines() {
+		$this->db->select("al.* ", FALSE);
+		$this->db->from('airline_tbl al');
+
+		$query = $this->db->get();
+		$qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
 }	
 ?>

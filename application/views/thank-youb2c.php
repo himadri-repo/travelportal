@@ -391,7 +391,8 @@
 													<label>Service Charge : </label><?php echo number_format($details[0]["service_charge"],2,".",","); ?><br/>
 													<!--<label>SGST : </label><?php echo number_format($details[0]["sgst"],2,".",","); ?><br/>
 													<label>CGST : </label><?php echo number_format($details[0]["cgst"],2,".",","); ?><br/>-->
-													<label>GST : </label><?php echo number_format(($details[0]["igst"]+$details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/>
+													<!-- <label>GST : </label><?php echo number_format(($details[0]["igst"]+$details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/> -->
+													<label>GST : </label><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/>
 													<label>Grand Total : </label><?php echo number_format($details[0]["total"],2,".",","); ?></td>
 													
 													 <td>            
