@@ -821,11 +821,12 @@ class Search extends Mail_Controller
 						);	
 						
 						$this->Search_Model->save("wallet_tbl",$arr);
-						$where=array("id"=>$id);
-						$current_no_of_person=$no_of_person-$this->input->post('qty');
-						$data=array("no_of_person"=>$current_no_of_person);
-						$this->Search_Model->update("tickets_tbl",$data,$where);
-						
+
+						// Don't reduce the ticket count on self booking. That also has to be reviewed.
+						// $where=array("id"=>$id);
+						// $current_no_of_person=$no_of_person-$this->input->post('qty');
+						// $data=array("no_of_person"=>$current_no_of_person);
+						// $this->Search_Model->update("tickets_tbl",$data,$where);
 						
 						$user['user_details']=$this->User_Model->user_details();	          							
 						$data = array(				            
