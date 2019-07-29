@@ -26,7 +26,8 @@ class Admin extends REST_Controller {
     {
         // Construct the parent class
         header('Access-Control-Allow-Origin: *');
-        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        // header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Cache-Control, Pragma, Expires");
         header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
         parent::__construct();
         $method = $_SERVER['REQUEST_METHOD'];

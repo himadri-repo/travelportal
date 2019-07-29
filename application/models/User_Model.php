@@ -139,19 +139,7 @@ Class User_Model extends CI_Model
 
 	public function user_details() 
 	{    
-        
-		// $arr=array("u.id"=>$this->session->userdata('user_id'));  	
 		$userid = $this->session->userdata('user_id');
-		// $this->db->select('u.*,count(t.id) as total_ticket,count(seller.id) as sold,count(customer.id) as purchased');
-		// $this->db->from('user_tbl as u');
-		
-		// $this->db->join('tickets_tbl as t', 't.user_id = u.id','left');		
-		// $this->db->join('booking_tbl as seller', 'seller.seller_id = u.id','left');
-		// $this->db->join('booking_tbl as customer', 'customer.customer_id = u.id','left');
-		// $this->db->where($arr);
-		//$this->db->group_by('t.ticket_no'); 
-		// $query = $this->db->get();
-
 		$sql = "select 	u.id, u.user_id, u.name, u.profile_image, u.email, u.mobile, u.address, u.state, u.country, u.password, u.is_supplier, 
 						u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
         				(select count(t.id) from tickets_tbl t where t.user_id=$userid) as total_ticket, 
@@ -171,7 +159,33 @@ Class User_Model extends CI_Model
 		{
 			  return false;
 		}
-    }
+	}
+	
+	public function user_settings($userid = -1, $fields = []) {
+		if($userid < 0) {
+			$userid = $this->session->userdata('user_id');
+		}
+
+		$this->db->select('ucnf.id, ucnf.user_id, ucnf.field_name, ucnf.field_display_name, ucnf.field_value, ucnf.field_value_type, ucnf.status, ucnf.companyid, ucnf.dependent_field_id, usr.name, usr.email, usr.mobile, usr.address, usr.type, usr.credit_ac');
+		$this->db->from('user_config_tbl ucnf');
+		$this->db->join('user_tbl usr', 'ucnf.user_id = usr.id and ucnf.status=1', 'inner');
+		$this->db->where('ucnf.user_id=', $userid);
+		if($fields!==NULL && count($fields)>0) {
+			$this->db->where_in('ucnf.field_name', $fields);
+		}
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) 
+		{
+			return $query->result_array()[0];
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
 	public function filter_city($trip_type) 
 	{       
         $today=date("Y-m-d");

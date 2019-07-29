@@ -25,7 +25,8 @@ class Company extends REST_Controller {
     {
         parent::__construct();
         header('Access-Control-Allow-Origin: *');
-        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        // header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method, Cache-Control, Pragma, Expires");
         header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
         $method = $_SERVER['REQUEST_METHOD'];
         if($method == "OPTIONS") {
@@ -248,6 +249,10 @@ class Company extends REST_Controller {
         if($companyid === NULL || $companyid==='') {
             $companyid = -1;
         }
+
+        $companyid = intval($companyid);
+        $userid = intval($userid);
+
         $rateplans = $this->Admin_Model->rateplanByCompanyid(-1);
 
         $customers = $this->Search_Model->get_booking_customers(-1, intval($companyid), intval($userid));
@@ -278,7 +283,9 @@ class Company extends REST_Controller {
             if($customers && count($customers)>0) {
                 $lastcustid = 0;
                 foreach ($customers as $customer) {
-                    if((intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id'])))
+                    // if((intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id'])))
+                    if((($companyid === intval($customer['companyid']) && intval($customer['cus_booking_id']) === intval($booking['id']))
+                        || ($companyid !== intval($customer['companyid']) && intval($customer['refrence_id']) === intval($booking['id'])))
                         && $lastcustid !== intval($customer['id'])) {
                         $customer_list[] = $customer;
                     }

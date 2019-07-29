@@ -328,7 +328,7 @@ Class Search_Model extends CI_Model
 		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,u.type,
-						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price+b.admin_markup+b.markup) as rate,b.qty,((b.price+b.admin_markup+b.markup) * b.qty) as amount,b.total, b.costprice, b.rateplanid, 
+						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.total + (b.markup * b.qty)) as total, b.costprice, b.rateplanid, 
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
 						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status
@@ -683,9 +683,9 @@ Class Search_Model extends CI_Model
 		// 	where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
 		// 	order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
 
-		$sql = "select tkt.id, tkt.source sourceid, ct1.city source, tkt.destination destinationid, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no 
-					,tkt.terminal, tkt.no_of_person, tkt.class, tkt.airline airlineid, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, cm.id as companyid, tkt.user_id 
-					,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, tkt.sale_type, tkt.refundable, 
+		$sql = "select tkt.id, tkt.source sourceid, ct1.city source, tkt.destination destinationid, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no  
+					,tkt.terminal, tkt.no_of_person, tkt.class, tkt.airline airlineid, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, sl1.wsl_markup_rate as admin_markup, cm.id as companyid, tkt.user_id  
+					,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, tkt.sale_type, tkt.refundable, tkt.pnr,  
 					sl1.slr_markup_rate as markup_rate, 0 as markup_type, sl1.slr_srvchg as srvchg_rate, sl1.slr_cgst as cgst_rate, sl1.slr_sgst as sgst_rate, sl1.slr_igst as igst_rate, sl1.slr_allowfeed as allowfeed, sl1.service, sl1.owner_companyid,  
 					sl1.wsl_markup_rate as wsl_markup_rate, sl1.wsl_srvchg as wsl_srvchg_rate, sl1.wsl_cgst as wsl_cgst_rate, sl1.wsl_sgst as wsl_sgst_rate, sl1.wsl_igst as wsl_igst_rate, sl1.wsl_allowfeed as wsl_allowfeed
 				from tickets_tbl tkt 
@@ -736,10 +736,11 @@ Class Search_Model extends CI_Model
 
 	public function get_bookings($companyid=-1, $userid=-1) {
 		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
-		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+		// $sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
-						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
+						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,   
 						ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid
 				FROM bookings_tbl b 
 				INNER JOIN tickets_tbl t ON b.ticket_id = t.id 
@@ -756,7 +757,7 @@ Class Search_Model extends CI_Model
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
 		{					
-			return $query->result_array();		
+			return $query->result_array();
 		}
 		else
 		{
@@ -768,7 +769,7 @@ Class Search_Model extends CI_Model
 		$this->db->select("t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
 			b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 			cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
-			case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
+			case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,  
 			ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid");
 		$this->db->from("bookings_tbl b");
 		$this->db->join("tickets_tbl t", "b.ticket_id = t.id", FALSE);
@@ -798,7 +799,7 @@ Class Search_Model extends CI_Model
 						ba.updated_by, ba.updated_on, ba.charge_amount, ba.charge_desc,
 						case when (ba.requesting_by & 1)=1 then 'Customer' when (ba.requesting_by & 2)=2 then 'Travel Agent' when (ba.requesting_by & 4)=4 then 'Wholesaler' when (ba.requesting_by & 8)=8 then 'Supplier' end as requesting_by,
 						case when (ba.requesting_to & 1)=1 then 'Customer' when (ba.requesting_to & 2)=2 then 'Travel Agent' when (ba.requesting_to & 4)=4 then 'Wholesaler' when (ba.requesting_to & 8)=8 then 'Supplier' end as requesting_to,
-						case when ba.status=0 then 'Pending' when ba.status=1 then 'Hold' when ba.status=2 then 'Rejected' when ba.status=4 then 'Requesy for Cancel' when ba.status=8 then 'Cancelled' when ba.status=16 then 'Revised' when ba.status=32 then 'Processed' when ba.status=64 then 'Processing' end as status
+						case when ba.status=0 then 'Pending' when ba.status=1 then 'Hold' when ba.status=2 then 'Rejected' when ba.status=4 then 'Requesy for Cancel' when ba.status=8 then 'Cancelled' when ba.status=16 then 'Revised' when ba.status=32 then 'Processed' when ba.status=64 then 'Processing' when ba.status=128 then 'Request 4 Hold' end as status    
 				from booking_activity_tbl ba
 				inner join bookings_tbl b on ba.booking_id=b.id
 				inner join company_tbl src on src.id=ba.source_companyid and src.active=1
@@ -820,15 +821,15 @@ Class Search_Model extends CI_Model
 	}
 
 	public function get_booking_customers($bookingid=-1, $companyid=-1, $userid=-1) {
-		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.age, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status, 
-				b.id as booking_id, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, 
-				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as booking_status, 
-				b.total, b.costprice
-			from customer_information_tbl cus
-			inner join bookings_tbl b on (b.id=cus.booking_id or b.id=cus.refrence_id)
-			inner join tickets_tbl t on t.id = b.ticket_id
-			where (cus.booking_id=$bookingid or $bookingid=-1) and (t.sale_type!='live') and 
-				(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
+		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.age, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status,  
+				b.id as booking_id, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,  
+				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as booking_status,  
+				b.total, b.costprice  
+			from customer_information_tbl cus  
+			inner join bookings_tbl b on (b.id=cus.booking_id or b.id=cus.refrence_id)  
+			inner join tickets_tbl t on t.id = b.ticket_id  
+			where (cus.booking_id=$bookingid or $bookingid=-1) and (t.sale_type!='live') and   
+				(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or   
 				((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid)))";
 		
 		$query = $this->db->query($sql);
@@ -945,9 +946,11 @@ Class Search_Model extends CI_Model
 
 				for ($i=0; $i < count($customers); $i++) { 
 					$customer = &$customers[$i];
-					$customer['refrence_id'] = $returnedValue;
+					if(intval($customer['refrence_id']) === -1) {
+						$customer['refrence_id'] = $returnedValue;
 
-					$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
+						$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
+					}
 				}
 				$returnedValue = $this->save($tbl, $bookingactivity);
 			}

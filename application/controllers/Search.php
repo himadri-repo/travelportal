@@ -130,20 +130,41 @@ class Search extends Mail_Controller
 
 				$tickets = $this->Search_Model->search_one_wayV2($arr);
 
-				//$default_rp = $this->Admin_Model->rateplanByCompanyid($company["id"], array('rp.default' => 1));
-				// $default_rp_detail = [];
-				// if(count($default_rp)>0) {
-				// 	$default_rp_detail = $this->Admin_Model->rateplandetails($default_rp[0]["id"]);
+				// for ($i=0; $tickets && $i < count($tickets); $i++) { 
+				// 	$ticket = &$tickets[$i];
+
+				// 	$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+	
+				// 	$total = $ticket['total'];
+				// 	$ticket["new"] = 1;
 				// }
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
-
-					$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
-	
+					$suprpd = [];
+					$sellrpd = [];
+					$suprpid = intval($ticket["rate_plan_id"]);
+					$sellrpid = intval($ticket["seller_rateplan_id"]);
+					
+					if($rateplan_details && count($rateplan_details)>0) {
+						foreach ($rateplan_details as $rateplan_detail) {
+							$rpid = intval($rateplan_detail["rateplanid"]);
+		
+							if($rpid === $suprpid) {
+								$suprpd[] = $rateplan_detail;
+							}
+							if($rpid === $sellrpid) {
+								$sellrpd[] = $rateplan_detail;
+							}
+						}
+		
+						if(count($suprpd)>0 || count($sellrpd)>0) {
+							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid);
+						}
+					}
 					$total = $ticket['total'];
 					$ticket["new"] = 1;
-				}
+				}	
 				
 				$result["flight"]=$tickets;
 				$result["rateplan"]=$rateplans; // $default_rp;
@@ -621,7 +642,7 @@ class Search extends Mail_Controller
 	{
 		$company = $this->session->userdata('company');
 		$companyid = $company["id"];
-		$companyname = $company["id"];
+		$companyname = $company["display_name"];
 		$current_user = $this->session->userdata('current_user');
 
 		$result["footer"]=$this->Search_Model->get_post(5);
@@ -640,6 +661,13 @@ class Search extends Mail_Controller
 			$amount=$this->input->post('total');
 			$costprice=$this->input->post('costprice');
 			$user['user_details']=$this->User_Model->user_details();
+			if($current_user['type'] === 'B2B') {
+				$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
+			}
+			else {
+				$user['user_markup']= 0;
+			}
+
 			$users = $this->User_Model->get_users($result1[0]["companyid"]);
 			if($users!==null && count($users)>0) {
 				for ($i=0; $i < count($users); $i++) { 
@@ -701,7 +729,12 @@ class Search extends Mail_Controller
 				if($current_user["is_admin"]!=='1' && $current_user["type"]!=='EMP' && ($current_user["type"]==='B2B' || $current_user["type"]==='B2C'))
 				{
 					if($current_user["type"]==='B2B') {
-						$adminmarkup = $result1[0]["admin_markup"];
+						// $adminmarkup = $result1[0]["admin_markup"];
+						if($user['user_markup']!==NULL) {
+							if($user['user_markup']['field_value_type'] === '2') {
+								$adminmarkup = floatval($user['user_markup']['field_value']);
+							}
+						}
 						$requesting_by = 2;
 						$seller_userid = $company['primary_user_id'];
 						$seller_companyid = $company['id'];
@@ -948,8 +981,8 @@ class Search extends Mail_Controller
 										"last_name"=>$_REQUEST["last_name"][$key],
 										"mobile_no"=>$_REQUEST["mobile_no"][$key],
 										"age"=>$_REQUEST["age"][$key],
-										"ticket_fare"=>($amount),
-										"costprice"=>($costprice),
+										"ticket_fare"=>round($amount/$this->input->post('qty'), 0),
+										"costprice"=>round($costprice, 0),
 										"email"=>$_REQUEST["email"][$key],
 										"companyid"=> $companyid,
 										"booking_id"=>$booking_id_new,
