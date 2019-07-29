@@ -283,10 +283,15 @@ class Company extends REST_Controller {
             if($customers && count($customers)>0) {
                 $lastcustid = 0;
                 foreach ($customers as $customer) {
+                    $cust_companyid = intval($customer['companyid']);
+                    $cust_bookingid = intval($customer['cus_booking_id']);
+                    $cust_refid = intval($customer['refrence_id']);
+                    $bookid = intval($booking['id']);
                     // if((intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id'])))
-                    if((($companyid === intval($customer['companyid']) && intval($customer['cus_booking_id']) === intval($booking['id']))
-                        || ($companyid !== intval($customer['companyid']) && intval($customer['refrence_id']) === intval($booking['id'])))
-                        && $lastcustid !== intval($customer['id'])) {
+                    if((($companyid === $cust_companyid && ($cust_bookingid === $bookid || $cust_refid === $bookid))
+                        || ($companyid !== $cust_companyid && $cust_refid === $bookid))
+                        && $lastcustid !== intval($customer['id'])) 
+                    {
                         $customer_list[] = $customer;
                     }
                     $lastcustid = intval($customer['id']);
@@ -307,6 +312,7 @@ class Company extends REST_Controller {
         $tickets = NULL;
         $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
         $arg = json_decode($stream_clean, true);
+        $adminmarkup = 0; //This will be admin markup for Travel Agents. Can be get by userid
 
         try
         {
@@ -335,7 +341,7 @@ class Company extends REST_Controller {
                     }
     
                     if(count($suprpd)>0 || count($sellrpd)>0) {
-                        $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid);
+                        $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
                     }
                 }
             }
@@ -347,7 +353,7 @@ class Company extends REST_Controller {
         $this->set_response($tickets, REST_Controller::HTTP_OK);
     }
 
-	private function calculationTicketValue(&$ticket, $supplier_rpdetails, $seller_rpdetails, $companyid) {
+	private function calculationTicketValue(&$ticket, $supplier_rpdetails, $seller_rpdetails, $companyid, $adminmarkup=0) {
 		$rateplanid = $ticket['rate_plan_id'];
 		$price = $ticket['price'];
 		
@@ -419,6 +425,7 @@ class Company extends REST_Controller {
         
         $price = $ticket['price'];
 
+		$ticket['admin_markup'] = $adminmarkup;
 		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
 				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
 				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)

@@ -113,6 +113,14 @@ class Search extends Mail_Controller
 				$companyid = $company["id"];
 				$usertype = $currentuser["type"];
 				$is_admin = $currentuser["is_admin"];
+
+				if($currentuser['type'] === 'B2B') {
+					$user['user_markup']=$this->User_Model->user_settings($currentuser['id'], array('markup'));
+				}
+				else {
+					$user['user_markup']= NULL;
+				}	
+
 				$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 				$defaultRP = NULL;
 				$defaultRPD = NULL;
@@ -129,15 +137,6 @@ class Search extends Mail_Controller
 				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
 				$tickets = $this->Search_Model->search_one_wayV2($arr);
-
-				// for ($i=0; $tickets && $i < count($tickets); $i++) { 
-				// 	$ticket = &$tickets[$i];
-
-				// 	$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
-	
-				// 	$total = $ticket['total'];
-				// 	$ticket["new"] = 1;
-				// }
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
@@ -157,9 +156,22 @@ class Search extends Mail_Controller
 								$sellrpd[] = $rateplan_detail;
 							}
 						}
+
+						//If user is a Travel Agent (B2B) then check is there any Rateplan assigned against him or not.
+						//If assigned then ignore wholesaler's rateplan and take the rateplan which is assigned to this customer.
+						//$adminmarkup is his own margin to his customers.
+						$adminmarkup = 0;
+						if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $defaultRPD!==NULL) {
+							$sellrpd = $defaultRPD;
+							if($user['user_markup']!==NULL) {
+								if($user['user_markup']['field_value_type'] === '2') {
+									$adminmarkup = floatval($user['user_markup']['field_value']);
+								}
+							}	
+						}
 		
 						if(count($suprpd)>0 || count($sellrpd)>0) {
-							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid);
+							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
 						}
 					}
 					$total = $ticket['total'];
@@ -408,7 +420,40 @@ class Search extends Mail_Controller
 			if($tickets && count($tickets)>0) {
 				$ticket = $tickets[0];
 
-				$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+				$suprpid = intval($ticket["rate_plan_id"]);
+				$sellrpid = intval($ticket["seller_rateplan_id"]);
+
+				if($rateplan_details!==NULL && count($rateplan_details)>0) {
+					foreach ($rateplan_details as $rateplan_detail) {
+						$rpid = intval($rateplan_detail["rateplanid"]);
+
+						if($rpid === $suprpid) {
+							$suprpd[] = $rateplan_detail;
+						}
+						if($rpid === $sellrpid) {
+							$sellrpd[] = $rateplan_detail;
+						}
+					}
+				}
+
+				//If user is a Travel Agent (B2B) then check is there any Rateplan assigned against him or not.
+				//If assigned then ignore wholesaler's rateplan and take the rateplan which is assigned to this customer.
+				//$adminmarkup is his own margin to his customers.
+				$adminmarkup = 0;
+				$user['user_markup']= NULL;
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
+					$sellrpd = $defaultRPD;
+					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
+	
+					if($user['user_markup']!==NULL) {
+						if($user['user_markup']['field_value_type'] === '2') {
+							$adminmarkup = floatval($user['user_markup']['field_value']);
+						}
+					}	
+				}
+				
+				//$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup);
+				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
 
 				$result["flight"]=array($ticket); 
 				$result["currentuser"]=$current_user;
@@ -456,8 +501,9 @@ class Search extends Mail_Controller
 		}
 	}
 
-	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid) {
+	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup=0) {
 		$rateplanid = $ticket['rate_plan_id'];
+		$seller_rateplanid = $ticket['seller_rateplan_id'];
 		$price = $ticket['price'];
 		
 		$ticket['whl_markup'] = 0;
@@ -482,7 +528,7 @@ class Search extends Mail_Controller
 				//sourced tickets
 				for ($j=0; $j < count($rateplan_details); $j++) { 
 					$rpdetail = $rateplan_details[$j];
-					if($rpdetail['rateplanid'] == $rateplanid) {
+					//if($rpdetail['rateplanid'] == $seller_rateplanid) {
 						$achead = 'whl_'.$rpdetail['head_code'];
 						// array_push($ticket, [$achead => '']);
 						if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
@@ -495,7 +541,7 @@ class Search extends Mail_Controller
 								$tax_others = $tax_others - $ticket[$achead];
 							}
 						}
-					}
+					//}
 				}
 			}
 			// $ticket['price'] += $tax_others;
@@ -527,6 +573,7 @@ class Search extends Mail_Controller
 		// $ticket['finalvalue'] = $tax_others;
 		// $ticket['price'] += $tax_others;
 
+		$ticket['admin_markup'] = $adminmarkup;
 		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
 				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
 				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)
@@ -577,7 +624,39 @@ class Search extends Mail_Controller
 			{
 				$ticket = $tickets[0];
 
-				$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid);
+				$suprpid = intval($ticket["rate_plan_id"]);
+				$sellrpid = intval($ticket["seller_rateplan_id"]);
+
+				if($rateplan_details!==NULL && count($rateplan_details)>0) {
+					foreach ($rateplan_details as $rateplan_detail) {
+						$rpid = intval($rateplan_detail["rateplanid"]);
+
+						if($rpid === $suprpid) {
+							$suprpd[] = $rateplan_detail;
+						}
+						if($rpid === $sellrpid) {
+							$sellrpd[] = $rateplan_detail;
+						}
+					}
+				}
+
+				//If user is a Travel Agent (B2B) then check is there any Rateplan assigned against him or not.
+				//If assigned then ignore wholesaler's rateplan and take the rateplan which is assigned to this customer.
+				//$adminmarkup is his own margin to his customers.
+				$adminmarkup = 0;
+				$user['user_markup']= NULL;
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
+					$sellrpd = $defaultRPD;
+					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
+
+					if($user['user_markup']!==NULL) {
+						if($user['user_markup']['field_value_type'] === '2') {
+							$adminmarkup = floatval($user['user_markup']['field_value']);
+						}
+					}	
+				}
+
+				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
 
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();
@@ -599,6 +678,8 @@ class Search extends Mail_Controller
 				else if($current_user["type"]==='B2B' || $current_user["type"]==='B2C') {
 					$costprice = $ticket["price"];
 				}
+
+				$result["flight"][0]["admin_markup"]= $ticket['admin_markup'];
 
 				$result["flight"][0]["price"]= $baserate;
 				$result["flight"][0]["service_charge"]= $srvchg;

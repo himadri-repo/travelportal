@@ -327,7 +327,8 @@
 												
 												<?php if($currentuser['is_admin']=='1') { ?>
 													<?php 
-													$costprice = $flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
+													//$costprice = $flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
+													$costprice = $flight[$key]["total"] + $flight[$key]["spl_markup"] + $flight[$key]["spl_srvchg"] + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_cgst'] / 100) + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_sgst'] / 100);
 													?>
 													<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
 												<?php } else {

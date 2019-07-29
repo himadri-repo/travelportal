@@ -328,7 +328,7 @@ Class Search_Model extends CI_Model
 		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,u.type,
-						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.total + (b.markup * b.qty)) as total, b.costprice, b.rateplanid, 
+						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,(b.total) as total, b.costprice, b.rateplanid, 
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
 						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status
@@ -590,6 +590,23 @@ Class Search_Model extends CI_Model
 		}         	
 	 }
 
+	 public function get($table, $arr) {
+		// $arr=array("id"=>$id); 
+		$this->db->select("*");
+		$this->db->from($table);
+		$this->db->where($arr);
+		
+		$query = $this->db->get();							
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			  return false;
+		}         	
+	 }
+
      public function terms()
 	 {
 		 
@@ -737,7 +754,7 @@ Class Search_Model extends CI_Model
 	public function get_bookings($companyid=-1, $userid=-1) {
 		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
 		// $sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
-		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,   
@@ -891,23 +908,34 @@ Class Search_Model extends CI_Model
 
 			$customers = null; 
 			$no_of_tickets = 0;
+			$inv_mode = '';
 			if(isset($booking['customers']) && count($booking['customers'])>0) {
 				$customers = $booking['customers'];
 				unset($booking['customers']);
 				$tbl = 'customer_information_tbl';
 
 				for ($i=0; $i < count($customers); $i++) { 
-					if($customers[$i]['status'] == 2)
+					$customer_info = $this->get($tbl, array('id' => $customers[$i]['id']));
+
+					if(($customers[$i]['status'] == 2 || $customers[$i]['status'] == 8) && $customer_info && intval($customer_info[0]['status']) !==8)
 					{
+						// Approved or Hold
 						$no_of_tickets++;
+					} else if(($customers[$i]['status'] == 3) && $customer_info && intval($customer_info[0]['status']) === 8) {
+						//Previously kept on Hold. Now rejecting it.
+						$no_of_tickets++;
+						$inv_mode = 'return_stock';
+					} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
+						$inv_mode = 'no_update_stock';
 					}
-					if(intval($ticket['no_of_person'])>=$no_of_tickets) {
+
+					if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') {
 						$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
 					}
 				}
 			}
 
-			if(($booking['status'] == 2 || $booking['status'] == 1) && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
+			if(($booking['status'] == 2 || $booking['status'] == 1 || $inv_mode == 'return_stock') && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
 				// deduct stock if 'Approved' or 'Hold'
 				// Means if the booking is approved then reduce the available ticekt count and dr./cr. wallet balance.
 
@@ -915,7 +943,10 @@ Class Search_Model extends CI_Model
 				$tbl = 'tickets_tbl';
 				$no_of_person = intval($ticket['no_of_person']);
 
-				if(intval($ticket['no_of_person'])>=$no_of_tickets) {
+				if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode === 'return_stock') {
+					if($inv_mode === 'return_stock') {
+						$no_of_tickets = -1 * $no_of_tickets;
+					}
 					$available = (intval($ticket['no_of_person']) - $no_of_tickets)>0 ? 'YES' : 'NO';
 					$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
 				}
