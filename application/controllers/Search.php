@@ -161,6 +161,21 @@ class Search extends Mail_Controller
 						//If assigned then ignore wholesaler's rateplan and take the rateplan which is assigned to this customer.
 						//$adminmarkup is his own margin to his customers.
 						$adminmarkup = 0;
+						$usertype = '';
+
+						if($currentuser['type']==='B2B') {
+							if($currentuser['is_admin']==='1') {
+								$usertype = 'EMP';	
+							}
+							else {
+								$usertype = 'B2B';
+							}
+						} else if($currentuser['type']==='B2B') {
+							$usertype = 'B2C';
+						} else if($currentuser['type']==='EMP') {
+							$usertype = 'EMP';
+						}
+
 						if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $defaultRPD!==NULL) {
 							$sellrpd = $defaultRPD;
 							if($user['user_markup']!==NULL) {
@@ -171,7 +186,7 @@ class Search extends Mail_Controller
 						}
 		
 						if(count($suprpd)>0 || count($sellrpd)>0) {
-							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
+							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
 						}
 					}
 					$total = $ticket['total'];
@@ -402,6 +417,9 @@ class Search extends Mail_Controller
 			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 			$defaultRP = NULL;
 			$defaultRPD = NULL;
+			$suprpd = [];
+			$sellrpd = [];
+
 			if(count($rateplans)>0) {
 				$defaultRP = $rateplans[0];
 				$rateplanid = $defaultRP['id'];
@@ -451,9 +469,24 @@ class Search extends Mail_Controller
 						}
 					}	
 				}
-				
+
+				$usertype = '';
+
+				if($current_user['type']==='B2B') {
+					if($current_user['is_admin']==='1') {
+						$usertype = 'EMP';	
+					}
+					else {
+						$usertype = 'B2B';
+					}
+				} else if($current_user['type']==='B2B') {
+					$usertype = 'B2C';
+				} else if($current_user['type']==='EMP') {
+					$usertype = 'EMP';
+				}
+		
 				//$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup);
-				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
+				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
 
 				$result["flight"]=array($ticket); 
 				$result["currentuser"]=$current_user;
@@ -501,7 +534,7 @@ class Search extends Mail_Controller
 		}
 	}
 
-	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup=0) {
+	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup=0, $usertype='') {
 		$rateplanid = $ticket['rate_plan_id'];
 		$seller_rateplanid = $ticket['seller_rateplan_id'];
 		$price = $ticket['price'];
@@ -551,7 +584,12 @@ class Search extends Mail_Controller
 				//add wholesaler's part
 				for ($j=0; $j < count($defaultRPD); $j++) { 
 					$rpdetail = $defaultRPD[$j];
-					$achead = 'spl_'.$rpdetail['head_code'];
+					if(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B') {
+						$achead = 'whl_'.$rpdetail['head_code'];
+					}
+					else {
+						$achead = 'spl_'.$rpdetail['head_code'];
+					}
 					// array_push($ticket, [$achead => '']);
 					if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
 						if($rpdetail['operation'] == 1) {
@@ -605,6 +643,8 @@ class Search extends Mail_Controller
 			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 			$defaultRP = NULL;
 			$defaultRPD = NULL;
+			$suprpd = [];
+			$sellrpd = [];
 			if(count($rateplans)>0) {
 				$defaultRP = $rateplans[0];
 				$rateplanid = $defaultRP['id'];
@@ -656,7 +696,22 @@ class Search extends Mail_Controller
 					}	
 				}
 
-				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
+				$usertype = '';
+
+				if($current_user['type']==='B2B') {
+					if($current_user['is_admin']==='1') {
+						$usertype = 'EMP';	
+					}
+					else {
+						$usertype = 'B2B';
+					}
+				} else if($current_user['type']==='B2B') {
+					$usertype = 'B2C';
+				} else if($current_user['type']==='EMP') {
+					$usertype = 'EMP';
+				}
+
+				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
 
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();

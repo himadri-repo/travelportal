@@ -339,9 +339,9 @@ class Company extends REST_Controller {
                             $sellrpd[] = $rateplan_detail;
                         }
                     }
-    
+                    $usertype = '';
                     if(count($suprpd)>0 || count($sellrpd)>0) {
-                        $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup);
+                        $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
                     }
                 }
             }
@@ -353,7 +353,7 @@ class Company extends REST_Controller {
         $this->set_response($tickets, REST_Controller::HTTP_OK);
     }
 
-	private function calculationTicketValue(&$ticket, $supplier_rpdetails, $seller_rpdetails, $companyid, $adminmarkup=0) {
+	private function calculationTicketValue(&$ticket, $supplier_rpdetails, $seller_rpdetails, $companyid, $adminmarkup=0, $usertype='') {
 		$rateplanid = $ticket['rate_plan_id'];
 		$price = $ticket['price'];
 		
@@ -377,23 +377,25 @@ class Company extends REST_Controller {
 
 		try
 		{
-            //accomodate supplier rateplan
-            for ($j=0; $j < count($supplier_rpdetails); $j++) { 
-                $rpdetail = $supplier_rpdetails[$j];
-                $achead = 'spl_'.$rpdetail['head_code'];
-                // array_push($ticket, [$achead => '']);
-                //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
-                    if($rpdetail['operation'] == 1) {
-                        // add operation
-                        $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
-                        $tax_others = $tax_others + $ticket[$achead];
-                    }
-                    else {
-                        // subtraction operation
-                        $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
-                        $tax_others = $tax_others - $ticket[$achead];
-                    }
-                //}
+			if($ticket['supplierid'] !== $companyid) {
+                //accomodate supplier rateplan
+                for ($j=0; $j < count($supplier_rpdetails); $j++) { 
+                    $rpdetail = $supplier_rpdetails[$j];
+                    $achead = 'spl_'.$rpdetail['head_code'];
+                    // array_push($ticket, [$achead => '']);
+                    //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
+                        if($rpdetail['operation'] == 1) {
+                            // add operation
+                            $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+                            $tax_others = $tax_others + $ticket[$achead];
+                        }
+                        else {
+                            // subtraction operation
+                            $ticket[$achead] = $this->getProcessedValue($rpdetail, $price, $ticket);
+                            $tax_others = $tax_others - $ticket[$achead];
+                        }
+                    //}
+                }
             }
 
 			// $ticket['price'] += $tax_others;
@@ -402,7 +404,12 @@ class Company extends REST_Controller {
             //accomodate wholesaler rateplan
             for ($j=0; $j < count($seller_rpdetails); $j++) { 
                 $rpdetail = $seller_rpdetails[$j];
-                $achead = 'whl_'.$rpdetail['head_code'];
+                if(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B') {
+                    $achead = 'whl_'.$rpdetail['head_code'];
+                }
+                else {
+                    $achead = 'spl_'.$rpdetail['head_code'];
+                }
                 // array_push($ticket, [$achead => '']);
                 //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
                     if($rpdetail['operation'] == 1) {
