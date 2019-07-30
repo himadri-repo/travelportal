@@ -555,7 +555,7 @@ Class Search_Model extends CI_Model
 		}
 		else
 		{
-			  return false;
+			return false;
 		}         	
 	}
 	

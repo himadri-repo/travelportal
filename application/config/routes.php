@@ -109,6 +109,7 @@ $route['api/suppliers'] = 'api/Company/suppliers';
 $route['api/customers'] = 'api/Company/customers';
 $route['api/tickets'] = 'api/Company/tickets';
 $route['api/company/open_tickets'] = 'api/Company/open_tickets';
+$route['api/company/delete_booking_customer/(:num)/(:num)'] = 'api/Company/delete_booking_customer/$1/$2';
 $route['api/customer/save'] = 'api/Company/customer';
 $route['api/customer/(:num)/(:num)'] = 'api/Company/customer/$1/$2';
 $route['api/admin/suppliers'] = 'api/Admin/suppliers';

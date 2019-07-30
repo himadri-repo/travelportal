@@ -404,12 +404,15 @@ class Company extends REST_Controller {
             //accomodate wholesaler rateplan
             for ($j=0; $j < count($seller_rpdetails); $j++) { 
                 $rpdetail = $seller_rpdetails[$j];
-                if(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B') {
-                    $achead = 'whl_'.$rpdetail['head_code'];
-                }
-                else {
-                    $achead = 'spl_'.$rpdetail['head_code'];
-                }
+                $achead = 'whl_'.$rpdetail['head_code'];
+
+                // if(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B') {
+                //     $achead = 'whl_'.$rpdetail['head_code'];
+                // }
+                // else {
+                //     $achead = 'spl_'.$rpdetail['head_code'];
+                // }
+
                 // array_push($ticket, [$achead => '']);
                 //if($rpdetail['head_code'] !== 'igst') { //because igst can only be calculated for other state
                     if($rpdetail['operation'] == 1) {
@@ -429,6 +432,20 @@ class Company extends REST_Controller {
 
 		// $ticket['finalvalue'] = $tax_others;
         // $ticket['price'] += $tax_others;
+
+        if(!(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B')) {
+            if ($ticket['whl_srvchg'] > 0) {
+                $ticket['spl_srvchg'] += $ticket['whl_srvchg'];
+                $ticket['spl_cgst'] += $ticket['whl_cgst'];
+                $ticket['spl_sgst'] += $ticket['whl_sgst'];
+                $ticket['spl_igst'] += $ticket['whl_igst'];
+
+                $ticket['whl_srvchg'] = 0;
+                $ticket['whl_cgst'] = 0;
+                $ticket['whl_sgst'] = 0;
+                $ticket['whl_igst'] = 0;
+            }
+        }
         
         $price = $ticket['price'];
 
@@ -530,6 +547,19 @@ class Company extends REST_Controller {
         }
 
         $this->set_response($ticket, REST_Controller::HTTP_OK);
+    }
+
+    public function delete_booking_customer_get($bookingid=-1, $customerid=-1) {
+        $flg = true;
+        try
+        {
+             $this->Search_Model->update('customer_information_tbl', array('status' => 127), array('booking_id' => $bookingid, 'id' => $customerid));
+        }
+        catch(Exception $ex) {
+            $flg = false;
+        }
+
+        $this->set_response($flg, REST_Controller::HTTP_OK);
     }
 }
 
