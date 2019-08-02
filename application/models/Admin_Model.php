@@ -156,11 +156,59 @@ Class Admin_Model extends CI_Model
 		}
 
 		$result = '';
-		if($data==null) {
-			//insert
-			$customer["id"] = null;
-			$this->db->insert('user_tbl', $customer);
-			$result = 'Item created successfully.';
+		if($data==null && $customer['name']!='' && $customer['email']!='' && $customer['mobile']!='' && $customer['type']!='') {
+			$trans_started = false;
+			try
+			{
+				$this->db->where('id', $customer['companyid']);
+				$query = $this->db->get('company_tbl');
+
+				if($query->num_rows() > 0) {
+					$company = $query->result_array();
+					$wallet_code = abbreviate($customer['name']);
+					$companyabcode = abbreviate($company['display_name']);
+					$this->db->trans_begin();
+					$trans_started = true;
+					//insert
+					$customer["id"] = null;
+					$this->db->insert('user_tbl', $customer);
+					$result = 'Item created successfully.';
+					$insert_id = $this->db->insert_id();
+
+					// Sponsored Wallet
+					$customer_wallet = array('name' => $company['code'].'_wallet_'.$insert_id, 'display_name' => 'Wallet by '.$company['display_name'], 
+						'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => $customer['companyid'], 'WL_'.$companyabcode.'_'.$wallet_code.'_'.$insert_id, 
+						'balance' => 0, 'type' => 2, 'created_by' => $insert_id);
+					$this->db->insert('system_wallets_tbl', $customer_wallet);
+
+					// System sponsored Wallet
+					$customer_wallet = array('name' => $company['code'].'_wallet_sys_'.$insert_id, 'display_name' => 'Wallet by System', 
+						'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => -1, 'WL_'.$companyabcode.'_'.$insert_id, 
+						'balance' => 0, 'type' => 1, 'created_by' => $insert_id);
+					$this->db->insert('system_wallets_tbl', $customer_wallet);
+
+					if($customer['type'] === 'B2B') {
+						//This is a travel agent type customer. So lets add default markup value
+						//Default markup value
+						$user_config = array('user_id' => $insert_id, 'field_name' => 'markup', 'field_display_name' => 'Markup', 'field_value' => 200, 'field_value_type' => 2, 'status' => 1, 'companyid' => $customer['companyid']);
+						$this->db->insert('user_config_tbl', $user_config);
+					}
+				}
+			}
+			catch(Exception $ex) {
+
+			}
+
+			if ($trans_started) {
+				if ($this->db->trans_status() === FALSE)
+				{
+					$this->db->trans_rollback();
+				}
+				else
+				{
+					$this->db->trans_commit();
+				}
+			}
 		}
 		else {
 			//update
@@ -182,6 +230,30 @@ Class Admin_Model extends CI_Model
 		$this->db->from('user_tbl usr');
 		$this->db->join('rateplan_tbl rp', 'usr.rateplanid=rp.id and rp.active=1', 'left', FALSE);
 		$this->db->where('usr.id='.$customerid.' and usr.companyid='.$company);
+
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function get_customer_wallets($companyid, $customerid=-1) {
+		$this->db->select("cm1.display_name as company_name, wl.name, wl.display_name, wl.companyid, wl.userid, wl.sponsoring_companyid, 
+			cm2.display_name as sponsoring_company_name, wl.allowed_transactions, wl.wallet_account_code, wl.balance, wl.type, wl.status, 
+			wl.created_by, wl.created_on, wl.updated_by, wl.updated_on ");
+		$this->db->from('system_wallets_tbl wl');
+		$this->db->join('company_tbl cm1', 'wl.companyid=cm1.id', 'left', FALSE);
+		$this->db->join('company_tbl cm2', 'wl.sponsoring_companyid=cm2.id', 'left', FALSE);
+		$this->db->where('wl.companyid = '.$company);
+		if($customerid > 0) {
+			$this->db->where('wl.userid = '.$customerid);
+		}
 
 		$query = $this->db->get();
 		//echo $this->db->last_query();die();
@@ -820,7 +892,7 @@ Class Admin_Model extends CI_Model
 
 	public function get_cities() {
 		$this->db->select("ct.* ", FALSE);
-		$this->db->from('city_tbl c1');
+		$this->db->from('city_tbl ct');
 
 		$query = $this->db->get();
 		$qry = $this->db->last_query();
@@ -849,5 +921,15 @@ Class Admin_Model extends CI_Model
 			return false;
 		}
 	}
+
+	function abbreviate($string){
+		$abbreviation = "";
+		$string = ucwords($string);
+		$words = explode(" ", "$string");
+		  foreach($words as $word){
+			  $abbreviation .= $word[0];
+		  }
+	   return $abbreviation; 
+	}	
 }	
 ?>
