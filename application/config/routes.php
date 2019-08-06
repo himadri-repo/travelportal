@@ -137,3 +137,4 @@ $route['api/save/bookings'] = 'api/Company/upsert_bookings';
 $route['api/company/ticket/(:num)'] = 'api/Company/getticket/$1';
 $route['api/admin/cities'] = 'api/Admin/cities';
 $route['api/admin/airlines'] = 'api/Admin/airlines';
+$route['api/company/save/tickets'] = 'api/Company/save_tickets';

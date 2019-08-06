@@ -561,6 +561,31 @@ class Company extends REST_Controller {
 
         $this->set_response($flg, REST_Controller::HTTP_OK);
     }
+
+    public function save_tickets_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $tickets = json_decode($stream_clean, true);
+
+        $idx = 1;
+        $feedbacks = array();
+
+        try
+        {
+            foreach ($tickets as $ticket) {
+                if(!isset($ticket['id'])) {
+                    // unset($ticket['id']);
+                    $feedbacks[] = array('idx' => $idx++, 'insert - feedback' => $this->Search_Model->save('tickets_tbl', $ticket));
+                } else {
+                    $feedbacks[] = array('idx' => $idx++, 'update - feedback' => $this->Search_Model->update('tickets_tbl', $ticket, array('id' => $ticket['id'])));
+                }
+            }
+        }
+        catch(Exception $ex) {
+            // $bookings = array();
+        }
+
+        $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
 
 ?>
