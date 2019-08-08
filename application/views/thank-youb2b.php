@@ -1,71 +1,137 @@
 
-        <style>
-		.thank-you-note
+<style>
+	.thank-you-note
+	{
+		padding:0 !important
+	}
+	.thank-you-note p
+	{
+		margin-bottom:0 !important;
+	}
+	.thank-you-note span
+	{
+		margin-right:20px;
+	}
+	.pull-right
+	{
+		float:right;
+		width:100%;
+		text-align:right;
+	}
+	.center
+	{
+		text-align:center;
+	}
+	.thank-you-note span
+	{
+		margin-right:0 !important;
+	}
+	.thank-you-note span .fa
+	{
+		margin-right:20px;
+	}
+	.table th
+	{
+		border-bottom:1px solid #ccc;
+		border-top:none !important;
+		padding:0;
+		background:#666;
+		color:#fff;
+	}
+	.table td
+	{
+		border-bottom:1px solid #ccc;
+		border-top:none !important;
+		padding:0;
+	}
+	.table tr td label
+	{
+		font-weight:normal !important;
+	}
+
+	.table-responsive
+	{
+		overflow-x:hidden;
+	}
+	.traveler-info
+	{
+		margin-top:50px;
+	}
+	.t-info-heading
+	{
+		margin:0 0 20px 0 !important;
+		border-bottom: 4px solid #ccc;
+	}
+	.t-info-heading span
+	{
+		color:#ccc;
+		border-bottom:none;
+	}
+	.t-info-heading span 
+	{
+		color: #333;
+		border-bottom: none;
+		font-size: 15px;
+		font-weight: normal;
+	}
+	.t-info-heading span .fa
+	{
+		font-size:24px !important;
+	}
+	.table th h5
+	{
+		font-size:14px !important;
+	}
+	.table td
+	{
+		font-size:12px !important;
+	}
+
+	@media print
+	{    
+		#top-bar,#mynavbar,#cover-thank-you,#newsletter-1,#newsletter-2,#footer,#editor
 		{
-			padding:0 !important
+			display: none !important;
 		}
-		.thank-you-note p
+		.traveler-info
 		{
-			margin-bottom:0 !important;
+			top:0 !important;
+			margin-top:200px;
+			position:absolute !important;
 		}
-		.thank-you-note span
+		.innerpage-section-padding
 		{
-			margin-right:20px;
-		}
-		.pull-right
-		{
-			float:right;
-			width:100%;
-			text-align:right;
-		}
-		.center
-		{
-			text-align:center;
-		}
-		.thank-you-note span
-		{
-			margin-right:0 !important;
+			padding-top:0 !important;
 		}
 		.thank-you-note span .fa
 		{
 			margin-right:20px;
 		}
-		.table th
+		.center
 		{
-		  border-bottom:1px solid #ccc;
-		  border-top:none !important;
-		  padding:0;
-		  background:#666;
-		  color:#fff;
+			text-align:center;
+		}								
+		.thank-you-note
+		{
+			border-bottom:1px solid #000;
+		}		
+		.traveler-info table tr th
+		{
+			border-bottom:1px solid #000 !important;
+			border-top:none !important;
+			padding:0;
+			background:#666 !important;
+			color:#fff;
 		}
-		.table td
+		.traveler-info table tr td
 		{
-		  border-bottom:1px solid #ccc;
-		  border-top:none !important;
-		   padding:0;
+			border-bottom:1px solid #ccc !important;
+			border-top:none !important;
+			padding:0;
 		}
-		.table tr td label
+		table th
 		{
-			font-weight:normal !important;
-		}
-		
-		.table-responsive
-		{
-			overflow-x:hidden;
-		}
-		.traveler-info
-		{
-			margin-top:50px;
-		}
-		.t-info-heading
-		{
-			margin:0 0 20px 0 !important;
-			border-bottom: 4px solid #ccc;
-		}
-		.t-info-heading span
-		{
-			color:#ccc;
-			border-bottom:none;
+			background:#666666 !important;
 		}
 		.t-info-heading span 
 		{
@@ -79,98 +145,31 @@
 			font-size:24px !important;
 		}
 		.table th h5
-				{
-					font-size:14px !important;
-				}
-				.table td
-				{
-					font-size:12px !important;
-				}
-		    @media print
-			{    
-				#top-bar,#mynavbar,#cover-thank-you,#newsletter-1,#newsletter-2,#footer,#editor
-				{
-					display: none !important;
-				}
-			   .traveler-info
-				{
-					top:0 !important;
-					margin-top:200px;
-					position:absolute !important;
-				}
-				.innerpage-section-padding
-				{
-					padding-top:0 !important;
-				}
-				.thank-you-note span .fa
-				{
-					margin-right:20px;
-				}
-				.center
-				{
-					text-align:center;
-				}								
-				.thank-you-note
-				{
-					 border-bottom:1px solid #000;
-				}
-				
-				.traveler-info table tr th
-				{
-						border-bottom:1px solid #000 !important;
-						border-top:none !important;
-						 padding:0;
-						 background:#666 !important;
-		                color:#fff;
-				}
-				.traveler-info table tr td
-				{
-						border-bottom:1px solid #ccc !important;
-						border-top:none !important;
-						 padding:0;
-				}
-				table th
-				{
-					background:#666666 !important;
-				}
-				.t-info-heading span 
-				{
-						color: #333;
-						border-bottom: none;
-						font-size: 15px;
-						font-weight: normal;
-				}
-				.t-info-heading span .fa
-				{
-					font-size:24px !important;
-				}
-				.table th h5
-				{
-					font-size:14px !important;
-				}
-				.table td
-				{
-					font-size:12px !important;
-				}
-				
-				 #innerpage-wrapper
-				 {
-				     margin-left:-1000px !important;
-				 }
-				
-			}
-		   @page section {
-    size: 8.27in 11.69in; 
-    margin: .5in .5in .5in .5in; 
-    mso-header-margin: .5in; 
-    mso-footer-margin: .5in; 
-    mso-paper-source: 0;
-}
-			.thank-you-note:before
-			{
-			  display:none;
-			}
-		</style>
+		{
+			font-size:14px !important;
+		}
+		.table td
+		{
+			font-size:12px !important;
+		}
+
+		#innerpage-wrapper
+		{
+			margin-left:-1000px !important;
+		}		
+	}
+	@page section {
+		size: 8.27in 11.69in; 
+		margin: .5in .5in .5in .5in; 
+		mso-header-margin: .5in; 
+		mso-footer-margin: .5in; 
+		mso-paper-source: 0;
+	}
+	.thank-you-note:before
+	{
+		display:none;
+	}
+</style>
         <!--================= PAGE-COVER ================-->
         <section class="page-cover" id="cover-thank-you">
             <div class="container">

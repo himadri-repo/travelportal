@@ -30,19 +30,24 @@
 		{
 			margin-right:20px;
 		}
+
+		.table {
+			border: 1px solid #ccc;
+		}
+
 		.table th
 		{
 		  border-bottom:1px solid #ccc;
 		  border-top:none !important;
 		  padding:0;
-		  background:#666;
-		  color:#fff;
+		  /* background:#666;
+		  color:#fff; */
 		}
 		.table td
 		{
-		  border-bottom:1px solid #ccc;
-		  border-top:none !important;
-		   padding:0;
+			border-bottom:1px solid #ccc;
+			border-top:none !important;
+			padding:6px !important;
 		}
 		.table tr td label
 		{
@@ -80,11 +85,11 @@
 		}
 		.table th h5
 				{
-					font-size:14px !important;
+					font-size:16px !important;
 				}
 				.table td
 				{
-					font-size:12px !important;
+					font-size:14px !important;
 				}
 		    @media print
 			{    
@@ -146,11 +151,11 @@
 				}
 				.table th h5
 				{
-					font-size:14px !important;
+					font-size:16px !important;
 				}
 				.table td
 				{
-					font-size:12px !important;
+					font-size:14px !important;
 				}
 				 @page {
     size: letter portrait;
@@ -188,21 +193,35 @@
 
                     	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-side">
                         	<div class="space-right">
+								<hr/>
 							    <div class="thank-you-note col-md-12 col-xs-12 col-sm-12 center">
-								   <h3><span><i class="fa fa-plane"></i>OXY</span> TRA</H3>
+								   <!-- <h3><span><i class="fa fa-plane"></i>OXY</span> TRA</h3> -->
+								   <h3><span>E-TICKET</span></h3>
 								    <p>&nbsp;</p>
-								   
 								</div>
                             	<div class="thank-you-note col-md-6 col-xs-6 col-sm-6">
-                                   <h3><?php echo $setting[0]["site_title"];?></h3> 
-								   <p><span><i class="fa fa-envelope"></i></span> <?php echo $setting[0]["email"];?></p>
-								   <p><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"];?></p>
-								   <p><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"];?></p>							   
+                                   <!-- <h3><?php echo $setting[0]["site_title"];?></h3> logo -->
+								   <?php 
+								 	if($details[0]["type"]=="B2C") {
+								   ?>
+									<h3><?php echo $details[0]["name"];?></h3> 
+									<p><span><i class="fa fa-envelope"></i></span> <?php echo $details[0]["email"];?></p>
+									<p><span><i class="fa fa-phone"></i></span><?php echo $details[0]["mobile"];?></p>
+									<p><span><i class="fa fa-map-marker"></i></span><?php echo $details[0]["address"];?></p>
+								   <?php 
+									} else { ?>
+									<img src='<?php echo base_url(); ?>upload/<?php echo $setting[0]["logo"]; ?>' alt='<?php echo $setting[0]["acc_name"]; ?>' style="width: 85px; height: 30px;"/><h3><?php echo $setting[0]["acc_name"];?></h3> 
+									<p><span><i class="fa fa-envelope"></i></span> <?php echo $setting[0]["email"];?></p>
+									<p><span><i class="fa fa-phone"></i></span><?php echo $setting[0]["phone_no"];?></p>
+									<p><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"];?></p>							   
+								   <?php }
+								   ?>
                                 </div><!-- end thank-you-note -->
 								
 								<div class="thank-you-note col-md-6 col-xs-6 col-sm-6">
-                                   <h3 class="pull-right"><?php echo $details[0]["name"];?></h3> 
-								   <p class="pull-right"><i class="fa fa-calendar"></i></span><?php echo date("d-m-Y",strtotime($details[0]["date"]));?></p>
+                                   <!-- <h3 class="pull-right"><?php echo $details[0]["name"];?></h3>  -->
+								   <h3 class="pull-right"><?php echo $details[0]["first_name"].' '.$details[0]["last_name"];?></h3>
+								   <p class="pull-right"><i class="fa fa-calendar"></i></span> <?php echo date("d-m-Y",strtotime($details[0]["date"]));?></p>
 								   <p class="pull-right"><i class="fa fa-envelope"></i></span> <?php echo $details[0]["email"];?></p>
 								   <p class="pull-right"><i class="fa fa-phone"></i></span><?php echo $details[0]["mobile"];?></p>
 								   
@@ -225,14 +244,13 @@
                                		<div class="table-responsive">
                                			<table class="table">
                                         	<tbody>
-                                        		
 												  <tr>
-                                                	<th><h5>SI No.</h5></th>
-                                                    <th><h5>Passenger Name</h5></th>													
-													<th><h5>Age</h5></th>
+                                                	<th style="width: 10%;"><h5>SI No.</h5></th>
+                                                    <th style="width: 80%;"><h5>Passenger Name</h5></th>													
+													<!-- <th><h5>Age</h5></th>
 													<th><h5>Mobile No.</h5></th>
-													<th><h5>Email</h5></th>
-													<th><h5>PNR</h5></th>
+													<th><h5>Email</h5></th> -->
+													<th style="width: 20%;"><h5>PNR</h5></th>
                                                 </tr>
 												<?php
 												$ctr=1;
@@ -242,9 +260,9 @@
 													<tr>
                                                 	<td><?php echo $ctr;?></td>
                                                     <td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
-													<td><?php echo $details[$key]["age"];?></td>
+													<!-- <td><?php echo $details[$key]["age"];?></td>
 													<td><?php echo $details[$key]["mobile_no"];?></td>
-													<td><?php echo $details[$key]["cemail"];?></td>
+													<td><?php echo $details[$key]["cemail"];?></td> -->
 													<td><?php echo $details[$key]["pnr"];?></td>
                                                 </tr>
 													<?php
@@ -256,15 +274,14 @@
                                		</div>	
                                     <?php if($details[0]["trip_type"]=="ONE") 
 									{
-										$dateDiff = intval((strtotime($details[0]["arrival_date_time"])-strtotime($details[0]["departure_date_time"]))/60);
-										?>									
-									<h4 class="t-info-heading"><span><i class="fa fa-plane" ></i>&nbsp;&nbsp;GOING</span></h4>
-									<div class="table-responsive">
+										$dateDiff = intval((strtotime($details[0]["arrival_date_time"])-strtotime($details[0]["departure_date_time"]))/60);?>
+									<!-- <h4 class="t-info-heading"><span><i class="fa fa-plane" ></i>&nbsp;&nbsp;GOING</span></h4> -->
+									<!-- <div class="table-responsive">
                                			<table class="table">
                                         	<tbody>
                                         		
 												  <tr>
-                                                	<th><h5>Dep</h5></th>                                                   
+                                                	<th><h5>Dep</h5></th>
 													<th><h5>From</h5></th>
 													<th><h5>To</h5></th>
 													<th><h5>Duration</h5></th>													
@@ -289,18 +306,199 @@
 																							
                                         	</tbody>
                                         </table>
+                               		</div>	 -->
+
+									<h4 class="t-info-heading"><span><i class="fa fa-plane" ></i>&nbsp;&nbsp;Itinerary</span></h4>
+									<div class="table-responsive">
+                               			<table class="table">
+                                        	<tbody>
+                                        		
+												<tr>
+                                                	<th><h5>Flight</h5></th>
+													<th><h5>Departure</h5></th>
+													<th><h5>Arrival</h5></th>
+													<th><h5>Status / Flight Duration</h5></th>
+                                                </tr>
+												<tr>
+													<td style="padding: 10px;">
+														<div style="width: 10%;display: inline-block;">
+															<img style="width: 35px; height: 35px;" src="<?php echo base_url(); ?>upload/thumb/<?php echo $details[0]["image"]; ?>" alt="<?php echo $details[0]["airline"];?>">
+														</div>
+														<div style="width: 80%; display: inline-block; float: right;">
+															<div style="">
+																<?php echo $details[0]["airline"];?>
+																<?php echo $details[0]["flight_no"];?>
+															</div>
+															<div style="">
+																<?php echo $details[0]["class"];?>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+
+
+                                                	<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
+
+													<!-- <td><?php echo $details[0]["source"];?></td>
+                                                    <td><?php echo $details[0]["destination"];?></td>													 -->
+													<!-- <td><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></th>
+													<td><?php echo $details[0]["airline"];?></td>
+													<td><?php echo $details[0]["class"];?></td>
+													<td><?php echo $details[0]["flight_no"];?></td>
+													<td><?php echo $details[0]["terminal"];?></td>
+													<td><?php echo $details[0]["terminal1"];?></td> -->
+                                                </tr>
+																							
+                                        	</tbody>
+                                        </table>
                                		</div>	
+
 				                    <?php 
 									}
 									?>
 									
-									<?php if($details[0]["trip_type"]=="ROUND") 
+									<?php if($details[0]["trip_type"]=="ROUND")
 									{
 										$dateDiff = intval((strtotime($details[0]["arrival_date_time"])-strtotime($details[0]["departure_date_time"]))/60);
 										$dateDiff1 = intval((strtotime($details[0]["arrival_date_time1"])-strtotime($details[0]["departure_date_time1"]))/60);
 										?>									
-									<h4 class="t-info-heading"><span><i class="fa fa-plane"></i>&nbsp;&nbsp;GOING</span></h4>
+									<h4 class="t-info-heading"><span><i class="fa fa-plane" ></i>&nbsp;&nbsp;Itinerary</span></h4>
 									<div class="table-responsive">
+                               			<table class="table">
+                                        	<tbody>
+                                        		
+												<tr>
+                                                	<th><h5>Flight</h5></th>
+													<th><h5>Departure</h5></th>
+													<th><h5>Arrival</h5></th>
+													<th><h5>Status / Flight Duration</h5></th>
+                                                </tr>
+												<tr>
+													<td style="padding: 10px;">
+														<div style="width: 10%;display: inline-block;">
+															<img style="width: 35px; height: 35px;" src="<?php echo base_url(); ?>upload/thumb/<?php echo $details[0]["image"]; ?>" alt="<?php echo $details[0]["airline"];?>">
+														</div>
+														<div style="width: 80%; display: inline-block; float: right;">
+															<div style="">
+																<?php echo $details[0]["airline"];?>
+																<?php echo $details[0]["flight_no"];?>
+															</div>
+															<div style="">
+																<?php echo $details[0]["class"];?>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+
+
+                                                	<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
+
+													<!-- <td><?php echo $details[0]["source"];?></td>
+                                                    <td><?php echo $details[0]["destination"];?></td>													 -->
+													<!-- <td><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></th>
+													<td><?php echo $details[0]["airline"];?></td>
+													<td><?php echo $details[0]["class"];?></td>
+													<td><?php echo $details[0]["flight_no"];?></td>
+													<td><?php echo $details[0]["terminal"];?></td>
+													<td><?php echo $details[0]["terminal1"];?></td> -->
+                                                </tr>
+												<tr>
+													<td style="padding: 10px;">
+														<div style="width: 10%;display: inline-block;">
+															<img style="width: 35px; height: 35px;" src="<?php echo base_url(); ?>upload/thumb/<?php echo $details[0]["image1"]; ?>" alt="<?php echo $details[0]["airline1"];?>">
+														</div>
+														<div style="width: 80%; display: inline-block; float: right;">
+															<div style="">
+																<?php echo $details[0]["airline1"];?>
+																<?php echo $details[0]["flight_no1"];?>
+															</div>
+															<div style="">
+																<?php echo $details[0]["class1"];?>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source1"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time1"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time1"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+													<td style="padding: 10px;">
+														<div style="display: inline-block;">
+															<div style="">
+																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination1"];?></div>
+																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
+																<div style="margin: 0px 15px;">
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time1"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time1"]))." )";?>
+																</div>
+															</div>
+														</div>
+													</td>
+
+
+                                                	<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff1/60)." Hours ".($dateDiff1%60)." Minutes"; ?></td>
+
+													<!-- <td><?php echo $details[0]["source"];?></td>
+                                                    <td><?php echo $details[0]["destination"];?></td>													 -->
+													<!-- <td><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></th>
+													<td><?php echo $details[0]["airline"];?></td>
+													<td><?php echo $details[0]["class"];?></td>
+													<td><?php echo $details[0]["flight_no"];?></td>
+													<td><?php echo $details[0]["terminal"];?></td>
+													<td><?php echo $details[0]["terminal1"];?></td> -->
+                                                </tr>
+                                        	</tbody>
+                                        </table>
+                               		</div>	
+
+									<!-- <div class="table-responsive">
                                			<table class="table">
                                         	<tbody>
                                         		
@@ -332,8 +530,8 @@
 																							
                                         	</tbody>
                                         </table>
-                               		</div>
-                                   <h4 class="t-info-heading"><span><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;RETURN</span></h4>
+                               		</div> -->
+                                   	<!-- <h4 class="t-info-heading"><span><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;RETURN</span></h4>
 									<div class="table-responsive">
                                			<table class="table">
                                         	<tbody>
@@ -364,7 +562,7 @@
 																							
                                         	</tbody>
                                         </table>
-                               		</div>	
+                               		</div>	 -->
 				                    <?php 
 									}
 									?>
@@ -372,8 +570,7 @@
 									<div class="table-responsive">
                                			<table class="table">
                                         	<tbody>
-                                        		
-												  <tr>
+												<tr>
                                                 	<th><h5>Booking No.</h5></th>
                                                     <th><h5>Booking Date</h5></th>													
 													<th><h5>Price Summary</h5></th>
@@ -381,31 +578,26 @@
                                                 </tr>
 												
 												<tr>
-													<td><?php echo $details[0]["id"];?></td>
+													<td>BK-<?php echo $details[0]["id"];?></td>
 													<td><?php echo date("d/m/Y h:i:s",strtotime($details[0]["date"]));?></td>													
-													
+													<?php
+														$qty = $details[0]["qty"];
+													?>
 													
 													<td><label>Ticket Fare (each) : </label><?php echo number_format($details[0]["rate"],2,".",","); ?><br/>
 													<label>Qty : </label><?php echo $details[0]["qty"]; ?><br/>													
 													<label>Sub Total : </label><?php echo number_format($details[0]["amount"],2,".",","); ?><br/>
-													<label>Service Charge : </label><?php echo number_format($details[0]["service_charge"],2,".",","); ?><br/>
+													<label>Service Charge : </label><?php echo number_format($details[0]["service_charge"] * $qty,2,".",","); ?><br/>
 													<!--<label>SGST : </label><?php echo number_format($details[0]["sgst"],2,".",","); ?><br/>
 													<label>CGST : </label><?php echo number_format($details[0]["cgst"],2,".",","); ?><br/>-->
 													<!-- <label>GST : </label><?php echo number_format(($details[0]["igst"]+$details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/> -->
-													<label>GST : </label><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/>
+													<label>GST : </label><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]) * $qty,2,".",","); ?><br/>
 													<label>Grand Total : </label><?php echo number_format($details[0]["total"],2,".",","); ?></td>
 													
-													 <td>            
-													   <?php 
-														
-															echo $details[$key]["status"]."<br>";
-														
-															
-														
-														?>
-												  </td>
+													<td>            
+													   <?php echo $details[0]["status"]."<br>";?>
+												  	</td>
 												</tr>
-																							
                                         	</tbody>
                                         </table>
                                		</div>	
@@ -417,26 +609,50 @@
 								
                         	</div><!-- end space-right -->
                         </div><!-- end columns -->
+						<?php 
+						if(!$options['pdf']) {
+						?>
                         <div id="editor">
-						<div class="col-sm-4"></div>
-						<div class="col-sm-2">
-						  <button type="button" class="btn btn-orange col-sm-12" onclick="window.print()">PRINT</button>
+							<div class="row">
+								<form method="POST" action="<?php echo base_url(); ?>search/pdf/<?php echo $details[0]["id"];?>">
+									<div class="row" style="margin: 2px 2px 10px 2px;">
+										<div class="col-sm-2">
+										</div>
+										<div class="col-sm-4">
+											<label>Disable pricing summary in PDF</label>&nbsp;
+											<input type="checkbox" id="showprice" name="showprice" title="Disable pricing summary while generating PDF by clicking DOWNLOAD button"/>
+										</div>
+										<div class="col-sm-4">
+											<label>Extra markup</label>&nbsp;
+											<input type="number" id="markup" name="markup" title="Specify extra markup before generating E-TICKET" value="0.00"/>
+										</div>
+										<div class="col-sm-2">
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-sm-4"></div>
+										<div class="col-sm-2">
+											<button type="button" class="btn btn-orange col-sm-12" onclick="window.print()">PRINT</button>
+										</div>
+										<div class="col-sm-2">
+											<!-- <a href="<?php echo base_url(); ?>search/pdf/<?php echo $details[0]["id"];?>" class="btn btn-orange col-sm-12" id="pdfview">DOWNLOAD</a> -->
+											<button type="submit" class="btn btn-orange col-sm-12" title="Download ticket in PDF format">DOWNLOAD</button>
+										</div>
+									</div>
+								</form>
+							</div>
 						</div>
-						<div class="col-sm-2">
-						  <a href="<?php echo base_url(); ?>search/pdf/<?php echo $details[0]["id"];?>" class="btn btn-orange col-sm-12" id="pdfview">DOWNLOAD</a>
-						</div>
-						</div>
-                        
-                        
+						<?php 
+						}
+						?>
                     </div><!-- end row -->
         		</div><!-- end container -->
         	</div><!-- end thank-you --> 
         </section><!-- end innerpage-wrapper -->
         
-        
-        
-        
-        
+		<?php 
+		if(!$options['pdf']) {
+		?>
         <!--========================= NEWSLETTER-1 ==========================-->
         <section id="newsletter-1" class="section-padding back-size newsletter"> 
             <div class="container">
@@ -456,6 +672,4 @@
                 </div><!-- end row -->
             </div><!-- end container -->
         </section><!-- end newsletter-1 -->
-        
-        
-       
+		<?php }?>

@@ -1245,6 +1245,7 @@ class Search extends Mail_Controller
 	{
 		$company = $this->session->userdata('company');
 		$companyid = $company["id"];
+		$result["options"] = array('pdf' => false);  
 		$result["details"] = $this->Search_Model->booking_details($id);  
 		//$result["setting"] = $this->Search_Model->setting($id); 
 		$result['setting']=$this->Search_Model->company_setting($companyid);
@@ -1256,7 +1257,8 @@ class Search extends Mail_Controller
 				{			  
 					//$result["setting"]=$this->Search_Model->setting();
 					$this->load->view('header1',$result);
-					$this->load->view('thank-youb2b',$result);
+					// $this->load->view('thank-youb2b',$result);
+					$this->load->view('thank-youb2c',$result);
 					$this->load->view('footer1');
 				}
 				if($result['details'][0]["type"]=="B2C")
@@ -1654,49 +1656,72 @@ class Search extends Mail_Controller
 		$response["success"]=$this->Search_Model->search_available_date1($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $company["id"]);
 		echo json_encode($response);	
 	}
+
 	public function pdf($id)
 	{
+		$showprice = true;
+		$extra_markup = 0.0;
+		$company = $this->session->userdata('company');
+		$companyid = $company["id"];
+		$result["details"] = $this->Search_Model->booking_details($id);  
+		$result['setting']=$this->Search_Model->company_setting($companyid);
+		$result["footer"]=$this->Search_Model->get_post(5);
+
+		$ticket_no = $result["details"][0]["ticket_no"];
+
+		if(isset($_POST['showprice'])) {
+			$showprice = strtolower($_POST['showprice']) === 'off';
+		}
+
+		if(isset($_POST['markup'])) {
+			//$extra_markup = intval($_GET['markup']);
+			$extra_markup = intval($_POST['markup']);
+
+			$qty = intval($result["details"][0]["qty"]);
+
+			$par_ticket_rate = round($extra_markup/$qty);
+
+			$result["details"][0]["rate"] = floatval($result["details"][0]["rate"])+$par_ticket_rate;
+
+			$result["details"][0]["amount"] = $result["details"][0]["rate"] * $qty;
+			$result["details"][0]["service_charge"] = intval($result["details"][0]["service_charge"]) * $qty;
+
+			$result["details"][0]["sgst"] = $result["details"][0]["sgst"] * $qty;
+			$result["details"][0]["cgst"] = $result["details"][0]["cgst"] * $qty;
+
+			$result["details"][0]["total"] = $result["details"][0]["total"] + $extra_markup;
+			// $par_ticket_rate
+		}
+		$result["options"] = array('pdf' => false, 'showprice' => $showprice);  
 		
-		
-	      $result["details"] = $this->Search_Model->booking_details($id);  
-		  $result["setting"] = $this->Search_Model->setting($id); 
-		  	$result["footer"]=$this->Search_Model->get_post(5);
-          if($result["details"])
-		  {		 
-	             if($result['details'][0]["type"]=="B2B")
-			     {			  
-					  $result["setting"]=$this->Search_Model->setting();
-					  $this->load->view('header1',$result);
-					  $this->load->view('thank-you',$result);
-					  $this->load->view('footer1');
-					  
-					$html = $this->output->get_output();
-            		$this->load->library('pdf');
-            		$this->dompdf->loadHtml($html);
-            		$this->dompdf->setPaper('A4', 'portrait');
-            		
-            		$this->dompdf->render();
-            		$this->dompdf->stream("ticket.pdf", array("Attachment"=>1));
-				 }
-				 if($result['details'][0]["type"]=="B2C")
-			     {			  
-					  $result["setting"]=$this->Search_Model->setting();
-					  $this->load->view('header1',$result);
-					  $this->load->view('thank-you1',$result);
-					  $this->load->view('footer1');
-					  
-					$html = $this->output->get_output();
-            		$this->load->library('pdf');
-            		$this->dompdf->loadHtml($html);
-            		$this->dompdf->setPaper('A4', 'portrait');
-            		$this->dompdf->render();
-            		$this->dompdf->stream("ticket.pdf", array("Attachment"=>1));
-				 }
-			  
-		  }	  		 	      
-		  else
-		  {
-			   redirect("/search");
-		  }	
+		if($result["details"])
+		{		 
+			$this->load->library('pdf');
+			// Set Font Style
+			$this->pdf->set_option('defaultFont', 'Courier');
+			$this->pdf->set_option('isRemoteEnabled', true);
+			$this->pdf->set_option('isPhpEnabled', true);
+			$this->pdf->set_option('isJavascriptEnabled', true);
+			$this->pdf->set_option('isHtml5ParserEnabled', true);
+			$this->pdf->setPaper('A4', 'portrait');
+
+			// if($result['details'][0]["type"]=="B2B" || $result['details'][0]["type"]=="EMP")
+			// {			  
+			// 	$this->load->view('myticket',$result);
+			// }
+
+			// if($result['details'][0]["type"]=="B2C")
+			// {			  
+			// 	$this->load->view('myticket',$result);
+			// }
+
+			$this->pdf->load_view('myticket', $result);
+			$this->pdf->render();
+			$this->pdf->stream("$ticket_no.pdf", array("Attachment"=>1));
+		}
+		else
+		{
+			redirect("/search");
+		}	
 	}
 }

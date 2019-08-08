@@ -327,11 +327,12 @@ Class Search_Model extends CI_Model
 
 		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
-						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,u.type,
+						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,u.type,u.address, 
 						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,(b.total) as total, b.costprice, b.rateplanid, 
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
-						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status
+						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status, 
+						a.aircode, a.image, a1.aircode as aircode1, a1.image as image1
 				from tickets_tbl as t 
 				inner join bookings_tbl b on b.ticket_id = t.id
 				inner join airline_tbl a on a.id = t.airline
@@ -670,7 +671,7 @@ Class Search_Model extends CI_Model
 					,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, tkt.sale_type, tkt.refundable, tkt.pnr,  tkt.baggage, tkt.meal,  
 					sl1.slr_markup_rate as markup_rate, 0 as markup_type, sl1.slr_srvchg as srvchg_rate, sl1.slr_cgst as cgst_rate, sl1.slr_sgst as sgst_rate, sl1.slr_igst as igst_rate, sl1.slr_allowfeed as allowfeed, sl1.service, sl1.owner_companyid,  
 					sl1.wsl_markup_rate as wsl_markup_rate, sl1.wsl_srvchg as wsl_srvchg_rate, sl1.wsl_cgst as wsl_cgst_rate, sl1.wsl_sgst as wsl_sgst_rate, sl1.wsl_igst as wsl_igst_rate, sl1.wsl_allowfeed as wsl_allowfeed,  
-					case when sl1.trans_type='' then tkt.sale_type else sl1.trans_type end trans_type  
+					case when sl1.trans_type=1 then 'ON REQUEST' when sl1.trans_type=0  then 'LIVE' when sl1.trans_type=-1 then 'ON REQUEST' end trans_type   
 				from tickets_tbl tkt 
 				inner join city_tbl ct1 on tkt.source=ct1.id
 				inner join city_tbl ct2 on tkt.destination=ct2.id
@@ -681,8 +682,7 @@ Class Search_Model extends CI_Model
 					(select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id, slr_rp.markup as slr_markup_rate, wsl_rp.markup as wsl_markup_rate, 
 					slr_rp.srvchg as slr_srvchg, wsl_rp.srvchg as wsl_srvchg, slr_rp.cgst as slr_cgst, wsl_rp.cgst as wsl_cgst, 
 					slr_rp.sgst as slr_sgst, wsl_rp.sgst as wsl_sgst, slr_rp.igst as slr_igst, wsl_rp.igst as wsl_igst, slr_rp.disc as slr_disc, wsl_rp.disc as wsl_disc, cmm1.display_name, 
-					spd.allowfeed as slr_allowfeed, whd.allowfeed as wsl_allowfeed, mtd.datavalue as service, spl.salerid as owner_companyid, 
-					case when spd.transaction_type=1 then 'ON REQUEST' else 'LIVE' end as trans_type
+					spd.allowfeed as slr_allowfeed, whd.allowfeed as wsl_allowfeed, mtd.datavalue as service, spl.salerid as owner_companyid, spd.transaction_type as trans_type
 					from wholesaler_tbl spl 
 					inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1
 					inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services'
@@ -696,7 +696,7 @@ Class Search_Model extends CI_Model
 					(select cm.id as supplierid, rp.id as rate_plan_id, 0 as sellerid, 0 as seller_rateplan_id, slr_rp.markup as slr_markup_rate, 0 as wsl_markup_rate, 
 					slr_rp.srvchg as slr_srvchg, 0 as wsl_srvchg, slr_rp.cgst as slr_cgst, 0 as wsl_cgst, 
 					slr_rp.sgst as slr_sgst, 0 as wsl_sgst, slr_rp.igst as slr_igst, 0 as wsl_igst, slr_rp.disc as slr_disc, 0 as wsl_disc, cm.display_name, 
-					1 as slr_allowfeed, 0 as wsl_allowfeed, 'Coupon Flight Tickets' as service, cm.id as owner_companyid, '' as trans_type 
+					1 as slr_allowfeed, 0 as wsl_allowfeed, 'Coupon Flight Tickets' as service, cm.id as owner_companyid, -1 as trans_type 
 					from company_tbl cm
 					inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1
 					left join rateplans_vw slr_rp on rp.id=slr_rp.rateplanid

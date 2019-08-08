@@ -91,4 +91,7 @@
   'fontawesome' => array(
     'normal' => $fontDir . '/3c3408463cda27c34ff01498c3a88e89',
   ),
+  'flexslider-icon' => array(
+    'normal' => $fontDir . '\d4dd06b55965e1c47ee220012a0c9675',
+  ),
 ) ?>

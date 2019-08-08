@@ -4,7 +4,7 @@
         <title>Oxytra | Travel operation platform</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <link rel="icon" href="images/favicon.png" type="image/x-icon">                
+        <link rel="icon" href="<?php echo base_url(); ?>images/favicon.png" type="image/x-icon">                
         <link href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,400i,700,700i,900,900i%7CMerriweather:300,300i,400,400i,700,700i,900,900i" rel="stylesheet">               
         
 		<link rel="stylesheet" href="<?php echo base_url(); ?>css/bootstrap.min.css">                
@@ -69,8 +69,6 @@
     
     
     <body id="flight-homepage">
-    
-       
         <div class="loader"></div>            
     	<!--<div class="overlay">
             <a href="javascript:void(0)" id="close-button" class="closebtn">&times;</a>
