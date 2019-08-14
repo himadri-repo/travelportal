@@ -3350,6 +3350,7 @@ p{
 .info-stat .stat-block{
 	border:2px solid #d8d8d8;
 	color:#303030;
+	min-height: 200px;
 }
 
 .info-stat .stat-block .fa{
@@ -4033,4 +4034,14 @@ p{
     background: url(../images/makepayment.png) center center no-repeat;
     height: 55px;
     width: 135px;
+}
+
+.model-header {
+    background-image: url(../images/grass_background.jpg);
+    background-size: 100% 100%;
+    /* background-repeat: no-repeat, repeat; */
+    /* background-color: #cccccc; */
+    height: 150px;
+    opacity: 1;
+	color: #ffffff;
 }

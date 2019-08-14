@@ -25,6 +25,22 @@
             var admin=parseInt("0<?php echo $this->session->userdata('current_user')['is_admin'] ?>");
             var permission = parseInt("0<?php echo $this->session->userdata('current_user')['permission'] ?>");
         </script>
+        <style>
+            .dropdown-item {
+                font-size: 15px;
+                padding: 15px 10px;
+                display: block;
+                background-color: #ffffff;
+                color: #000000;
+                text-decoration: none;
+            }
+
+            .dropdown-item:hover {
+                background-color: #0000ff;
+                color: #ffffff;
+                text-decoration: none;
+            }
+        </style>
     </head>
     
     <body id="flight-homepage">
@@ -123,6 +139,14 @@
                             <li><a href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus"></i></span>Sign Up</a></li>
                         <?php } else {?>
                             <li><a href="<?php echo base_url(); ?>user"><span><i class="fa fa-user"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?>&nbsp;<?php echo $admin?'(Admin)':'' ?></a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">My Wallet (₹ <?php echo $mywallet['balance'] ?>)</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/add">Add Money</a>
+                                    <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/ledger">Ledger</a>
+                                    <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/withdraw">Withdraw Money</a>
+                                </div>
+                            </li>
                             <?php if($this->session->userdata('user_id') && $admin) { ?>
                                 <li><a href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid; ?>"><span><i class="fa user-crown"></i></span>Administration</a></li>
                             <?php } ?>
@@ -158,6 +182,11 @@
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus link-icon"></i></span>Sign Up</a></li>
                         <?php } else {?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user"><span><i class="fa fa-user link-icon"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
+
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/add"><span><i class="fa fa-money link-icon"></i></span> Add Money</a>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/ledger"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/withdraw"><span><i class="fa fa-suitcase link-icon"></i></span> Withdraw Money</a>
+
                             <?php if($this->session->userdata('user_id') && $admin) { ?>
                                 <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid; ?>"><span><i class="fa user-crown link-icon"></i></span>Administration</a></li>
                             <?php } ?>

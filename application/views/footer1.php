@@ -244,7 +244,7 @@
                     // console.log($('#departure_date').val()==='');
                     // console.log(dp.selectedMonth);
                     // console.log(dp.selectedYear);
-                    if($('#departure_date').val()!=='' && mth===0 && yr===0) {
+                    if($('#departure_date').val() && $('#departure_date').val()!=='' && mth===0 && yr===0) {
                         datePart = $('#departure_date').val().split('/');
                         mth = parseInt(datePart[0])-1;
                         yr = parseInt(datePart[2]);

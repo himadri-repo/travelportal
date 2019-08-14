@@ -44,6 +44,11 @@ class User_Controller extends Mail_Controller
 			
 			//$result["setting"]=$this->Search_Model->setting();
 			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+			// $result["target_accounts"]= [
+			// 	array('id' => 1, 'bank_name' => 'SBI', 'bank_branch' => 'Patuli', 'acc_no' => '3532453453', 'ifsc' => 'SBIN0000234', 'acc_name' => 'Majumdar Travels'),
+			// 	array('id' => 2, 'bank_name' => 'HDFC', 'bank_branch' => 'Garia', 'acc_no' => '9798998988', 'ifsc' => 'HDFC0000082', 'acc_name' => 'Majumdar Travels'),
+			// 	array('id' => 3, 'bank_name' => 'ICICI', 'bank_branch' => 'Garia', 'acc_no' => '6597345898', 'ifsc' => 'ICICI0000349', 'acc_name' => 'Majumdar Travels')
+			// ];
 
 			if(NEW_FLOW)
 			{
@@ -54,8 +59,17 @@ class User_Controller extends Mail_Controller
 
 				$result["company_setting"]=$this->Search_Model->company_setting($companyid);
 			}
+			//$bank_accounts = json_decode($result["company_setting"][0]['bank_accounts'], false);
 
-		    $this->load->view('header1',$result);			
+			$result["target_accounts"] = json_decode($result["company_setting"][0]['bank_accounts'], true);
+
+			$result['mywallet']= $this->getMyWallet();
+
+			if(isset($result['mywallet']['walletid'])) {
+				$result['wallet_summary']=$this->User_Model->get_wallet_summary($result['mywallet']['walletid']);
+			}
+
+		    $this->load->view('header1',$result);
 			$this->load->view('user_dashboard',$result);
 			$this->load->view('footer1');
 		}
@@ -175,7 +189,10 @@ class User_Controller extends Mail_Controller
 			
 			$result['city']=$this->User_Model->select("city_tbl");
 	        $result["setting"]=$this->Search_Model->setting();
-	        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_ticket',$result);
 			$this->load->view('footer');
@@ -195,7 +212,10 @@ class User_Controller extends Mail_Controller
 	        			
 			$result['testimonials']=$this->User_Model->testimonials();
 	        $result["setting"]=$this->Search_Model->setting();
-	        	$result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_testimonials',$result);
 			$this->load->view('footer');
@@ -214,7 +234,9 @@ class User_Controller extends Mail_Controller
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->my_booking_order();
 	        $result["setting"]=$this->Search_Model->setting();
-	        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+			
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking',$result);
 			$this->load->view('footer');
@@ -234,7 +256,8 @@ class User_Controller extends Mail_Controller
 			$result['sale_order']=$this->User_Model->booking_details($id);
 	        $result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
-			
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_details',$result);
 			$this->load->view('footer');
@@ -253,7 +276,9 @@ class User_Controller extends Mail_Controller
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->booking_orders();
 	        $result["setting"]=$this->Search_Model->setting();
-	        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_orders',$result);
 			$this->load->view('footer');
@@ -272,7 +297,9 @@ class User_Controller extends Mail_Controller
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->cancel_request();
 	        $result["setting"]=$this->Search_Model->setting();
-	        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_cancel_request',$result);
 			$this->load->view('footer');
@@ -290,17 +317,19 @@ class User_Controller extends Mail_Controller
 		$result["flight"]=$this->Search_Model->booking_details($id); 
 		if ($this->session->userdata('user_id') && isset($id) && ($result["flight"][0]["customer_id"]==$this->session->userdata('user_id')) && $result1["user"][0]["is_customer"]==1 ) 
 		{			          		   				  							  
-				  $result["flight"][0]["price"]=$result["flight"][0]["rate"];	
-				  $result["flight"][0]["service_charge"]=$result["flight"][0]["service_charge"];	
-				  $result["flight"][0]["gst"]=($result["flight"][0]["igst"]+$result["flight"][0]["cgst"]+$result["flight"][0]["sgst"]);	
-				  $result["flight"][0]["total"]=$result["flight"][0]["total"];
-				  $result["flight"][0]["qty"]=$result["flight"][0]["qty"];
-				  $result["flight"][0]["id"]=$id;								  			  			 
-				  $result["setting"]=$this->Search_Model->setting();
-				  	$result["footer"]=$this->Search_Model->get_post(5);
-				  $this->load->view('header1',$result);;
-				  $this->load->view('edit_booking',$result);						
-				  $this->load->view('footer1');					 						  
+			$result["flight"][0]["price"]=$result["flight"][0]["rate"];	
+			$result["flight"][0]["service_charge"]=$result["flight"][0]["service_charge"];	
+			$result["flight"][0]["gst"]=($result["flight"][0]["igst"]+$result["flight"][0]["cgst"]+$result["flight"][0]["sgst"]);	
+			$result["flight"][0]["total"]=$result["flight"][0]["total"];
+			$result["flight"][0]["qty"]=$result["flight"][0]["qty"];
+			$result["flight"][0]["id"]=$id;								  			  			 
+			$result["setting"]=$this->Search_Model->setting();
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+
+			$this->load->view('header1',$result);;
+			$this->load->view('edit_booking',$result);						
+			$this->load->view('footer1');					 						  
 		}
 		else
 		{
@@ -337,6 +366,8 @@ class User_Controller extends Mail_Controller
 		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		$result["footer"]=$this->Search_Model->get_post(5);
+		$result['mywallet']= $this->getMyWallet();
+
 		$this->load->view('header1',$result);
 		if($company!==null) {
 			$states = $this->Admin_Model->get_metadata('state', $company["id"]);
@@ -371,6 +402,7 @@ class User_Controller extends Mail_Controller
 
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$result["company"]=$company;
+		$result['mywallet']= $this->getMyWallet();
 
 		if(!NEW_FLOW) {
 			$this->load->view('header1',$result);
@@ -392,6 +424,8 @@ class User_Controller extends Mail_Controller
 	{
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
+		$result['mywallet']= $this->getMyWallet();
+
 		$this->load->view('header1',$result);
 		$this->load->view('verify');
 		$this->load->view('footer');
@@ -402,6 +436,8 @@ class User_Controller extends Mail_Controller
 	{
 		$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
+		$result['mywallet']= $this->getMyWallet();
+
 		$this->load->view('header1',$result);
 		$this->load->view('login_otp');
 		$this->load->view('footer');
@@ -518,51 +554,67 @@ class User_Controller extends Mail_Controller
 				$result = $this->User_Model->save("user_tbl",$data);
 				if($result==true)
 				{
-					   			 
-						$data = array(				            
-								 'name' => $company['display_name'], // "OXYTRA",
-								 'email'=>$this->session->userdata('email'),
-								 'msg'=>"Your Registration Completed Successfully",
-								 'msg1'=>'After Admin Approval of <span class="il">'.$company['display_name'].'</span> you can login to this site',
-								 'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-								 );
-						$this->send("Registration",$data);
+					$wallet_code = $this->abbreviate($data['name']);
+					$companyabcode = $this->abbreviate($company['display_name']);
+
+					$walletdata = array(
+						'name' => $company['code'].'_wallet_'.$result, 
+						'display_name' => 'Wallet by '.$company['display_name'], 
+						'companyid' => $company['id'], 
+						'userid' => $result, 
+						'sponsoring_companyid' => $company['id'], 
+						'wallet_account_code' => 'WL_'.$companyabcode.'_'.$wallet_code.'_'.$result,  
+						'balance' => 0,
+						'type' => 2,
+						'created_by' => $result
+					);
+
+					$wallet_result = $this->User_Model->save("system_wallets_tbl",$walletdata);
+										
+					$data = array(				            
+								'name' => $company['display_name'], // "OXYTRA",
+								'email'=>$this->session->userdata('email'),
+								'msg'=>"Your Registration Completed Successfully",
+								'msg1'=>'After Admin Approval of <span class="il">'.$company['display_name'].'</span> you can login to this site',
+								'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
+								);
+					$this->send("Registration",$data);
+					
+					$data = array(				            
+								'name' => $this->session->userdata('name'),
+								'email'=>$this->session->userdata('email'),
+								'mobile'=>$this->session->userdata('mobile'),
+								'msg'=>"A New User Registered",
+								'user_id'=> $this->session->userdata('reg_user_id'),
+								'msg1'=>'',
+								'msg2'=>""
+								
+								);
+			
+					try
+					{
+						$this->adminsend("Registration",$data);
+					}
+					catch(Exception $ex1) {
 						
-						$data = array(				            
-								 'name' => $this->session->userdata('name'),
-								 'email'=>$this->session->userdata('email'),
-								 'mobile'=>$this->session->userdata('mobile'),
-								 'msg'=>"A New User Registered",
-								 'user_id'=> $this->session->userdata('reg_user_id'),
-								 'msg1'=>'',
-								 'msg2'=>""
-								 
-								 );
-				
-						try
-						{
-							$this->adminsend("Registration",$data);
-						}
-						catch(Exception $ex1) {
-							
-						}
-												
-						if($admin_user!=null && count($admin_user)>0 && $admin_user[0]["mobile"]!='') {
-							$no=$admin_user[0]["mobile"];
-						}
-						else {
-							$no="9800412356";
-						}
-						$msg="A New User Register with ".$company['display_name'].". User ID : ".$this->session->userdata('reg_user_id')."";
-						$this->send_message($no,$msg);
-						$this->session->set_userdata('otp',"");
-					    $this->session->set_userdata('data',"");
-						$this->session->set_userdata('email',"");
-						$this->session->set_userdata('type',"");
-						$this->session->set_userdata('name',"");
-						$this->session->set_userdata('mobile',"");
-						$this->session->set_userdata('reg_user_id',"");
-						$json["success"]="Your Registration Completed Successfully";
+					}
+											
+					if($admin_user!=null && count($admin_user)>0 && $admin_user[0]["mobile"]!='') {
+						$no=$admin_user[0]["mobile"];
+					}
+					else {
+						$no="9800412356";
+					}
+					$msg="A New User Register with ".$company['display_name'].". User ID : ".$this->session->userdata('reg_user_id')."";
+					$this->send_message($no,$msg);
+					$this->session->set_userdata('otp',"");
+					$this->session->set_userdata('data',"");
+					$this->session->set_userdata('email',"");
+					$this->session->set_userdata('type',"");
+					$this->session->set_userdata('name',"");
+					$this->session->set_userdata('mobile',"");
+					$this->session->set_userdata('reg_user_id',"");
+					$json["success"]="Your Registration Completed Successfully";
 			   }
 			   else
 			  {
@@ -793,7 +845,91 @@ class User_Controller extends Mail_Controller
         }
 
         return TRUE;
-    }
+	}
+	
+	public function validate_paymenttype($paymenttype) {
+		$flag = intval($paymenttype)>0;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_paymenttype', 'Please select country you stay');
+
+		return $flag;
+	}
+
+	public function validate_cheque($chequeno) {
+		$payment_type = intval($this->input->post('payment_type'));
+		
+		$flag = $payment_type===1 ? intval($chequeno)>0 : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_cheque', 'Cheque number is mandatory for Cheque payment mode.');
+
+		return $flag;
+	}
+
+	public function validate_draft($draftno) {
+		$payment_type = intval($this->input->post('payment_type'));
+		
+		$flag = $payment_type===2 ? intval($draftno)>0 : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_draft', 'Draft number is mandatory for Draft payment mode.');
+
+		return $flag;
+	}
+
+	public function validate_referenceid($referenceid) {
+		$payment_type = intval($this->input->post('payment_type'));
+		
+		$flag = ($payment_type===3 || $payment_type===4 || $payment_type===8 || $payment_type===9 || $payment_type===10) ? ($referenceid!==NULL && $referenceid!=='') : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_referenceid', 'Reference id is mandatory field.');
+
+		return $flag;
+	}
+
+	public function validate_target_accountid($target_accountid) {
+		$flag = intval($target_accountid)>0;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_target_accountid', 'Depositing account number is mandatory.');
+
+		return $flag;
+	}
+
+	public function validate_accountno($accountno) {
+		$payment_type = intval($this->input->post('payment_type'));
+		
+		$flag = ($payment_type===1) ? (intval($accountno)>0) : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_accountno', 'Account No is mandatory for Cheque & Draft payment mode.');
+
+		return $flag;
+	}
+
+	public function validate_bank($bank) {
+		$payment_type = intval($this->input->post('payment_type'));
+		$flag = ($payment_type===1 || $payment_type===2 || $payment_type===3 || 
+			$payment_type===4 || $payment_type===8 || $payment_type===9 || $payment_type===10) ? ($bank!=='' && $bank!==NULL) : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_bank', 'Bank is mandatory field.');
+
+		return $flag;
+	}
+
+	public function validate_branch($branch) {
+		$payment_type = intval($this->input->post('payment_type'));
+		$flag = ($payment_type===1 || $payment_type===2 || $payment_type===3 || 
+			$payment_type===4 || $payment_type===8 || $payment_type===9 || $payment_type===10) ? ($branch!=='' && $branch!==NULL) : true;
+
+		if(!$flag)
+			$this->form_validation->set_message('validate_branch', 'Branch is mandatory field.');
+
+		return $flag;
+	}
 	
 	public function do_login()
 	{
@@ -1785,6 +1921,8 @@ class User_Controller extends Mail_Controller
 				$result["footer"]=$this->Search_Model->get_post(5);
 			$result['city']=$this->User_Model->select("city_tbl");	
 			$result['airline']=$this->User_Model->select("airline_tbl");
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);
 			$this->load->view('ticket-form');
 			$this->load->view('footer');
@@ -1802,7 +1940,9 @@ class User_Controller extends Mail_Controller
 		if ($this->session->userdata('user_id')) 
 		{
 			$result["setting"]=$this->Search_Model->setting();
-				$result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);
 			$this->load->view('testimonial-form');
 			$this->load->view('footer');
@@ -1820,9 +1960,11 @@ class User_Controller extends Mail_Controller
 		if ($this->session->userdata('user_id')) 
 		{
 			$result["setting"]=$this->Search_Model->setting();
-				$result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['city']=$this->User_Model->select("city_tbl");	
 			$result['airline']=$this->User_Model->select("airline_tbl");
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);
 			$this->load->view('return-ticket-form');
 			$this->load->view('footer');
@@ -1852,6 +1994,8 @@ class User_Controller extends Mail_Controller
 				$result['city']=$this->User_Model->select("city_tbl");	
 				$result['airline']=$this->User_Model->select("airline_tbl");
 				$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
+				$result['mywallet']= $this->getMyWallet();
+
 				if($result["flight"][0]["trip_type"]=="ONE")
 				{
 					$this->load->view('header1',$result);
@@ -1886,12 +2030,12 @@ class User_Controller extends Mail_Controller
 			if ($check->num_rows() > 0) 
 			{
 			   
-				   $result["setting"]=$this->Search_Model->setting();
-					$this->load->view('header1',$result);
-					$this->load->view('ticket-form');
-					$this->load->view('footer');
-				
-			   
+				$result["setting"]=$this->Search_Model->setting();
+				$result['mywallet']= $this->getMyWallet();
+
+				$this->load->view('header1',$result);
+				$this->load->view('ticket-form');
+				$this->load->view('footer');
 			}
 			else
 				redirect('/user');
@@ -1940,7 +2084,9 @@ class User_Controller extends Mail_Controller
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['wallet_transaction']=$this->User_Model->wallet_transaction();
 	        $result["setting"]=$this->Search_Model->setting();
-	        $result["footer"]=$this->Search_Model->get_post(5);
+			$result["footer"]=$this->Search_Model->get_post(5);
+			$result['mywallet']= $this->getMyWallet();
+
 		    $this->load->view('header1',$result);
 			$this->load->view('user_transaction',$result);
 			$this->load->view('footer');
@@ -2064,8 +2210,123 @@ class User_Controller extends Mail_Controller
 		 }		 		 		
 	}
 
+	public function addtowallet() {
+		// $source = intval($this->input->post('source'));
+		// $destination = intval($this->input->post('destination'));
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
+			// $this->form_validation->set_rules('name', 'Name', 'required|trim|xss_clean');
+			// $this->form_validation->set_rules('address', 'Address', 'required|trim|xss_clean');
+			// $this->form_validation->set_rules('state', 'State', 'required|callback_validate_state');
+			$this->form_validation->set_rules('payment_type', 'Payment Type', 'required|callback_validate_paymenttype');
+			$this->form_validation->set_rules('cheque_no', 'Cheque No', 'callback_validate_cheque');
+			$this->form_validation->set_rules('draft_no', 'Draft No', 'callback_validate_draft');
+			$this->form_validation->set_rules('bank', 'Bank', 'callback_validate_bank');
+			$this->form_validation->set_rules('branch', 'Branch', 'callback_validate_branch');
+			$this->form_validation->set_rules('account_no', 'Account No', 'callback_validate_accountno');
+			$this->form_validation->set_rules('amount','Amount','required|trim|xss_clean|max_length[6]|min_length[3]');
+			$this->form_validation->set_rules('reference_id','Reference No','callback_validate_referenceid');
+			$this->form_validation->set_rules('target_accountid','Reference No','callback_validate_target_accountid');
+			
+			// $this->form_validation->set_rules('type','Register As.','required|xss_clean');
+		   //  $this->form_validation->set_rules('pan','PAN.','trim|xss_clean|max_length[10]|min_length[10]');
+		   //  $this->form_validation->set_rules('gst','GST.','trim|xss_clean|max_length[15]|min_length[15]');
+			// $this->form_validation->set_rules('password','Password','required|xss_clean|min_length[6]');
+			// $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[password]');
+			
+			if(!$this->form_validation->run()) 
+			{
+			   $json = array(
+				   'payment_type' => form_error('payment_type', '<div class="error">', '</div>'),
+				   'cheque_no' => form_error('cheque_no', '<div class="error">', '</div>'),
+				   'draft_no' => form_error('draft_no', '<div class="error">', '</div>'),
+				   'amount' => form_error('amount', '<div class="error">', '</div>'),
+				   'reference_id' => form_error('reference_id', '<div class="error">', '</div>'),
+				   'bank' => form_error('bank', '<div class="error">', '</div>'),
+				   'branch' => form_error('branch', '<div class="error">', '</div>'),
+				   'account_no' => form_error('account_no', '<div class="error">', '</div>'),
+				   'target_accountid' => form_error('target_accountid', '<div class="error">', '</div>')
+			   );
+			}
+			else
+			{
+				$payment_type = intval($this->input->post('payment_type'));
+				$cheque_no = intval($this->input->post('cheque_no'));
+				$cheque_date = date('Y-m-d', strtotime($this->input->post('cheque_date')));
+				$draft_no = intval($this->input->post('draft_no'));
+				$draft_date = date('Y-m-d', strtotime($this->input->post('draft_date')));
+				$amount = floatval($this->input->post('amount'));
+				$reference_id = $this->input->post('reference_id');
+				$reference_date = date('Y-m-d', strtotime($this->input->post('reference_date')));
+				$narration = $this->input->post('narration');
+				$bank = $this->input->post('bank');
+				$branch = $this->input->post('branch');
+				$account_no = $this->input->post('account_no');
+				$target_accountid = $this->input->post('target_accountid');
+
+				if($payment_type===1) {
+					$reference_id = $cheque_no;
+					$reference_date = $cheque_date;
+				}
+				else if($payment_type===2) {
+					$reference_id = $draft_no;
+					$reference_date = $draft_date;
+				}
+
+				$company = $this->session->userdata('company');
+				$user_id = $this->session->userdata('user_id');
+				$current_user = $this->session->userdata('current_user');
+				$companyid = $current_user["companyid"];
+
+				$walletid = $current_user['wallet_id'];
+				$wallet_balance = $current_user['wallet_balance'];
+				$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+				$wallet_trans_id = $this->User_Model->save("wallet_transaction_tbl", 
+			   		array(
+					   	'wallet_id' => $walletid, 
+						'date' => date("Y-m-d H:i:s"),
+						'trans_id' => gen_uuid(),
+						'companyid' => $companyid,
+						'userid' => $user_id,
+						'amount' => $amount,
+						'bank' => $bank,
+						'branch' => $branch,
+						'userid' => $user_id,
+						'dr_cr_type' => 'CR',
+						'trans_type' => $payment_type,
+						'trans_ref_id' => $reference_id,
+						'trans_ref_date' => $reference_date,
+						'target_accountid' => $target_accountid,
+						'target_companyid' => $sponsoring_companyid,
+						'trans_ref_type' => 'PAYMENT',
+						'narration' => $narration,
+						'sponsoring_companyid' => $sponsoring_companyid,
+						'created_by' => $user_id
+					   )
+				);
+				
+				redirect('/user');
+			}
+
+			redirect('/user');
+			//echo json_encode($json);
+		}
+	}
+
+
 	private function get_default_permission($company, $data) {
 		// we need to put some logic here. If needed we can query table and get the default value set to any company
 		return 255;
+	}
+
+	function abbreviate($string){
+		$abbreviation = "";
+		$string = ucwords($string);
+		$words = explode(" ", "$string");
+		  foreach($words as $word){
+			  $abbreviation .= $word[0];
+		  }
+	   return $abbreviation; 
 	}
 }

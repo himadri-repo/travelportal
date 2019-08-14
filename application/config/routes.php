@@ -74,6 +74,7 @@ $route['user/booking-orders'] = 'User_Controller/bookingorders';
 $route['user/booking-details/(:num)'] = 'User_Controller/booking_details/$1';
 $route['user/edit-booking/(:num)'] = 'User_Controller/edit_booking/$1';
 $route['user/cancel-request'] = 'User_Controller/cancelrequest';
+$route['user/addtowallet'] = 'User_Controller/addtowallet';
 /*********** TestNG ***********************************/
 
 /*********** End of TestNG ***********************************/

@@ -155,18 +155,39 @@ Class Admin_Model extends CI_Model
             $data = null;
 		}
 
+		if($customer['rateplanid']=='-1') {
+			unset($customer['rateplanid']);
+		}
+
+		$this->db->where('id', $customer['companyid']);
+		$query = $this->db->get('company_tbl');
+		$company = NULL;
+		$wallet_code = '';
+		$companyabcode = '';
+		
+		if($query->num_rows() > 0) {
+			$company = $query->result_array();
+			$wallet_code = $this->abbreviate($customer['name']);
+			$companyabcode = $this->abbreviate($company['display_name']);
+		}
+
 		$result = '';
+		if($company === NULL) {
+			$result = 'Invalid company id';
+			return [$result];
+		}
+
 		if($data==null && $customer['name']!='' && $customer['email']!='' && $customer['mobile']!='' && $customer['type']!='') {
 			$trans_started = false;
 			try
 			{
-				$this->db->where('id', $customer['companyid']);
-				$query = $this->db->get('company_tbl');
+				// $this->db->where('id', $customer['companyid']);
+				// $query = $this->db->get('company_tbl');
 
 				if($query->num_rows() > 0) {
 					$company = $query->result_array();
-					$wallet_code = abbreviate($customer['name']);
-					$companyabcode = abbreviate($company['display_name']);
+					$wallet_code = $this->abbreviate($customer['name']);
+					$companyabcode = $this->abbreviate($company['display_name']);
 					$this->db->trans_begin();
 					$trans_started = true;
 					//insert
@@ -177,15 +198,16 @@ Class Admin_Model extends CI_Model
 
 					// Sponsored Wallet
 					$customer_wallet = array('name' => $company['code'].'_wallet_'.$insert_id, 'display_name' => 'Wallet by '.$company['display_name'], 
-						'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => $customer['companyid'], 'WL_'.$companyabcode.'_'.$wallet_code.'_'.$insert_id, 
+						'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => $customer['companyid'], 'wallet_account_code' => 'WL_'.$companyabcode.'_'.$wallet_code.'_'.$insert_id, 
 						'balance' => 0, 'type' => 2, 'created_by' => $insert_id);
 					$this->db->insert('system_wallets_tbl', $customer_wallet);
 
 					// System sponsored Wallet
-					$customer_wallet = array('name' => $company['code'].'_wallet_sys_'.$insert_id, 'display_name' => 'Wallet by System', 
-						'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => -1, 'WL_'.$companyabcode.'_'.$insert_id, 
-						'balance' => 0, 'type' => 1, 'created_by' => $insert_id);
-					$this->db->insert('system_wallets_tbl', $customer_wallet);
+					// Disable System Wallet for Travel Agent and Customer
+					// $customer_wallet = array('name' => $company['code'].'_wallet_sys_'.$insert_id, 'display_name' => 'Wallet by System', 
+					// 	'companyid' => $customer['companyid'], 'userid' => $insert_id, 'sponsoring_companyid' => -1, 'WL_'.$companyabcode.'_'.$insert_id, 
+					// 	'balance' => 0, 'type' => 1, 'created_by' => $insert_id);
+					// $this->db->insert('system_wallets_tbl', $customer_wallet);
 
 					if($customer['type'] === 'B2B') {
 						//This is a travel agent type customer. So lets add default markup value
@@ -216,6 +238,26 @@ Class Admin_Model extends CI_Model
 			{
 				$result = $this->db->update('user_tbl', $customer, array("id" => intval($customer["id"],10)));
 				$result = 'Item updated successfully.';
+
+				// Sponsored Wallet
+				$wallet_data = $this->db->get_where("system_wallets_tbl", ['userid' => $customer["id"], 'type' => 2])->row_array();
+				if($wallet_data==null) {
+					//wallet was not created as this user registered himself via registration flow
+
+					$customer_wallet = array('name' => $company['code'].'_wallet_'.$customer["id"], 'display_name' => 'Wallet by '.$company['display_name'], 
+					'companyid' => $customer['companyid'], 'userid' => $customer["id"], 'sponsoring_companyid' => $customer['companyid'], 'wallet_account_code' => 'WL_'.$companyabcode.'_'.$wallet_code.'_'.$customer["id"], 
+					'balance' => 0, 'type' => 2, 'created_by' => $customer["id"]);
+					$this->db->insert('system_wallets_tbl', $customer_wallet);
+				}
+
+				// User config
+				$userconfig_data = $this->db->get_where("user_config_tbl", ['user_id' => $customer["id"], 'companyid' => $customer["companyid"]])->row_array();
+				if($userconfig_data == null && $customer['type'] === 'B2B') {
+					//This is a travel agent type customer. So lets add default markup value
+					//Default markup value
+					$user_config = array('user_id' => $customer["id"], 'field_name' => 'markup', 'field_display_name' => 'Markup', 'field_value' => 200, 'field_value_type' => 2, 'status' => 1, 'companyid' => $customer['companyid']);
+					$this->db->insert('user_config_tbl', $user_config);
+				}			
 			}
 			catch(Exception $ex) {
 				throw $ex;

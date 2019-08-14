@@ -101,9 +101,12 @@ Class User_Model extends CI_Model
 		$pwd = $data['password'];
 		$companyid = $data['companyid'];
 
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
+			c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
+			wl.type as wallet_type, wl.status as wallet_status');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
+		$this->db->join('system_wallets_tbl wl', 'u.companyid=wl.companyid and u.id=wl.userid', 'left');
 		$this->db->where('u.companyid=', $companyid);
 		$this->db->where('u.active=', 1);
 		$this->db->where('u.mobile=', $mobile);
@@ -757,5 +760,28 @@ Class User_Model extends CI_Model
 			die();
 		}
 	}
+
+	public function get_wallet_summary($walletid) {
+		$arr = array('wl.id'=>$walletid);
+
+		$this->db->select("wl.id as wallet_id, wl.display_name as wallet_name, wl.companyid, wl.userid, wl.sponsoring_companyid, wl.balance as wallet_balance, wl.type as wallet_type, wl.status as wallet_status, 
+				(select count(*) from wallet_transaction_tbl wlt where wlt.wallet_id=wl.id) as no_of_transactions, 
+				(select count(*) from wallet_transaction_tbl wlt where wlt.wallet_id=wl.id and wlt.status=0) as no_of_unapproved_transactions, 
+				(select sum(case when wlt.dr_cr_type='CR' then wlt.amount else -wlt.amount end) from wallet_transaction_tbl wlt where wlt.wallet_id=wl.id and wlt.status=0) as unapproved_amount");
+		$this->db->from('system_wallets_tbl wl');
+        $this->db->where($arr);
+		$query = $this->db->get();
+		
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			return false;
+			echo $this->db->last_query();
+			die();
+		}
+	}	
 }	
 ?>

@@ -1,8 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
+include_once(APPPATH.'core/Mail_Controller.php');
 include_once(APPPATH.'core/Common.php');
+define('PAGE_SIZE', 25);
 
-class Home_Controller extends CI_Controller 
+class Home_Controller extends Mail_Controller 
 {
     public function __construct()
 	{
@@ -77,7 +79,11 @@ class Home_Controller extends CI_Controller
 		$result["third"]=$this->Search_Model->get_post(3);
 		$result["fourth"]=$this->Search_Model->get_post(4);
 		$result["footer"]=$this->Search_Model->get_post(5);
-	
+		
+		$current_user = $this->session->userdata("current_user");
+
+		$result['mywallet']= $this->getMyWallet();
+
 		//$this->load->view('header',$result);
 		$this->load->view('headernew',$result);
 		//$this->load->view('home');

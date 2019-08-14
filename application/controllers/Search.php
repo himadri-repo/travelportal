@@ -46,7 +46,9 @@ class Search extends Mail_Controller
 
 			//$result["setting"]=$this->Search_Model->setting();
 			$result['setting']=$this->Search_Model->company_setting($companyid);
-			
+
+			$result['mywallet']= $this->getMyWallet();
+				
 			$this->load->view('header1',$result);
 			$this->load->view('search',$result);
 			$this->load->view('footer1');
@@ -210,6 +212,10 @@ class Search extends Mail_Controller
 				//$result["setting"]=$this->Search_Model->setting();
 				$result['setting']=$this->Search_Model->company_setting($companyid);
 				$result["footer"]=$this->Search_Model->get_post(5);
+				$current_user = $this->session->userdata("current_user");
+
+				$result['mywallet']= $this->getMyWallet();
+							
 				$this->load->view('header1',$result);
 				$this->load->view('search_one_way',$result);
 				$this->load->view('footer1');
@@ -315,6 +321,11 @@ class Search extends Mail_Controller
 				$result["post"][0]["qty"]=$this->input->post('no_of_person');
 				$result["setting"]=$this->Search_Model->setting();
 				$result["footer"]=$this->Search_Model->get_post(5);
+
+				$current_user = $this->session->userdata("current_user");
+
+				$result['mywallet']= $this->getMyWallet();
+					
 				$this->load->view('header1',$result);
 				$this->load->view('search_one_way',$result);
 				$this->load->view('footer1');
@@ -369,6 +380,7 @@ class Search extends Mail_Controller
 				 );
 			  }
 			  $company = $this->session->userdata('company');
+			  $companyid = $company["id"];
 
 			  $result['city']=$this->User_Model->filter_city("ROUND");
 			  $result['city1']=$this->Search_Model->filter_city($this->input->post('source1'),"ROUND"); 
@@ -394,6 +406,11 @@ class Search extends Mail_Controller
 			  $result["post"][0]["qty"]=$this->input->post('no_of_person');
 			  $result["setting"]=$this->Search_Model->setting();
 			  $result["footer"]=$this->Search_Model->get_post(5);
+
+			  $current_user = $this->session->userdata("current_user");
+
+			  $result['mywallet']= $this->getMyWallet();
+	  
 		      $this->load->view('header1',$result);
 			  $this->load->view('search_round_trip',$result);
 			  $this->load->view('footer1');
@@ -522,6 +539,10 @@ class Search extends Mail_Controller
 					
 					//$result["setting"]=$this->Search_Model->setting();
 					$result["footer"]=$this->Search_Model->get_post(5);
+					$current_user = $this->session->userdata("current_user");
+
+					$result['mywallet']= $this->getMyWallet();
+											
 					$this->load->view('header1',$result);
 					$this->load->view('flight-detail',$result);
 					$this->load->view('footer1');
@@ -758,6 +779,10 @@ class Search extends Mail_Controller
 				{					  			  			  
 					//$result["setting"]=$this->Search_Model->setting();
 					$result["footer"]=$this->Search_Model->get_post(5);
+					$current_user = $this->session->userdata("current_user");
+
+					$result['mywallet']= $this->getMyWallet();
+									
 					$this->load->view('header1',$result);
 					$this->load->view('customer-information',$result);						
 					$this->load->view('footer1');
@@ -824,6 +849,10 @@ class Search extends Mail_Controller
 			if($costprice>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
 			{
 				$result["setting"]=$this->Search_Model->setting();
+				$current_user = $this->session->userdata("current_user");
+
+				$result['mywallet']= $this->getMyWallet();
+			
 				$this->load->view('header1',$result);
 				$this->load->view('insufficient_amount',$result);
 				$this->load->view('footer1'); 					
@@ -855,7 +884,8 @@ class Search extends Mail_Controller
 				"status"=>$status
 				);
 						
-				$booking_id = $this->Search_Model->save("booking_tbl",$arr);
+				$booking_id = -1;
+				//$booking_id = $this->Search_Model->save("booking_tbl",$arr);
 
 				$requesting_by = 1;
 				$requesting_to = 4;
@@ -962,7 +992,8 @@ class Search extends Mail_Controller
 						"status"=>$status,
 						"booking_id"=>$booking_id_new
 						);
-						$refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
+						$refrence_id = -1;
+						//$refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
 						// FOR LIVE BOOKING
 					}
 					
@@ -1229,7 +1260,10 @@ class Search extends Mail_Controller
     		//$result["setting"]=$this->Search_Model->setting();
 			$result['setting']=$this->Search_Model->company_setting($companyid);
     		
-    		
+			$current_user = $this->session->userdata("current_user");
+
+			$result['mywallet']= $this->getMyWallet();
+				
     		$this->load->view('header1',$result);
     		$this->load->view('quotation_sent',$result);
     		$this->load->view('footer1'); 
@@ -1251,6 +1285,11 @@ class Search extends Mail_Controller
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 
 		$result["footer"]=$this->Search_Model->get_post(5);
+
+		$current_user = $this->session->userdata("current_user");
+
+		$result['mywallet']= $this->getMyWallet();
+
 		if($result["details"])
 		{		 
 				if($result['details'][0]["type"]=="B2B" || $result['details'][0]["type"]=="EMP")
@@ -1284,6 +1323,11 @@ class Search extends Mail_Controller
 		//$result["setting"] = $this->Search_Model->setting($id); 
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 		$result["footer"]=$this->Search_Model->get_post(5);
+
+		$current_user = $this->session->userdata("current_user");
+
+		$result['mywallet']= $this->getMyWallet();
+
 		if($result["details"])
 		{		 
 			if($result['details'][0]["type"]=="B2B")
@@ -1724,4 +1768,55 @@ class Search extends Mail_Controller
 			redirect("/search");
 		}	
 	}
+
+	/*
+	private function getMyWallet() {
+		$companyid = $this->session->userdata("current_user")["companyid"];
+		$current_user = $this->session->userdata("current_user");
+		$wallet = NULL;
+
+		if($this->session->userdata('user_id') && $current_user['is_admin']!=='1') {
+			$mywallet = $this->Search_Model->getMyWallet($this->session->userdata('user_id'), -1);
+			if($mywallet && count($mywallet)>0) {
+				//$result["mywallet"] = $mywallet[0];
+				$wallet = $mywallet[0];
+			}
+			else {
+				//$result["mywallet"] = array('balance' => 0);
+				$wallet = array('balance' => 0);
+			}
+		}
+		else if($companyid) {
+			$mywallet = $this->Search_Model->getMyWallet(-1, $companyid);
+			
+			if($mywallet && count($mywallet)>0) {
+				$mywallet=$this->Search_Model->getMyWallet(-1, $companyid);
+				if($mywallet && count($mywallet)>0) {
+					//$result["mywallet"] = $mywallet[0];
+					$wallet = $mywallet[0];
+				}
+				else {
+					//$result["mywallet"] = array('balance' => 0);
+					$wallet = array('balance' => 0);
+				}
+			}
+			else {
+				//$result["mywallet"] = array('balance' => 0);
+				$wallet = array('balance' => 0);
+			}
+		}
+		else {
+			//$result["mywallet"] = array('balance' => 0);
+			$wallet = array('balance' => 0);
+		}
+
+		if(!$result["mywallet"]) {
+			//$result["mywallet"] = array('balance' => 0);
+			$wallet = array('balance' => 0);
+		}	
+
+		return $wallet;
+	}
+
+	*/
 }

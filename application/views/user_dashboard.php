@@ -167,7 +167,15 @@
 												    <a style="color:#303030;text-decoration:none;cursor:pointer" data-toggle="modal" data-target="#make-payment">
                                                     <div class="stat-block">
                                                         <span><i class="fa makepayment"></i></span>
-                                                        <h3>&nbsp;</h3>
+                                                        <div>
+															<?php if(isset($wallet_summary[0]['wallet_id'])) { ?>
+																<div style="font-size: 18px; font-weight: 700; color: #ff0000;">Unapproved    : ₹ <?php echo $wallet_summary[0]['unapproved_amount']?></div>
+																<div style="font-size: 18px; font-weight: 700; color: #139412;">Clear Balance : ₹ <?php echo $wallet_summary[0]['wallet_balance']?></div>
+																<!-- <div>Approve/Wait Trans : </h3> <?php echo $wallet_summary[0]['no_of_transactions']?>/<?php echo $wallet_summary[0]['no_of_unapproved_transactions']?></div> -->
+															<?php } else { ?>
+																&nbsp;
+															<?php } ?>
+														</div>
                                                         <p>Make Payment</p>
                                                     </div>
 													</a>
@@ -195,34 +203,49 @@
 												
 												<div class="col-sm-12 col-md-12">												    
                                                     <div class="stat-block" style="float:left;width:100%">
-													    <div class="col-sm-4">
-                                                        <span><i class="fa fa-bank"></i></span>
-                                                        <h3><?php echo strtoupper($cname);?> - BANK DETAILS</h3>
+													    <div class="col-sm-4 col-md-4">
+															<span><i class="fa fa-bank"></i></span>
+															<h3><?php echo strtoupper($cname);?> - BANK DETAILS</h3>
                                                         </div>
 
-													<div class="col-sm-4">
-														<?php 
-															$bank = isset($company_setting[0]["bank_name"])?$company_setting[0]["bank_name"]:$setting[0]["bank_name"];
-															$branch = isset($company_setting[0]["bank_branch"])?$company_setting[0]["bank_branch"]:$setting[0]["bank_branch"];
-															//$acc_name = $setting[0]["acc_name"]; //$company_setting["acc_name"]?'true':'false';
-															$acc_name = isset($company_setting[0]["acc_name"])?$company_setting[0]["acc_name"]:$setting[0]["acc_name"];
-															$acc_no = isset($company_setting[0]["acc_no"])?$company_setting[0]["acc_no"]:$setting[0]["acc_no"];
-															$ifsc = isset($company_setting[0]["ifsc"])?$company_setting[0]["ifsc"]:$setting[0]["ifsc"];
-														?>
-                                                        <p><b>BANK NAME : </b> <?php echo $bank;?></p>
-														<p><b>BRANCH : </b> <?php echo $branch;?></p>
-                                                    </div>												
-													<div class="col-sm-4">
-                                                      
-                                                        <p><b>A/C NAME : </b> <?php echo $acc_name;?></p>
-														<p><b>A/C NO. : </b> <?php echo $acc_no;?></p>
-														<p><b>IFSC : </b> <?php echo $ifsc;?></p>
-                                                    </div>
+														<div class="col-sm-8 col-md-8">
+															<div class="row">
+																<?php 
+																for ($i=0; $target_accounts && $i < count($target_accounts); $i++) { ?>
+																	<div class="col-sm-6 col-md-6" style="border-bottom: 1px solid #ccc;">
+																		<?php 
+																			$target_account = $target_accounts[$i];
+																			// $bank = isset($company_setting[0]["bank_name"])?$company_setting[0]["bank_name"]:$setting[0]["bank_name"];
+																			// $branch = isset($company_setting[0]["bank_branch"])?$company_setting[0]["bank_branch"]:$setting[0]["bank_branch"];
+																			// //$acc_name = $setting[0]["acc_name"]; //$company_setting["acc_name"]?'true':'false';
+																			// $acc_name = isset($company_setting[0]["acc_name"])?$company_setting[0]["acc_name"]:$setting[0]["acc_name"];
+																			// $acc_no = isset($company_setting[0]["acc_no"])?$company_setting[0]["acc_no"]:$setting[0]["acc_no"];
+																			// $ifsc = isset($company_setting[0]["ifsc"])?$company_setting[0]["ifsc"]:$setting[0]["ifsc"];
+
+																			$bank = isset($target_account["bank_name"])?$target_account["bank_name"]:$setting[0]["bank_name"];
+																			$branch = isset($target_account["bank_branch"])?$target_account["bank_branch"]:$setting[0]["bank_branch"];
+																			//$acc_name = $setting[0]["acc_name"]; //$company_setting["acc_name"]?'true':'false';
+																			$acc_name = isset($target_account["acc_name"])?$target_account["acc_name"]:$setting[0]["acc_name"];
+																			$acc_no = isset($target_account["acc_no"])?$target_account["acc_no"]:$setting[0]["acc_no"];
+																			$ifsc = isset($target_account["ifsc"])?$target_account["ifsc"]:$setting[0]["ifsc"];
+																			?>
+																		<p style="text-align: left"><b></b> <?php echo $i+1;?></p>
+																		<p style="text-align: left"><b>BANK NAME : </b> <?php echo $bank;?></p>
+																		<p style="text-align: left"><b>BRANCH : </b> <?php echo $branch;?></p>
+																	</div>												
+																	<div class="col-sm-6 col-md-6" style="border-bottom: 1px solid #ccc;">
+																		<p style="text-align: left"><b>A/C NAME : </b> <?php echo $acc_name;?></p>
+																		<p style="text-align: left"><b>A/C NO. : </b> <?php echo $acc_no;?></p>
+																		<p style="text-align: left"><b>IFSC : </b> <?php echo $ifsc;?></p>
+																	</div>
+																<?php		
+																}
+																?>
+															</div>
+														</div>
 													</div>	
                                                 </div><!-- end columns -->
-                                                
                                             </div>
-                                            
                                         </div><!-- end dashboard-content -->
                                     </div><!-- end dsh-dashboard -->
                                     
@@ -329,15 +352,6 @@
             </div><!-- end contact-us -->
         </section><!-- end innerpage-wrapper -->
         
-        
-       
-        
-        
-        
-        
-        
-        
-        
         <div id="edit-profile" class="modal custom-modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -368,69 +382,249 @@
             </div><!-- end modal-dialog -->
         </div><!-- end edit-profile -->
         
-        
-        
-        
-		
-		
-		 
-		
 		 <div id="make-payment" class="modal custom-modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <div class="modal-header model-header">
+                        <button type="button" class="close" data-dismiss="modal" style="background-color: #000000; color: #ffffff; opacity: 1;">&times;</button>
                         <h3 class="modal-title">Make Payment</h3>
                     </div><!-- end modal-header -->
                     
                     <div class="modal-body">
-                        <form  id="frm_make_payment">												    
-								<div class="form-group">
-									<label>Payment Type</label>
-									 <select class="form-control" name="payment_type" id="payment_type">											   
-											   <option value="NEFT">NEFT</option>
-											   <option value="CHEQUE">Cheque Payment</option>
-											   <option value="BANK">Bank</option>												 
-									</select>
-								</div>
-								
-								<div class="form-group" id="div_refrence_id">
-									<label>Refrence ID</label>
-									<input  type="number" class="form-control" name="refrence_id" id="refrence_id" placeholder="XXXX" />
-								</div>
-								
-								<div class="form-group" style="display:none" id="div_bank">
-									<label>Bank</label>
-									<input  type="text" class="form-control" name="bank" id="bank" placeholder="SBI/BOI" />
-								</div>
-						   
-								<div class="form-group" style="display:none" id="div_cheque_no">
-									<label>Cheque No.</label>
-									<input  type="number" class="form-control" name="cheque_no" id="cheque_no" placeholder="XXXX" />
-								</div>	
-								
-								<div class="form-group" style="display:none" id="div_account_no">
-									<label>Account No.</label>
-									<input  type="number" class="form-control" name="account_no" id="account_no" placeholder="XXXX" />
-								</div>
-							
-								<div class="form-group" id="div_amount">
-									<label>Amount</label>
-									<input  type="number" class="form-control" name="amount" id="amount" placeholder="5000" />
-								</div>
-								
-								
-                                <div class="form-group" id="div_amount">							
-                                  <a class="btn btn-orange" id="btn_make_payment">DONE</a>
-									<div class="form-group" id="make_payment_status">
+                        <form id="frm_make_payment" action="<?php echo base_url(); ?>user/addtowallet" method="post" onsubmit="return validate_payment();">
+							<div class="container-fluid">
+								<div class="row">
+									<div class="form-group col-sm-6 col-md-6">
+										<label>Payment Mode</label>
+										<select class="form-control" name="payment_type" id="payment_type">
+											<option value="-1">Select Payment Mode</option>
+											<option value="1">Cheque</option>
+											<option value="2">Draft</option>
+											<option value="3">Cash</option>
+											<option value="4">RTGS</option>
+											<!-- <option value="5">Credit Card</option>
+											<option value="6">Debit Card</option>
+											<option value="7">Net Banking</option> -->
+											<option value="8">NEFT</option>
+											<option value="9">Transfer</option>
+											<option value="10">EDC Machine</option>
+											<!--<option value="3">Online Payment</option>-->
+										</select>
 									</div>
-								</div>	
+									<div class="form-group col-sm-6 col-md-6" id="div_amount">
+										<label>Amount</label>
+										<input type="number" min=500 max=100000 class="form-control" name="amount" id="amount" placeholder="5000" />
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-sm-6 col-md-6" id="div_refrence_id">
+										<label>Refrence ID</label>
+										<input  type="text" class="form-control" name="reference_id" id="reference_id" placeholder="Reference #" />
+									</div>
+									<div class="form-group col-sm-6 col-md-6" id="div_refrence_date">
+										<label>Refrence Date</label>
+										<input class="form-control datepicker" placeholder="dd/mm/yyyy" name="reference_date" id="reference_date"/>
+									</div>
+								</div>
+								<div class="row">
+									<div style="display:none" id="div_bank">
+										<div class="form-group col-sm-6 col-md-6" id="div_bank_name">
+											<label>Your Bank</label>
+											<input  type="text" class="form-control" name="bank" id="bank" placeholder="SBI/BOI" />
+										</div>
+										<div class="form-group col-sm-6 col-md-6" id="div_branch_name">
+											<label>Branch</label>
+											<input  type="text" class="form-control" name="branch" id="branch" placeholder="" />
+										</div>
+									</div>
+								</div>
+								<div class="row" style="display:none" id="div_cheque">
+									<div class="form-group col-sm-6 col-md-6" id="div_cheque_no">
+										<label>Cheque No.</label>
+										<input  type="number" class="form-control" name="cheque_no" id="cheque_no" placeholder="XXXX" />
+									</div>	
+
+									<div class="form-group col-sm-6 col-md-6" id="div_cheque_date">
+										<label>Cheque Date</label>
+										<input class="form-control datepicker" placeholder="dd/mm/yyyy" name="cheque_date" id="cheque_date" readonly/>
+									</div>
+								</div>
+								<div class="row" style="display:none" id="div_draft">
+									<div class="form-group col-sm-6 col-md-6" id="div_draft_no">
+										<label>Draft No.</label>
+										<input  type="number" class="form-control" name="draft_no" id="draft_no" placeholder="XXXX" />
+									</div>	
+
+									<div class="form-group col-sm-6 col-md-6" id="div_draft_date">
+										<label>Draft Date</label>
+										<input class="form-control datepicker" placeholder="dd/mm/yyyy" name="draft_date" id="draft_date" readonly/>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-sm-6 col-md-6" style="display:none" id="div_account_no">
+										<label>Your Account No.</label>
+										<input  type="number" class="form-control" name="account_no" id="account_no" placeholder="XXXX" />
+									</div>
+
+									<div class="form-group col-sm-6 col-md-6" id="div_target_accountid">
+										<label>Our Bank Account <i style="color: #ff0000;">*</i></label>
+										<select class="form-control" name="target_accountid" id="target_accountid">
+											<option value="-1">Select our account</option>
+											<?php for ($i=0; $target_accounts && $i < count($target_accounts); $i++) { 
+												$targetAccount = $target_accounts[$i]; ?>
+												<option value="<?php echo $targetAccount['id']?>"><?php echo $targetAccount['bank_name'].'-'.$targetAccount['acc_no'].'-'.$targetAccount['ifsc']?></option>
+											<?php 
+											}?>
+										</select>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-sm-12 col-md-12" id="div_narration">
+										<label for="narration">Narration</label>
+										<textarea id="narration" class="form-control" name="narration" rows="3"></textarea>
+									</div>
+								</div>
+								<div class="row">
+									<div class="form-group col-sm-12 col-md-12" id="div_action">
+										<button type="submit" class="btn btn-orange" id="btn_make_payment">Done</button>
+										<button type="button" class="btn btn-orange" id="btn_make_payment" style="float: right;" data-dismiss="modal">Close</button>
+										<!-- <button class="btn btn-orange" id="btn_make_payment">DONE</a> -->
+										<div class="form-group" id="make_payment_status"></div>
+									</div>	
+								</div>
+							</div>
                         </form>
                     </div><!-- end modal-bpdy -->
                 </div><!-- end modal-content -->
             </div><!-- end modal-dialog -->
         </div><!-- end edit-card -->
         
-        
+        <script language="javascript">
+			$("#payment_type").change(function(ev) {
+				let value = parseInt(this.value);
+				// alert( "Handler for .change() called. - " + value);
+				$('#div_bank').hide();
+				$('#div_account_no').hide();
+				$('#div_cheque').hide();
+				$('#div_draft').hide();
+				$('#div_refrence_id').hide();
+				$('#div_refrence_date').hide();
+
+				if(value===1) { //Cheque
+					$('#div_bank').show();
+					$('#div_account_no').show();
+					$('#div_cheque').show();
+				}
+				else if(value===2) { //Draft
+					$('#div_bank').show();
+					$('#div_draft').show();
+				}
+				else if(value===3 || value===9 || value===10) { //Cash, Transfer, EDC Machine
+					$('#div_bank').show();
+					$('#div_refrence_id').show();
+					$('#div_refrence_date').hide();
+				}
+				else if(value===4 || value===8) { //NEFT, RTGS
+					$('#div_bank').show();
+					$('#div_refrence_id').show();
+					$('#div_refrence_date').show();
+				}
+			});
+
+			function validate_payment() {
+				//alert('Submitting form');
+				
+				let payment_type = parseInt($('#payment_type').val());
+				let reference_id = $('#reference_id').val();
+				let reference_date = $('#reference_date').val();
+				let bank = $('#bank').val();
+				let branch = $('#branch').val();
+				let cheque_no = $('#cheque_no').val();
+				let draft_no = $('#draft_no').val();
+				let account_no = parseInt($('#account_no').val());
+				let narration = $('textarea#narration').val();
+				let amount = parseInt("0"+$('#amount').val());
+				let target_accountid = $('#target_accountid').val();
+				let flag = true;
+
+				if(target_accountid<=0) {
+					alert('Please select our account number where you are depositing the amount. It is mandatory.');
+					flag = false;
+					return flag;
+				}
+				
+				if(payment_type<=0) {
+					alert('Please select your payment mode.');
+					flag = false;
+					return flag;
+				}
+
+				if(amount<=0) {
+					alert('Depositing amount should not be zero or negative.');
+					flag = false;
+					return flag;
+				}
+
+				if(payment_type===1 || payment_type===2) {
+					let err = '';
+					if(bank===null || bank==='') {
+						err += 'Please provide bank details.\n';
+						flag = false;
+					}
+
+					if(payment_type===1 && (cheque_no===null || cheque_no==='')) {
+						err += 'Please provide cheque number.\n';
+						flag = false;
+					}
+
+					if(payment_type===2 && (draft_no===null || draft_no==='')) {
+						err += 'Please provide draft number.\n';
+						flag = false;
+					}
+
+					if(account_no<=0) {
+						err += 'Please provide account details.\n';
+						flag = false;
+					}
+
+					if(!flag) {
+						alert(err);
+
+						return flag;
+					}
+				}
+
+				if(payment_type===3 || payment_type===9 || payment_type===10 || payment_type===4 || payment_type===8) {
+					let err = '';
+					if(bank===null || bank==='') {
+						err += 'Please provide bank details.\n';
+						flag = false;
+					}
+
+					if(branch===null || branch==='') {
+						err += 'Please provide bank branch details.\n';
+						flag = false;
+					}
+
+					if(reference_id===null || reference_id==='') {
+						err += 'Please provide transaction reference number.\n';
+						flag = false;
+					}
+
+					if((payment_mode===4 || payment_mode===8) && (reference_date===null || reference_date==='')) {
+						err += 'Please provide transaction reference date.\n';
+						flag = false;
+					}
+
+					if(!flag) {
+						alert(err);
+
+						return flag;
+					}
+				}
+
+				return flag;
+			}
+		</script>
        
 	   

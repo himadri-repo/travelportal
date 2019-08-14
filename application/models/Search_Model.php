@@ -241,6 +241,7 @@ Class Search_Model extends CI_Model
 			'acc_name' => '',
 			'ifsc' => '',
 			'map' => '',
+			'bank_accounts' => '',
 			'service_charge' => 0.00,
 			'cgst' => 0.00,
 			'igst' => 0.00
@@ -955,6 +956,67 @@ Class Search_Model extends CI_Model
 		}
 
 		return $returnedValue;
+	}
+
+	public function get_wallet($userid=-1, $companyid=-1) {
+		$sql = "select 	usr.type as user_type, usr.name, usr.rateplanid, usr.is_admin, wl.id as walletid, wl.name wallet_name, wl.display_name as wallet_display_name, wl.userid, wl.companyid, wl.sponsoring_companyid, 
+						wl.allowed_transactions, wl.wallet_account_code, wl.balance, wl.type as wallet_type, wl.status
+				from 	system_wallets_tbl wl
+						left outer join user_tbl usr on wl.userid=usr.id and usr.active=1";
+		
+		if($companyid!==NULL && $companyid!==-1) {
+			$sql = $sql." where ((wl.sponsoring_companyid=$companyid or -1=$companyid) and wl.userid is null) and wl.status=1 and wl.type=2;";
+		} 
+		else if($userid!==NULL && $userid!==-1) {
+			$sql = $sql." where (wl.userid=$userid or -1=$userid) and wl.status=1 and wl.type=2;";
+		}
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function get_wallet_transaction($walletid=-1) {
+		if($walletid==-1 || $walletid==NULL) return false;
+
+		$sql = "select 	wlt.id as wallet_trans_id, wlt.wallet_id, wlt.date, wlt.trans_id, wlt.companyid, wlt.userid, wlt.amount, wlt.dr_cr_type, wlt.trans_type, wlt.trans_ref_id, wlt.trans_tracking_id, wlt.narration, wlt.sponsoring_companyid, 
+						wlt.status, wlt.approved_by, wlt.approved_on, c.display_name as sponsoring_company_name
+				from wallet_transaction_tbl wlt
+				inner join wallet_tbl wl on wlt.wallet_id=wl.id
+				inner join company_tbl c on wlt.sponsoring_companyid=c.id
+				left outer join user_tbl usr on wlt.approved_by=usr.id
+				where wl.id=$walletid";
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function getMyWallet($userid=-1, $companyid=-1) {
+		$wallet = $this->get_wallet($userid, $companyid);
+
+		$mywallet = &$wallet;
+
+		if($mywallet && count($mywallet)>0) {
+			$walletid = $mywallet[0]['walletid'];
+			$mywallet[0]['transactions'] = $this->get_wallet_transaction($walletid);
+		}
+
+		return $mywallet;
 	}
 }
 ?>
