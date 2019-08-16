@@ -41,14 +41,33 @@ class User_Controller extends Mail_Controller
 			$result["footer"]=$this->Search_Model->get_post(5);
 
 			$company = $this->session->userdata("company");
-			
+			$companyname = $company['display_name'];
 			//$result["setting"]=$this->Search_Model->setting();
 			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+			$result["payment_gateway"] = json_decode($result["setting"][0]['payment_gateway'], true);
 			// $result["target_accounts"]= [
 			// 	array('id' => 1, 'bank_name' => 'SBI', 'bank_branch' => 'Patuli', 'acc_no' => '3532453453', 'ifsc' => 'SBIN0000234', 'acc_name' => 'Majumdar Travels'),
 			// 	array('id' => 2, 'bank_name' => 'HDFC', 'bank_branch' => 'Garia', 'acc_no' => '9798998988', 'ifsc' => 'HDFC0000082', 'acc_name' => 'Majumdar Travels'),
 			// 	array('id' => 3, 'bank_name' => 'ICICI', 'bank_branch' => 'Garia', 'acc_no' => '6597345898', 'ifsc' => 'ICICI0000349', 'acc_name' => 'Majumdar Travels')
 			// ];
+
+			// $result['payment_gateway'] = [   
+			// 	array('id' => 1, 'pw_name' => 'PayU', 'icon' => '', 'conv_rate' => [   
+			// 		array('payment_mode' => 5, 'conv_rate' => 0.05, 'rate_type' => 'percentage'),  
+			// 		array('payment_mode' => 6, 'conv_rate' => 0.02, 'rate_type' => 'percentage'),  
+			// 		array('payment_mode' => 7, 'conv_rate' => 0.01, 'rate_type' => 'percentage')  
+			// 	],   
+			// 	'configuration' => array('marchent_key' => 'gtKFFx', 'salt' => 'eCwWELxi'),   
+			// 	'terms_condition' => "$companyname certifies that the Credit/Debit Card/Net Banking Account being used for this transaction belongs to $companyname or an authorized employee of $companyname. In particular, this Card/Net Banking Account does not belong to a customer or passenger"),
+			// 	array('id' => 2, 'pw_name' => 'PayTM', 'icon' => '', 'conv_rate' => [   
+			// 		array('payment_mode' => 5, 'conv_rate' => 0.03, 'rate_type' => 'percentage'),  
+			// 		array('payment_mode' => 6, 'conv_rate' => 0.025, 'rate_type' => 'percentage'),  
+			// 		array('payment_mode' => 7, 'conv_rate' => 0.015, 'rate_type' => 'percentage')  
+			// 	],   
+			// 	'configuration' => array('marchent_key' => 'M7MynOEE', 'salt' => 'WsX0BbXWgX'),   
+			// 	'terms_condition' => "$companyname certifies that the Credit/Debit Card/Net Banking Account being used for this transaction belongs to $companyname or an authorized employee of $companyname. In particular, this Card/Net Banking Account does not belong to a customer or passenger"),
+			// ];
+
 
 			if(NEW_FLOW)
 			{
@@ -890,7 +909,9 @@ class User_Controller extends Mail_Controller
 	}
 
 	public function validate_target_accountid($target_accountid) {
-		$flag = intval($target_accountid)>0;
+		$payment_type = intval($this->input->post('payment_type'));
+
+		$flag = ($payment_type!==5 && $payment_type!==6 && $payment_type!==7) ? intval($target_accountid)>0 : true;
 
 		if(!$flag)
 			$this->form_validation->set_message('validate_target_accountid', 'Depositing account number is mandatory.');
@@ -2210,14 +2231,79 @@ class User_Controller extends Mail_Controller
 		 }		 		 		
 	}
 
-	public function addtowallet() {
-		// $source = intval($this->input->post('source'));
-		// $destination = intval($this->input->post('destination'));
+	public function pg_response() {
 		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		{
-			// $this->form_validation->set_rules('name', 'Name', 'required|trim|xss_clean');
-			// $this->form_validation->set_rules('address', 'Address', 'required|trim|xss_clean');
-			// $this->form_validation->set_rules('state', 'State', 'required|callback_validate_state');
+			$pg_transid = $this->input->post('mihpayid');
+			$mode = $this->input->post('mode');
+			$status = $this->input->post('status');
+			$txnid = $this->input->post('txnid');
+			$amount = $this->input->post('net_amount_debit');
+			$card_category = $this->input->post('cardCategory');
+			$trans_date = date('Y-m-d H:i:s', strtotime($this->input->post('addedon')));
+			$error = $this->input->post('error');
+			$message = $this->input->post('field9');
+
+			$response_json = json_encode($_REQUEST, JSON_HEX_QUOT);
+
+			$pg_transaction = $this->User_Model->get_where('pg_transactions_tbl', array('trans_tracking_id' => $txnid));
+
+			$company = $this->session->userdata('company');
+			$user_id = $this->session->userdata('user_id');
+			$current_user = $this->session->userdata('current_user');
+			$companyid = $current_user["companyid"];
+			$companyname = $company['display_name'];
+			$result["company_setting"]=$this->Search_Model->company_setting($companyid);
+
+			$walletid = $current_user['wallet_id'];
+			$wallet_balance = $current_user['wallet_balance'];
+			$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+			$wallet = $this->User_Model->get_where('system_wallets_tbl', array('id' => $walletid));
+			if($wallet && count($wallet)>0) {
+				$wallet_balance = floatval($wallet[0]['balance']);
+			}
+			if($pg_transaction && count($pg_transaction)>0) {
+				$wallet_trans_id = -1;
+				if($status === 'success') {
+					$billed_amount = floatval($pg_transaction[0]['amount']);
+					$wallet_trans_id = $this->User_Model->save("wallet_transaction_tbl", 
+						array(
+							'wallet_id' => $walletid, 
+							'date' => date("Y-m-d H:i:s"),
+							'trans_id' => $txnid,
+							'companyid' => $companyid,
+							'userid' => $user_id,
+							'amount' => $billed_amount,
+							'dr_cr_type' => 'CR',
+							'status' => 1,
+							'trans_type' => $pg_transaction[0]['payment_mode'],
+							'trans_ref_id' => $pg_transid,
+							'trans_ref_date' => $trans_date,
+							'target_companyid' => $sponsoring_companyid,
+							'trans_ref_type' => 'PAYMENT',
+							'narration' => 'Payed via online payment gateway (system generated message)',
+							'sponsoring_companyid' => $sponsoring_companyid,
+							'created_by' => $user_id
+						)
+					);
+
+					$return = $this->User_Model->update_table_data('system_wallets_tbl', array('id' => $walletid), array('balance' => ($wallet_balance + $billed_amount)));
+				}
+
+				$return = $this->User_Model->update_table_data('pg_transactions_tbl', 
+						array('id' => $pg_transaction[0]['id'], 'trans_tracking_id' => $txnid), 
+						array('error' => $error, 'message' => $message, 'response_data' => $response_json, 'response_status' => $status, 
+							'pg_transactionid' => $pg_transid, 'wallet_transactionid' => $wallet_trans_id, 'updated_by' => $user_id, 'updated_on' => date("Y-m-d H:i:s")));
+				
+				redirect('/user');
+			}
+		}
+	}
+
+	public function addtowallet() {
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
 			$this->form_validation->set_rules('payment_type', 'Payment Type', 'required|callback_validate_paymenttype');
 			$this->form_validation->set_rules('cheque_no', 'Cheque No', 'callback_validate_cheque');
 			$this->form_validation->set_rules('draft_no', 'Draft No', 'callback_validate_draft');
@@ -2227,12 +2313,6 @@ class User_Controller extends Mail_Controller
 			$this->form_validation->set_rules('amount','Amount','required|trim|xss_clean|max_length[6]|min_length[3]');
 			$this->form_validation->set_rules('reference_id','Reference No','callback_validate_referenceid');
 			$this->form_validation->set_rules('target_accountid','Reference No','callback_validate_target_accountid');
-			
-			// $this->form_validation->set_rules('type','Register As.','required|xss_clean');
-		   //  $this->form_validation->set_rules('pan','PAN.','trim|xss_clean|max_length[10]|min_length[10]');
-		   //  $this->form_validation->set_rules('gst','GST.','trim|xss_clean|max_length[15]|min_length[15]');
-			// $this->form_validation->set_rules('password','Password','required|xss_clean|min_length[6]');
-			// $this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[password]');
 			
 			if(!$this->form_validation->run()) 
 			{
@@ -2247,73 +2327,195 @@ class User_Controller extends Mail_Controller
 				   'account_no' => form_error('account_no', '<div class="error">', '</div>'),
 				   'target_accountid' => form_error('target_accountid', '<div class="error">', '</div>')
 			   );
+
+			   redirect('/user');
 			}
 			else
 			{
-				$payment_type = intval($this->input->post('payment_type'));
-				$cheque_no = intval($this->input->post('cheque_no'));
-				$cheque_date = date('Y-m-d', strtotime($this->input->post('cheque_date')));
-				$draft_no = intval($this->input->post('draft_no'));
-				$draft_date = date('Y-m-d', strtotime($this->input->post('draft_date')));
-				$amount = floatval($this->input->post('amount'));
-				$reference_id = $this->input->post('reference_id');
-				$reference_date = date('Y-m-d', strtotime($this->input->post('reference_date')));
-				$narration = $this->input->post('narration');
-				$bank = $this->input->post('bank');
-				$branch = $this->input->post('branch');
-				$account_no = $this->input->post('account_no');
-				$target_accountid = $this->input->post('target_accountid');
-
-				if($payment_type===1) {
-					$reference_id = $cheque_no;
-					$reference_date = $cheque_date;
-				}
-				else if($payment_type===2) {
-					$reference_id = $draft_no;
-					$reference_date = $draft_date;
-				}
-
 				$company = $this->session->userdata('company');
 				$user_id = $this->session->userdata('user_id');
 				$current_user = $this->session->userdata('current_user');
 				$companyid = $current_user["companyid"];
+				$companyname = $company['display_name'];
+				$result["company_setting"]=$this->Search_Model->company_setting($companyid);
+				$result["payment_gateway"] = json_decode($result["company_setting"][0]['payment_gateway'], true);
 
-				$walletid = $current_user['wallet_id'];
-				$wallet_balance = $current_user['wallet_balance'];
-				$sponsoring_companyid = $current_user['sponsoring_companyid'];
+				// $result['payment_gateway'] = [   
+				// 	array('id' => 1, 'pw_name' => 'PayU', 'icon' => '', 'conv_rate' => [   
+				// 		array('payment_mode' => 5, 'conv_rate' => 0.05, 'rate_type' => 'percentage'),  
+				// 		array('payment_mode' => 6, 'conv_rate' => 0.02, 'rate_type' => 'percentage'),  
+				// 		array('payment_mode' => 7, 'conv_rate' => 0.01, 'rate_type' => 'percentage')  
+				// 	],   
+				// 	'configuration' => array('marchent_key' => 'gtKFFx', 'salt' => 'eCwWELxi'),   
+				// 	'terms_condition' => "$companyname certifies that the Credit/Debit Card/Net Banking Account being used for this transaction belongs to $companyname or an authorized employee of $companyname. In particular, this Card/Net Banking Account does not belong to a customer or passenger"),
+				// 	array('id' => 2, 'pw_name' => 'PayTM', 'icon' => '', 'conv_rate' => [   
+				// 		array('payment_mode' => 5, 'conv_rate' => 0.03, 'rate_type' => 'percentage'),  
+				// 		array('payment_mode' => 6, 'conv_rate' => 0.025, 'rate_type' => 'percentage'),  
+				// 		array('payment_mode' => 7, 'conv_rate' => 0.015, 'rate_type' => 'percentage')  
+				// 	],   
+				// 	'configuration' => array('marchent_key' => 'M7MynOEE', 'salt' => 'WsX0BbXWgX'),   
+				// 	'terms_condition' => "$companyname certifies that the Credit/Debit Card/Net Banking Account being used for this transaction belongs to $companyname or an authorized employee of $companyname. In particular, this Card/Net Banking Account does not belong to a customer or passenger"),
+				// ];
+	
+				$payment_type = intval($this->input->post('payment_type'));
+				$amount = floatval($this->input->post('amount'));
 
-				$wallet_trans_id = $this->User_Model->save("wallet_transaction_tbl", 
-			   		array(
-					   	'wallet_id' => $walletid, 
-						'date' => date("Y-m-d H:i:s"),
-						'trans_id' => gen_uuid(),
-						'companyid' => $companyid,
-						'userid' => $user_id,
-						'amount' => $amount,
-						'bank' => $bank,
-						'branch' => $branch,
-						'userid' => $user_id,
-						'dr_cr_type' => 'CR',
-						'trans_type' => $payment_type,
-						'trans_ref_id' => $reference_id,
-						'trans_ref_date' => $reference_date,
-						'target_accountid' => $target_accountid,
-						'target_companyid' => $sponsoring_companyid,
-						'trans_ref_type' => 'PAYMENT',
-						'narration' => $narration,
-						'sponsoring_companyid' => $sponsoring_companyid,
-						'created_by' => $user_id
-					   )
-				);
-				
-				redirect('/user');
+				if($payment_type===5 || $payment_type===6 || $payment_type===7) {
+					$pgid = intval($this->input->post('pw'));
+					$payment_gateways = $result['payment_gateway'];
+					$selected_pg = false;
+
+					for ($i=0; $payment_gateways && $i < count($payment_gateways); $i++) { 
+						$pw = $payment_gateways[$i];
+						// $conv_rate = json_encode($pw['conv_rate'], JSON_HEX_QUOT);
+						if($pw['id']==$pgid) {
+							$selected_pg = $pw;
+							break;
+						}
+					}
+
+					$result['pg'] = $this->getPG_payload(array('payment_type' => $payment_type, 'amount' => $amount, 'selected_pg' => $selected_pg, 
+						'company' => $company, 'current_user' => $current_user));
+					//$this->load->view('header1',$result);
+					$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+					//Place to same transaction id into pg_transactions_tbl and same will be updated once the response received.
+					$wallet_trans_id = $this->User_Model->save("pg_transactions_tbl", 
+						array(
+							'trans_tracking_id' => $result['pg']['txnid'], 
+							'amount' => $amount,
+							'final_amount' => $result['pg']['final_amount'],
+							'companyid' => $companyid,
+							'userid' => $user_id,
+							'sponsoring_companyid' => $sponsoring_companyid,
+							'payment_gateway' => $pgid,
+							'pg_config' => json_encode($selected_pg, JSON_HEX_QUOT),
+							'payment_mode' => $payment_type,
+							'request_data' => json_encode($result['pg'], JSON_HEX_QUOT),
+							'created_by' => $user_id
+						)
+					);
+
+					$this->load->view('payu_pw',$result);
+					//$this->load->view('footer');
+				}
+				else {
+					$cheque_no = intval($this->input->post('cheque_no'));
+					$cheque_date = date('Y-m-d', strtotime($this->input->post('cheque_date')));
+					$draft_no = intval($this->input->post('draft_no'));
+					$draft_date = date('Y-m-d', strtotime($this->input->post('draft_date')));
+					$amount = floatval($this->input->post('amount'));
+					$reference_id = $this->input->post('reference_id');
+					$reference_date = date('Y-m-d', strtotime($this->input->post('reference_date')));
+					$narration = $this->input->post('narration');
+					$bank = $this->input->post('bank');
+					$branch = $this->input->post('branch');
+					$account_no = $this->input->post('account_no');
+					$target_accountid = $this->input->post('target_accountid');
+
+					if($payment_type===1) {
+						$reference_id = $cheque_no;
+						$reference_date = $cheque_date;
+					}
+					else if($payment_type===2) {
+						$reference_id = $draft_no;
+						$reference_date = $draft_date;
+					}
+
+					$companyid = $current_user["companyid"];
+
+					$walletid = $current_user['wallet_id'];
+					$wallet_balance = $current_user['wallet_balance'];
+					$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+					$wallet_trans_id = $this->User_Model->save("wallet_transaction_tbl", 
+						array(
+							'wallet_id' => $walletid, 
+							'date' => date("Y-m-d H:i:s"),
+							'trans_id' => gen_uuid(),
+							'companyid' => $companyid,
+							'userid' => $user_id,
+							'amount' => $amount,
+							'bank' => $bank,
+							'branch' => $branch,
+							'userid' => $user_id,
+							'dr_cr_type' => 'CR',
+							'trans_type' => $payment_type,
+							'trans_ref_id' => $reference_id,
+							'trans_ref_date' => $reference_date,
+							'target_accountid' => $target_accountid,
+							'target_companyid' => $sponsoring_companyid,
+							'trans_ref_type' => 'PAYMENT',
+							'narration' => $narration,
+							'sponsoring_companyid' => $sponsoring_companyid,
+							'created_by' => $user_id
+						)
+					);
+					
+					redirect('/user');
+				}
 			}
-
-			redirect('/user');
 			//echo json_encode($json);
 		}
 	}
 
+	public function getPG_payload($input_post) {
+		$payload = [];
+		$selected_pg = $input_post['selected_pg'];
+		$selected_convrates = $selected_pg['conv_rate'];
+		$payment_type = $input_post['payment_type'];
+		$amount = $input_post['amount'];
+		$company = $input_post['company'];
+		$current_user = $input_post['current_user'];
+
+		$final_amount = $amount;
+
+		for ($i=0; $selected_convrates && $i<count($selected_convrates); $i++) {
+			$conv_rateobj = $selected_convrates[$i];
+			if($conv_rateobj['payment_mode']==$payment_type) {
+				break;
+			}
+		}
+		if($conv_rateobj['rate_type']=='percentage') {
+			$conv_rate = $amount * floatval($conv_rateobj['conv_rate']);
+			$final_amount = round($final_amount + $conv_rate, 2);
+		} else {
+			$conv_rate = floatval($conv_rateobj['conv_rate']);
+			$final_amount = round($final_amount + $conv_rate, 2);
+		}
+
+		// Hash Sequence
+		//sha512        (key|txnid|amount|      productinfo|firstname|email|udf1        |udf2|udf3|udf4|udf5|    |    |    |    |     |SALT)
+		//				 key|txnid|amount      |productinfo|firstname|email|udf1        |udf2|udf3|udf4|udf5|    |    |    |    |     |SALT
+		$hashSequence = "key|txnid|final_amount|productinfo|firstname|email|payment_mode|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10";
+
+		$salt = $selected_pg['configuration']['salt'];
+		$name_array = explode(" ", $current_user['name']);
+
+		$payload['txnid'] = uniqid();
+		$payload['final_amount'] = $final_amount;
+		$payload['key'] = $selected_pg['configuration']['marchent_key'];
+		$payload['firstname'] = ($name_array && count($name_array)>0) ? $name_array[0] : '';
+		$payload['email'] = $current_user['email'];
+		$payload['phone'] = $current_user['mobile'];
+		$payload['productinfo'] = 'Payment for B2B';
+		$payload['surl'] = base_url().'paymentgateway/response';
+		$payload['furl'] = base_url().'paymentgateway/response';
+		$payload['lastname'] = ($name_array && count($name_array)>1) ? $name_array[1] : '';
+		$payload['curl'] = base_url().'paymentgateway/response';
+		$payload['address1'] = 'Kolkata';
+		$payload['address2'] = 'Kolkata';
+		$payload['city'] = 'Kolkata';
+		$payload['state'] = 'West Bengal';
+		$payload['country'] = 'IN';
+		$payload['zipcode'] = '700084';
+		$payload['payment_mode'] = $payment_type==5 ? 'CC' : ($payment_type==6 ? 'DC' : ($payment_type==6 ? 'NB' : ''));
+		$payload['bankcode'] = '';
+		$payload['enforce_paymethod'] = $payment_type==5 ? 'creditcard' : ($payment_type==6 ? 'debitcard' : ($payment_type==6 ? 'netbanking' : ''));
+		$payload['hash'] = $this->getHash($payload, $hashSequence, $salt);
+
+		return $payload;
+	}
 
 	private function get_default_permission($company, $data) {
 		// we need to put some logic here. If needed we can query table and get the default value set to any company

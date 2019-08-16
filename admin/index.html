@@ -16,7 +16,7 @@
   <!-- Bootstrap JS -->
   <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script> -->
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
-<link rel="stylesheet" href="styles.fee7b3d7eaba04a476bf.css"></head>
+<link rel="stylesheet" href="styles.54c8e73edbaf58d0e981.css"></head>
 <body>
   <app-root></app-root>
   <!-- Popper.JS -->
@@ -43,6 +43,31 @@
             }
         });
     });
+
+    /* Ripple Effect */
+    $(function() {
+        var ink, distance, x, y;
+        $("a, button, btn-action").click(function(e) {
+            if ($(this).find(".ink").length === 0) {
+                $(this).prepend("<span class='ink'></span>")
+            }
+            ink = $(this).find(".ink");
+            ink.removeClass("animate");
+            if (!ink.height() && !ink.width()) {
+                distance = Math.max($(this).outerWidth(), $(this).outerHeight());
+                ink.css({
+                    height: distance,
+                    width: distance
+                })
+            }
+            x = e.pageX - $(this).offset().left - ink.width() / 2;
+            y = e.pageY - $(this).offset().top - ink.height() / 2;
+            ink.css({
+                top: y + 'px',
+                left: x + 'px'
+            }).addClass("animate")
+        });
+    })
   </script>
 <script type="text/javascript" src="runtime.26209474bfa8dc87a77c.js"></script><script type="text/javascript" src="es2015-polyfills.1e04665e16f944715fd2.js" nomodule></script><script type="text/javascript" src="polyfills.8bbb231b43165d65d357.js"></script><script type="text/javascript" src="scripts.8cecf76b00429c969e4e.js"></script><script type="text/javascript" src="main.1fff85b2c501d0ff1d90.js"></script></body>
 </html>

@@ -35,7 +35,20 @@ Class User_Model extends CI_Model
 				echo $this->db->last_query();die();
 			    return false;
 			}         
-    }
+	}
+	
+	public function get_where($table, $where) {
+		$query = $this->db->get_where($table, $where);
+		if($query->num_rows() > 0)
+		{
+			return $query->result_array();
+		}				
+		else
+		{
+			echo $this->db->last_query();
+			return false;
+		}         
+	}
 	
 	
 	public function login($data) 
@@ -56,7 +69,6 @@ Class User_Model extends CI_Model
 		{
 			  return false;
 		}
-         	
 	}
 
 	public function get_userbyid($uid) {
@@ -214,9 +226,9 @@ Class User_Model extends CI_Model
 	
 	public function wallet() 
 	{            
-		$arr=array("user_id"=>$this->session->userdata('user_id'));  	
-		$this->db->select('sum(amount) as wallet');
-		$this->db->from('wallet_tbl');		
+		$arr=array("userid"=>$this->session->userdata('user_id'), 'type' => 2);
+		$this->db->select('balance as wallet');
+		$this->db->from('system_wallets_tbl');		
 		$this->db->where($arr);		
 		$query = $this->db->get();					
 		
@@ -683,7 +695,8 @@ Class User_Model extends CI_Model
 		{
 			  return false;
 		}         	
-    }
+	}
+	
 	public function update($data,$id) 
 	{    
         $arr=array("id"=>$id);	
@@ -691,13 +704,25 @@ Class User_Model extends CI_Model
 		if ($this->db->update('user_tbl',$data)) 
 		{					
             return true;
-			
 		}
 		else
 		{
-			  return false;
+			return false;
 		}
-         	
+    }
+
+	public function update_table_data($table, $where, $data)
+	{    
+        //$arr=array("id"=>$id);	
+        $this->db->where($where);
+		if ($this->db->update($table,$data)) 
+		{					
+            return true;
+		}
+		else
+		{
+			return false;
+		}
     }
 	public function update_table($tbl,$data,$field,$value) 
 	{    

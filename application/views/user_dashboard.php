@@ -402,9 +402,9 @@
 											<option value="2">Draft</option>
 											<option value="3">Cash</option>
 											<option value="4">RTGS</option>
-											<!-- <option value="5">Credit Card</option>
+											<option value="5">Credit Card</option>
 											<option value="6">Debit Card</option>
-											<option value="7">Net Banking</option> -->
+											<option value="7">Net Banking</option>
 											<option value="8">NEFT</option>
 											<option value="9">Transfer</option>
 											<option value="10">EDC Machine</option>
@@ -416,7 +416,7 @@
 										<input type="number" min=500 max=100000 class="form-control" name="amount" id="amount" placeholder="5000" />
 									</div>
 								</div>
-								<div class="row">
+								<div class="row" id="div_refrence">
 									<div class="form-group col-sm-6 col-md-6" id="div_refrence_id">
 										<label>Refrence ID</label>
 										<input  type="text" class="form-control" name="reference_id" id="reference_id" placeholder="Reference #" />
@@ -426,7 +426,7 @@
 										<input class="form-control datepicker" placeholder="dd/mm/yyyy" name="reference_date" id="reference_date"/>
 									</div>
 								</div>
-								<div class="row">
+								<div class="row" id="div_financials">
 									<div style="display:none" id="div_bank">
 										<div class="form-group col-sm-6 col-md-6" id="div_bank_name">
 											<label>Your Bank</label>
@@ -460,7 +460,7 @@
 										<input class="form-control datepicker" placeholder="dd/mm/yyyy" name="draft_date" id="draft_date" readonly/>
 									</div>
 								</div>
-								<div class="row">
+								<div class="row" id="div_account">
 									<div class="form-group col-sm-6 col-md-6" style="display:none" id="div_account_no">
 										<label>Your Account No.</label>
 										<input  type="number" class="form-control" name="account_no" id="account_no" placeholder="XXXX" />
@@ -478,12 +478,46 @@
 										</select>
 									</div>
 								</div>
-								<div class="row">
+
+								<?php if($payment_gateway && count($payment_gateway)>0) { ?>
+								<div class="row" id="div_pw" style="display:none;">
+									<div class="form-group col-sm-12 col-md-12" id="div_payment_gw">
+										<label for="payment_gw">Payment Gateway</label>
+										<?php 
+										for ($i=0; $payment_gateway && $i < count($payment_gateway); $i++) { 
+											$pw = $payment_gateway[$i];
+											$terms = $pw['terms_condition'];
+											$conv_rate = json_encode($pw['conv_rate'], JSON_HEX_QUOT);
+										?>
+											<div class="pw_item">
+												<!-- <input type="radio" id="rd_<?php echo $i?>" name="rd_<?php echo $i?>" value="<?php echo $pw['id']?>" style="display: inline-block;" data='<?php echo $conv_rate?>' onclick="pw_selected(this);"/> -->
+												<input type="radio" name="pw" value="<?php echo $pw['id']?>" style="display: inline-block;" terms='<?php echo $terms ?>' data='<?php echo $conv_rate?>' onclick="pw_selected(this);"/>
+												<span style="display: inline-block;"><?php echo $pw['pw_name']?></span>
+												<img src="<?php echo ($pw['icon']?$pw['icon']:'../images/makepayment.png') ?>" class="" alt="<?php echo $pw['pw_name'] ?> payment gateway" style="display: inline-block; width: 25px; height:20px;"/>
+											</div>
+										<?php 
+										}
+										?>
+									</div>
+								</div>
+
+								<div class="row" id="div_convenience" style="display:none;">
+									<div class="form-group col-sm-12 col-md-12">
+										<div><span>Convenience Charge  </span> ₹ <input id="convenience" value="0.00" readonly style="border: none; width: 5%; background-color: #ffffff; text-align: right;"/> (<span id="conv_rate_text"></span>)</div>
+										<div><span>Amount to be charged</span> ₹ <input id="final_amount" value="0.00" readonly style="border: none; width: 5%; background-color: #ffffff; text-align: right;"/></div>
+										<span style="color: #ff0000; font-size: 12px;margin: 10px 0px;">Notes : </span><div id="terms" style="display:none; text-align: left;margin: 10px 0px; font-family: monospace;font-size: 10px;font-weight: 800;text-decoration: underline;color: #ff0000;"></div>
+									</div>
+								</div>
+
+								<?php } ?>
+
+								<div class="row" id="div_narration_section">
 									<div class="form-group col-sm-12 col-md-12" id="div_narration">
 										<label for="narration">Narration</label>
 										<textarea id="narration" class="form-control" name="narration" rows="3"></textarea>
 									</div>
 								</div>
+
 								<div class="row">
 									<div class="form-group col-sm-12 col-md-12" id="div_action">
 										<button type="submit" class="btn btn-orange" id="btn_make_payment">Done</button>
@@ -500,15 +534,80 @@
         </div><!-- end edit-card -->
         
         <script language="javascript">
+			let conv_rates = [];
+			let conv_rate = 0.00;
+			let conv_charge = 0.00;
+			let final_amount = 0.00;
+			$('#amount').change(function(ev) {
+				let payment_mode = parseInt($('#payment_type').val());
+				let amount = parseFloat($('#amount').val());
+
+				conv_rates.forEach(cnvrt => {
+					if(cnvrt.payment_mode == payment_mode) {
+						//conv_rate = parseInt(parseFloat(cnvrt.conv_rate)*100);
+						conv_rate = (parseFloat(cnvrt.conv_rate)*100);
+						return false;
+					}
+				});
+
+				if(payment_mode===5 || payment_mode===6 || payment_mode===7) {
+					//console.log(`amount changed - ${amount} -- ${payment_mode}`);
+					showConvenienceCharge(amount);
+				}
+			});
+
+			function showConvenienceCharge(amount) {
+				//console.log(`amount changed 1 - ${amount} - ${conv_rate}`);
+
+				conv_charge = (parseFloat(amount) * conv_rate)/100;
+				final_amount = Math.round(parseFloat(amount) + conv_charge, 0);
+
+				$('#conv_rate_text').text(`${conv_rate}% of net amount`);
+				$('#convenience').val(conv_charge);
+				$('#final_amount').val(final_amount);
+			}
+
+			function pw_selected(element) {
+				if(!element) return;
+				let payment_mode = parseInt($('#payment_type').val());
+
+				//console.log($(element).attr('data'));
+				conv_rates = JSON.parse($(element).attr('data'));
+				terms = $(element).attr('terms');
+
+				$('#terms').text(terms);
+				$('#terms').show();
+				//console.log(conv_rates);
+
+				conv_rates.forEach(cnvrt => {
+					if(cnvrt.payment_mode == payment_mode) {
+						//conv_rate = parseInt(parseFloat(cnvrt.conv_rate)*100);
+						conv_rate = (parseFloat(cnvrt.conv_rate)*100);
+						return false;
+					}
+				});
+
+				// conv_rate = parseInt(parseFloat($(element).attr('data'))*100);
+
+				let amount = $('#amount').val();
+				showConvenienceCharge(amount);
+			}
+
 			$("#payment_type").change(function(ev) {
 				let value = parseInt(this.value);
 				// alert( "Handler for .change() called. - " + value);
+				$('#amount').val(0.00);
+				$('#div_account').show();
+				$('#div_narration_section').show();
 				$('#div_bank').hide();
 				$('#div_account_no').hide();
 				$('#div_cheque').hide();
 				$('#div_draft').hide();
 				$('#div_refrence_id').hide();
 				$('#div_refrence_date').hide();
+				$('#div_pw').hide();
+				$('#div_convenience').hide();
+				$('#terms').hide();
 
 				if(value===1) { //Cheque
 					$('#div_bank').show();
@@ -529,6 +628,12 @@
 					$('#div_refrence_id').show();
 					$('#div_refrence_date').show();
 				}
+				else if(value===5 || value===6 || value===7) { //Credit Card, Debit Card, Net Banking
+					$('#div_pw').show();
+					$('#div_convenience').show();
+					$('#div_account').hide();
+					$('#div_narration_section').hide();
+				}
 			});
 
 			function validate_payment() {
@@ -547,7 +652,7 @@
 				let target_accountid = $('#target_accountid').val();
 				let flag = true;
 
-				if(target_accountid<=0) {
+				if(target_accountid<=0 && (payment_type!==5 && payment_type!==6 && payment_type!==7)) {
 					alert('Please select our account number where you are depositing the amount. It is mandatory.');
 					flag = false;
 					return flag;

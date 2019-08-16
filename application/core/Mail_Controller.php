@@ -286,5 +286,21 @@ class Mail_Controller  extends CI_Controller
 
 		return $wallet;
 	}
+
+	public function getHash($posted, $hashSequence, $salt) {
+		$hashVarsSeq = explode('|', $hashSequence);
+		$hash_string = '';	
+		foreach($hashVarsSeq as $hash_var) {
+		  $hash_string .= isset($posted[$hash_var]) ? $posted[$hash_var] : '';
+		  $hash_string .= '|';
+		}
+	
+		$hash_string .= $salt;
+	
+	
+		$hash = strtolower(hash('sha512', $hash_string));	
+
+		return $hash;
+	}
 }
 ?>

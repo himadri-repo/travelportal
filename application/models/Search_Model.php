@@ -242,6 +242,7 @@ Class Search_Model extends CI_Model
 			'ifsc' => '',
 			'map' => '',
 			'bank_accounts' => '',
+			'payment_gateway' => '',
 			'service_charge' => 0.00,
 			'cgst' => 0.00,
 			'igst' => 0.00
