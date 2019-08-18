@@ -1278,6 +1278,10 @@ class Search extends Mail_Controller
 	public function thankyou($id)
 	{
 		$company = $this->session->userdata('company');
+		if(!$company) {
+			redirect("/login");
+		}
+
 		$companyid = $company["id"];
 		$result["options"] = array('pdf' => false);  
 		$result["details"] = $this->Search_Model->booking_details($id);  

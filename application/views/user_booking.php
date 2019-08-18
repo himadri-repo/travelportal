@@ -120,7 +120,7 @@
 																			  {
 																			  ?>                                             																							
 																				<tr>
-																					<td class="dash-list-icon invoice-icon"><center><?php echo $ctr; ?></center></td>
+																					<td class="dash-list-icon invoice-icon" style="text-align: center;"><?php echo $ctr; ?></td>
 																					<td class="dash-list-icon invoice-icon"><?php echo $sale_order[$key]["id"]; if($sale_order[$key]["customer_id"]==$sale_order[$key]["seller_id"]) echo " (Self Ticket Booking)";?></td>
 																					<td class="dash-list-icon invoice-icon"><?php echo date("d/m/Y",strtotime($sale_order[$key]["date"]))."<br>".date("h:i:s",strtotime($sale_order[$key]["date"])); ?></td>
 																					<!--<td class="dash-list-icon invoice-icon"><?php  echo $sale_order[$key]["name"]." <br> ".$sale_order[$key]["user_id"];?></td>-->
@@ -131,7 +131,7 @@
 																					<td class="dash-list-icon invoice-icon"><?php echo $sale_order[$key]["qty"]; ?></td>
 																					<td class="dash-list-icon invoice-icon">
 																					<?php 
-																					echo $sale_order[$key]["status"]."<br>";
+																					echo $usermodel->booking_status($sale_order[$key]["status"])."<br>";
 																					if($sale_order[$key]["status"]=="CONFIRM")
 																						//echo date("d/m/Y h:i:s",strtotime($sale_order[$key]["booking_confirm_date"]));
 																					if($sale_order[$key]["status"]=="REQUESTED FOR CANCEL")
@@ -143,11 +143,12 @@
 																					?></td>
 																					<td class="dash-list-icon invoice-icon">
 																					<?php if($user_details[0]["is_supplier"]==1 && $sale_order[$key]["customer_id"]==$sale_order[$key]["seller_id"]) {?>
-																					   <a class="btn btn-orange" href="<?php echo base_url() ?>user/edit-booking/<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px">Edit</a> 
+																						<!-- hide the edit action as functionality is not yet complete -->
+																					   	<a class="btn btn-orange" href="<?php echo base_url() ?>user/edit-booking/<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px; display:none">Edit</a> 
 																					<?php } ?>
-																					<button class="btn btn-orange btn_booking_cancel" data-toggle="modal" data-target="#booking-cancel"  color="<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px">Cancel</button>  
-																					
-																					<a class="btn btn-orange" href="<?php echo base_url() ?>search/thankyou/<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px">View</a></td>
+																						<!-- hide the cancel action as functionality is not yet complete -->
+																						<button class="btn btn-orange btn_booking_cancel" data-toggle="modal" data-target="#booking-cancel"  color="<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px; display:none">Cancel</button>
+																						<a class="btn btn-orange" href="<?php echo base_url() ?>search/thankyou/<?php echo $sale_order[$key]["id"]; ?>" style="cursor:pointer;font-size:11px">View</a></td>
 																				</tr>	
                                                                
 																				<?php 

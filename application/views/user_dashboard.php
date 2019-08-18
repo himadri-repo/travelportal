@@ -228,14 +228,15 @@
 																			$acc_name = isset($target_account["acc_name"])?$target_account["acc_name"]:$setting[0]["acc_name"];
 																			$acc_no = isset($target_account["acc_no"])?$target_account["acc_no"]:$setting[0]["acc_no"];
 																			$ifsc = isset($target_account["ifsc"])?$target_account["ifsc"]:$setting[0]["ifsc"];
+																			$acc_type = isset($target_account["acc_type"])?$target_account["acc_type"]:'CURRENT';
 																			?>
-																		<p style="text-align: left"><b></b> <?php echo $i+1;?></p>
+																		<p style="text-align: left"><b>A/C NAME</b> <?php echo $acc_name;?></p>
 																		<p style="text-align: left"><b>BANK NAME : </b> <?php echo $bank;?></p>
 																		<p style="text-align: left"><b>BRANCH : </b> <?php echo $branch;?></p>
 																	</div>												
 																	<div class="col-sm-6 col-md-6" style="border-bottom: 1px solid #ccc;">
-																		<p style="text-align: left"><b>A/C NAME : </b> <?php echo $acc_name;?></p>
 																		<p style="text-align: left"><b>A/C NO. : </b> <?php echo $acc_no;?></p>
+																		<p style="text-align: left"><b>A/C TYPE. : </b> <?php echo $acc_type;?></p>
 																		<p style="text-align: left"><b>IFSC : </b> <?php echo $ifsc;?></p>
 																	</div>
 																<?php		

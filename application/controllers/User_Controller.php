@@ -250,7 +250,8 @@ class User_Controller extends Mail_Controller
 	{
 		if ($this->session->userdata('user_id')) 
 		{ 
-	        $result['user_details']=$this->User_Model->user_details();
+			$result['usermodel'] = $this->User_Model;
+			$result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->my_booking_order();
 	        $result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);

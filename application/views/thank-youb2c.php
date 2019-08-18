@@ -202,7 +202,7 @@
                             	<div class="thank-you-note col-md-6 col-xs-6 col-sm-6">
                                    <!-- <h3><?php echo $setting[0]["site_title"];?></h3> logo -->
 								   <?php 
-								 	if($details[0]["type"]=="B2C") {
+								 	if($details[0]["type"]=="B2B") {
 								   ?>
 									<h3><?php echo $details[0]["name"];?></h3> 
 									<p><span><i class="fa fa-envelope"></i></span> <?php echo $details[0]["email"];?></p>
@@ -263,7 +263,7 @@
 													<!-- <td><?php echo $details[$key]["age"];?></td>
 													<td><?php echo $details[$key]["mobile_no"];?></td>
 													<td><?php echo $details[$key]["cemail"];?></td> -->
-													<td><?php echo $details[$key]["pnr"];?></td>
+													<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
                                                 </tr>
 													<?php
 													$ctr++;
@@ -340,7 +340,7 @@
 																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." (".date("H:i",strtotime($details[0]["departure_date_time"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -351,7 +351,7 @@
 																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." (".date("H:i",strtotime($details[0]["arrival_date_time"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -415,7 +415,7 @@
 																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." (".date("H:i",strtotime($details[0]["departure_date_time"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -426,7 +426,7 @@
 																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." (".date("H:i",strtotime($details[0]["arrival_date_time"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -465,7 +465,7 @@
 																<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source1"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time1"]))." ( ".date("h:i a",strtotime($details[0]["departure_date_time1"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["departure_date_time1"]))." (".date("H:i",strtotime($details[0]["departure_date_time1"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -476,7 +476,7 @@
 																<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination1"];?></div>
 																<div style="margin: 0px 15px;"><?php echo $details[0]["terminal1"];?></div>
 																<div style="margin: 0px 15px;">
-																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time1"]))." ( ".date("h:i a",strtotime($details[0]["arrival_date_time1"]))." )";?>
+																	<?php echo date("jS M y",strtotime($details[0]["arrival_date_time1"]))." (".date("H:i",strtotime($details[0]["arrival_date_time1"])).")";?>
 																</div>
 															</div>
 														</div>
@@ -579,7 +579,7 @@
 												
 												<tr>
 													<td>BK-<?php echo $details[0]["id"];?></td>
-													<td><?php echo date("d/m/Y h:i:s",strtotime($details[0]["date"]));?></td>													
+													<td><?php echo date("d/m/Y H:i:s",strtotime($details[0]["date"]));?></td>
 													<?php
 														$qty = $details[0]["qty"];
 													?>
@@ -615,6 +615,9 @@
                         <div id="editor">
 							<div class="row">
 								<form method="POST" action="<?php echo base_url(); ?>search/pdf/<?php echo $details[0]["id"];?>">
+									<?php 
+								 		if($details[0]["type"]!="B2C") {
+								   	?>
 									<div class="row" style="margin: 2px 2px 10px 2px;">
 										<div class="col-sm-2">
 										</div>
@@ -629,6 +632,7 @@
 										<div class="col-sm-2">
 										</div>
 									</div>
+									<?php } ?>
 									<div class="row">
 										<div class="col-sm-4"></div>
 										<div class="col-sm-2">

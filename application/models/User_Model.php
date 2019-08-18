@@ -382,14 +382,35 @@ Class User_Model extends CI_Model
     }
 
 	public function my_booking_order() 
-	{    
-		$arr=array("customer_id"=>$this->session->userdata('user_id')); 
-		$this->db->select('b.pnr,b.status,u.user_id,u.name,b.id,b.date,b.qty,b.rate,b.amount,b.total,c.city as source_city,ct.city as destination_city,t.trip_type,b.customer_id,b.seller_id,b.customer_cancel_request,b.supplier_cancel_request,b.reason_for_cancellation,b.cancel_request_date,b.cancel_date,b.booking_confirm_date');
-		$this->db->from('booking_tbl as b');	
+	{   
+		$current_user = $this->session->userdata('current_user');
+		
+		if($current_user['is_admin']=='1' && ($current_user['type']=='B2B' || $current_user['type']=='EMP')) {
+			$arr=array("customer_companyid"=> $current_user['companyid'], 'pbooking_id' => NULL); 
+		}
+		else {
+			$arr=array("customer_userid"=>$this->session->userdata('user_id'), 'pbooking_id' => NULL); 
+		}
+
+		// $this->db->select('b.pnr,b.status,u.user_id,u.name,b.id,b.date,b.qty,b.rate,b.amount,b.total,c.city as source_city,ct.city as destination_city,t.trip_type,b.customer_id, 
+		// 		b.seller_id,b.customer_cancel_request,b.supplier_cancel_request,b.reason_for_cancellation,b.cancel_request_date,b.cancel_date,b.booking_confirm_date');
+		// $this->db->from('booking_tbl as b');	
+		// $this->db->join('tickets_tbl as t', 't.id = b.ticket_id');		
+	    // $this->db->join('city_tbl c', 'c.id = t.source');
+		// $this->db->join('city_tbl ct', 'ct.id = t.destination');
+		// $this->db->join('user_tbl u', 'u.id = b.customer_id');
+		// $this->db->where($arr);	
+		// $this->db->order_by("b.id", "DESC");
+
+
+		$this->db->select('b.pnr,b.status,u.user_id,u.name,b.id,b.booking_date as date,b.qty, (b.total/b.qty) as rate, b.price, b.total,c.city as source_city,ct.city as destination_city,t.trip_type,b.customer_userid as customer_id,   
+				b.seller_userid as seller_id, 0 as customer_cancel_request, 0 as supplier_cancel_request, "" as reason_for_cancellation,   
+				"1990-01-01 00:00:00" as cancel_request_date, "1990-01-01 00:00:00" as cancel_date, b.booking_confirm_date');
+		$this->db->from('bookings_tbl as b');
 		$this->db->join('tickets_tbl as t', 't.id = b.ticket_id');		
-	    $this->db->join('city_tbl c', 'c.id = t.source');
+		$this->db->join('city_tbl c', 'c.id = t.source');
 		$this->db->join('city_tbl ct', 'ct.id = t.destination');
-		$this->db->join('user_tbl u', 'u.id = b.customer_id');
+		$this->db->join('user_tbl u', 'u.id = b.customer_userid');
 		$this->db->where($arr);	
 		$this->db->order_by("b.id", "DESC");
 		$query = $this->db->get();					
@@ -808,5 +829,69 @@ Class User_Model extends CI_Model
 			die();
 		}
 	}	
+
+	public function get_wallet_transactions($payload) {
+
+		$this->db->select("wlt.*, wl.name, wl.display_name wallet_name, wl.allowed_transactions, wl.wallet_account_code, wl.balance, wl.type as wallet_type, wl.status as wallet_status, c.display_name as companyname, 
+			usr.name as username, usr.email, usr.type ");
+		$this->db->from("wallet_transaction_tbl wlt ", FALSE);
+		$this->db->join("system_wallets_tbl wl ", "wl.id=wlt.wallet_id", NULL, FALSE);
+		$this->db->join("company_tbl c ", "wl.companyid=c.id",NULL, FALSE);
+		$this->db->join("user_tbl usr ", "usr.id=wlt.userid","left", FALSE);
+
+		if(isset($payload['filter'])) {
+			$this->db->where($payload['filter'], FALSE);
+		}
+		$pagesize = isset($payload['pagesize']) ? intval($payload['pagesize']) : -1;
+		$pageindex = isset($payload['pageindex']) ? intval($payload['pageindex']) : -1;
+		$start = intval(($pageindex - 1) * $pagesize);
+
+		if($pagesize>-1)
+			$this->db->limit($pagesize, $start);
+
+		$query = $this->db->get();
+		
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			return false;
+			echo $this->db->last_query();
+			die();
+		}
+	}
+
+	public function booking_status($status) {
+		$status = intval($status);
+		$statusValue = 'PENDING';
+
+		switch ($status) {
+			case 0:
+				$statusValue = 'PENDING';
+				break;
+			case 1:
+				$statusValue = 'HOLD';
+				break;
+			case 2:
+				$statusValue = 'APPROVED';
+				break;
+			case 4:
+				$statusValue = 'PROCESSING';
+				break;
+			case 8:
+				$statusValue = 'REJECTED';
+				break;
+			case 16:
+				$statusValue = 'CANCELLED';
+				break;
+			default:
+				$statusValue = 'PENDING';
+				break;
+		}
+
+		return $statusValue;
+	}
 }	
 ?>

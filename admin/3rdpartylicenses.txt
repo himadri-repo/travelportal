@@ -85,17 +85,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 
+@angular/material/button
+
 @angular/material/core
 
 @angular/material/dialog
+
+@angular/material/form-field
+
+@angular/material/paginator
 
 @angular/material/radio
 
 @angular/material/select
 
+@angular/material/table
+
 @angular/material/tabs
 
 @angular/material/toolbar
+
+@angular/material/tooltip
 
 @angular/platform-browser
 MIT
