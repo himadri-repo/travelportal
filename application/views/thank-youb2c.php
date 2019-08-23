@@ -246,11 +246,12 @@
                                         	<tbody>
 												  <tr>
                                                 	<th style="width: 10%;"><h5>SI No.</h5></th>
-                                                    <th style="width: 80%;"><h5>Passenger Name</h5></th>													
+                                                    <th style="width: 60%;"><h5>Passenger Name</h5></th>
 													<!-- <th><h5>Age</h5></th>
 													<th><h5>Mobile No.</h5></th>
 													<th><h5>Email</h5></th> -->
-													<th style="width: 20%;"><h5>PNR</h5></th>
+													<th style="width: 15%;"><h5>PNR</h5></th>
+													<th style="width: 15%;"><h5>Ticket #</h5></th>
                                                 </tr>
 												<?php
 												$ctr=1;
@@ -264,6 +265,7 @@
 													<td><?php echo $details[$key]["mobile_no"];?></td>
 													<td><?php echo $details[$key]["cemail"];?></td> -->
 													<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
+													<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
                                                 </tr>
 													<?php
 													$ctr++;

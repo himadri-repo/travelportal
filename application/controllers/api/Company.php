@@ -600,6 +600,20 @@ class Company extends REST_Controller {
 
         $this->set_response($wallet_transactions, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function settle_wallet_transaction_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+
+        try {
+            $status = $this->User_Model->settle_wallet_transaction($payload);
+        }
+        catch(Exception $ex) {
+
+        }
+
+        $this->set_response($status, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
 
 ?>

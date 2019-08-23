@@ -327,7 +327,7 @@ Class Search_Model extends CI_Model
 		// $this->db->where($arr);
 		// $this->db->order_by("cus.id","ASC");
 
-		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
+		$qry = "select 	cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr, cus.airline_ticket_no, u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.display_name as airline,a1.display_name as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1, case when u.is_admin=1 then 'EMP' else u.type end as type, u.address, 
 						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,(b.total) as total, b.costprice, b.rateplanid, 

@@ -920,8 +920,9 @@ class Search extends Mail_Controller
 				}
 
 				//insert data into bookings_tbl
+				$booking_date = date("Y-m-d H:i:s");
 				$arr=array(
-					"booking_date"=>date("Y-m-d h:i:s"),
+					"booking_date"=>$booking_date,
 					"ticket_id"=>$id,
 					"pnr"=>$result1[0]["pnr"],
 					"customer_userid"=>$this->session->userdata('user_id'),
@@ -943,14 +944,14 @@ class Search extends Mail_Controller
 					"qty"=>$this->input->post('qty'),
 					"adult"=>$this->input->post('qty'),
 					"created_by"=>$this->session->userdata('user_id'),
-					"created_on"=>date("Y-m-d h:i:s"),
+					"created_on"=>date("Y-m-d H:i:s"),
 				);
 				$booking_id_new = $this->Search_Model->save("bookings_tbl",$arr);
 
 				//insert data into booking_activity_tbl
 				$arr=array(
 					"booking_id"=>$booking_id_new,
-					"activity_date"=>date("Y-m-d h:i:s"),
+					"activity_date"=>$booking_date,  //date("Y-m-d H:i:s"),
 					"source_userid"=>$this->session->userdata('user_id'),
 					"source_companyid"=>$companyid,
 					"requesting_by"=>$requesting_by,
@@ -960,7 +961,7 @@ class Search extends Mail_Controller
 					"status"=>0,
 					"notes"=>'',
 					"created_by"=>$this->session->userdata('user_id'),
-					"created_on"=>date("Y-m-d h:i:s"),
+					"created_on"=>date("Y-m-d H:i:s"),
 				);
 				$booking_activity_id = $this->Search_Model->save("booking_activity_tbl",$arr);
 
@@ -1001,7 +1002,7 @@ class Search extends Mail_Controller
 					{
 						$amount=$this->input->post('total');
 						$arr=array(
-						'date'=>date("Y-m-d h:i:s"),
+						'date'=>date("Y-m-d H:i:s"),
 						'user_id'=>$this->session->userdata('user_id'),
 						//'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
 						'amount'=>(0-$costprice),
@@ -1013,7 +1014,7 @@ class Search extends Mail_Controller
 						
 						$amount=$this->input->post('total');
 						$arr=array(
-						'date'=>date("Y-m-d h:i:s"),
+						'date'=>date("Y-m-d H:i:s"),
 						'user_id'=>$result1[0]["user_id"],
 						'amount'=>($amount),
 						'booking_id'=>$booking_id_new,
@@ -1062,16 +1063,33 @@ class Search extends Mail_Controller
 					else
 					{		
 						$amount=($this->input->post('total'));
-						$arr=array(
-						'date'=>date("Y-m-d h:i:s"),
-						'user_id'=>$this->session->userdata('user_id'),
-						//'amount'=>(0-$amount),
-						'amount'=>(0-$costprice),
-						'booking_id'=>$booking_id_new,
-						'type'=>'DR'
-						);					 
-						$this->Search_Model->save("wallet_tbl",$arr);
-						
+
+						if ($current_user['is_admin']=='0') {
+							$arr=array(
+							'wallet_id'=>$current_user['wallet_id'],
+							'date'=>date("Y-m-d H:i:s"),
+							'trans_id'=>uniqid(),
+							'companyid'=>$companyid,
+							'userid'=>$this->session->userdata('user_id'),
+							//'amount'=>(0-$amount),
+							'amount'=>($costprice),
+							'dr_cr_type'=>'DR',
+							'trans_type'=>20, /*20 is for Ticket Booking */
+							'trans_ref_id'=>$booking_id_new,
+							'trans_ref_date'=>$booking_date,
+							'trans_ref_type'=>'PURCHASE',
+							'trans_documentid'=>$booking_id_new,
+							'narration'=>"New ticket booking raised (id: $booking_id_new)",
+							'sponsoring_companyid'=>$current_user['sponsoring_companyid'],
+							'created_by'=>$this->session->userdata('user_id'),
+							'status'=>1,
+							'approved_by'=>$company['primary_user_id'],
+							'approved_on'=>date("Y-m-d H:i:s"),
+							'target_companyid'=>$companyid
+							);					 
+							$this->Search_Model->save("wallet_transaction_tbl",$arr);
+						}
+
 						$user['user_details']=$this->User_Model->user_details();	          							
 						$data = array(				            
 							'name' => $companyname,
@@ -1130,7 +1148,7 @@ class Search extends Mail_Controller
 										"costprice"=>($costprice),
 										"pnr"=>$result1[0]["pnr"],
 										"created_by"=>$this->session->userdata('user_id'),
-										"created_on"=>date("Y-m-d h:i:s")
+										"created_on"=>date("Y-m-d H:i:s")
 										);
 							$this->Search_Model->save("customer_information_tbl",$arr);
 						}
@@ -1155,7 +1173,7 @@ class Search extends Mail_Controller
 										"booking_id"=>$booking_id_new,
 										"pnr"=>$result1[0]["pnr"],
 										"created_by"=>$this->session->userdata('user_id'),
-										"created_on"=>date("Y-m-d h:i:s")
+										"created_on"=>date("Y-m-d H:i:s")
 									);
 							$this->Search_Model->save("customer_information_tbl",$arr);
 						}
@@ -1278,7 +1296,8 @@ class Search extends Mail_Controller
 	public function thankyou($id)
 	{
 		$company = $this->session->userdata('company');
-		if(!$company) {
+		$current_user = $this->session->userdata("current_user");
+		if(!$company || !$current_user) {
 			redirect("/login");
 		}
 
@@ -1289,8 +1308,6 @@ class Search extends Mail_Controller
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 
 		$result["footer"]=$this->Search_Model->get_post(5);
-
-		$current_user = $this->session->userdata("current_user");
 
 		$result['mywallet']= $this->getMyWallet();
 
@@ -1714,6 +1731,11 @@ class Search extends Mail_Controller
 		$result["details"] = $this->Search_Model->booking_details($id);  
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 		$result["footer"]=$this->Search_Model->get_post(5);
+
+		$current_user = $this->session->userdata("current_user");
+		if(!$company || !$current_user) {
+			redirect("/login");
+		}
 
 		$ticket_no = $result["details"][0]["ticket_no"];
 

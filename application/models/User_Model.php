@@ -8,6 +8,24 @@ Class User_Model extends CI_Model
 	    date_default_timezone_set("Asia/Calcutta");   
 		
 	}
+
+	public function get($table, $arr) {
+		// $arr=array("id"=>$id); 
+		$this->db->select("*");
+		$this->db->from($table);
+		$this->db->where($arr);
+		
+		$query = $this->db->get();							
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			  return false;
+		}         	
+	 }
+
 	public function save($tbl,$data) 
 	{                      
 		if($this->db->insert($tbl,$data))
@@ -832,6 +850,8 @@ Class User_Model extends CI_Model
 
 	public function get_wallet_transactions($payload) {
 
+		$qry = [];
+
 		$this->db->select("wlt.*, wl.name, wl.display_name wallet_name, wl.allowed_transactions, wl.wallet_account_code, wl.balance, wl.type as wallet_type, wl.status as wallet_status, c.display_name as companyname, 
 			usr.name as username, usr.email, usr.type ");
 		$this->db->from("wallet_transaction_tbl wlt ", FALSE);
@@ -840,7 +860,8 @@ Class User_Model extends CI_Model
 		$this->db->join("user_tbl usr ", "usr.id=wlt.userid","left", FALSE);
 
 		if(isset($payload['filter'])) {
-			$this->db->where($payload['filter'], FALSE);
+			$qry = array('wlt.status' => $payload['filter']['status'], 'wlt.target_companyid' => $payload['filter']['target_companyid']);
+			$this->db->where($qry, FALSE);
 		}
 		$pagesize = isset($payload['pagesize']) ? intval($payload['pagesize']) : -1;
 		$pageindex = isset($payload['pageindex']) ? intval($payload['pageindex']) : -1;
@@ -860,6 +881,36 @@ Class User_Model extends CI_Model
 			return false;
 			echo $this->db->last_query();
 			die();
+		}
+	}
+
+	public function settle_wallet_transaction($payload) {
+		$id = $payload['id'];
+		$status = $payload['status'];
+		
+		if($id != '' && $status != '') {
+			$wallet_trans = $this->get('wallet_transaction_tbl', array('id' => $id));
+			if($wallet_trans) {
+				$wallet_trans = $wallet_trans[0];
+				$wallet = $this->get('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']));
+			}
+			if($wallet && $wallet_trans) {
+				$wallet = $wallet[0];
+				$balance = intval($wallet['balance']) + intval($wallet_trans['amount']);
+				$flag = $this->update_table_data('wallet_transaction_tbl', array('id' => $id), array('status' => $status));
+				if($flag) {
+					return $this->update_table_data('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']), array('balance' => $balance));
+				}
+				else {
+					return false;
+				}
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			return false;
 		}
 	}
 

@@ -205,8 +205,9 @@
 				<thead>
 					<tr>
 						<th style="width: 15%;">Sl.No</th>
-						<th style="width: 65%;">Passenger Name</th>
+						<th style="width: 45%;">Passenger Name</th>
 						<th style="width: 20%;">PNR</th>
+						<th style="width: 20%;">Ticket #</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -219,6 +220,7 @@
 							<td><?php echo $ctr;?></td>
 							<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></td>
 							<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
+							<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
 							<!-- <td><?php echo $details[$key]["pnr"];?></td> -->
 						</tr>
 					<?php
