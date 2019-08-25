@@ -858,6 +858,13 @@ Class User_Model extends CI_Model
 		$this->db->join("system_wallets_tbl wl ", "wl.id=wlt.wallet_id", NULL, FALSE);
 		$this->db->join("company_tbl c ", "wl.companyid=c.id",NULL, FALSE);
 		$this->db->join("user_tbl usr ", "usr.id=wlt.userid","left", FALSE);
+		
+		// allTransactions
+		if(isset($payload['allTransactions'])) {
+			if($payload['allTransactions'] === false) {
+				$this->db->where(array('trans_ref_type' => 'PAYMENT'), FALSE);
+			}
+		}
 
 		if(isset($payload['filter'])) {
 			$qry = array('wlt.status' => $payload['filter']['status'], 'wlt.target_companyid' => $payload['filter']['target_companyid']);

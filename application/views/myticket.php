@@ -270,7 +270,7 @@
 							<div style="display: inline-block;">
 								<div style="">
 									<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source"];?></div>
-									<div style="margin: 0px 23px;"><?php echo $details[0]["terminal"];?></div>
+									<div style="margin: 0px 23px;">Terminal - <?php echo $details[0]["terminal"];?></div>
 									<div style="margin: 0px 23px;">
 										<?php echo date("jS M y",strtotime($details[0]["departure_date_time"]))." (".date("H:i",strtotime($details[0]["departure_date_time"])).")";?>
 									</div>
@@ -281,7 +281,7 @@
 							<div style="display: inline-block;">
 								<div style="">
 									<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination"];?></div>
-									<div style="margin: 0px 23px;"><?php echo $details[0]["terminal1"];?></div>
+									<div style="margin: 0px 23px;">Terminal - <?php echo $details[0]["terminal2"];?></div>
 									<div style="margin: 0px 23px;">
 										<?php echo date("jS M y",strtotime($details[0]["arrival_date_time"]))." (".date("H:i",strtotime($details[0]["arrival_date_time"])).")";?>
 									</div>
@@ -313,7 +313,7 @@
 							<div style="display: inline-block;">
 								<div style="">
 									<div><i class="fa fa-plane"></i>&nbsp;&nbsp;<?php echo $details[0]["source1"];?></div>
-									<div style="margin: 0px 23px;"><?php echo $details[0]["terminal1"];?></div>
+									<div style="margin: 0px 23px;">Terminal - <?php echo $details[0]["terminal1"];?></div>
 									<div style="margin: 0px 23px;">
 										<?php echo date("jS M y",strtotime($details[0]["departure_date_time1"]))." (".date("H:i",strtotime($details[0]["departure_date_time1"])).")";?>
 									</div>
@@ -324,7 +324,7 @@
 							<div style="display: inline-block;">
 								<div style="">
 									<div><i class="fa fa-plane" style="transform:rotate(83deg)"></i>&nbsp;&nbsp;<?php echo $details[0]["destination1"];?></div>
-									<div style="margin: 0px 23px;"><?php echo $details[0]["terminal1"];?></div>
+									<div style="margin: 0px 23px;">Terminal - <?php echo $details[0]["terminal3"];?></div>
 									<div style="margin: 0px 23px;">
 										<?php echo date("jS M y",strtotime($details[0]["arrival_date_time1"]))." (".date("H:i",strtotime($details[0]["arrival_date_time1"])).")";?>
 									</div>

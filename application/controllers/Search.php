@@ -767,7 +767,9 @@ class Search extends Mail_Controller
 				$result["flight"][0]["markup"]=$srvchg;
 				$result["flight"][0]["total"]=$total;
 				$result["flight"][0]["qty"]=$this->input->post('qty');
-				$result["flight"][0]["wallet_balance"]=$this->get_wallet_balance($this->session->userdata('user_id'));
+				// $result["flight"][0]["wallet_balance"]=$this->get_wallet_balance($this->session->userdata('user_id'));
+				$result["flight"][0]["wallet_balance"]=$this->get_wallet_balance($current_user);
+				
 				$result["flight"][0]["id"]=$id;	
 				$result["flight"][0]["user_email"]=$result1["user"][0]["email"];
 				$result["flight"][0]["mobile_no"]=$result1["user"][0]["mobile"];			
@@ -811,7 +813,14 @@ class Search extends Mail_Controller
 		if ($this->input->post('date') && $this->input->post('qty')) 
 		{
 			$CI =   &get_instance();
-			$check = $CI->db->get_where('wallet_tbl', array('user_id' => $this->session->userdata('user_id')));				
+			
+			$userid = $current_user['id'];
+			if(($current_user['type']=='B2B' || $current_user['type']=='B2C') && $current_user['is_admin']!=1) {
+				$check = $CI->db->get_where('system_wallets_tbl', array('userid' => $userid, 'type' => 2));
+			} else {
+				$check = $CI->db->get_where('system_wallets_tbl', array('companyid' => $companyid, 'type' => 1, 'sponsoring_companyid' => -1));
+			}
+
 			$result=$check->result_array();
 			
 			$ticket = $CI->db->get_where('tickets_tbl', array('id' => $id));				
@@ -822,7 +831,7 @@ class Search extends Mail_Controller
 			$amount=$this->input->post('total');
 			$costprice=$this->input->post('costprice');
 			$user['user_details']=$this->User_Model->user_details();
-			if($current_user['type'] === 'B2B') {
+			if($current_user['type'] === 'B2B' && $current_user['is_admin']!='1') {
 				$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
 			}
 			else {
@@ -840,13 +849,18 @@ class Search extends Mail_Controller
 			}
 			
 			$supplier_mobile = $user['supplier_user_details']['mobile'];
-			foreach($result as $key=>$value)
-			{
-				$wallet_amount+=$result[$key]["amount"];
-			}				
+			$wallet_amount = 0;
+			if($result && count($result)>0) {
+				$wallet_amount = floatval($result[0]['balance']);
+			}
+			// $wallet_amount = floatval($result['balance']);
+			// foreach($result as $key=>$value)
+			// {
+			// 	$wallet_amount+=$result[$key]["amount"];
+			// }				
 
 			//if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
-			if($costprice>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
+			if($costprice>$wallet_amount && $current_user['is_admin']!='1' && $user['user_details'][0]["credit_ac"]==0)
 			{
 				$result["setting"]=$this->Search_Model->setting();
 				$current_user = $this->session->userdata("current_user");
@@ -1062,7 +1076,7 @@ class Search extends Mail_Controller
 					}							 
 					else
 					{		
-						$amount=($this->input->post('total'));
+						$amount=floatval($this->input->post('costprice'));
 
 						if ($current_user['is_admin']=='0') {
 							$arr=array(
@@ -1088,6 +1102,18 @@ class Search extends Mail_Controller
 							'target_companyid'=>$companyid
 							);					 
 							$this->Search_Model->save("wallet_transaction_tbl",$arr);
+
+							$mywallet = $this->Search_Model->get('system_wallets_tbl', array('id' => $current_user['wallet_id']));
+							$wl_balance = 0;
+							if($mywallet && count($mywallet)>0) {
+								$mywallet = $mywallet[0];
+
+								$wl_balance = floatval($mywallet['balance']);
+							}
+
+							$wl_balance -= $amount;
+
+							$return = $this->Search_Model->update('system_wallets_tbl', array('balance' => $wl_balance), array('id' => $current_user['wallet_id']));
 						}
 
 						$user['user_details']=$this->User_Model->user_details();	          							
@@ -1188,16 +1214,33 @@ class Search extends Mail_Controller
 		}
 	}
 
-	private function get_wallet_balance($userid) {
+	private function get_wallet_balance($current_user) {
+		$userid = intval($current_user['id']);
+		$type = $current_user['type'];
+		$companyid = intval($current_user['companyid']);
+		$isadmin = intval($current_user['is_admin']);
+
 		$CI =   &get_instance();
-		$check = $CI->db->get_where('wallet_tbl', array('user_id' => $userid));
-		$result=$check->result_array();
-		$wallet_amount = 0;
-		
-		foreach($result as $key=>$value)
-		{
-			$wallet_amount+=$result[$key]["amount"];
+
+		if(($current_user['type']=='B2B' || $current_user['type']=='B2C') && $current_user['is_admin']!=1) {
+			$check = $CI->db->get_where('system_wallets_tbl', array('userid' => $userid, 'type' => 2));
+		} else {
+			$check = $CI->db->get_where('system_wallets_tbl', array('companyid' => $companyid, 'type' => 1, 'sponsoring_companyid' => -1));
 		}
+
+		$result=$check->result_array();	
+
+		// $check = $CI->db->get_where('wallet_tbl', array('user_id' => $userid));
+		// $result=$check->result_array();
+		$wallet_amount = 0;
+		if($result && count($result) > 0) {
+			$wallet_amount = floatval($result[0]['balance']);
+		}
+		
+		// foreach($result as $key=>$value)
+		// {
+		// 	$wallet_amount+=$result[$key]["amount"];
+		// }
 
 		return $wallet_amount;
 	}

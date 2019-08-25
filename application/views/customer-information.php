@@ -186,8 +186,9 @@
 											<td>
 												<?php echo number_format($grand_total,2,".",""); 
 												$allow_credit = $flight[0]["user"]["credit_ac"];
+												$costprice = floatval($flight[0]["costprice"]);
 												$show_alarm = false;
-												if($grand_total>$flight[0]["wallet_balance"] && $allow_credit==0) { 
+												if($costprice>$flight[0]["wallet_balance"] && $allow_credit==0) { 
 													$show_alarm = true; ?>
 													<span class="warning">*</span>
 												<?php }
