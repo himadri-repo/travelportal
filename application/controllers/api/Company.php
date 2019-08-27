@@ -297,8 +297,17 @@ class Company extends REST_Controller {
                     $lastcustid = intval($customer['id']);
                 }
             }
-            
+
             $booking['customers'] = $customer_list;
+            
+            $b2bmarkup_value = 0;
+            if($booking['customer_type']=='B2B' && intval($booking['is_admin'])==0) {
+                $b2bmarkup_value = floatval($booking['field_value']);
+            }
+            
+            $booking['rate'] = floatval($booking['rate']) - $b2bmarkup_value;
+            $booking['amount'] = floatval($booking['amount']) - ($b2bmarkup_value * intval($booking['qty']));
+            $booking['total'] = floatval($booking['total']) - ($b2bmarkup_value * intval($booking['qty']));
 
             $ticket = $this->Search_Model->get_ticket(intval($booking['ticket_id']));
             if($ticket && count($ticket)>0)
@@ -325,9 +334,16 @@ class Company extends REST_Controller {
                 $ticket = &$tickets[$i];
                 $suprpd = [];
                 $sellrpd = [];
-                $suprpid = intval($ticket["rate_plan_id"]);
-                $sellrpid = intval($ticket["seller_rateplan_id"]);
-                
+
+                if(intval($companyid) === intval($ticket["companyid"])) {
+                    $suprpid = 0;
+                    $sellrpid = intval($ticket["rate_plan_id"]);
+                }
+                else {
+                    $suprpid = intval($ticket["rate_plan_id"]);
+                    $sellrpid = intval($ticket["seller_rateplan_id"]);
+                }
+
                 if($rateplan_details && count($rateplan_details)>0) {
                     foreach ($rateplan_details as $rateplan_detail) {
                         $rpid = intval($rateplan_detail["rateplanid"]);
@@ -377,7 +393,7 @@ class Company extends REST_Controller {
 
 		try
 		{
-			if($ticket['supplierid'] !== $companyid) {
+			if(intval($ticket['supplierid']) !== $companyid) {
                 //accomodate supplier rateplan
                 for ($j=0; $j < count($supplier_rpdetails); $j++) { 
                     $rpdetail = $supplier_rpdetails[$j];
@@ -459,6 +475,11 @@ class Company extends REST_Controller {
         $ticket['cost_price'] = (($price + $ticket['spl_markup'] + $ticket['spl_srvchg'])
                                 + ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
                                 + ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
+
+        if(intval($ticket['cost_price'])===0) {
+            $ticket['cost_price'] = intval($price);
+        }
+
 
 		if ($ticket['whl_srvchg'] === 0) {
 			$ticket['whl_cgst'] = 0;

@@ -84,6 +84,7 @@ if(!in_array(5,$auth))
 														<option value="moh">Make Our Holiday</option>
 														<option value="mpt">Metropolitan Travels</option>
 														<option value="tmz">Tripmaza</option>
+														<option value="indr">Inder Tours</option>
 													</select>
 												</div> 												
 												

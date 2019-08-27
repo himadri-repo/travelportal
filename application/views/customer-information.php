@@ -47,7 +47,7 @@
 										</div>
 									</div><!-- end detail-title -->
 									<?php 
-										$qty = $this->session->userdata('no_of_person');
+										$qty = intval($this->session->userdata('no_of_person'));
 										$price = $flight[0]["price"];
 										$total = $flight[0]["total"];
 										$admin_markup = 0;
@@ -187,8 +187,9 @@
 												<?php echo number_format($grand_total,2,".",""); 
 												$allow_credit = $flight[0]["user"]["credit_ac"];
 												$costprice = floatval($flight[0]["costprice"]);
+												$total_costprice = ($costprice * $qty);
 												$show_alarm = false;
-												if($costprice>$flight[0]["wallet_balance"] && $allow_credit==0) { 
+												if($total_costprice>$flight[0]["wallet_balance"] && $allow_credit==0) { 
 													$show_alarm = true; ?>
 													<span class="warning">*</span>
 												<?php }

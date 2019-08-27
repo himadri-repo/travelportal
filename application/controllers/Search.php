@@ -830,6 +830,7 @@ class Search extends Mail_Controller
 			$pnr=$result1[0]["pnr"];
 			$amount=$this->input->post('total');
 			$costprice=$this->input->post('costprice');
+			$qty=intval($this->input->post('qty'));
 			$user['user_details']=$this->User_Model->user_details();
 			if($current_user['type'] === 'B2B' && $current_user['is_admin']!='1') {
 				$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
@@ -859,8 +860,10 @@ class Search extends Mail_Controller
 			// 	$wallet_amount+=$result[$key]["amount"];
 			// }				
 
+			$total_costprice = ($qty * $costprice);
+
 			//if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
-			if($costprice>$wallet_amount && $current_user['is_admin']!='1' && $user['user_details'][0]["credit_ac"]==0)
+			if($total_costprice>$wallet_amount && $current_user['is_admin']!='1' && $user['user_details'][0]["credit_ac"]==0)
 			{
 				$result["setting"]=$this->Search_Model->setting();
 				$current_user = $this->session->userdata("current_user");
@@ -1015,27 +1018,27 @@ class Search extends Mail_Controller
 					if($this->session->userdata('user_id')==$user_id)
 					{
 						$amount=$this->input->post('total');
-						$arr=array(
-						'date'=>date("Y-m-d H:i:s"),
-						'user_id'=>$this->session->userdata('user_id'),
-						//'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
-						'amount'=>(0-$costprice),
-						'booking_id'=>$booking_id_new,
-						'type'=>'DR'
-						);					 
-						$this->Search_Model->save("wallet_tbl",$arr);
+						// $arr=array(
+						// 'date'=>date("Y-m-d H:i:s"),
+						// 'user_id'=>$this->session->userdata('user_id'),
+						// //'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
+						// 'amount'=>(0-$costprice),
+						// 'booking_id'=>$booking_id_new,
+						// 'type'=>'DR'
+						// );					 
+						// $this->Search_Model->save("wallet_tbl",$arr);
 						
 						
-						$amount=$this->input->post('total');
-						$arr=array(
-						'date'=>date("Y-m-d H:i:s"),
-						'user_id'=>$result1[0]["user_id"],
-						'amount'=>($amount),
-						'booking_id'=>$booking_id_new,
-						'type'=>'CR'
-						);	
+						// $amount=$this->input->post('total');
+						// $arr=array(
+						// 'date'=>date("Y-m-d H:i:s"),
+						// 'user_id'=>$result1[0]["user_id"],
+						// 'amount'=>($amount),
+						// 'booking_id'=>$booking_id_new,
+						// 'type'=>'CR'
+						// );	
 						
-						$this->Search_Model->save("wallet_tbl",$arr);
+						// $this->Search_Model->save("wallet_tbl",$arr);
 
 						// Don't reduce the ticket count on self booking. That also has to be reviewed.
 						// $where=array("id"=>$id);
@@ -1076,8 +1079,8 @@ class Search extends Mail_Controller
 					}							 
 					else
 					{		
-						$amount=floatval($this->input->post('costprice'));
-
+						$amount=$total_costprice; //floatval($this->input->post('costprice'));
+						
 						if ($current_user['is_admin']=='0') {
 							$arr=array(
 							'wallet_id'=>$current_user['wallet_id'],
@@ -1086,7 +1089,7 @@ class Search extends Mail_Controller
 							'companyid'=>$companyid,
 							'userid'=>$this->session->userdata('user_id'),
 							//'amount'=>(0-$amount),
-							'amount'=>($costprice),
+							'amount'=>($total_costprice),
 							'dr_cr_type'=>'DR',
 							'trans_type'=>20, /*20 is for Ticket Booking */
 							'trans_ref_id'=>$booking_id_new,
@@ -1111,7 +1114,7 @@ class Search extends Mail_Controller
 								$wl_balance = floatval($mywallet['balance']);
 							}
 
-							$wl_balance -= $amount;
+							$wl_balance -= $total_costprice;
 
 							$return = $this->Search_Model->update('system_wallets_tbl', array('balance' => $wl_balance), array('id' => $current_user['wallet_id']));
 						}

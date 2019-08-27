@@ -727,7 +727,10 @@ Class Search_Model extends CI_Model
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,   
-						ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid
+						ifnull(b.pbooking_id,0) as parent_booking_id, ifnull(b.message, '') as notes, ifnull(b.rateplanid,0) as rateplanid, 
+						rpvw.display_name as rateplan_name, rpvw.default as isdefaultrateplan, rpvw.assigned_to as rateplan_assignedto, rpvw.markup as rateplan_markup, rpvw.srvchg as rateplan_srvchg, rpvw.cgst as rateplan_cgst, 
+						rpvw.sgst as rateplan_sgst, rpvw.igst as rateplan_igst, rpvw.disc as rateplan_disc, ifnull(ucfg.field_display_name,'') as field_name, ifnull(ucfg.field_value, 0) as field_value, ifnull(ucfg.field_value_type, 0) as field_value_type, 
+						ifnull(ucfg.status,0) as ucfg_status, t.price as ticket_price, t.total as ticket_total, u.type as customer_type, u.is_admin
 				FROM bookings_tbl b 
 				INNER JOIN tickets_tbl t ON b.ticket_id = t.id 
 				INNER JOIN user_tbl u ON b.customer_userid = u.id
@@ -736,6 +739,8 @@ Class Search_Model extends CI_Model
 				INNER JOIN company_tbl sc ON b.seller_companyid = sc.id 
 				INNER JOIN city_tbl source ON source.id = t.source 
 				INNER JOIN city_tbl destination ON destination.id = t.destination 
+				LEFT OUTER JOIN rateplans_vw rpvw on b.rateplanid=rpvw.rateplanid
+				LEFT OUTER JOIN user_config_tbl ucfg on ucfg.user_id=u.id
 				WHERE (t.sale_type!='live') and 				
 					((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid))
 				ORDER BY b.id DESC";
