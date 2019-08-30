@@ -822,6 +822,11 @@ class Search extends Mail_Controller
 
 				$key = $prefix.'_'.$first_name.'_'.$last_name;
 
+				if($prefix=='' || $first_name=='' || $last_name=='') {
+					$hasduplicatecustomers = true;
+					break;
+				}
+
 				if(!isset($customers[$key])) {
 					$customers[$key] = true;
 				}

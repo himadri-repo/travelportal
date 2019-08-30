@@ -261,7 +261,8 @@
 										<div class="row">
 											<div class="col-xs-4 col-sm-4">
 												<div class="form-group right-icon">	
-													<select name="prefix[]"  class="form-control">
+													<select name="prefix[]"  class="form-control" required>
+														 <option value="">Select</option>
 														 <option value="Mr.">Mr.</option>
 														 <option value="Miss">Miss</option>
 														 <option value="Mrs.">Mrs.</option>
@@ -328,21 +329,32 @@
 			var keys = {};
 			var proceed = true;
 			var name = '';
+			var msg = 'Invalid input. Please check your form.';
 			for(i=0; i<counts; i++) {
-				name = $(prefix[i]).val().trim()+' '+$(first_name[i]).val().trim()+' '+$(last_name[i]).val().trim();
-				var key = $(prefix[i]).val().trim()+'_'+$(first_name[i]).val().trim()+'_'+$(last_name[i]).val().trim();
+				prefix = $(prefix[i]).val().trim();
+				firstname = $(first_name[i]).val().trim();
+				lastname = $(last_name[i]).val().trim();
+				name = prefix+' '+firstname+' '+lastname;
+				var key = prefix+'_'+firstname+'_'+lastname;
+
+				if(prefix=='' || firstname=='' || lastname=='') {
+					proceed = false;
+					msg = 'Title, First name and Last name of the all the customers are mandatory';
+					break;
+				}
 				
 				if(keys[key]===null || keys[key]===undefined) {
 					keys[key] = true;
 				} else {
 					proceed = false;
+					msg = 'Duplicate name not allowed [' + name + ']';
 					break;
 				}
 				
 			}
 
 			if(!proceed) {
-				alert('Duplicate name not allowed [' + name + ']');
+				alert(msg);
 			}
 
 			return proceed;

@@ -132,7 +132,8 @@
                                                     <div class="form-group">
                                                         <label><span><i class="fa fa-calendar"></i></span>Available Date</label>
                                                        <!--<input class="form-control dpd3" placeholder="Date" name="departure_date_time" id="departure_date_time" autocomplete="off"/>-->
-                                                        <input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly required/>
+                                                        <input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly/>
+                                                        <!-- <input class="form-control datepicker" name="departure_date" id="departure_date" readonly required/> -->
                                                         <select class="form-control" name="departure_date_time" id="departure_date_time" style="display:none">
                                                         </select>  
                                                     </div>
