@@ -219,12 +219,11 @@
                                 </div><!-- end thank-you-note -->
 								
 								<div class="thank-you-note col-md-6 col-xs-6 col-sm-6" style="height: 160px;">
-                                   <!-- <h3 class="pull-right"><?php echo $details[0]["name"];?></h3>  -->
-								   <h3 class="pull-right"><?php echo $details[0]["first_name"].' '.$details[0]["last_name"];?></h3>
-								   <p class="pull-right"><span><i class="fa fa-calendar"></i></span> <?php echo date("d-m-Y",strtotime($details[0]["date"]));?></p>
-								   <p class="pull-right"><span><i class="fa fa-envelope"></i></span> <?php echo $details[0]["email"];?></p>
-								   <p class="pull-right"><span><i class="fa fa-phone"></i></span><?php echo $details[0]["mobile"];?></p>
-								   <p class="pull-right"><span><i class="fa fa-map-marker"></i></span><?php echo $setting[0]["address"];?></p>
+								<h3 class="pull-right"><?php echo $details[0]["first_name"].' '.$details[0]["last_name"];?></h3>
+								<p class="pull-right"><span><i class="fa fa-calendar"></i></span> <?php echo date("d-m-Y",strtotime($details[0]["date"]));?></p>
+								<p class="pull-right"><span><i class="fa fa-envelope"></i></span> <?php echo $details[0]["cemail"];?></p>
+								<p class="pull-right"><span><i class="fa fa-phone"></i></span><?php echo $details[0]["mobile_no"];?></p>
+								<p class="pull-right"><span><i class="fa fa-map-marker"></i></span>&nbsp;</p>
 								   
                                 </div><!-- end thank-you-note -->
                                                            
@@ -258,18 +257,20 @@
 												$ctr=1;
 												foreach($details as $key=>$value)
 												{
-													?>
-													<tr>
-                                                	<td><?php echo $ctr;?></td>
-                                                    <td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
-													<!-- <td><?php echo $details[$key]["age"];?></td>
-													<td><?php echo $details[$key]["mobile_no"];?></td>
-													<td><?php echo $details[$key]["cemail"];?></td> -->
-													<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
-													<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
-                                                </tr>
-													<?php
-													$ctr++;
+													if($details[$key]['customer_status']=='PENDING' || $details[$key]['customer_status']=='APPROVED') {
+														?>
+														<tr>
+														<td><?php echo $ctr;?></td>
+														<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
+														<!-- <td><?php echo $details[$key]["age"];?></td>
+														<td><?php echo $details[$key]["mobile_no"];?></td>
+														<td><?php echo $details[$key]["cemail"];?></td> -->
+														<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
+														<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
+													</tr>
+														<?php
+														$ctr++;
+													}
 												}												
 												?>												
                                         	</tbody>

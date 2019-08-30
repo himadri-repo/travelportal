@@ -213,7 +213,7 @@
                         
                         
                         <div class="col-xs-12 col-sm-12 col-md-7 col-lg-8 content-side">
-                        	<form class="lg-booking-form" action="<?php echo base_url(); ?>search/book/<?php echo $flight[0]["id"];?>" method="POST">
+                        	<form class="lg-booking-form" action="<?php echo base_url(); ?>search/book/<?php echo $flight[0]["id"];?>" method="POST" onsubmit="return validate_customers()">
 							    <input type="hidden" name="markup" value="<?php echo $flight[0]["markup"]; ?>">
 							    <input type="hidden" name="source" value="<?php echo $flight[0]["source"]; ?>">
 								<input type="hidden" name="destination" value="<?php echo $flight[0]["destination"]; ?>">
@@ -317,6 +317,36 @@
                 </div><!-- end container -->         
             </div><!-- end flight-booking -->
         </section><!-- end innerpage-wrapper -->
-        
+        <script language="javascript">
+		function validate_customers() {
+
+			var prefix = $("select[name='prefix[]'");
+			var first_name = $("input[name='first_name[]'");
+			var last_name = $("input[name='last_name[]'");
+			var counts = prefix.length;
+
+			var keys = {};
+			var proceed = true;
+			var name = '';
+			for(i=0; i<counts; i++) {
+				name = $(prefix[i]).val().trim()+' '+$(first_name[i]).val().trim()+' '+$(last_name[i]).val().trim();
+				var key = $(prefix[i]).val().trim()+'_'+$(first_name[i]).val().trim()+'_'+$(last_name[i]).val().trim();
+				
+				if(keys[key]===null || keys[key]===undefined) {
+					keys[key] = true;
+				} else {
+					proceed = false;
+					break;
+				}
+				
+			}
+
+			if(!proceed) {
+				alert('Duplicate name not allowed [' + name + ']');
+			}
+
+			return proceed;
+		}
+		</script>
         
        

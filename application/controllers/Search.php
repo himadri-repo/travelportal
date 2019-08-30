@@ -726,7 +726,7 @@ class Search extends Mail_Controller
 					else {
 						$usertype = 'B2B';
 					}
-				} else if($current_user['type']==='B2B') {
+				} else if($current_user['type']==='B2C') {
 					$usertype = 'B2C';
 				} else if($current_user['type']==='EMP') {
 					$usertype = 'EMP';
@@ -810,6 +810,35 @@ class Search extends Mail_Controller
 
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$wallet_amount=0;
+		$customers = array();
+		$hasduplicatecustomers = false;
+
+		if(isset($_REQUEST["prefix"])) {
+			foreach($_REQUEST["prefix"] as $key=>$value)
+			{
+				$prefix = $_REQUEST["prefix"][$key];
+				$first_name = $_REQUEST["first_name"][$key];
+				$last_name = $_REQUEST["last_name"][$key];
+
+				$key = $prefix.'_'.$first_name.'_'.$last_name;
+
+				if(!isset($customers[$key])) {
+					$customers[$key] = true;
+				}
+				else {
+					$hasduplicatecustomers = true;
+					break;
+				}
+			}
+		}
+		else {
+			redirect("/search");
+		}
+
+		if($hasduplicatecustomers) {
+			redirect("search/beforebook/$id");
+		}
+
 		if ($this->input->post('date') && $this->input->post('qty')) 
 		{
 			$CI =   &get_instance();
@@ -828,8 +857,8 @@ class Search extends Mail_Controller
 			$no_of_person=$result1[0]["no_of_person"];
 			$user_id=$result1[0]["user_id"];
 			$pnr=$result1[0]["pnr"];
-			$amount=$this->input->post('total');
-			$costprice=$this->input->post('costprice');
+			$amount=floatval($this->input->post('total'));
+			$costprice=floatval($this->input->post('costprice'));
 			$qty=intval($this->input->post('qty'));
 			$user['user_details']=$this->User_Model->user_details();
 			if($current_user['type'] === 'B2B' && $current_user['is_admin']!='1') {
@@ -865,6 +894,7 @@ class Search extends Mail_Controller
 			//if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
 			if($total_costprice>$wallet_amount && $current_user['is_admin']!='1' && $user['user_details'][0]["credit_ac"]==0)
 			{
+				$result["footer"]=$this->Search_Model->get_post(5);
 				$result["setting"]=$this->Search_Model->setting();
 				$current_user = $this->session->userdata("current_user");
 
@@ -872,7 +902,7 @@ class Search extends Mail_Controller
 			
 				$this->load->view('header1',$result);
 				$this->load->view('insufficient_amount',$result);
-				$this->load->view('footer1'); 					
+				$this->load->view('footer1');
 			}
 			else
 			{
@@ -1193,11 +1223,11 @@ class Search extends Mail_Controller
 							$arr=array("prefix"=>$_REQUEST["prefix"][$key],
 										"first_name"=>$_REQUEST["first_name"][$key],
 										"last_name"=>$_REQUEST["last_name"][$key],
-										"mobile_no"=>$_REQUEST["mobile_no"][$key],
-										"age"=>$_REQUEST["age"][$key],
+										"mobile_no"=>$_REQUEST["mobile_no"][0], /* was $key */
+										"age"=>$_REQUEST["age"][$key], 
 										"ticket_fare"=>round($amount/$this->input->post('qty'), 0),
 										"costprice"=>round($costprice, 0),
-										"email"=>$_REQUEST["email"][$key],
+										"email"=>$_REQUEST["email"][0],  /* was $key */
 										"companyid"=> $companyid,
 										"booking_id"=>$booking_id_new,
 										"pnr"=>$result1[0]["pnr"],

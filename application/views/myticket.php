@@ -184,9 +184,10 @@
 		</div>
 		<div style="width: 30%; text-align: right; float: left;">
 			<h2 style="padding: 0; margin: 0;"><?php echo $details[0]["first_name"].' '.$details[0]["last_name"];?></h3>
-			<div><i class="fa fa-calendar"></i></span> <?php echo date("d-m-Y",strtotime($details[0]["date"]));?></div>
-			<div><i class="fa fa-envelope"></i></span> <?php echo $details[0]["email"];?></div>
-			<div><i class="fa fa-phone"></i></span> <?php echo $details[0]["mobile"];?></div>
+			<div><span><i class="fa fa-calendar"></i></span> <?php echo date("d-m-Y",strtotime($details[0]["date"]));?></div>
+			<div><span><i class="fa fa-envelope"></i></span> <?php echo $details[0]["cemail"];?></div>
+			<div><span><i class="fa fa-phone"></i></span> <?php echo $details[0]["mobile_no"];?></div>
+			<div><span><i class="fa fa-map-marker"></i></span>&nbsp;</div>
 		</div>
 		<div style="clear: both;"></div>
 	</div>
@@ -215,6 +216,7 @@
 					$ctr=1;
 					foreach($details as $key=>$value)
 					{
+						if($details[$key]['customer_status']=='PENDING' || $details[$key]['customer_status']=='APPROVED') {
 					?>
 						<tr>
 							<td><?php echo $ctr;?></td>
@@ -225,6 +227,7 @@
 						</tr>
 					<?php
 						$ctr++;
+						}
 					}												
 					?>												
 				</tbody>

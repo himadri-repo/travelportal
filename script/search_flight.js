@@ -32,8 +32,11 @@ $( document ).ready(function()
 					
                     if(key=="success")
 					{	
-                        for(var i=0;i<50;i++)										  
-					      $("#destination").append("<option value='"+value[i]["id"]+"'>"+value[i]["city"]+"</option>");
+                        for(var i=0;i<50;i++) {
+							if(value[i]) {
+								$("#destination").append("<option value='"+value[i]["id"]+"'>"+value[i]["city"]+"</option>");
+							}
+						}
 					}
 					else
 					{
@@ -183,11 +186,11 @@ function validation1()
 			   $("#departure_date_time1").parent().append('<div class="error">Please Select Departing Date</div>');
 				return false;
 		}
-		else if($("#departure_date_time1").val()=="")
+		else if($("#departure_date1").val()=="")
 		{
-			   $("#departure_date_time1").addClass('is-invalid');
-			   $("#departure_date_time1").parent().find(".error").remove();			  
-			   $("#departure_date_time1").parent().append('<div class="error">Please Select Departing Date</div>');
+			   $("#departure_date1").addClass('is-invalid');
+			   $("#departure_date1").parent().find(".error").remove();			  
+			   $("#departure_date1").parent().append('<div class="error">Please Select Departing Date</div>');
 				return false;
 		}
 		else if($("#passanger1").val()=="" || $("#passanger1").val()=="0")
@@ -274,22 +277,26 @@ function getAvailableTickets(source, destination) {
 					console.log(e1);
 				}
 
-				$("#departure_date_time").html("");
-				$.each(data, function(key, value) 
-				{                      					
-					if(key=="success")
-					{	
-						for(var i=0;i<50;i++)
+				if($("#departure_date_time")!==null && $("#departure_date_time")!== undefined) {
+					$("#departure_date_time").html("");
+					$.each(data, function(key, value) 
+					{                      					
+						if(key=="success")
 						{	
-							$("#departure_date_time").append("<option value='"+value[i]["departure_date_time"]+"'>"+value[i]["departure_date_time"]+"</option>");
+							for(var i=0;i<50;i++)
+							{	
+								if(value[i]) {
+									$("#departure_date_time").append("<option value='"+value[i]["departure_date_time"]+"'>"+value[i]["departure_date_time"]+"</option>");
+								}
+							}
 						}
-					}
-					else
-					{
-						alert("Error")
-					}
-					
-				});
+						else
+						{
+							alert("Error")
+						}
+						
+					});
+				}
 			}
 			catch(e) {
 				console.log(e);

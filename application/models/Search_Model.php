@@ -334,7 +334,8 @@ Class Search_Model extends CI_Model
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
 						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status, 
-						a.aircode, a.image, a1.aircode as aircode1, a1.image as image1
+						a.aircode, a.image, a1.aircode as aircode1, a1.image as image1,  
+						case when cus.status=2 then 'APPROVED' when b.status=127 then 'REMOVED' else 'PENDING' end as customer_status 
 				from tickets_tbl as t 
 				inner join bookings_tbl b on b.ticket_id = t.id
 				inner join airline_tbl a on a.id = t.airline

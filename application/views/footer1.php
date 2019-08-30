@@ -125,7 +125,7 @@
                 try
                 {
                     $('html, body').animate({
-                        scrollTop: $('#top_div').offset().top-200
+                        scrollTop: $('#top_div').offset()? $('#top_div').offset().top-200 : 0
                     }, 'slow');
                 }
                 catch(e) {
