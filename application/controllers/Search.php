@@ -804,6 +804,18 @@ class Search extends Mail_Controller
 	public function book($id)
 	{
 		$company = $this->session->userdata('company');
+		$company_configuration = json_decode($company['setting']['configuration'], true);
+		$company_account_settings = isset($company_configuration['account_settings'])?$company_configuration['account_settings']:array();
+		$ticket_account = null;
+
+		if(count($company_account_settings)>0) {
+			for($idx=0; $idx<count($company_account_settings); $idx++) {
+				if($company_account_settings[$idx]['module']=='ticket_sale') {
+					$ticket_account = $company_account_settings[$idx];
+					break;
+				}
+			}
+		}
 		$companyid = $company["id"];
 		$companyname = $company["display_name"];
 		$current_user = $this->session->userdata('current_user');
@@ -918,23 +930,23 @@ class Search extends Mail_Controller
 					$status="PENDING";	
 
 				
-				$arr=array(
-				"date"=>date("Y-m-d h:i:s"),
-				"ticket_id"=>$id,
-				"seller_id"=>$result1[0]["user_id"],
-				"pnr"=>$result1[0]["pnr"],
-				"customer_id"=>$this->session->userdata('user_id'),
-				"qty"=>$this->input->post('qty'),
-				"available_qty"=>$this->input->post('qty'),
-				"rate"=>$this->input->post('price'),
-				"amount"=>$this->input->post('price')*$this->input->post('qty'),
-				"service_charge"=>$this->input->post('service_charge'),
-				"igst"=>$this->input->post('igst'),
-				"total"=>$amount,
-				"costprice"=>$costprice,
-				"type"=>$user['user_details'][0]["type"],
-				"status"=>$status
-				);
+				// $arr=array(
+				// "date"=>date("Y-m-d h:i:s"),
+				// "ticket_id"=>$id,
+				// "seller_id"=>$result1[0]["user_id"],
+				// "pnr"=>$result1[0]["pnr"],
+				// "customer_id"=>$this->session->userdata('user_id'),
+				// "qty"=>$this->input->post('qty'),
+				// "available_qty"=>$this->input->post('qty'),
+				// "rate"=>$this->input->post('price'),
+				// "amount"=>$this->input->post('price')*$this->input->post('qty'),
+				// "service_charge"=>$this->input->post('service_charge'),
+				// "igst"=>$this->input->post('igst'),
+				// "total"=>$amount,
+				// "costprice"=>$costprice,
+				// "type"=>$user['user_details'][0]["type"],
+				// "status"=>$status
+				// );
 						
 				$booking_id = -1;
 				//$booking_id = $this->Search_Model->save("booking_tbl",$arr);
@@ -1017,6 +1029,22 @@ class Search extends Mail_Controller
 				);
 				$booking_activity_id = $this->Search_Model->save("booking_activity_tbl",$arr);
 
+				//insert into accounts account_transactions_tbl
+				//$this->Search_Model->get_next_voucherno($companyid);
+				$arr=array(
+					"voucher_no" => $this->Search_Model->get_next_voucherno($company),
+					"transacting_companyid" => $companyid,
+					"transacting_userid" => $this->session->userdata('user_id'),
+					"documentid" => $booking_id_new,
+					"document_date" => $booking_date,
+					"document_type" => 1,
+					"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? $costprice : $total),
+					"companyid" => $companyid,
+					"credited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
+					"created_by" => $this->session->userdata('user_id')
+				);
+				$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
+
 				$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 				if($result["flight"][0]["trip_type"]=="ONE")
 					$trip="ONE WAY";
@@ -1027,24 +1055,24 @@ class Search extends Mail_Controller
 					if($result["flight"][0]["sale_type"]=="live")
 					{
 						// FOR LIVE BOOKING
-						$arr=array(
-						"date"=>date("Y-m-d h:i:s"),
-						"ticket_id"=>$id,
-						"seller_id"=>$result1[0]["user_id"],
-						"pnr"=>$result1[0]["pnr"],
-						"customer_id"=>$this->session->userdata('user_id'),
-						"qty"=>$this->input->post('qty'),
+						// $arr=array(
+						// "date"=>date("Y-m-d h:i:s"),
+						// "ticket_id"=>$id,
+						// "seller_id"=>$result1[0]["user_id"],
+						// "pnr"=>$result1[0]["pnr"],
+						// "customer_id"=>$this->session->userdata('user_id'),
+						// "qty"=>$this->input->post('qty'),
 						
-						"rate"=>$this->input->post('price'),
-						"amount"=>$this->input->post('price')*$this->input->post('qty'),
-						"service_charge"=>$this->input->post('service_charge'),						
-						"igst"=>$this->input->post('igst'),
-						"total"=>$amount,
-						"costprice"=>$costprice,
-						"type"=>$user['user_details'][0]["type"],
-						"status"=>$status,
-						"booking_id"=>$booking_id_new
-						);
+						// "rate"=>$this->input->post('price'),
+						// "amount"=>$this->input->post('price')*$this->input->post('qty'),
+						// "service_charge"=>$this->input->post('service_charge'),						
+						// "igst"=>$this->input->post('igst'),
+						// "total"=>$amount,
+						// "costprice"=>$costprice,
+						// "type"=>$user['user_details'][0]["type"],
+						// "status"=>$status,
+						// "booking_id"=>$booking_id_new
+						// );
 						$refrence_id = -1;
 						//$refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
 						// FOR LIVE BOOKING
@@ -1117,9 +1145,10 @@ class Search extends Mail_Controller
 						$amount=$total_costprice; //floatval($this->input->post('costprice'));
 						
 						if ($current_user['is_admin']=='0') {
+							$wallet_trans_date = date("Y-m-d H:i:s");
 							$arr=array(
 							'wallet_id'=>$current_user['wallet_id'],
-							'date'=>date("Y-m-d H:i:s"),
+							'date'=>$wallet_trans_date,
 							'trans_id'=>uniqid(),
 							'companyid'=>$companyid,
 							'userid'=>$this->session->userdata('user_id'),
@@ -1139,7 +1168,7 @@ class Search extends Mail_Controller
 							'approved_on'=>date("Y-m-d H:i:s"),
 							'target_companyid'=>$companyid
 							);					 
-							$this->Search_Model->save("wallet_transaction_tbl",$arr);
+							$wallet_transid = $this->Search_Model->save("wallet_transaction_tbl",$arr);
 
 							$mywallet = $this->Search_Model->get('system_wallets_tbl', array('id' => $current_user['wallet_id']));
 							$wl_balance = 0;
@@ -1152,6 +1181,23 @@ class Search extends Mail_Controller
 							$wl_balance -= $total_costprice;
 
 							$return = $this->Search_Model->update('system_wallets_tbl', array('balance' => $wl_balance), array('id' => $current_user['wallet_id']));
+							//save data to account_transactions_tbl;
+							//If wallet balance is there and amount realized from wallet then add that to accounts
+							if($total_costprice<=$wallet_amount) {
+								$arr=array(
+									"voucher_no" => $this->Search_Model->get_next_voucherno($company),
+									"transacting_companyid" => $companyid,
+									"transacting_userid" => $this->session->userdata('user_id'),
+									"documentid" => $wallet_transid,
+									"document_date" => $wallet_trans_date,
+									"document_type" => 2, /* Payment receive */
+									"credit" => $total_costprice,
+									"companyid" => $companyid,
+									"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
+									"created_by" => $this->session->userdata('user_id')
+								);
+								$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
+							}
 						}
 
 						$user['user_details']=$this->User_Model->user_details();	          							

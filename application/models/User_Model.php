@@ -891,20 +891,97 @@ Class User_Model extends CI_Model
 		}
 	}
 
+	public function get_account_balance($companyid, $userid) {
+		$account_balance = 0;
+		$arr = array('act.transacting_companyid'=>$companyid, 'act.transacting_userid'=>$userid);
+
+		$this->db->select("ifnull(sum(credit-debit), 0) balance");
+		$this->db->from('account_transactions_tbl act');
+        $this->db->where($arr);
+		$query = $this->db->get();
+		
+		if ($query->num_rows() > 0) 
+		{	
+			$result = $query->result_array();
+			$account_balance = intval($result[0]['balance']);
+            return $account_balance;
+		}
+		else
+		{
+			return $account_balance;
+			// echo $this->db->last_query();
+			// die();
+		}
+	}
+	
 	public function settle_wallet_transaction($payload) {
 		$id = $payload['id'];
 		$status = $payload['status'];
 		
 		if($id != '' && $status != '') {
 			$wallet_trans = $this->get('wallet_transaction_tbl', array('id' => $id));
-			if($wallet_trans) {
+			if($wallet_trans && count($wallet_trans)>0) {
 				$wallet_trans = $wallet_trans[0];
-				$wallet = $this->get('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']));
 			}
+
+			$amount_balance = $this->get_account_balance($wallet_trans['companyid'], $wallet_trans['userid']);
+			$wallet = $this->get('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']));
+
 			if($wallet && $wallet_trans) {
 				$wallet = $wallet[0];
+				$trans_amount = floatval($wallet_trans['amount']);
+				$balance_before = floatval($wallet['balance']);
 				$balance = intval($wallet['balance']) + intval($wallet_trans['amount']);
-				$flag = $this->update_table_data('wallet_transaction_tbl', array('id' => $id), array('status' => $status));
+
+				$flag = $this->update_table_data('wallet_transaction_tbl', array('id' => $id), array('status' => $status, 'approved_on' => date("Y-m-d h:i:s")));
+
+				if($trans_amount>0 && $flag) {
+					$companyid = $wallet_trans['companyid'];
+					$userid = $wallet_trans['userid'];
+					$setting=$this->get('attributes_tbl', array('target_object_id' => 'company', 'target_object_id' => 1, 'active' => 1, 'companyid' => 1, 'code' => 'configuration'));
+					if($setting && count($setting)>0) {
+						$setting = json_decode($setting[0]['datavalue'], true);
+						if(isset($setting['account_settings'])) {
+							$setting = $setting['account_settings'];
+							for ($i=0; $i<count($setting) ; $i++) { 
+								if($setting[$i]['module']=='ticket_sale') {
+									$setting = $setting[$i];
+									break;
+								}
+							}
+						}
+						else {
+							$setting = null;
+						}
+					}
+					else {
+						$setting = null;
+					}
+
+					// $cost_amount = (0 - $amount_balance);
+
+					// if($trans_amount<$cost_amount) {
+					// 	$cost_amount = $trans_amount;
+					// }
+					//save data to account_transactions_tbl;
+					//If wallet balance is there and amount realized from wallet then add that to accounts
+					if($amount_balance<0) {
+						$arr=array(
+							"voucher_no" => $this->Search_Model->get_next_voucherno($company),
+							"transacting_companyid" => $companyid,
+							"transacting_userid" => $userid,
+							"documentid" => $id,
+							"document_date" => $wallet_trans['date'],
+							"document_type" => 2, /* Payment receive */
+							"credit" => $trans_amount,
+							"companyid" => $companyid,
+							"debited_accountid" => (($setting==null || !isset($setting['accountid']))? -1: $setting['accountid']),
+							"created_by" => $userid
+						);
+						$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
+					}
+				}
+
 				if($flag) {
 					return $this->update_table_data('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']), array('balance' => $balance));
 				}

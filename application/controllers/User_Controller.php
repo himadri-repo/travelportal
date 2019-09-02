@@ -413,6 +413,7 @@ class User_Controller extends Mail_Controller
 		for($idx=0; $idx<count($companies); $idx++) {
 			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
 				$company = $companies[$idx];
+				log_message('debug', json_encode($company, false));
 				break;
 			}
 		}
@@ -422,6 +423,14 @@ class User_Controller extends Mail_Controller
 
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$result["company"]=$company;
+		if(isset($result["setting"]) && count($result["setting"])>0) {
+			$company["setting"] = array(
+				"configuration" => $result["setting"][0]["configuration"], 
+				"payment_gateway" => $result["setting"][0]['payment_gateway'],
+				"bank_accounts" => $result["setting"][0]['bank_accounts']
+			);
+		}
+
 		$result['mywallet']= $this->getMyWallet();
 
 		if(!NEW_FLOW) {

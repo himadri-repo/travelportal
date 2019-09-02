@@ -28,7 +28,7 @@ class Home_Controller extends Mail_Controller
 
 		for($idx=0; $idx<count($companies); $idx++) {
 			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
-				$company = $companies[$idx];
+				$company = &$companies[$idx];
 				break;
 			}
 		}
@@ -88,6 +88,9 @@ class Home_Controller extends Mail_Controller
 		$this->load->view('headernew',$result);
 		//$this->load->view('home');
 		if($company!==null) {
+			if(isset($result["setting"]) && count($result["setting"])>0) {
+				$company['setting'] = $result["setting"][0];
+			}
 			$this->session->set_userdata('company', $company);
 			$this->load->view('homenew');
 		}

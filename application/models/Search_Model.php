@@ -243,6 +243,7 @@ Class Search_Model extends CI_Model
 			'map' => '',
 			'bank_accounts' => '',
 			'payment_gateway' => '',
+			'configuration' => '',
 			'service_charge' => 0.00,
 			'cgst' => 0.00,
 			'igst' => 0.00
@@ -1024,6 +1025,32 @@ Class Search_Model extends CI_Model
 		}
 
 		return $mywallet;
+	}
+
+	public function get_next_voucherno($company) {
+		// 'VCH-RR-000001/19-20'
+		$companyid=intval($company['id']);
+		$company_name = $company['display_name'];
+		$company_abb = $this->abbreviate($company_name);
+
+		$vchno = null;
+		
+		$this->db->where(array("companyid" => $companyid));
+		$num = $this->db->count_all_results("account_transactions_tbl");
+		$num++;
+
+		$vchno = "VCH-$company_abb-".str_pad($num,6,"0",STR_PAD_LEFT);
+		return $vchno;
+	}
+
+	private function abbreviate($string) {
+		$abbreviation = "";
+		$string = ucwords($string);
+		$words = explode(" ", "$string");
+		  foreach($words as $word){
+			  $abbreviation .= $word[0];
+		  }
+	   return $abbreviation; 
 	}
 }
 ?>
