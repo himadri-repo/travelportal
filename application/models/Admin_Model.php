@@ -94,13 +94,15 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_customers($companyid) {
-		$this->db->select("usr.*, cm.primary_user_id as primary_user, cm.type as company_type, rp.display_name as rateplan_name, rp.assigned_to, rp.default ", FALSE);
+		$this->db->select("swl.balance, swl.allowed_transactions, 
+		ifnull((select sum(credit-debit) as balance from account_transactions_tbl acc where acc.transacting_userid=usr.id and acc.transacting_companyid=usr.companyid), 0) as accounts_balance, 
+		usr.*, cm.primary_user_id as primary_user, cm.type as company_type, rp.display_name as rateplan_name, rp.assigned_to, rp.default ", FALSE);
 		$this->db->from('user_tbl usr');
-		// $this->db->join('company_tbl cm', 'usr.companyid=cm.id and usr.active=1 and cm.active=1', 'inner');
+		$this->db->join('system_wallets_tbl swl', 'swl.userid=usr.id and swl.type=2', 'inner', FALSE);
 		$this->db->join('company_tbl cm', 'usr.companyid=cm.id and cm.active=1', 'inner', FALSE);
 		$this->db->join('rateplan_tbl rp', 'usr.rateplanid=rp.id and rp.active=1', 'left', FALSE);
 		$this->db->where('usr.type in (\'B2C\', \'B2B\') and is_admin=0 and usr.companyid='.$companyid, NULL, FALSE);
-		$this->db->order_by('name asc');
+		$this->db->order_by('usr.name asc');
 
 		$query = $this->db->get();
 

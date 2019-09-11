@@ -170,9 +170,13 @@ Class User_Model extends CI_Model
 		}
 	}
 
-	public function user_details() 
+	public function user_details($userid = -1) 
 	{    
-		$userid = $this->session->userdata('user_id');
+		if(!isset($userid) || intval($userid)<=0) {
+			$userid = $this->session->userdata('user_id');
+		}
+		//$userid = $this->session->userdata('user_id');
+
 		$sql = "select 	u.id, u.user_id, u.name, u.profile_image, u.email, u.mobile, u.address, u.state, u.country, u.password, u.is_supplier, 
 						u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
         				(select count(t.id) from tickets_tbl t where t.user_id=$userid) as total_ticket, 
@@ -917,6 +921,7 @@ Class User_Model extends CI_Model
 	public function settle_wallet_transaction($payload) {
 		$id = $payload['id'];
 		$status = $payload['status'];
+		$userid = isset($payload['userid'])?$payload['userid']:-1;
 		
 		if($id != '' && $status != '') {
 			$wallet_trans = $this->get('wallet_transaction_tbl', array('id' => $id));
@@ -924,7 +929,7 @@ Class User_Model extends CI_Model
 				$wallet_trans = $wallet_trans[0];
 			}
 
-			$amount_balance = $this->get_account_balance($wallet_trans['companyid'], $wallet_trans['userid']);
+			$account_balance = $this->get_account_balance($wallet_trans['companyid'], $wallet_trans['userid']);
 			$wallet = $this->get('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']));
 
 			if($wallet && $wallet_trans) {
@@ -933,7 +938,7 @@ Class User_Model extends CI_Model
 				$balance_before = floatval($wallet['balance']);
 				$balance = intval($wallet['balance']) + intval($wallet_trans['amount']);
 
-				$flag = $this->update_table_data('wallet_transaction_tbl', array('id' => $id), array('status' => $status, 'approved_on' => date("Y-m-d h:i:s")));
+				$flag = $this->update_table_data('wallet_transaction_tbl', array('id' => $id), array('status' => $status, 'approved_by' => $userid, 'approved_on' => date("Y-m-d h:i:s")));
 
 				if($trans_amount>0 && $flag) {
 					$companyid = $wallet_trans['companyid'];
@@ -965,7 +970,11 @@ Class User_Model extends CI_Model
 					// }
 					//save data to account_transactions_tbl;
 					//If wallet balance is there and amount realized from wallet then add that to accounts
-					if($amount_balance<0) {
+					if($account_balance<0) {
+						$company = $this->get('company_tbl', array('id'=>$companyid));
+						if($company && count($company)>0) {
+							$company = $company[0];
+						}
 						$arr=array(
 							"voucher_no" => $this->Search_Model->get_next_voucherno($company),
 							"transacting_companyid" => $companyid,
@@ -973,7 +982,7 @@ Class User_Model extends CI_Model
 							"documentid" => $id,
 							"document_date" => $wallet_trans['date'],
 							"document_type" => 2, /* Payment receive */
-							"credit" => $trans_amount,
+							"credit" => abs($account_balance)>$trans_amount?$trans_amount:abs($account_balance),
 							"companyid" => $companyid,
 							"debited_accountid" => (($setting==null || !isset($setting['accountid']))? -1: $setting['accountid']),
 							"created_by" => $userid

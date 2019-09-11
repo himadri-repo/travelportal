@@ -137,16 +137,16 @@
 										  ?>
 										  <!--
 										  <tr>
-											<td>SGST <?php echo $setting[0]["sgst"];?> % </td>
-											<td><?php echo number_format(($setting[0]["service_charge"]*$setting[0]["sgst"]/100),2,".",""); ?></td>
+											<td>SGST <?php //echo $setting[0]["sgst"];?> % </td>
+											<td><?php //echo number_format(($setting[0]["service_charge"]*$setting[0]["sgst"]/100),2,".",""); ?></td>
 										  </tr>
 										  <tr>
-											<td>CGST <?php echo $setting[0]["cgst"];?> % </td>
-											<td><?php echo number_format(($setting[0]["service_charge"]*$setting[0]["cgst"]/100),2,".",""); ?></td>
+											<td>CGST <?php //echo $setting[0]["cgst"];?> % </td>
+											<td><?php //echo number_format(($setting[0]["service_charge"]*$setting[0]["cgst"]/100),2,".",""); ?></td>
 										  </tr>
 										  <tr>
-											<td>IGST <?php echo $setting[0]["igst"];?> % </td>
-											<td><?php echo number_format(($setting[0]["service_charge"]*$setting[0]["igst"]/100),2,".",""); ?></td>
+											<td>IGST <?php //echo $setting[0]["igst"];?> % </td>
+											<td><?php //echo number_format(($setting[0]["service_charge"]*$setting[0]["igst"]/100),2,".",""); ?></td>
 										  </tr>-->
 										  <?php if($this->session->userdata('user_id')==$flight[0]["uid"])
 										  {

@@ -309,7 +309,7 @@
                                                     <table class="table table-hover">
                                                         <tbody>
                                                             <?php
-                                                             if(is_array($sale_order))
+                                                             if($sale_order && is_array($sale_order))
 														     {
 															  foreach($sale_order as $key=>$value)
 															  {

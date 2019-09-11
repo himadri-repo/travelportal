@@ -1039,9 +1039,139 @@ Class Search_Model extends CI_Model
 		$num = $this->db->count_all_results("account_transactions_tbl");
 		$num++;
 
-		$vchno = "VCH-$company_abb-".str_pad($num,6,"0",STR_PAD_LEFT);
+		$vchno = "VCH-$company_abb-".str_pad($num,8,"0",STR_PAD_LEFT);
 		return $vchno;
 	}
+
+	public function book_ticket($parameters, $company, $current_user, $ticket, $wallet, $posteddata, $customers) {
+		$booking_id = -1;
+		$booking_activity_id = -1;
+		$voucher_no = -1;
+		$amount = floatval($parameters["total"]);
+
+		if($amount>0) {
+			try {
+				$this->db->trans_begin();
+				log_message("info", "SearchModel:book_ticket-BeforeSave-{'bookingid': $booking_id, 'booking_activity_id': $booking_activity_id, 'parameters': ".json_encode($parameters)."}");
+
+				$booking_id = $this->save("bookings_tbl", array(
+					"booking_date"=>$parameters["booking_date"], 
+					"ticket_id"=>$parameters["ticket_id"], 
+					"pnr"=>$parameters["pnr"], 
+					"customer_userid"=>$parameters["customer_userid"], 
+					"customer_companyid"=>$parameters["customer_companyid"], 
+					"seller_userid"=>$parameters["seller_userid"], 
+					"seller_companyid"=>$parameters["seller_companyid"], 
+					"status"=>$parameters["status"], 
+					"price"=>$parameters["price"], 
+					"admin_markup"=>$parameters["admin_markup"], 
+					"markup"=>$parameters["markup"], 
+					"srvchg"=>$parameters["srvchg"], 
+					"cgst"=>$parameters["cgst"], 
+					"sgst"=>$parameters["sgst"], 
+					"igst"=>$parameters["igst"], 
+					"total"=>$parameters["total"], 
+					"costprice"=>$parameters["costprice"], 
+					"rateplanid"=>$parameters["rateplanid"], 
+					"qty"=>$parameters["qty"], 
+					"adult"=>$parameters["adult"], 
+					"created_by"=>$parameters["created_by"], 
+					"created_on"=>date("Y-m-d H:i:s"),
+				));
+
+				$booking_activity_id = $this->save("booking_activity_tbl", array(
+					"booking_id"=>$booking_id,
+					"activity_date"=>$parameters["booking_date"],
+					"source_userid"=>$parameters["customer_userid"], 
+					"source_companyid"=>$parameters["customer_companyid"], 
+					"requesting_by"=>$parameters["requesting_by"], 
+					"target_userid"=>$parameters["target_userid"], 
+					"target_companyid"=>$parameters["target_companyid"], 
+					"requesting_to"=>$parameters["requesting_to"], 
+					"status"=>$parameters["status"], 
+					"notes"=>'',
+					"created_by"=>$parameters["created_by"], 
+					"created_on"=>date("Y-m-d H:i:s")
+				));
+
+				if(intval($booking_id)>0) {
+					$voucher_no = $this->save("account_transactions_tbl", array(
+						"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
+						"transacting_companyid" => $parameters["customer_companyid"], 
+						"transacting_userid" => $parameters["customer_userid"], 
+						"documentid" => $booking_id, 
+						"document_date" => $parameters["booking_date"], 
+						"document_type" => 1,
+						"debit" => $parameters["debit"],  
+						"companyid" => $parameters["customer_companyid"],  
+						"credited_accountid" => $parameters["ticket_account"],  
+						"created_by"=>$parameters["created_by"]
+					));
+				}
+
+				foreach($customers as $customer)
+				{
+					try
+					{
+						$arr=array("prefix"=>$customer["prefix"],
+									"first_name"=>$customer["first_name"],
+									"last_name"=>$customer["last_name"],
+									"mobile_no"=>$customer["mobile_no"],
+									"age"=>$customer["age"], 
+									"ticket_fare"=>round($amount/intval($parameters["qty"]), 0),
+									"costprice"=>round(floatval($parameters["costprice"]), 0),
+									"email"=>$customer["email"], 
+									"companyid"=> intval($parameters["customer_companyid"]),
+									"booking_id"=>$booking_id,
+									"pnr"=>$parameters["pnr"],
+									"created_by"=>$parameters["created_by"],
+									"created_on"=>date("Y-m-d H:i:s")
+								);
+						$custinfo = $this->save("customer_information_tbl",$arr);
+						log_message("info", "SearchModel:book_ticket-AfterSave:customer-".json_encode($arr));
+					}
+					catch(Exception $ex1) {
+						log_message("error", $ex1);
+					}
+				}
+
+				log_message("info", "SearchModel:book_ticket-AfterSave-{'bookingid': $booking_id, 'booking_activity_id': $booking_activity_id, 'voucher_no': $voucher_no, 'parameters': ".json_encode($parameters)."}");
+
+				if($booking_id>0 && $booking_activity_id>0) {
+					$this->db->trans_complete();
+				}
+				else {
+					$this->db->trans_rollback();
+				}
+			}
+			catch(Exception $ex) {
+				log_message("error", $ex);
+				$this->db->trans_rollback();
+			}
+		}
+
+		return array('booking_id'=> $booking_id, 'booking_activity_id' => $booking_activity_id, 'voucher_no' => $voucher_no);
+	}
+
+	public function get_suppliers_contract($wholesalerid, $supplierid=-1) {
+		$sql = "select 	spl.code, spl.primary_user_id, spl.supplierid, spl.companyid, spls.serviceid, spls.allowfeed, spls.markup_rate, spls.markup_type, spls.rate_plan_id, spls.status, 
+						spls.communicationid, spls.tracking_id, case when spls.transaction_type=1 then 'request' else 'live' end as sale_type
+				from supplier_tbl spl
+				inner join supplier_services_tbl spls on spl.id=spls.supplier_rel_id and spl.active=1
+				where spl.companyid=$wholesalerid and (spl.supplierid=$supplierid or $supplierid=-1)";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 
 	private function abbreviate($string) {
 		$abbreviation = "";

@@ -40,11 +40,13 @@
                                                         <select class="form-control" name="source1" id="source1">
 													      <option value="">Source</option>
 														  <?php
-														  foreach($city2 as $key=>$value)
-														  {
-														  ?>
-															<option value="<?php echo $city2[$key]["id"];?>"><?php echo $city2[$key]["city"];?></option>
-														  <?php
+														  if($city2 && count($city2)>0) {
+															foreach($city2 as $key=>$value)
+															{
+															?>
+																<option value="<?php echo $city2[$key]["id"];?>"><?php echo $city2[$key]["city"];?></option>
+															<?php
+															}
 														  }
 														   ?>										  
 														</select>
