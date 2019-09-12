@@ -65,10 +65,18 @@ class Company extends REST_Controller {
         else
         {
             $company = $this->Admin_Model->get_company($id);
+            if($company && count($company)>0) {
+                $company = $company[0];
+            }
+
+            $companysetting = $this->Search_Model->company_setting($id, TRUE);
+            if($companysetting && count($companysetting)>0) {
+                $company['settings'] = $companysetting[0];
+            }
 
             if (!empty($company))
             {
-                $this->response($company[0], REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+                $this->response($company, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
             }
             else
             {

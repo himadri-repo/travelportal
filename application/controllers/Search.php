@@ -927,11 +927,13 @@ class Search extends Mail_Controller
 						$sale_type = 'request';
 					}
 
-					$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
+					if($current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
+						$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
+					}
 
 					$wallettransid = intval($transactionresult['wallet_transid']);
 
-					if($booking_id>0 && $wallettransid>0) {
+					if($booking_id>0 && $wallettransid>=0) {
 						log_message('info', "Booking processed in REQUEST mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
 						redirect("/search/thankyou/".$booking_id."");
 					}
@@ -1199,6 +1201,8 @@ class Search extends Mail_Controller
 		$walletid = intval($current_user['wallet_id']);
 		$userid = intval($current_user['id']);
 		$ticket_account = $company['ticket_sale_account'];
+		$wallet_transid = 0;
+		$voucher_no = 0;
 		
 		if ($current_user['is_admin']=='0') {
 			log_message('info', "[Search:do_wallet_transaction] | User Id: $userid | Wallet Id: $walletid | User is not admin - ".json_encode($current_user));
@@ -1439,6 +1443,7 @@ class Search extends Mail_Controller
 		$CI =   &get_instance();
 			
 		$userid = $current_user['id'];
+		$companyid = $current_user['companyid'];
 		if(($current_user['type']=='B2B' || $current_user['type']=='B2C') && $current_user['is_admin']!=1) {
 			$check = $CI->db->get_where('system_wallets_tbl', array('userid' => $userid, 'type' => 2));
 		} else {

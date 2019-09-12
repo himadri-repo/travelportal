@@ -212,7 +212,11 @@ Class Search_Model extends CI_Model
 		}   
 	}
 	
-	public function company_setting($companyid) {
+	public function company_setting($companyid, $asobject=false) {
+		if(!isset($asobject)) {
+			$asobject = false;
+		}
+
         $arr=array("target_object_type"=>"company", "target_object_id"=>$companyid);
 		$this->db->select('*');
 		$this->db->from('attributes_tbl');
@@ -252,7 +256,12 @@ Class Search_Model extends CI_Model
 		if ($query->num_rows() > 0) 
 		{	
 			foreach ($query->result_array() as $row) {
-				$data[$row['code']] = $row['datavalue'];
+				if($asobject && isset($row['datatype']) && $row['datatype']=='object') {
+					$data[$row['code']] = json_decode($row['datavalue'], TRUE);
+				}
+				else {
+					$data[$row['code']] = $row['datavalue'];
+				}
 			}
 			return array($data);
 		}
@@ -707,9 +716,10 @@ Class Search_Model extends CI_Model
 					where cm.id=$companyid
 					limit 1)
 				) as sl1 on tkt.companyid = sl1.supplierid
-				where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and tkt.no_of_person>0 and sl1.owner_companyid=$companyid
+				where DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and sl1.owner_companyid=$companyid
 				order by sl1.display_name asc, ct1.city asc, ct2.city asc, tkt.departure_date_time asc";
 
+		//tkt.no_of_person>0 - this condition was there which has been removed. So that even ticket, no_of_passengers becode zero it should be visible.
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
@@ -1128,7 +1138,7 @@ Class Search_Model extends CI_Model
 									"created_on"=>date("Y-m-d H:i:s")
 								);
 						$custinfo = $this->save("customer_information_tbl",$arr);
-						log_message("info", "SearchModel:book_ticket-AfterSave:customer-".json_encode($arr));
+						log_message("info", "SearchModel:book_ticket-AfterSave: Customer Id: $custinfo | customer-".json_encode($arr));
 					}
 					catch(Exception $ex1) {
 						log_message("error", $ex1);
