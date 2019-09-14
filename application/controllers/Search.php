@@ -1179,7 +1179,7 @@ class Search extends Mail_Controller
 			"target_userid"=>intval($ticket['seller_userid']),
 			"target_companyid"=>intval($ticket['seller_companyid']),
 			"requesting_to"=>intval($ticket['requesting_to']),
-			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice']) : floatval($posteddata['total_amount'])),
+			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice'] * intval($posteddata['qty'])) : floatval($posteddata['total_amount'])),
 			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid']
 		);
 
@@ -1246,10 +1246,11 @@ class Search extends Mail_Controller
 			$wl_balance -= $amount;
 			$voucher_no = -1;
 			$return = $this->Search_Model->update('system_wallets_tbl', array('balance' => $wl_balance), array('id' => $current_user['wallet_id']));
-			log_message('info', "[Search:do_wallet_transaction] Wallet Id: $walletid | New wallet balance updated: $wl_balance");
+			log_message('info', "[Search:do_wallet_transaction] Wallet Id: $walletid | New wallet balance updated: $wl_balance | Wallet Balance: $wallet_amount");
 			//save data to account_transactions_tbl;
 			//If wallet balance is there and amount realized from wallet then add that to accounts
-			if($amount<=$wallet_amount) {
+			//if($amount<=$wallet_amount) {
+			if($wallet_amount>=0) {
 				log_message('info', "[Search:do_wallet_transaction] Transacting Accounts | User Id: $userid | Wallet Id: $walletid | Previous Wallet Balance: $wallet_amount | Transaction amount: $amount");
 
 				$arr=array(
@@ -1259,7 +1260,7 @@ class Search extends Mail_Controller
 					"documentid" => $wallet_transid,
 					"document_date" => $wallet_trans_date,
 					"document_type" => 2, /* Payment receive */
-					"credit" => $amount,
+					"credit" => ($amount<=$wallet_amount)?$amount:$wallet_amount,
 					"companyid" => $companyid,
 					"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
 					"created_by" => intval($current_user['id'])

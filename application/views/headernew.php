@@ -143,7 +143,7 @@
                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">My Wallet (₹ <?php echo $mywallet['balance'] ?>)</a>
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/add">Add Money</a>
-                                    <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/ledger">Ledger</a>
+                                    <a class="dropdown-item" href="<?php echo base_url(); ?>user/transaction">Ledger</a>
                                     <a class="dropdown-item" href="<?php echo base_url(); ?>wallet/withdraw">Withdraw Money</a>
                                 </div>
                             </li>
@@ -184,7 +184,7 @@
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user"><span><i class="fa fa-user link-icon"></i></span><?php echo 'Hi! '.explode(" ",$this->session->userdata('name'))[0];?></a></li>
 
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/add"><span><i class="fa fa-money link-icon"></i></span> Add Money</a>
-                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/ledger"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/transaction"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/withdraw"><span><i class="fa fa-suitcase link-icon"></i></span> Withdraw Money</a>
 
                             <?php if($this->session->userdata('user_id') && $admin) { ?>

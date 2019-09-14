@@ -875,101 +875,227 @@ Class Search_Model extends CI_Model
 		$returnedValue = NULL;
 		$tbl = 'bookings_tbl';
 
+		log_message('info', 'Search_Model::upsert_booking - '.json_encode($booking));
+
 		if($booking['id']>0) {
-			$bookingStatus = $booking['status'];
-			if(isset($booking['ticket'])) {
-				$ticket = $this->get_ticket($booking['ticket']['id'])[0];
-			}
+			try
+			{
+				$this->db->trans_begin();
 
-			// this is old booking. so needs to be updated
-			$returnedValue = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
-			$bookingactivity = null; 
-			if(isset($booking['activity']) && count($booking['activity'])>0) {
-				$bookingactivity = $booking['activity'][0];
-				unset($booking['activity']);
-				$tbl = 'booking_activity_tbl';
-
-				$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
-			}
-
-			$customers = null; 
-			$no_of_tickets = 0;
-			$inv_mode = '';
-			if(isset($booking['customers']) && count($booking['customers'])>0) {
-				$customers = $booking['customers'];
-				unset($booking['customers']);
-				$tbl = 'customer_information_tbl';
-
-				for ($i=0; $i < count($customers); $i++) { 
-					$customer_info = $this->get($tbl, array('id' => $customers[$i]['id']));
-
-					if(($customers[$i]['status'] == 2 || $customers[$i]['status'] == 8) && $customer_info && intval($customer_info[0]['status']) !==8)
-					{
-						// Approved or Hold
-						$no_of_tickets++;
-					} else if(($customers[$i]['status'] == 3) && $customer_info && intval($customer_info[0]['status']) === 8) {
-						//Previously kept on Hold. Now rejecting it.
-						$no_of_tickets++;
-						$inv_mode = 'return_stock';
-					} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
-						$inv_mode = 'no_update_stock';
-					}
-
-					if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') {
-						$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
-					}
+				log_message('info', 'Search_Model::upsert_booking - Updating existing booking information | Booking id: '.$booking['id']);
+				$bookingStatus = $booking['status'];
+				if(isset($booking['ticket'])) {
+					$ticket = $this->get_ticket($booking['ticket']['id'])[0];
 				}
-			}
+				log_message('info', 'Search_Model::upsert_booking - Booking Status : '.($bookingStatus==2?'Processed':($bookingStatus==1?'Hold':'')));
+				// this is old booking. so needs to be updated
+				$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
+				log_message('info', 'Search_Model::upsert_booking - Booking updated : $bookingupdate');
+				$bookingactivity = null; 
+				if(isset($booking['activity']) && count($booking['activity'])>0) {
+					$bookingactivity = $booking['activity'][0];
+					unset($booking['activity']);
+					$tbl = 'booking_activity_tbl';
 
-			if(($booking['status'] == 2 || $booking['status'] == 1 || $inv_mode == 'return_stock') && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
-				// deduct stock if 'Approved' or 'Hold'
-				// Means if the booking is approved then reduce the available ticekt count and dr./cr. wallet balance.
-
-				// reduce available tickets count.
-				$tbl = 'tickets_tbl';
-				$no_of_person = intval($ticket['no_of_person']);
-
-				if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode === 'return_stock') {
-					if($inv_mode === 'return_stock') {
-						$no_of_tickets = -1 * $no_of_tickets;
-					}
-					$available = (intval($ticket['no_of_person']) - $no_of_tickets)>0 ? 'YES' : 'NO';
-					$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
+					$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
+					log_message('info', 'Search_Model::upsert_booking - Booking activity updated : $returnedValue');
 				}
 
-				// new dr./cr. wallet money
+				$customers = null; 
+				$no_of_tickets = 0;
+				$inv_mode = '';
+				if(isset($booking['customers']) && count($booking['customers'])>0) {
+					$customers = $booking['customers'];
+					unset($booking['customers']);
+					$tbl = 'customer_information_tbl';
+
+					for ($i=0; $i < count($customers); $i++) { 
+						$returnedValue = -1;
+						$customer_info = $this->get($tbl, array('id' => $customers[$i]['id']));
+
+						if(($customers[$i]['status'] == 2 || $customers[$i]['status'] == 8) && $customer_info && intval($customer_info[0]['status']) !==8)
+						{
+							// Approved or Hold
+							$no_of_tickets++;
+						} else if(($customers[$i]['status'] == 3) && $customer_info && intval($customer_info[0]['status']) === 8) {
+							//Previously kept on Hold. Now rejecting it.
+							$no_of_tickets++;
+							$inv_mode = 'return_stock';
+						} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
+							$inv_mode = 'no_update_stock';
+						}
+
+						if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') {
+							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
+							log_message('info', 'Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets');
+						}
+					}
+				}
+
+				if(($booking['status'] == 2 || $booking['status'] == 1 || $inv_mode == 'return_stock') && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
+					// deduct stock if 'Approved' or 'Hold'
+					// Means if the booking is approved then reduce the available ticekt count and dr./cr. wallet balance.
+
+					// reduce available tickets count.
+					$tbl = 'tickets_tbl';
+					$no_of_person = intval($ticket['no_of_person']);
+
+					if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode === 'return_stock') {
+						if($inv_mode === 'return_stock') {
+							$no_of_tickets = -1 * $no_of_tickets;
+						}
+						$available = (intval($ticket['no_of_person']) - $no_of_tickets)>0 ? 'YES' : 'NO';
+						$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
+					}
+
+					// new dr./cr. wallet money
+				}
+
+				if($bookingupdate>0) {
+					$this->db->trans_complete();
+				}
+				else {
+					$this->db->trans_rollback();
+				}
+			}
+			catch(Exception $ex) {
+				log_message('error', 'Search_Model::upsert_booking - Error: '.$ex);
+				$this->db->trans_rollback();
 			}
 		}
 		else {
-			// this is new booking. so needs to be inserted
-			$bookingactivity = null; 
-			if(isset($booking['activity']) && count($booking['activity'])>0) {
-				$bookingactivity = $booking['activity'][0];
-				unset($booking['activity']);
-			}
 
-			$customers = null; 
-			if(isset($booking['customers']) && count($booking['customers'])>0) {
-				$customers = $booking['customers'];
-				unset($booking['customers']);
-			}
+			try
+			{
+				$this->db->trans_begin();
+				log_message('info', 'Search_Model::upsert_booking - Inserting new booking information');
 
-			unset($booking['id']);
-			unset($bookingactivity['activity_id']);
-			$returnedValue = $this->save($tbl, $booking);
-			if($returnedValue!==null) {
-				$tbl = 'booking_activity_tbl';
-				$bookingactivity['booking_id'] = $returnedValue;
+				// this is new booking. so needs to be inserted
+				$bookingactivity = null; 
+				$customer_userid = intval($booking['customer_userid']);
+				$customer_companyid = intval($booking['customer_companyid']);
+				$seller_userid = intval($booking['seller_userid']);
+				$seller_companyid = intval($booking['seller_companyid']);
+				$customeruserinfo = $this->get('user_tbl', array('id' => $customer_userid));
+				$customercompanyinfo = $this->get('company_tbl', array('id' => $customer_companyid));
+				$customerwallet = $this->get('system_wallets_tbl', array('companyid' => $customer_companyid, 'sponsoring_companyid' => -1, 'userid' => NULL, 'type' => 1));
+				$sellerwallet = $this->get('system_wallets_tbl', array('companyid' => $seller_companyid, 'sponsoring_companyid' => -1, 'userid' => NULL, 'type' => 1));
 
-				for ($i=0; $i < count($customers); $i++) { 
-					$customer = &$customers[$i];
-					if(intval($customer['refrence_id']) === -1) {
-						$customer['refrence_id'] = $returnedValue;
+				log_message('info', 'Search_Model::upsert_booking - Customer UserId: $customer_userid | Customer CompanyId: $customer_companyid | Seller UserId: $seller_userid | Seller CompanyId: $seller_companyid');
+				log_message('info', 'Search_Model::upsert_booking - Customer User Info - '.json_encode($customeruserinfo));
+				log_message('info', 'Search_Model::upsert_booking - Customer Company Info - '.json_encode($customercompanyinfo));
+				log_message('info', 'Search_Model::upsert_booking - Customer Wallet Info - '.json_encode($customerwallet));
+				log_message('info', 'Search_Model::upsert_booking - Customer Wallet Info - '.json_encode($sellerwallet));
 
-						$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
-					}
+				if(isset($booking['activity']) && count($booking['activity'])>0) {
+					$bookingactivity = $booking['activity'][0];
+					unset($booking['activity']);
 				}
-				$returnedValue = $this->save($tbl, $bookingactivity);
+
+				$customers = null; 
+				if(isset($booking['customers']) && count($booking['customers'])>0) {
+					$customers = $booking['customers'];
+					unset($booking['customers']);
+				}
+
+				unset($booking['id']);
+				unset($bookingactivity['activity_id']);
+				$booking_id = $this->save($tbl, $booking);
+				if($booking_id!==null && intval($booking_id)>0) {
+					log_message('info', 'Search_Model::upsert_booking - New booking id: $booking_id');
+					$tbl = 'booking_activity_tbl';
+					$bookingid = intval($booking_id);
+					$bookingactivity['booking_id'] = $booking_id;
+
+					log_message('info', 'Search_Model::upsert_booking - Customer List'.json_encode($customers));
+					for ($i=0; $i < count($customers); $i++) { 
+						$customer = &$customers[$i];
+						if(intval($customer['refrence_id']) === -1) {
+							$customer['refrence_id'] = $booking_id;
+
+							$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
+						}
+					}
+					$returnedValue = $this->save($tbl, $bookingactivity);
+					log_message('info', "Search_Model::upsert_booking - Booking activity : $returnedValue");
+					//perform wallet transaction
+					if($seller_companyid !== $customer_companyid) {
+						//First debit customer wallet account
+						$transaction_id = $this->save("wallet_transaction_tbl", array(
+							"wallet_id" => $customerwallet['wallet_id'], 
+							"date" => date("Y-m-d H:i:s"), 
+							"trans_id" => uniqid(), 
+							"companyid" => $customer_companyid, 
+							"amount" => floatval($booking['costprice']), 
+							"dr_cr_type" => 'DR', 
+							"trans_type" => 20, /* 20 is for booking type transaction */
+							"trans_ref_id" => $bookingid,
+							"trans_ref_date" => $booking['booking_date'],
+							"trans_ref_type" => 'PURCHASE',
+							"trans_documentid" => $bookingid,
+							"narration" => "New ticket booking raised (id: $bookingid)",
+							"sponsoring_companyid" => $customer_companyid,
+							"status" => 1,
+							"approved_by" => $customer_userid,
+							"approved_on" => date("Y-m-d H:i:s"),
+							"target_companyid" => $customer_companyid, 
+							"created_by" => $customer_userid,
+							"created_on" => date("Y-m-d H:i:s")
+						));
+
+						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$customerwallet['wallet_id']." | Wallet Balance : ".floatval($booking['costprice']));
+						if(intval($transaction_id)>0) {
+							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($customerwallet['balance'])-floatval($booking['costprice']))), 
+							array(
+								"id" => $customerwallet['wallet_id']
+							));
+
+							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($customerwallet['balance'])-floatval($booking['costprice'])));
+						}
+
+						//Second credit seller wallet account
+						$transaction_id = $this->save("wallet_transaction_tbl", array(
+							"wallet_id" => $sellerwallet['wallet_id'], 
+							"date" => date("Y-m-d H:i:s"), 
+							"trans_id" => uniqid(), 
+							"companyid" => $seller_companyid, 
+							"amount" => floatval($booking['costprice']), 
+							"dr_cr_type" => 'CR', 
+							"trans_type" => 9, /* 9 is for transfer */
+							"trans_ref_id" => $bookingid,
+							"trans_ref_date" => $booking['booking_date'],
+							"trans_ref_type" => 'PAYMENT',
+							"trans_documentid" => $bookingid,
+							"narration" => "New ticket booking raised (id: $bookingid)",
+							"sponsoring_companyid" => $seller_companyid,
+							"status" => 1,
+							"approved_by" => $seller_userid,
+							"approved_on" => date("Y-m-d H:i:s"),
+							"target_companyid" => $seller_companyid, 
+							"created_by" => $customer_userid,
+							"created_on" => date("Y-m-d H:i:s")
+						));
+
+						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$sellerwallet['wallet_id']." | Wallet Balance : ".floatval($booking['costprice']));
+						if(intval($transaction_id)>0) {
+							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($sellerwallet['balance'])+floatval($booking['costprice']))), 
+							array(
+								"id" => $sellerwallet['wallet_id']
+							));
+
+							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($sellerwallet['balance'])+floatval($booking['costprice'])));
+						}
+					}
+
+					$this->db->trans_complete();
+				}
+				else {
+					$this->db->trans_rollback();
+				}
+			}
+			catch(Exception $ex1) {
+				log_message('error', 'Search_Model::upsert_booking - Error: '.$ex1);
+				$this->db->trans_rollback();
 			}
 		}
 

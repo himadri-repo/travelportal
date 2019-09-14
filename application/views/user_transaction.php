@@ -91,58 +91,85 @@
 																<tr>
 																	<td class="dash-list-icon invoice-icon"><?php echo $ctr; ?></td>
 																	<td class="dash-list-icon invoice-icon"><?php echo date("d/m/Y h:i:s",strtotime($wallet_transaction[$key]["date"])); ?></td>
-																	<?php if($wallet_transaction[$key]["booking_id"]==0 ) {?>
+																	<?php if(intval($wallet_transaction[$key]["booking_no"])==0 ) {?>
 																	<td class="dash-list-icon invoice-icon">ADMIN ADDED TO WALLET</td>
+																	<?php } else {?>
+																	<td class="dash-list-icon invoice-icon">Booking No. : <?php echo $wallet_transaction[$key]["booking_id"]; ?></td>
 																	<?php } ?>
 																	
-																	<?php if($wallet_transaction[$key]["booking_id"]!=0 && $wallet_transaction[$key]["type"]=="CR") {?>
+																	<?php if(intval($wallet_transaction[$key]["booking_no"])!=0 && $wallet_transaction[$key]["type"]=="PURCHASE") {?>
 																		<?php if($wallet_transaction[$key]["narration"]!="") {?>
-																		<td class="dash-list-icon invoice-icon"><?php echo $wallet_transaction[$key]["narration"]; ?></td>
-																		<?php } else {?>
-																		<td class="dash-list-icon invoice-icon">SALE</td>
-																		<?php } ?>
-																	<?php } ?>
-																	
-																	<?php if($wallet_transaction[$key]["booking_id"]!=0 && $wallet_transaction[$key]["type"]=="DR") {?>
-																	<?php if($wallet_transaction[$key]["narration"]!="") {?>
 																		<td class="dash-list-icon invoice-icon"><?php echo $wallet_transaction[$key]["narration"]; ?></td>
 																		<?php } else {?>
 																		<td class="dash-list-icon invoice-icon">PURCHASE</td>
 																		<?php } ?>
 																	<?php } ?>
-																	<td class="dash-list-text invoice-text">
-																	    <?php if($wallet_transaction[$key]["booking_id"]!=0) {?>
-																		<ul class="list-unstyled list-inline invoice-info">
-																			<!--<li class="invoice-order">Customer Name : <?php echo $wallet_transaction[$key]["name"]; ?></li>--> 
-																			<li class="invoice-order">Booking No. : <?php echo $wallet_transaction[$key]["booking_id"]; ?></li> 																			
-																			<!--<li class="invoice-order">PNR. : <?php echo $wallet_transaction[$key]["pnr"]; ?></li>-->
-																		</ul>
+																	
+																	<?php if(intval($wallet_transaction[$key]["booking_no"])==0 && $wallet_transaction[$key]["type"]=="PAYMENT") {?>
+																	<?php if($wallet_transaction[$key]["narration"]!="") {?>
+																		<td class="dash-list-icon invoice-icon"><?php echo $wallet_transaction[$key]["narration"]; ?></td>
+																		<?php } else {?>
+																		<td class="dash-list-icon invoice-icon">PAYMENT</td>
 																		<?php } ?>
-																	</td>  
+																	<?php } ?>
 																	<td class="dash-list-icon invoice-icon">
 																	<?php 
-																	 if($wallet_transaction[$key]["status"]=="CANCELLED" && $wallet_transaction[$key]["narration"]=="")
+																	 if($wallet_transaction[$key]["wallet_trans_status"]=="1")
 																	 {
-																		 echo "CONFIRM";
+																		echo "CONFIRM";
+																	 }
+																	 else if($wallet_transaction[$key]["wallet_trans_status"]=="2")
+																	 {
+																		echo "REJECTED";
 																	 }
 																	 else
 																	 {
-																		 echo $wallet_transaction[$key]["status"];
+																		echo "PENDING";
 																	 }
-																	?></td>
-																	<td class="dash-list-icon invoice-icon"><?php if($wallet_transaction[$key]["type"]=="CR")echo number_format($wallet_transaction[$key]["amount"],2,".",","); ?></td>
-																	<td class="dash-list-icon invoice-icon"><?php if($wallet_transaction[$key]["type"]=="DR")echo number_format(floatval(0-$wallet_transaction[$key]["amount"]),2,".",","); ?></td>
+																	?>
+																	</td>
+																	<td class="dash-list-icon invoice-icon">
+																		<?php if($wallet_transaction[$key]["type"]=="PAYMENT") {
+																			echo number_format($wallet_transaction[$key]["amount"],2,".",","); 
+																		}
+																		else {
+																			echo number_format(0,2,".",","); 
+																		}
+																		?>
+																	</td>
+																	<td class="dash-list-icon invoice-icon">
+																		<?php if($wallet_transaction[$key]["type"]=="PURCHASE") {
+																			echo number_format(floatval($wallet_transaction[$key]["amount"]),2,".",","); 
+																		}
+																		else {
+																			echo number_format(floatval(0),2,".",","); 
+																		}
+																		?>
+																	</td>
 																</tr>
 																<?php
-																 $total=$total+$wallet_transaction[$key]["amount"];
+																if($wallet_transaction[$key]["wallet_trans_status"]=="1") {
+																	if($wallet_transaction[$key]["type"]=="PAYMENT") {
+																		$total+=floatval($wallet_transaction[$key]["amount"]);
+																	}
+																	else if($wallet_transaction[$key]["type"]=="PURCHASE") {
+																		$total-=floatval($wallet_transaction[$key]["amount"]);
+																	}
+																}
 																$ctr++;
-																  }
+																}
 															 } 
 															?>
                                                              <tr>
 															    <td colspan="6" class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Total</h3></td>
                                                                 
-																<td class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px"><?php echo number_format($total,2,".",",");?></h3></td>
+																<td class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0">
+															 		<?php if($total>=0) { ?>
+																		<h3 class="dash-listing-heading" style="padding:15px 10px; color: #1f800f;">₹ <?php echo number_format($total,2,".",",");?> (CR)</h3>
+																	<?php } else { ?>
+																		<h3 class="dash-listing-heading" style="padding:15px 10px; color: #ff0000;">₹ <?php echo number_format(abs($total),2,".",",");?> (DR)</h3>
+																	<?php } ?>
+																</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>

@@ -784,16 +784,28 @@ Class User_Model extends CI_Model
     }
 	public function wallet_transaction() 
 	{    
-        $arr=array("w.user_id"=>$this->session->userdata('user_id'));  	
-		$this->db->select('w.date,w.amount,w.booking_id,w.type,w.narration,b.id as booking_no,t.ticket_no,b.pnr,c.city as source,ct.city as destination,u.name,b.status');
-		$this->db->from('wallet_tbl as w');
-		$this->db->join('booking_tbl as b', 'w.booking_id = b.id','left');
+        // $arr=array("w.user_id"=>$this->session->userdata('user_id'));  	
+		// $this->db->select('w.date,w.amount,w.booking_id,w.type,w.narration,b.id as booking_no,t.ticket_no,b.pnr,c.city as source,ct.city as destination,u.name,b.status');
+		// $this->db->from('wallet_tbl as w');
+		// $this->db->join('booking_tbl as b', 'w.booking_id = b.id','left');
+		// $this->db->join('tickets_tbl as t', 't.id = b.ticket_id','left');
+		// $this->db->join('city_tbl as c', 'c.id = t.source','left');
+		// $this->db->join('city_tbl as ct', 'ct.id = t.destination','left');		
+		// $this->db->join('user_tbl as u', 'u.id = b.customer_id','left');
+        // $this->db->where($arr);
+		// $this->db->order_by("w.id", "DESC");
+		// $query = $this->db->get();	
+
+        $arr=array("w.userid"=>$this->session->userdata('user_id'));  	
+		$this->db->select('w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, u.name, b.status, w.status as wallet_trans_status');
+		$this->db->from('wallet_transaction_tbl w');
+		$this->db->join('bookings_tbl as b', 'w.trans_documentid = b.id and w.trans_type=20','left');
 		$this->db->join('tickets_tbl as t', 't.id = b.ticket_id','left');
 		$this->db->join('city_tbl as c', 'c.id = t.source','left');
 		$this->db->join('city_tbl as ct', 'ct.id = t.destination','left');		
-		$this->db->join('user_tbl as u', 'u.id = b.customer_id','left');
+		$this->db->join('user_tbl as u', 'u.id = b.customer_userid','left');
         $this->db->where($arr);
-		$this->db->order_by("w.id", "DESC");
+		$this->db->order_by("w.id", "ASC");
 		$query = $this->db->get();	
 		
 		
@@ -970,7 +982,7 @@ Class User_Model extends CI_Model
 					// }
 					//save data to account_transactions_tbl;
 					//If wallet balance is there and amount realized from wallet then add that to accounts
-					if($account_balance<0) {
+					if($account_balance<0 && intval($status)==1) {
 						$company = $this->get('company_tbl', array('id'=>$companyid));
 						if($company && count($company)>0) {
 							$company = $company[0];
@@ -991,7 +1003,7 @@ Class User_Model extends CI_Model
 					}
 				}
 
-				if($flag) {
+				if($flag && intval($status)==1) {
 					return $this->update_table_data('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']), array('balance' => $balance));
 				}
 				else {

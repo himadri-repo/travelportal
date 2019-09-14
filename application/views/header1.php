@@ -188,7 +188,7 @@
                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">My Wallet (₹ <?php echo $mywallet['balance'] ?>)</a>
                                 <div class="dropdown-menu">
                                     <a class="dropdown-item" href="#">Add Money</a>
-                                    <a class="dropdown-item" href="#">Ledger</a>
+                                    <a class="dropdown-item" href="<?php echo base_url(); ?>user/transaction">Ledger</a>
                                     <a class="dropdown-item" href="#">Withdraw Money</a>
                                 </div>
                             </li>
@@ -225,14 +225,11 @@
                         if($this->session->userdata('user_id')) {
                         ?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/add"><span><i class="fa fa-money link-icon"></i></span> Add Money</a>
-                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/ledger"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
+                            <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/transaction"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/withdraw"><span><i class="fa fa-suitcase link-icon"></i></span> Withdraw Money</a>
                         <?php
                         }
                         ?>
-                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/add"><span><i class="fa fa-money link-icon"></i></span> Add Money</a>
-                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/ledger"><span><i class="fa fa-shopping-bag link-icon"></i></span> Ledger</a>
-                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>wallet/withdraw"><span><i class="fa fa-suitcase link-icon"></i></span> Withdraw Money</a>
 
                         <?php if($this->session->userdata('user_id') && $admin) { ?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>admin?uuid=<?php echo $uuid?>"><span><i class="fa user-crown link-icon"></i></span>Administration</a>
