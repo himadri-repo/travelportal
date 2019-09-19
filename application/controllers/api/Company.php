@@ -545,9 +545,35 @@ class Company extends REST_Controller {
         $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+    public function payment_details_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $arg = json_decode($stream_clean, true);
+
+        try
+        {
+            $booking_payment = $this->Search_Model->get_booking_payment_by_query($arg);
+        }
+        catch(Exception $ex) {
+            $booking_payment = array();
+        }
+
+        $this->set_response($booking_payment, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
     public function upsert_bookings_post() {
         $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
-        $bookings = json_decode($stream_clean, true);
+        $payload = json_decode($stream_clean, true);
+        $selectedTicket = [];
+        $originalbooking = [];
+
+        if(isset($payload['bookings'])) {
+            $bookings = $payload['bookings'];
+            $selectedTicket = $payload['selectedticket'];
+            $originalbooking = $payload['originalbooking'];
+        }
+        else {
+            $bookings = $payload;
+        }
 
         $idx = 1;
         $feedbacks = array();
@@ -555,7 +581,7 @@ class Company extends REST_Controller {
         try
         {
             foreach ($bookings as $booking) {
-                $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking));
+                $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking, $selectedTicket, $originalbooking));
             }
         }
         catch(Exception $ex) {

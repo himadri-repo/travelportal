@@ -75,6 +75,7 @@ class User_Controller extends Mail_Controller
 				$companyid = $current_user["companyid"];
 				$result["companyid"] = $companyid;
 				$result["cname"] = $current_user["cname"];
+				$result["current_user"] = $current_user;
 
 				$result["company_setting"]=$this->Search_Model->company_setting($companyid);
 			}
@@ -2540,5 +2541,70 @@ class User_Controller extends Mail_Controller
 			  $abbreviation .= $word[0];
 		  }
 	   return $abbreviation; 
+	}
+
+	public function update_profile() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $postedvalue = json_decode($stream_clean, true);
+
+		$uid=$postedvalue['id'];
+		$name=$postedvalue['name'];
+		$mobile=$postedvalue['mobile'];
+		$email=$postedvalue['email'];
+		$admin_markup=$postedvalue['admin_markup'];
+		$company = $this->session->userdata('company');
+		$companyid = intval($company['id']);
+		$user_id = $this->session->userdata('user_id');
+		$current_user = $this->session->userdata('current_user');
+		$msg = '';
+		$bflag = false;
+
+		log_message('info', "[User_Control:update_profile]=> user profile update initiated | Name: $name | Mobile: $mobile | Admin.Markup: $admin_markup | User.ID: $user_id | Email: $email");
+
+		$user_info = $this->User_Model->get('user_tbl', array('companyid' => $companyid, 'id !=' => $uid, 'email' => $email));
+		if($user_info && count($user_info)>0) {
+			$user_info = $user_info[0];
+		}
+
+		if(!$user_info) {
+			$user_info = $this->User_Model->get('user_tbl', array('companyid' => $companyid, 'id !=' => $uid, 'mobile' => $mobile));
+			if($user_info && count($user_info)>0) {
+				$user_info = $user_info[0];
+				$msg = 'Entered Mobile number already present. Please use different mobile number';				
+			}
+			else {
+				$bflag = true;
+			}
+		}
+		else {
+			$msg = 'Entered Email address already present. Please use different email address';
+		}
+
+		if($bflag && $name!='')
+		{
+			$arr = array('name' => $name, 
+						'mobile'=> $mobile,
+						'email'=> $email							 							
+					);
+			$result = $this->User_Model->update($arr,$this->session->userdata('user_id'));
+			log_message('info', "[User_Control:update_profile]=> user profile update response | Result : $result");
+
+			log_message('info', "[User_Control:update_profile]=> user profile | Type : ".$current_user['type']." | Is.Admin: ".$current_user['is_admin']);
+			if($result && $admin_markup>=0 && ($current_user['type']=='B2B' && $current_user['is_admin']!='1')) {
+				log_message('info', "[User_Control:update_profile]=> Initiating Admin Markup | Result : $result");
+				$arr = array('field_value' => $admin_markup);
+				$result = $this->User_Model->update_table_data('user_config_tbl', array('user_id' => $this->session->userdata('user_id')), $arr);
+			}
+			if($result==true) {
+				$bflg = true;
+				$msg="Your Profile Updated Successfully. You need to relogin have the effect. After 5 secs it will auto logout.";
+			}
+			else {
+				$bflg = false;
+				$msg="Some error happened. Please contact administrator."; //$this->db->last_query();
+			}
+		}		 
+
+		echo json_encode(array('status' => $bflag, 'message' => $msg));
 	}
 }

@@ -67,6 +67,33 @@
 				font-size:15px;
 				font-weight:normal;
 			}
+			.list-unstyled li span.title {
+				display: inline-block;
+				width: 150px;
+				margin: 0px 6px;
+				color: #5a5454bd;
+			}
+			.list-unstyled li span {
+				display: inline-block;
+				font-weight: normal !important;
+			}
+			.error {
+				color: #ff0000;
+			}
+			.success {
+				color: #24a00f;
+			}
+			/* .error:after {
+				font-family: "Font Awesome 5 Free";
+				font-weight: 400;
+				content: "\f1ea";
+				
+				content:url("http://www.free-icons-download.net/images/tick-mark-icon-35779.png");
+				display: inline-block;
+				margin-left:10px;
+				width: 15px;
+				height: 15px;
+			} */
 		</style>
         <section class="page-cover dashboard">
             <div class="container">
@@ -278,11 +305,16 @@
                                                         
                                                         <div class="col-sm-7 col-md-6  user-detail">
                                                             <ul class="list-unstyled">
-                                                                <li><span>Name:</span> <?php echo $user_details[0]["name"]; ?></li>
-                                                                <li><span>Date of Joining:</span> <?php echo date("jS M Y",strtotime($user_details[0]["doj"])); ?></li>
-                                                                <li><span>Email:</span> <?php echo $user_details[0]["email"]; ?></li>
-                                                                <li><span>Mobile No. :</span> <?php echo $user_details[0]["mobile"]; ?></li>
-                                                                
+                                                                <li><span class="title">Name:</span> <span><?php echo $user_details[0]["name"]; ?></span></li>
+                                                                <li><span class="title">Date of Joining:</span> <span><?php echo date("jS M Y",strtotime($user_details[0]["doj"])); ?></span></li>
+                                                                <li><span class="title">Email:</span> <span><?php echo $user_details[0]["email"]; ?></span></li>
+                                                                <li><span class="title">Mobile No. :</span> <span><?php echo $user_details[0]["mobile"]; ?></span></li>
+																<?php if(($user_details[0]['type']=='B2B' || $user_details[0]['type']=='EMP') && $user_details[0]['is_admin']=='1') {?>
+																	<li><span class="title">User Type :</span> <span>Employee (Admin)</span></li>
+																<?php } ?>
+																<?php if($user_details[0]['type']=='B2B' && $user_details[0]['is_admin']!='1') {?>
+                                                                	<li><span class="title">Admin Markup. :</span> <span><?php echo $current_user["admin_markup"]; ?></span></li>
+                                                                <?php } ?>
                                                             </ul>
                                                             <button class="btn" data-toggle="modal" data-target="#edit-profile"><i class="fa fa-pencil"></i> Edit Profile</button>
                                                         </div><!-- end columns -->
@@ -356,29 +388,48 @@
         <div id="edit-profile" class="modal custom-modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h3 class="modal-title">Edit Profile</h3>
-                    </div><!-- end modal-header -->
-                    
-                    <div class="modal-body">
-                       
-                        	<div class="form-group">
-                        		<label>Your Name</label>
-                            	<input type="text" class="form-control" placeholder="Name" name="name" id="name" value="<?php echo $user_details[0]["name"]; ?>"/>
-                            </div><!-- end form-group -->
-                            
-                        	
-                            <div class="form-group">
-                        		<label>Your Mobile No.</label>
-                            	<input type="text" class="form-control" placeholder="Mobile No."  name="mobile" id="mobile" value="<?php echo $user_details[0]["mobile"]; ?>"/>
-                            </div><!-- end form-group -->							                            
-                            
-                            <button id="btn_update" class="btn btn-orange">Save Changes</button>
-							 <div class="form-group" id="status">
-							 </div>
-                        
-                    </div><!-- end modal-bpdy -->
+					<form id="frm_edit_user" action="<?php echo base_url(); ?>user/update_profile" method="post">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+							<h3 class="modal-title">Edit Profile</h3>
+						</div><!-- end modal-header -->
+						
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>Your Name</label>
+										<input type="text" class="form-control" placeholder="Name" name="name" id="name" value="<?php echo $user_details[0]["name"]; ?>"/>
+									</div><!-- end form-group -->
+								</div><!-- end col -->
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>Your Mobile No.</label>
+										<input type="text" class="form-control" placeholder="Mobile No."  name="mobile" id="mobile" value="<?php echo $user_details[0]["mobile"]; ?>"/>
+									</div><!-- end form-group -->							                            
+								</div><!-- end col -->
+							</div><!-- end row -->
+							<div class="row">
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>Your Email.ID</label>
+										<input type="text" class="form-control" placeholder="Email Id"  name="email" id="email" value="<?php echo $user_details[0]["email"]; ?>"/>
+									</div><!-- end form-group -->							                            
+								</div><!-- end col -->
+								<?php
+								if($user_details[0]['type']=='B2B' && $user_details[0]['is_admin']!='1') {?>
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>Admin Markup</label>
+										<input type="text" class="form-control" placeholder="Markup" name="markup" id="markup" value="<?php echo $current_user["admin_markup"]; ?>"/>
+									</div><!-- end form-group -->
+								</div><!-- end col -->
+								<?php } ?>
+							</div>
+							<button id="btn_update" type="button" class="btn btn-orange" onclick="javascript:update_profile(<?php echo $user_details[0]['id']?>);">Save Changes</button>
+							<div class="form-group error" id="status"></div>
+						</div><!-- end modal-bpdy -->
+					</form>
                 </div><!-- end modal-content -->
             </div><!-- end modal-dialog -->
         </div><!-- end edit-profile -->
@@ -728,6 +779,64 @@
 						return flag;
 					}
 				}
+
+				return flag;
+			}
+
+			let uuid = parseInt('<?php echo $user_details[0]['id']?>');
+			// $("#mobile").on('change', function() {
+			// 	console.log('I am pretty sure the mobile box changed');
+			// 	if(!$("#mobile").hasClass('error')) {
+			// 		$("#mobile").addClass('error');
+			// 	}
+			// });
+			// $("#email").on('change', function() {
+			// 	console.log('I am pretty sure the email box changed');
+			// 	if(!$("#email").hasClass('error')) {
+			// 		$("#email").addClass('error');
+			// 	}
+			// });
+
+			function update_profile(uid) {
+				let name = $('#name').val();
+				let mobile = $('#mobile').val();
+				let email = $('#email').val();
+				let admin_markup = $('#markup').val();
+				let flag = true;
+				let data = {
+					'id': uid,
+					'name': name,
+					'mobile': mobile,
+					'email': email,
+					'admin_markup': admin_markup
+				};
+				//alert(JSON.stringify(data));
+				$.ajax({
+					url: '<?php echo base_url(); ?>user/update_profile',
+					dataType: 'json',
+					type: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(data),
+					processData: false,
+					success: function( data, textStatus, jQxhr ){
+						if(data && data.status) {
+							if($('#status').hasClass('error')) {
+								$('#status').removeClass('error');
+								$('#status').addClass('success');
+							}
+							$('#status').html( data.message );
+							setTimeout(() => {
+								window.location.href = '<?php echo base_url(); ?>user/logout';
+							}, 5000);
+						}
+						else {
+							$('#status').html( data.message );
+						}
+					},
+					error: function( jqXhr, textStatus, errorThrown ){
+						console.log( errorThrown );
+					}
+				});				
 
 				return flag;
 			}

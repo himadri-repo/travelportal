@@ -75,6 +75,7 @@ $route['user/booking-details/(:num)'] = 'User_Controller/booking_details/$1';
 $route['user/edit-booking/(:num)'] = 'User_Controller/edit_booking/$1';
 $route['user/cancel-request'] = 'User_Controller/cancelrequest';
 $route['user/addtowallet'] = 'User_Controller/addtowallet';
+$route['user/update_profile'] = 'User_Controller/update_profile';
 $route['paymentgateway/response'] = 'User_Controller/pg_response';
 /*********** TestNG ***********************************/
 
@@ -135,6 +136,7 @@ $route['api/admin/wholesaler/(:num)/supplier/(:num)'] = 'api/Admin/save_wholesal
 $route['api/metadata/(:any)/(:num)'] = 'api/Common/metadata/$1/$2';
 $route['api/bookings/?(:num)?/?(:num)?'] = 'api/Company/bookings/$1/$2';
 $route['api/query/bookings'] = 'api/Company/bookingsquery';
+$route['api/query/bookings/payment_details'] = 'api/Company/payment_details';
 $route['api/save/bookings'] = 'api/Company/upsert_bookings';
 $route['api/company/ticket/(:num)'] = 'api/Company/getticket/$1';
 $route['api/admin/cities'] = 'api/Admin/cities';
