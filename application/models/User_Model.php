@@ -943,6 +943,62 @@ Class User_Model extends CI_Model
 			// die();
 		}
 	}
+
+	public function perform_wallet_transaction($userid, $arr) {
+		$wallet = $this->get('system_wallets_tbl', array('userid' => $userid));
+		$user_info = $this->get('user_tbl', array('id' => $userid));
+
+		if($wallet && count($wallet)>0) {
+			$wallet = $wallet[0];
+		}
+
+		if($user_info && count($user_info)>0) {
+			$user_info = $user_info[0];
+		}
+
+		if($wallet) {
+			$walletid = $wallet['id'];
+			$customeruser_wallet_balance = $wallet['balance'];
+
+			$tbl = 'wallet_transaction_tbl';
+			$wallet_trans_date = date("Y-m-d H:i:s");
+			$pricediff = floatval($arr['amount']);
+			$trans_ref_id = $arr['trans_ref_id'];
+			$trans_ref_date = $arr['trans_ref_date'];
+			$trans_documentid = $arr['trans_documentid'];
+
+			$transaction_id = $this->save("wallet_transaction_tbl", array(
+				"wallet_id" => $walletid, 
+				"date" => $wallet_trans_date, 
+				"trans_id" => uniqid(), 
+				"companyid" => $user_info['companyid'], 
+				"userid" => $userid,
+				"amount" => abs($pricediff), 
+				'dr_cr_type'=> $pricediff>0 ?'CR':'CR',
+				'trans_type'=>$pricediff>0?11:12, /*20 is for Ticket Booking | 11 is Credit Note | 12 is Debit Note*/
+				"trans_ref_id" => $trans_ref_id,
+				"trans_ref_date" => $trans_ref_date,
+				'trans_ref_type'=>$pricediff>0 ?'CREDIT NOTE':'DEBIT NOTE',
+				"trans_documentid" => $trans_documentid,
+				"narration" => "Customer deleted from booking $trans_ref_id. Differance amount credited to customer account as credit note.",
+				"sponsoring_companyid" => $user_info['companyid'],
+				"status" => 1,
+				"approved_by" => $userid,
+				"approved_on" => $trans_ref_date,
+				"target_companyid" => $user_info['companyid'], 
+				"created_by" => $userid,
+				"created_on" => date("Y-m-d H:i:s")
+			));
+
+			log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: $walletid");
+
+			$returnvalue = $this->update_table_data("system_wallets_tbl", array(
+				"id" => $walletid
+			), array('balance' => $customeruser_wallet_balance+$pricediff));
+		}
+
+		return $transaction_id;
+	}
 	
 	public function settle_wallet_transaction($payload) {
 		$id = $payload['id'];

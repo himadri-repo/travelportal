@@ -260,30 +260,32 @@
 												<div class="col-xs-12 col-sm-12 col-md-12">
 													<div class="f-fl-title">
 														<?php
-															$splcode = '';
-															if($flight[$key]["data_collected_from"]=='airiq') {
-																$splcode = 'oxytra-spl-1';
-															}
-															else if($flight[$key]["data_collected_from"]=='e2f') {
-																$splcode = 'oxytra-spl-2';
-															}
-															else if($flight[$key]["data_collected_from"]=='moh') {
-																$splcode = 'oxytra-spl-3';
-															}
-															else if($flight[$key]["data_collected_from"]=='mair') {
-																$splcode = 'oxytra-spl-4';
-															}
-															else if($flight[$key]["data_collected_from"]=='doshi') {
-																$splcode = 'oxytra-spl-5';
-															}
-															else if($flight[$key]["data_collected_from"]=='mpt') {
-																$splcode = 'oxytra-spl-6';
-															}
-															else if($flight[$key]["data_collected_from"]=='tmz') {
-																$splcode = 'oxytra-spl-7';
-															}
-															else if($flight[$key]["data_collected_from"]=='indr') {
-																$splcode = 'oxytra-spl-8';
+															$splcode = 'special fare';
+															if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+																if($flight[$key]["data_collected_from"]=='airiq') {
+																	$splcode = 'oxytra-spl-1';
+																}
+																else if($flight[$key]["data_collected_from"]=='e2f') {
+																	$splcode = 'oxytra-spl-2';
+																}
+																else if($flight[$key]["data_collected_from"]=='moh') {
+																	$splcode = 'oxytra-spl-3';
+																}
+																else if($flight[$key]["data_collected_from"]=='mair') {
+																	$splcode = 'oxytra-spl-4';
+																}
+																else if($flight[$key]["data_collected_from"]=='doshi') {
+																	$splcode = 'oxytra-spl-5';
+																}
+																else if($flight[$key]["data_collected_from"]=='mpt') {
+																	$splcode = 'oxytra-spl-6';
+																}
+																else if($flight[$key]["data_collected_from"]=='tmz') {
+																	$splcode = 'oxytra-spl-7';
+																}
+																else if($flight[$key]["data_collected_from"]=='indr') {
+																	$splcode = 'oxytra-spl-8';
+																}
 															}
 														?>
 														<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>

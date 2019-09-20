@@ -565,11 +565,13 @@ class Company extends REST_Controller {
         $payload = json_decode($stream_clean, true);
         $selectedTicket = [];
         $originalbooking = [];
+        $pricediffaction = 'pass';
 
         if(isset($payload['bookings'])) {
             $bookings = $payload['bookings'];
             $selectedTicket = $payload['selectedticket'];
             $originalbooking = $payload['originalbooking'];
+            $pricediffaction = $payload['price_diff_action'];
         }
         else {
             $bookings = $payload;
@@ -581,7 +583,7 @@ class Company extends REST_Controller {
         try
         {
             foreach ($bookings as $booking) {
-                $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking, $selectedTicket, $originalbooking));
+                $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking, $selectedTicket, $originalbooking, $pricediffaction));
             }
         }
         catch(Exception $ex) {
@@ -609,6 +611,31 @@ class Company extends REST_Controller {
         try
         {
              $this->Search_Model->update('customer_information_tbl', array('status' => 127), array('booking_id' => $bookingid, 'id' => $customerid));
+             
+             $ordered_booking = $this->User_Model->get('bookings_tbl', array('id' => $bookingid));
+             if($ordered_booking!=NULL && count($ordered_booking)>0) {
+                 $ordered_booking = $ordered_booking[0];
+             }
+
+             if($ordered_booking) {
+                $user_info = $this->User_Model->get('user_tbl', array('id' => $ordered_booking['customer_userid']));
+                if($user_info && count($user_info)>0) {
+                    $user_info = $user_info[0];
+                }
+
+                $price = floatval($ordered_booking['price']);
+
+                if(intval($user_info['is_admin'])!==1) {
+                    $transactionid = $this->User_Model->perform_wallet_transaction($ordered_booking['customer_userid'], array(
+                        'amount'=>$price,
+                        'trans_type'=>$price>0?'DR':'CR',
+                        'trans_ref_id'=>$bookingid,
+                        'trans_ref_date'=>date("Y-m-d H:i:s"),
+                        'trans_ref_type'=>$price>0 ?'DEBIT NOTE':'CREDIT NOTE',
+                        "trans_documentid" => $bookingid
+                    ));
+                }
+            }
         }
         catch(Exception $ex) {
             $flg = false;
