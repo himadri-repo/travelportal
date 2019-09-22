@@ -345,7 +345,7 @@ Class Search_Model extends CI_Model
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
 						a.image,b.booking_confirm_date, ifnull((select status from booking_activity_tbl where booking_id=$id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status, 
 						a.aircode, a.image, a1.aircode as aircode1, a1.image as image1,  
-						case when cus.status=2 then 'APPROVED' when b.status=127 then 'REMOVED' else 'PENDING' end as customer_status 
+						case when cus.status=2 then 'APPROVED' when cus.status=127 then 'REMOVED' else 'PENDING' end as customer_status 
 				from tickets_tbl as t 
 				inner join bookings_tbl b on b.ticket_id = t.id
 				inner join airline_tbl a on a.id = t.airline
@@ -913,6 +913,29 @@ Class Search_Model extends CI_Model
 		}
 	}
 
+	public function get_booking($id=-1) {
+		$sql = "select 	b.*, 
+			rpvw.display_name as rateplan_name, rpvw.default as isdefaultrateplan, rpvw.assigned_to as rateplan_assignedto, rpvw.markup as rateplan_markup, rpvw.srvchg as rateplan_srvchg, rpvw.cgst as rateplan_cgst, 
+			rpvw.sgst as rateplan_sgst, rpvw.igst as rateplan_igst, rpvw.disc as rateplan_disc, ifnull(ucfg.field_display_name,'') as field_name, ifnull(ucfg.field_value, 0) as field_value, ifnull(ucfg.field_value_type, 0) as field_value_type, 
+			ifnull(ucfg.status,0) as ucfg_status 
+		from bookings_tbl b 
+		inner join user_tbl u on b.customer_userid =u.id
+		LEFT OUTER JOIN rateplans_vw rpvw on b.rateplanid=rpvw.rateplanid
+		LEFT OUTER JOIN user_config_tbl ucfg on ucfg.user_id=u.id
+		where b.id = $id";
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public function upsert_booking($booking, $selected_ticket, $original_booking, $pricediffaction) {
 		if($booking === NULL) return;
 		$returnedValue = NULL;
@@ -1023,7 +1046,8 @@ Class Search_Model extends CI_Model
 				$customeruserinfo = $this->get('user_tbl', array('id' => $customer_userid));
 				$customercompanyinfo = $this->get('company_tbl', array('id' => $customer_companyid));
 
-				$ordered_booking = $this->get('bookings_tbl', array('id' => $pbooking_id));
+				//$ordered_booking = $this->get('bookings_tbl', array('id' => $pbooking_id));
+				$ordered_booking = $this->get_booking($pbooking_id);
 				if($ordered_booking!=NULL && count($ordered_booking)>0) {
 					$ordered_booking = $ordered_booking[0];
 				}
@@ -1120,12 +1144,20 @@ Class Search_Model extends CI_Model
 					//if not then no need to update ticket information in old booking
 					//if there is price differance then update old booking details
 					if($is_different_tkt && $process_db_interaction) {
-						$return = $this->update('bookings_tbl', array(
-							'ticket_id' => intval($selected_ticket['id']), 
-							'price' => $selected_ticket['price'], 
-							'costprice' => $selected_ticket['price'],
-							'total' => (floatval($selected_ticket['price'])+$markup+$srvchg+$cgst+$sgst)*$qty
-						), array('id' => $original_booking['id']));
+						$price = floatval($selected_ticket['price']) + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
+						if($pricediffaction==='pass') {
+							$return = $this->update('bookings_tbl', array(
+								'ticket_id' => intval($selected_ticket['id']), 
+								'price' => $price, 
+								'costprice' => $selected_ticket['price'],
+								'total' => ($price+$srvchg+$cgst+$sgst)*$qty
+							), array('id' => $original_booking['id']));
+						}
+						else {
+							$return = $this->update('bookings_tbl', array(
+								'ticket_id' => intval($selected_ticket['id']), 
+							), array('id' => $original_booking['id']));
+						}
 					}
 
 					//Perform wallet transaction if any recidue present

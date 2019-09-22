@@ -2075,21 +2075,22 @@ class Search extends Mail_Controller
 
 		if($result["details"])
 		{		 
-				if($result['details'][0]["type"]=="B2B" || $result['details'][0]["type"]=="EMP")
-				{			  
-					//$result["setting"]=$this->Search_Model->setting();
-					$this->load->view('header1',$result);
-					// $this->load->view('thank-youb2b',$result);
-					$this->load->view('thank-youb2c',$result);
-					$this->load->view('footer1');
-				}
-				if($result['details'][0]["type"]=="B2C")
-				{			  
-					//$result["setting"]=$this->Search_Model->setting();
-					$this->load->view('header1',$result);
-					$this->load->view('thank-youb2c',$result);
-					$this->load->view('footer1');
-				}
+			log_message('info', "Search::thankyou - Booking Summary Page: Booking Id: $id | page payload: ".json_encode($result));
+			if($result['details'][0]["type"]=="B2B" || $result['details'][0]["type"]=="EMP")
+			{			  
+				//$result["setting"]=$this->Search_Model->setting();
+				$this->load->view('header1',$result);
+				// $this->load->view('thank-youb2b',$result);
+				$this->load->view('thank-youb2c',$result);
+				$this->load->view('footer1');
+			}
+			if($result['details'][0]["type"]=="B2C")
+			{			  
+				//$result["setting"]=$this->Search_Model->setting();
+				$this->load->view('header1',$result);
+				$this->load->view('thank-youb2c',$result);
+				$this->load->view('footer1');
+			}
 			
 		}	  		 	      
 		else

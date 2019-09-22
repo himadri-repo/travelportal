@@ -635,10 +635,37 @@ class Company extends REST_Controller {
                         "trans_documentid" => $bookingid
                     ));
                 }
+
+                //update booking details as one person deleted
+                if($ordered_booking) {
+                    log_message('info', "Company::delete_booking_customer - Deleting customer: Booking Id : $bookingid | Customer Id : $customerid");
+                    $qty = intval($ordered_booking['qty']);
+                    $newqty = $qty-1;
+                    $admin_markup = floatval($ordered_booking['admin_markup']);
+                    $markup = floatval($ordered_booking['markup']);
+                    $srvchg = floatval($ordered_booking['srvchg']);
+                    $cgst = floatval($ordered_booking['cgst']);
+                    $sgst = floatval($ordered_booking['sgst']);
+                    $igst = floatval($ordered_booking['igst']);
+                    $discount = floatval($ordered_booking['discount']);
+                    $total = round(($price+$srvchg+$cgst+$sgst-$discount)*$newqty);
+                    $costprice = floatval($ordered_booking['costprice']);
+                    
+                    log_message('info', "Company::delete_booking_customer - Updating booking: Qty: $qty | NewQty: $newqty | Price: $price | Admin.Markup: $admin_markup | Total: $total");
+
+                    $result = $this->Search_Model->update('bookings_tbl', array(
+                        'total' => $total,
+                        'qty' => $newqty,
+                        'adult' => $newqty
+                    ), array('id' => $bookingid));
+
+                    log_message('info', "Company::delete_booking_customer - Updating booking: Booking Id: $bookingid | Booking update result: $result");
+                }
             }
         }
         catch(Exception $ex) {
             $flg = false;
+            log_message('error', 'Company::delete_booking_customer - $ex');
         }
 
         $this->set_response($flg, REST_Controller::HTTP_OK);
