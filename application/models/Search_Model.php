@@ -1123,6 +1123,7 @@ Class Search_Model extends CI_Model
 					$bookingid = intval($booking_id);
 					$bookingactivity['booking_id'] = $booking_id;
 
+					//Updating customer information into table
 					log_message('info', 'Search_Model::upsert_booking - Customer List'.json_encode($customers));
 					for ($i=0; $i < count($customers); $i++) { 
 						$customer = &$customers[$i];
