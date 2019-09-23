@@ -608,9 +608,12 @@ class Company extends REST_Controller {
 
     public function delete_booking_customer_get($bookingid=-1, $customerid=-1) {
         $flg = true;
+        $process_db_interaction = true;
         try
         {
+            if($process_db_interaction) {
              $this->Search_Model->update('customer_information_tbl', array('status' => 127), array('booking_id' => $bookingid, 'id' => $customerid));
+            }
              
              $ordered_booking = $this->User_Model->get('bookings_tbl', array('id' => $bookingid));
              if($ordered_booking!=NULL && count($ordered_booking)>0) {
@@ -623,9 +626,20 @@ class Company extends REST_Controller {
                     $user_info = $user_info[0];
                 }
 
-                $price = floatval($ordered_booking['price']);
+                // $price = floatval($ordered_booking['price']);
+                log_message('info', "Company::delete_booking_customer - Before Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Bookings Details: ".json_encode($ordered_booking));
+                $price = floatval($ordered_booking['costprice']);
+                $srvchg = floatval($ordered_booking['srvchg']);
+                $cgst = floatval($ordered_booking['cgst']);
+                $sgst = floatval($ordered_booking['sgst']);
+                $igst = floatval($ordered_booking['igst']);
 
-                if(intval($user_info['is_admin'])!==1) {
+                $refundprice = $price + $srvchg + $cgst + $sgst;
+                log_message('info', "Company::delete_booking_customer - Wallet Trans Info: Booking Id : $bookingid | Customer Id : $customerid | Price : $price value will be credit or debited from wallet");
+
+                log_message('info', "Company::delete_booking_customer - Wallet Trans Info(Changed): Booking Id : $bookingid | Customer Id : $customerid | Price : $refundprice | srvchg : $srvchg | cgst : $cgst | sgst : $sgst");
+
+                if(intval($user_info['is_admin'])!==1 && $process_db_interaction) {
                     $transactionid = $this->User_Model->perform_wallet_transaction($ordered_booking['customer_userid'], array(
                         'amount'=>$price,
                         'trans_type'=>$price>0?'DR':'CR',
@@ -634,6 +648,8 @@ class Company extends REST_Controller {
                         'trans_ref_type'=>$price>0 ?'DEBIT NOTE':'CREDIT NOTE',
                         "trans_documentid" => $bookingid
                     ));
+                    
+                    log_message('info', "Company::delete_booking_customer - After Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Wallet Trans Id: $transactionid");
                 }
 
                 //update booking details as one person deleted
@@ -643,23 +659,23 @@ class Company extends REST_Controller {
                     $newqty = $qty-1;
                     $admin_markup = floatval($ordered_booking['admin_markup']);
                     $markup = floatval($ordered_booking['markup']);
-                    $srvchg = floatval($ordered_booking['srvchg']);
-                    $cgst = floatval($ordered_booking['cgst']);
-                    $sgst = floatval($ordered_booking['sgst']);
-                    $igst = floatval($ordered_booking['igst']);
                     $discount = floatval($ordered_booking['discount']);
-                    $total = round(($price+$srvchg+$cgst+$sgst-$discount)*$newqty);
+
+                    $oldtotal = floatval($ordered_booking['total']);
+                    //$total = round(($price+$srvchg+$cgst+$sgst-$discount)*$newqty);
+                    $total = round(($oldtotal/$qty)*$newqty);
                     $costprice = floatval($ordered_booking['costprice']);
                     
                     log_message('info', "Company::delete_booking_customer - Updating booking: Qty: $qty | NewQty: $newqty | Price: $price | Admin.Markup: $admin_markup | Total: $total");
 
-                    $result = $this->Search_Model->update('bookings_tbl', array(
-                        'total' => $total,
-                        'qty' => $newqty,
-                        'adult' => $newqty
-                    ), array('id' => $bookingid));
-
-                    log_message('info', "Company::delete_booking_customer - Updating booking: Booking Id: $bookingid | Booking update result: $result");
+                    if($process_db_interaction) {
+                        $result = $this->Search_Model->update('bookings_tbl', array(
+                            'total' => $total,
+                            'qty' => $newqty,
+                            'adult' => $newqty
+                        ), array('id' => $bookingid));
+                        log_message('info', "Company::delete_booking_customer - Updating booking: Booking Id: $bookingid | Booking update result: $result");
+                    }
                 }
             }
         }

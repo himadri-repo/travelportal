@@ -940,6 +940,7 @@ Class Search_Model extends CI_Model
 		if($booking === NULL) return;
 		$returnedValue = NULL;
 		$tbl = 'bookings_tbl';
+		$process_db_interaction = true;
 
 		log_message('info', 'Search_Model::upsert_booking - '.json_encode($booking));
 
@@ -955,7 +956,10 @@ Class Search_Model extends CI_Model
 				}
 				log_message('info', 'Search_Model::upsert_booking - Booking Status : '.($bookingStatus==2?'Processed':($bookingStatus==1?'Hold':'')));
 				// this is old booking. so needs to be updated
-				$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
+				if($process_db_interaction) {
+					$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
+				}
+
 				log_message('info', 'Search_Model::upsert_booking - Booking updated : $bookingupdate');
 				$bookingactivity = null; 
 				if(isset($booking['activity']) && count($booking['activity'])>0) {
@@ -963,7 +967,9 @@ Class Search_Model extends CI_Model
 					unset($booking['activity']);
 					$tbl = 'booking_activity_tbl';
 
-					$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
+					if($process_db_interaction) {
+						$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
+					}
 					log_message('info', 'Search_Model::upsert_booking - Booking activity updated : $returnedValue');
 				}
 
@@ -991,7 +997,7 @@ Class Search_Model extends CI_Model
 							$inv_mode = 'no_update_stock';
 						}
 
-						if(intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') {
+						if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
 							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
 							log_message('info', 'Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets');
 						}
@@ -1011,7 +1017,9 @@ Class Search_Model extends CI_Model
 							$no_of_tickets = -1 * $no_of_tickets;
 						}
 						$available = (intval($ticket['no_of_person']) - $no_of_tickets)>0 ? 'YES' : 'NO';
-						$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
+						if($process_db_interaction) {
+							$returnedValue = $this->update($tbl, array('no_of_person'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'availibility'=> (intval($ticket['no_of_person']) - $no_of_tickets), 'available'=> "$available"), array('id' => $ticket['id']));
+						}
 					}
 
 					// new dr./cr. wallet money
@@ -1083,7 +1091,7 @@ Class Search_Model extends CI_Model
 				$is_different_tkt = (intval($selected_ticket['id']) !== intval($ordered_booking['ticket_id']));
 
 				log_message('info', 'Search_Model::upsert_booking - Selected Ticket - '.json_encode($selected_ticket));
-				log_message('info', 'Search_Model::upsert_booking - Customer UserId: $customer_userid | Customer CompanyId: $customer_companyid | Seller UserId: $seller_userid | Seller CompanyId: $seller_companyid');
+				log_message('info', "Search_Model::upsert_booking - Customer UserId: $customer_userid | Customer CompanyId: $customer_companyid | Seller UserId: $seller_userid | Seller CompanyId: $seller_companyid");
 				log_message('info', 'Search_Model::upsert_booking - Customer User Info - '.json_encode($customeruserinfo));
 				log_message('info', 'Search_Model::upsert_booking - Customer Company Info - '.json_encode($customercompanyinfo));
 				log_message('info', 'Search_Model::upsert_booking - Customer Wallet Info - '.json_encode($customerwallet));
@@ -1097,7 +1105,6 @@ Class Search_Model extends CI_Model
 					unset($booking['activity']);
 				}
 
-				$process_db_interaction = true;
 				$customers = null; 
 				if(isset($booking['customers']) && count($booking['customers'])>0) {
 					$customers = $booking['customers'];
@@ -1105,11 +1112,15 @@ Class Search_Model extends CI_Model
 				}
 
 				$booking_id = -1;
-				$pricediff = (floatval($selected_ticket['price']) - floatval($original_booking['rate']))*$qty;
+				$selected_ticket_price = floatval($selected_ticket['cost_price']) + floatval($selected_ticket['spl_markup']) + floatval($selected_ticket['whl_markup']);
+				log_message('info', "Search_Model::upsert_booking - Selected Ticket Price 1 - Selected Ticket Price: $selected_ticket_price | Cost : ".floatval($selected_ticket['cost_price']));
+				log_message('info', "Search_Model::upsert_booking - Selected Ticket Price 2 - Supl.Markup: ".($selected_ticket['spl_markup'])." | Whl.Markup: ".($selected_ticket['whl_markup']));
+
+				$pricediff = ($selected_ticket_price - floatval($original_booking['rate']))*$qty;
 				$customeruser_wallet_balance = floatval($customeruserwallet['balance']);
 
-				log_message('info', 'Search_Model::upsert_booking - Price diff: $pricediff | Target Booking.Cost: '.floatval($booking['costprice']).' | Original Order.Cost: '.$ordered_booking['costprice']." | customer wallet balance: $customeruser_wallet_balance");
-				log_message('info', 'Search_Model::upsert_booking - Price diff: $pricediff | Target Booking.Portal.Price: '.$selected_ticket['price'].' | Original Order.Portal.Price: '.floatval($original_booking['rate'])." | customer wallet balance: $customeruser_wallet_balance");
+				log_message('info', "Search_Model::upsert_booking - Price diff: $pricediff | Target Booking.Cost: ".floatval($booking['costprice']).' | Original Order.Cost: '.$ordered_booking['costprice']." | customer wallet balance: $customeruser_wallet_balance");
+				log_message('info', "Search_Model::upsert_booking - Price diff: $pricediff | Target Booking.Portal.Price: ".$selected_ticket_price.' | Original Order.Portal.Price: '.floatval($original_booking['rate'])." | customer wallet balance: $customeruser_wallet_balance");
 				unset($booking['id']);
 				unset($bookingactivity['activity_id']);
 
@@ -1118,7 +1129,7 @@ Class Search_Model extends CI_Model
 				}
 
 				if($booking_id!==null && intval($booking_id)>0) {
-					log_message('info', 'Search_Model::upsert_booking - New booking id: $booking_id');
+					log_message('info', "Search_Model::upsert_booking - New booking id: $booking_id");
 					$tbl = 'booking_activity_tbl';
 					$bookingid = intval($booking_id);
 					$bookingactivity['booking_id'] = $booking_id;
@@ -1144,13 +1155,16 @@ Class Search_Model extends CI_Model
 					//Check if there is a price differance or not.
 					//if not then no need to update ticket information in old booking
 					//if there is price differance then update old booking details
-					if($is_different_tkt && $process_db_interaction) {
-						$price = floatval($selected_ticket['price']) + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
+					if(($is_different_tkt || $pricediff!=0) && $process_db_interaction) {
+						//$price = floatval($selected_ticket['price']) + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
+						$price = $selected_ticket_price + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
+						
 						if($pricediffaction==='pass') {
 							$return = $this->update('bookings_tbl', array(
 								'ticket_id' => intval($selected_ticket['id']), 
 								'price' => $price, 
-								'costprice' => $selected_ticket['price'],
+								//'costprice' => $selected_ticket['price'],
+								'costprice' => $selected_ticket_price,
 								'total' => ($price+$srvchg+$cgst+$sgst)*$qty
 							), array('id' => $original_booking['id']));
 						}
