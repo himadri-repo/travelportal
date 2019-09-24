@@ -210,7 +210,7 @@ class Users extends REST_Controller {
             'message' => 'Deleted the resource'
         ];
 
-        $this->set_response($message, REST_Controller::HTTP_NO_CONTENT); // NO_CONTENT (204) being the HTTP response code
+        $this->set_response($message, REST_Controller::HTTP_OK); // NO_CONTENT (204) being the HTTP response code
     }
 
     public function currentuser_get($uuid) {
@@ -226,5 +226,53 @@ class Users extends REST_Controller {
                 'message' => 'User could not be found'
             ], REST_Controller::HTTP_NOT_FOUND); // NOT_FOUND (404) being the HTTP response code
         }
+    }
+
+    public function get_user_activities_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $posted_value = json_decode($stream_clean, true);
+        $activities = [];
+
+        if($posted_value!=null) {
+
+            $cities = $this->User_Model->get('city_tbl', array());
+
+            $user_activities = $this->User_Model->get_user_activities('search');
+
+            foreach ($user_activities as $activity) {
+                $user_activity = &$activity;
+
+                $posted_data = json_decode($user_activity['posted_data'], true);
+
+                if($posted_data!=null) {
+                    $source = intval($posted_data['source']);
+                    $source_city_name = '';
+                    $destination = intval($posted_data['destination']);
+                    $destination_city_name = '';
+                    $no_of_person = intval($posted_data['no_of_person']);
+
+                    foreach ($cities as $city) {
+                        if(intval($city['id']) === $source) {
+                            $source_city_name = $city['city'];
+                        }
+                        if(intval($city['id']) === $destination) {
+                            $destination_city_name = $city['city'];
+                        }
+                        if($source_city_name!=='' && $destination_city_name!=='') {
+                            break;
+                        }
+                    }
+
+                    if($source_city_name!=='' && $destination_city_name!=='') {
+                        $user_activity['source_city_name'] = $source_city_name;
+                        $user_activity['destination_city_name'] = $destination_city_name;
+                    }
+
+                    $activities[] = $user_activity;
+                }
+            }
+        }
+
+        $this->set_response($activities, REST_Controller::HTTP_OK); // NO_CONTENT (204) being the HTTP response code
     }
 }

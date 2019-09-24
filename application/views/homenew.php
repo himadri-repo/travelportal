@@ -1,28 +1,3 @@
-               		
-        <!--<section class="flexslider-container" id="flexslider-container-2" style="display:none">
-            <div class="flexslider slider" id="slider-2">
-                <ul class="slides">
-                    <?php
-					foreach($slider as $key=>$value)
-					{
-					?>
-                    <li class="item-1 back-size" 
-					style="background:linear-gradient(rgba(0,0,0,0.3),rgba(0,0,0,0.3)),url(<?php echo base_url(); ?>/upload/thumb/<?php echo $slider[$key]["slider_image_name"]; ?>) 50% 15%;
-	background-size:cover;
-	height:100%;">
-                    	<div class="meta">         
-                            <div class="container">
-                                <h2><?php echo $slider[$key]["slider_title"]; ?></h2>
-                                <?php echo $slider[$key]["slider_description"]; ?>
-                            </div>
-                        </div>
-                    </li>
-                    <?php
-					}
-					?>                   										                                        
-                </ul>
-            </div>                                  
-		</section>-->
 		<!-- end flexslider-container -->
 		<!--================= New Home - Header section ===================-->
 		<section id="head-container" class="head-container">

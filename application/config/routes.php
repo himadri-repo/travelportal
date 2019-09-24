@@ -144,3 +144,4 @@ $route['api/admin/airlines'] = 'api/Admin/airlines';
 $route['api/company/save/tickets'] = 'api/Company/save_tickets';
 $route['api/company/wallet/transactions'] = 'api/Company/wallet_transactions';
 $route['api/company/wallet/transactions/settle'] = 'api/Company/settle_wallet_transaction';
+$route['api/users/activity'] = 'api/Users/get_user_activities';

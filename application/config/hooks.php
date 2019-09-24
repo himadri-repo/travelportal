@@ -12,6 +12,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |
 */
 $hook['post_controller_constructor'][] = array(  'class'    => 'GeneralHooks',
+                                    'function' => 'post_controller_constructor',
+                                    'filename' => 'generalhooks.php',
+                                    'filepath' => 'hooks');
+
+$hook['post_controller'][] = array(  'class'    => 'GeneralHooks',
                                     'function' => 'post_controller',
                                     'filename' => 'generalhooks.php',
                                     'filepath' => 'hooks');

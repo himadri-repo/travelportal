@@ -169,6 +169,9 @@ Class Admin_Model extends CI_Model
 		
 		if($query->num_rows() > 0) {
 			$company = $query->result_array();
+			if($company && count($company)>0) {
+				$company = $company[0];
+			}
 			$wallet_code = $this->abbreviate($customer['name']);
 			$companyabcode = $this->abbreviate($company['display_name']);
 		}
@@ -259,7 +262,14 @@ Class Admin_Model extends CI_Model
 					//Default markup value
 					$user_config = array('user_id' => $customer["id"], 'field_name' => 'markup', 'field_display_name' => 'Markup', 'field_value' => 200, 'field_value_type' => 2, 'status' => 1, 'companyid' => $customer['companyid']);
 					$this->db->insert('user_config_tbl', $user_config);
-				}			
+				} else if($userconfig_data != null) {
+					$defaultB2BMarkup = floatval($userconfig_data['field_value']);
+					$defaultB2BMarkup = $defaultB2BMarkup>0?$defaultB2BMarkup:200;
+					$markupvalue = ($customer['type'] === 'B2B') ? $defaultB2BMarkup : 0;
+					
+					$user_config = array('field_value' => $markupvalue);
+					$this->db->update('user_config_tbl', $user_config, array('id' => $userconfig_data['id']));
+				}
 			}
 			catch(Exception $ex) {
 				throw $ex;

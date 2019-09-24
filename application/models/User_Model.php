@@ -1119,5 +1119,38 @@ Class User_Model extends CI_Model
 
 		return $statusValue;
 	}
+
+	public function get_user_activities($mode) {
+		$qry = '';
+		switch ($mode) {
+			case 'search':
+				$qry = 'select c.display_name as companyname, usr.name membername, ua.*  
+				from user_activities_tbl ua 
+				inner join user_tbl usr on ua.userid=usr.id 
+				inner join company_tbl c on usr.companyid=c.id 
+				where controller=\'search\' and method=\'search_one_way\' 
+				order by usr.id, ua.activityid';
+				break;
+			default:
+				break;
+		}
+
+		if($qry!='') {
+			$query = $this->db->query($qry);
+		
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();		
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+	}
 }	
 ?>
