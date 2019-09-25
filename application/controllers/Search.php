@@ -640,16 +640,34 @@ class Search extends Mail_Controller
 				+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
 				+ ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
 
+		$ticket['cost_price'] = (($price + $ticket['spl_markup'] + $ticket['spl_srvchg'])
+			+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
+			+ ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100));
+
+		if(intval($ticket['cost_price'])===0) {
+				$ticket['cost_price'] = intval($price);
+		}
+	
 		if ($ticket['whl_srvchg'] === 0) {
 			$ticket['whl_cgst'] = 0;
 			$ticket['whl_sgst'] = 0;
 			$ticket['whl_igst'] = 0;
+		}
+		else {
+			$ticket['whl_cgst'] = ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100);
+			$ticket['whl_sgst'] = ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100);
+			$ticket['whl_igst'] = ($ticket['whl_srvchg'] * $ticket['whl_igst'] / 100);
 		}
 
 		if ($ticket['spl_srvchg'] === 0) {
 			$ticket['spl_cgst'] = 0;
 			$ticket['spl_sgst'] = 0;
 			$ticket['spl_igst'] = 0;
+		}
+		else {
+			$ticket['spl_cgst'] = ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100);
+			$ticket['spl_sgst'] = ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100);
+			$ticket['spl_igst'] = ($ticket['spl_srvchg'] * $ticket['spl_igst'] / 100);
 		}
 
 		return $ticket;
@@ -750,7 +768,8 @@ class Search extends Mail_Controller
 				{
 					//this is company admin or employee
 					//$flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
-					$costprice = $ticket["total"] + $ticket["whl_markup"] + $ticket["whl_srvchg"] + ($ticket["whl_srvchg"] * $ticket["whl_cgst"]/100) + ($ticket["whl_srvchg"] * $ticket["whl_sgst"]/100);
+					//$costprice = $ticket["total"] + $ticket["whl_markup"] + $ticket["whl_srvchg"] + ($ticket["whl_srvchg"] * $ticket["whl_cgst"]/100) + ($ticket["whl_srvchg"] * $ticket["whl_sgst"]/100);
+					$costprice = $ticket["total"] + $ticket["spl_markup"] + $ticket["spl_srvchg"] + $ticket["spl_cgst"] + $ticket["spl_sgst"];
 				}
 				else if($current_user["type"]==='B2B' || $current_user["type"]==='B2C') {
 					$costprice = $ticket["price"];
@@ -1164,10 +1183,10 @@ class Search extends Mail_Controller
 			"status"=>0,
 			"price"=>floatval($posteddata['price']),
 			"admin_markup"=>floatval($ticket['adminmarkup']),
-			"markup"=>floatval($ticket['adminmarkup']),
+			"markup"=>0,
 			"srvchg"=>floatval($posteddata['service_charge']),
-			"cgst"=>floatval($posteddata['igst'])/2,
-			"sgst"=>floatval($posteddata['igst'])/2,
+			"cgst"=>floatval($posteddata['igst'])/2, /* This is wrong should be directly taken from cgst value */
+			"sgst"=>floatval($posteddata['igst'])/2, /* This is wrong should be directly taken from sgst value */
 			"igst"=>floatval($posteddata['igst']),
 			"total"=>floatval($posteddata['total_amount']),
 			"costprice"=>floatval($posteddata['costprice']),
@@ -1250,7 +1269,7 @@ class Search extends Mail_Controller
 			//save data to account_transactions_tbl;
 			//If wallet balance is there and amount realized from wallet then add that to accounts
 			//if($amount<=$wallet_amount) {
-			if($wallet_amount>=0) {
+			if($wallet_amount>0) {
 				log_message('info', "[Search:do_wallet_transaction] Transacting Accounts | User Id: $userid | Wallet Id: $walletid | Previous Wallet Balance: $wallet_amount | Transaction amount: $amount");
 
 				$arr=array(
@@ -2338,7 +2357,7 @@ class Search extends Mail_Controller
 			$defaultRP = $rateplans[0];
 			$rateplanid = $defaultRP['id'];
 
-			if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+			if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null && intval($current_user["rateplanid"])>0) {
 				$rateplanid = intval($current_user["rateplanid"]);
 			}
 
@@ -2400,7 +2419,7 @@ class Search extends Mail_Controller
 				// $ticket['price'] += $tax_others;
 				$tax_others = 0;
 				
-				if($defaultRPD !== NULL) {
+				if($defaultRPD !== NULL && count($defaultRPD)>0) {
 					//add wholesaler's part
 					for ($j=0; $j < count($defaultRPD); $j++) { 
 						$rpdetail = $defaultRPD[$j];

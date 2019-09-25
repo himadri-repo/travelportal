@@ -810,7 +810,20 @@ Class User_Model extends CI_Model
 		// $this->db->order_by("w.id", "DESC");
 		// $query = $this->db->get();	
 
-        $arr=array("w.userid"=>$this->session->userdata('user_id'));  	
+		$current_user = $this->session->userdata('current_user');
+		if($current_user) {
+			if(intval($current_user['is_admin'])===1) {
+				$arr=array("w.companyid" => $current_user['companyid'], 'w.userid' => 0);
+			}
+			else {
+				$arr=array("w.userid" => $current_user['id']);
+			}
+		}
+		else {
+			$arr=array("w.userid" => $this->session->userdata('user_id'));
+		}
+		
+
 		$this->db->select('w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, u.name, b.status, w.status as wallet_trans_status');
 		$this->db->from('wallet_transaction_tbl w');
 		$this->db->join('bookings_tbl as b', 'w.trans_documentid = b.id and w.trans_type=20','left');

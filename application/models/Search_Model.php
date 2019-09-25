@@ -759,7 +759,7 @@ Class Search_Model extends CI_Model
 	public function get_bookings($companyid=-1, $userid=-1) {
 		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
 		// $sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
-		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge,
+		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge, (b.markup * b.qty) as markup,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,   
@@ -1054,6 +1054,14 @@ Class Search_Model extends CI_Model
 				$customeruserinfo = $this->get('user_tbl', array('id' => $customer_userid));
 				$customercompanyinfo = $this->get('company_tbl', array('id' => $customer_companyid));
 
+				if($customeruserinfo!=NULL && count($customeruserinfo)>0) {
+					$customeruserinfo = $customeruserinfo[0];
+				}
+
+				if($customercompanyinfo!=NULL && count($customercompanyinfo)>0) {
+					$customercompanyinfo = $customercompanyinfo[0];
+				}
+
 				//$ordered_booking = $this->get('bookings_tbl', array('id' => $pbooking_id));
 				$ordered_booking = $this->get_booking($pbooking_id);
 				if($ordered_booking!=NULL && count($ordered_booking)>0) {
@@ -1112,11 +1120,16 @@ Class Search_Model extends CI_Model
 				}
 
 				$booking_id = -1;
-				$selected_ticket_price = floatval($selected_ticket['cost_price']) + floatval($selected_ticket['spl_markup']) + floatval($selected_ticket['whl_markup']);
+				//$selected_ticket_price = floatval($selected_ticket['cost_price']) + floatval($selected_ticket['spl_markup']) + floatval($selected_ticket['whl_markup']);
+				$selected_ticket_price = floatval($selected_ticket['total']) + floatval($selected_ticket['spl_markup']) + floatval($selected_ticket['whl_markup']);
 				log_message('info', "Search_Model::upsert_booking - Selected Ticket Price 1 - Selected Ticket Price: $selected_ticket_price | Cost : ".floatval($selected_ticket['cost_price']));
 				log_message('info', "Search_Model::upsert_booking - Selected Ticket Price 2 - Supl.Markup: ".($selected_ticket['spl_markup'])." | Whl.Markup: ".($selected_ticket['whl_markup']));
 
 				$pricediff = ($selected_ticket_price - floatval($original_booking['rate']))*$qty;
+				if(intval($customeruser['is_admin'])===1) {
+					$pricediff = 0;
+				}
+
 				$customeruser_wallet_balance = floatval($customeruserwallet['balance']);
 
 				log_message('info', "Search_Model::upsert_booking - Price diff: $pricediff | Target Booking.Cost: ".floatval($booking['costprice']).' | Original Order.Cost: '.$ordered_booking['costprice']." | customer wallet balance: $customeruser_wallet_balance");
@@ -1180,8 +1193,9 @@ Class Search_Model extends CI_Model
 					if($pricediff!=0 && $customeruserwallet && intval($customeruser['is_admin'])!=1 && $pricediffaction==='pass') {
 						$tbl = 'wallet_transaction_tbl';
 						$wallet_trans_date = date("Y-m-d H:i:s");
+						$transaction_id = -1;
 
-						if($process_db_interaction) {
+						if($process_db_interaction && intval($customeruserinfo['is_admin'])!=1) {
 							$transaction_id = $this->save("wallet_transaction_tbl", array(
 								"wallet_id" => $customeruserwallet['id'], 
 								"date" => $wallet_trans_date, 
@@ -1206,24 +1220,26 @@ Class Search_Model extends CI_Model
 							));
 						}
 
-						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$customerwallet['id']." | Wallet Balance : ".floatval($booking['costprice']));
-						$custuserid = $ordered_booking['customer_userid'];
-						$custuserwalletid = $customeruserwallet['id'];
+						if($transaction_id>-1) {
+							log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$customerwallet['id']." | Wallet Balance : ".floatval($booking['costprice']));
+							$custuserid = $ordered_booking['customer_userid'];
+							$custuserwalletid = $customeruserwallet['id'];						
 
-						if($process_db_interaction) {
-							$returnvalue = $this->update("system_wallets_tbl", array('balance' => $customeruser_wallet_balance-$pricediff), array(
-								"id" => $customeruserwallet['id']
-							));
+							if($process_db_interaction) {
+								$returnvalue = $this->update("system_wallets_tbl", array('balance' => $customeruser_wallet_balance-$pricediff), array(
+									"id" => $customeruserwallet['id']
+								));
+							}
+
+							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".($customeruser_wallet_balance-$pricediff).' | Transaction Type : '.($pricediff>0 ?'DEBIT NOTE':'CREDIT NOTE'));
 						}
-
-						log_message('info', "Search_Model::upsert_booking - Wallet balance : ".($customeruser_wallet_balance-$pricediff).' | Transaction Type : '.($pricediff>0 ?'DEBIT NOTE':'CREDIT NOTE'));
 
 						$company = $this->get('company_tbl', array('id' => $customer_companyid));
 						if($company!=NULL && count($company)>0) {
 							$company = $company[0];
 						}
 
-						if($pricediff!=0) {
+						if($pricediff!=0 && intval($customeruserinfo['is_admin'])!=1) {
 							log_message('info', "[Search:upsert_booking] Transacting Accounts | User Id: $custuserid | Wallet Id: $custuserwalletid | Previous Wallet Balance: $customeruser_wallet_balance | Transaction amount: $pricediff");
 				
 							$arr=array(
@@ -1274,11 +1290,12 @@ Class Search_Model extends CI_Model
 						//First debit customer wallet account
 						if($process_db_interaction) {
 							$transaction_id = $this->save("wallet_transaction_tbl", array(
-								"wallet_id" => $customerwallet['wallet_id'], 
+								"wallet_id" => $customerwallet['id'], 
 								"date" => date("Y-m-d H:i:s"), 
 								"trans_id" => uniqid(), 
 								"companyid" => $customer_companyid, 
-								"amount" => floatval($booking['costprice']), 
+								//"amount" => floatval($booking['costprice']), 
+								"amount" => floatval($booking['total']), 
 								"dr_cr_type" => 'DR', 
 								"trans_type" => 20, /* 20 is for booking type transaction */
 								"trans_ref_id" => $bookingid,
@@ -1296,24 +1313,25 @@ Class Search_Model extends CI_Model
 							));
 						}
 
-						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$customerwallet['wallet_id']." | Wallet Balance : ".floatval($booking['costprice']));
+						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$customerwallet['id']." | Wallet Balance : ".floatval($booking['total']));
 						if(intval($transaction_id)>0 && $process_db_interaction) {
-							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($customerwallet['balance'])-floatval($booking['costprice']))), 
+							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($customerwallet['balance'])-floatval($booking['total']))), 
 							array(
-								"id" => $customerwallet['wallet_id']
+								"id" => $customerwallet['id']
 							));
 
-							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($customerwallet['balance'])-floatval($booking['costprice'])));
+							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($customerwallet['balance'])-floatval($booking['total'])));
 						}
 
 						if($process_db_interaction) {
 							//Second credit seller wallet account
 							$transaction_id = $this->save("wallet_transaction_tbl", array(
-								"wallet_id" => $sellerwallet['wallet_id'], 
+								"wallet_id" => $sellerwallet['id'], 
 								"date" => date("Y-m-d H:i:s"), 
 								"trans_id" => uniqid(), 
 								"companyid" => $seller_companyid, 
-								"amount" => floatval($booking['costprice']), 
+								//"amount" => floatval($booking['costprice']), 
+								"amount" => floatval($booking['total']), 
 								"dr_cr_type" => 'CR', 
 								"trans_type" => 9, /* 9 is for transfer */
 								"trans_ref_id" => $bookingid,
@@ -1331,14 +1349,14 @@ Class Search_Model extends CI_Model
 							));
 						}
 
-						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$sellerwallet['wallet_id']." | Wallet Balance : ".floatval($booking['costprice']));
+						log_message('info', "Search_Model::upsert_booking - Wallet transaction id : $transaction_id | wallet id: ".$sellerwallet['id']." | Wallet Balance : ".floatval($booking['total']));
 						if(intval($transaction_id)>0 && $process_db_interaction) {
-							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($sellerwallet['balance'])+floatval($booking['costprice']))), 
+							$returnvalue = $this->update("system_wallets_tbl", array('balance' => (floatval($sellerwallet['balance'])+floatval($booking['total']))), 
 							array(
-								"id" => $sellerwallet['wallet_id']
+								"id" => $sellerwallet['id']
 							));
 
-							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($sellerwallet['balance'])+floatval($booking['costprice'])));
+							log_message('info', "Search_Model::upsert_booking - Wallet balance : ".(floatval($sellerwallet['balance'])+floatval($booking['total'])));
 						}
 					}
 
@@ -1364,10 +1382,10 @@ Class Search_Model extends CI_Model
 						left outer join user_tbl usr on wl.userid=usr.id and usr.active=1";
 		
 		if($companyid!==NULL && $companyid!==-1) {
-			$sql = $sql." where ((wl.sponsoring_companyid=$companyid or -1=$companyid) and wl.userid is null) and wl.status=1 and wl.type=2;";
+			$sql = $sql." where ((wl.companyid=$companyid or -1=$companyid) and wl.userid=0) and wl.status=1 and wl.type=1";
 		} 
 		else if($userid!==NULL && $userid!==-1) {
-			$sql = $sql." where (wl.userid=$userid or -1=$userid) and wl.status=1 and wl.type=2;";
+			$sql = $sql." where (wl.userid=$userid or -1=$userid) and wl.status=1 and wl.type=2";
 		}
 
 		$query = $this->db->query($sql);

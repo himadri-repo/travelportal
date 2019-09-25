@@ -244,7 +244,7 @@ class Mail_Controller  extends CI_Controller
 		$current_user = $this->session->userdata("current_user");
 		$wallet = NULL;
 
-		if($this->session->userdata('user_id') && $current_user['is_admin']!=='1') {
+		if(intval($this->session->userdata('user_id'))>0 && intval($current_user['is_admin'])!==1) {
 			$mywallet = $this->Search_Model->getMyWallet($this->session->userdata('user_id'), -1);
 			if($mywallet && count($mywallet)>0) {
 				//$result["mywallet"] = $mywallet[0];
@@ -255,27 +255,17 @@ class Mail_Controller  extends CI_Controller
 				$wallet = array('balance' => 0);
 			}
 		}
-		else if($companyid) {
+		else if(intval($companyid)>0) {
 			$mywallet = $this->Search_Model->getMyWallet(-1, $companyid);
 			
 			if($mywallet && count($mywallet)>0) {
-				$mywallet=$this->Search_Model->getMyWallet(-1, $companyid);
-				if($mywallet && count($mywallet)>0) {
-					//$result["mywallet"] = $mywallet[0];
-					$wallet = $mywallet[0];
-				}
-				else {
-					//$result["mywallet"] = array('balance' => 0);
-					$wallet = array('balance' => 0);
-				}
+				$wallet = $mywallet[0];
 			}
 			else {
-				//$result["mywallet"] = array('balance' => 0);
 				$wallet = array('balance' => 0);
 			}
 		}
 		else {
-			//$result["mywallet"] = array('balance' => 0);
 			$wallet = array('balance' => 0);
 		}
 

@@ -153,7 +153,8 @@
                                                     <div class="stat-block">
 													    <a style="color:#303030;text-decoration:none" href="<?php echo base_url(); ?>user/transaction">
                                                         <span><i class="fa fa-inr"></i></span>
-                                                        <h3><?php echo number_format($wallet[0]["wallet"],2,".",","); ?></h3>
+                                                        <!-- <h3><?php //echo number_format($wallet[0]["wallet"],2,".",","); ?></h3> -->
+														<h3><?php echo number_format($wallet_summary[0]['wallet_balance'],2,".",","); ?></h3>
                                                         <p>Wallet</p>
 														</a>
                                                     </div>

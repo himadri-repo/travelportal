@@ -457,19 +457,20 @@ class Company extends REST_Controller {
 		// $ticket['finalvalue'] = $tax_others;
         // $ticket['price'] += $tax_others;
 
-        if(!(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B')) {
-            if ($ticket['whl_srvchg'] > 0) {
-                $ticket['spl_srvchg'] += $ticket['whl_srvchg'];
-                $ticket['spl_cgst'] += $ticket['whl_cgst'];
-                $ticket['spl_sgst'] += $ticket['whl_sgst'];
-                $ticket['spl_igst'] += $ticket['whl_igst'];
+        // Original code : This code commented to have below code
+        // if(!(intval($ticket['supplierid']) === intval($companyid) && $usertype !== 'B2B')) {
+        //     if ($ticket['whl_srvchg'] > 0) {
+        //         $ticket['spl_srvchg'] += $ticket['whl_srvchg'];
+        //         $ticket['spl_cgst'] += $ticket['whl_cgst'];
+        //         $ticket['spl_sgst'] += $ticket['whl_sgst'];
+        //         $ticket['spl_igst'] += $ticket['whl_igst'];
 
-                $ticket['whl_srvchg'] = 0;
-                $ticket['whl_cgst'] = 0;
-                $ticket['whl_sgst'] = 0;
-                $ticket['whl_igst'] = 0;
-            }
-        }
+        //         $ticket['whl_srvchg'] = 0;
+        //         $ticket['whl_cgst'] = 0;
+        //         $ticket['whl_sgst'] = 0;
+        //         $ticket['whl_igst'] = 0;
+        //     }
+        // }
         
         $price = $ticket['price'];
 
@@ -494,11 +495,21 @@ class Company extends REST_Controller {
 			$ticket['whl_sgst'] = 0;
 			$ticket['whl_igst'] = 0;
 		}
+		else {
+			$ticket['whl_cgst'] = ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100);
+			$ticket['whl_sgst'] = ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100);
+			$ticket['whl_igst'] = ($ticket['whl_srvchg'] * $ticket['whl_igst'] / 100);
+		}
 
 		if ($ticket['spl_srvchg'] === 0) {
 			$ticket['spl_cgst'] = 0;
 			$ticket['spl_sgst'] = 0;
 			$ticket['spl_igst'] = 0;
+		}
+		else {
+			$ticket['spl_cgst'] = ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100);
+			$ticket['spl_sgst'] = ($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100);
+			$ticket['spl_igst'] = ($ticket['spl_srvchg'] * $ticket['spl_igst'] / 100);
 		}
 
 		return $ticket;
