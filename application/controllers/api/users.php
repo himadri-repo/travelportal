@@ -242,14 +242,28 @@ class Users extends REST_Controller {
             foreach ($user_activities as $activity) {
                 $user_activity = &$activity;
 
-                $posted_data = json_decode($user_activity['posted_data'], true);
+                $useragent = $user_activity['user_agent'];
+                $device = 'Desktop';
+                if($useragent!==NULL) {
+                    $device = strpos(strtolower($useragent), 'mobile')>-1?'Mobile':'Desktop';
+                }
+                $user_activity['device'] = $device;
+                $requested_on = (new DateTime($user_activity['requested_on']))->setTimezone(new DateTimeZone('Asia/Kolkata'));
+                $user_activity['requested_on'] = $requested_on->format('Y-m-d H:i:s');
 
+                $la_time = new DateTimeZone('America/Los_Angeles');
+
+                $posted_data = json_decode($user_activity['posted_data'], true);
                 if($posted_data!=null) {
                     $source = intval($posted_data['source']);
                     $source_city_name = '';
                     $destination = intval($posted_data['destination']);
                     $destination_city_name = '';
                     $no_of_person = intval($posted_data['no_of_person']);
+                    $travel_date = '';
+                    if(isset($posted_data['departure_date'])) {
+                        $travel_date = (new DateTime($posted_data['departure_date']))->format('Y-m-d');
+                    }
 
                     foreach ($cities as $city) {
                         if(intval($city['id']) === $source) {
@@ -266,6 +280,8 @@ class Users extends REST_Controller {
                     if($source_city_name!=='' && $destination_city_name!=='') {
                         $user_activity['source_city_name'] = $source_city_name;
                         $user_activity['destination_city_name'] = $destination_city_name;
+                        $user_activity['no_of_person'] = $no_of_person;
+                        $user_activity['travel_date'] = $travel_date;
                     }
 
                     $activities[] = $user_activity;

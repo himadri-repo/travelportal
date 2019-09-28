@@ -1137,7 +1137,7 @@ Class User_Model extends CI_Model
 		$qry = '';
 		switch ($mode) {
 			case 'search':
-				$qry = 'select c.display_name as companyname, usr.name membername, ua.*  
+				$qry = 'select c.display_name as companyname, usr.name membername, usr.mobile, ua.*  
 				from user_activities_tbl ua 
 				inner join user_tbl usr on ua.userid=usr.id 
 				inner join company_tbl c on usr.companyid=c.id 
