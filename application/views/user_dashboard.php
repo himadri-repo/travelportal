@@ -342,7 +342,7 @@
                                                     <table class="table table-hover">
                                                         <tbody>
                                                             <?php
-                                                             if($sale_order && is_array($sale_order))
+                                                             if(isset($sale_order) && $sale_order!==NULL && is_array($sale_order))
 														     {
 															  foreach($sale_order as $key=>$value)
 															  {

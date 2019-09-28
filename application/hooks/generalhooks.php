@@ -53,6 +53,9 @@ class GeneralHooks {
             $servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
             $servername = str_replace('www.', '', $servername);
 
+            log_message('info', "Hooks:Post_Controller - Current_User => ".json_encode($current_user));
+            log_message('info', "Hooks:Post_Controller - Company => ".json_encode($company));
+
             log_message('info', "Hooks:Post_Controller - SERVER => ".json_encode($_SERVER));
             log_message('info', "Hooks:Post_Controller - POST => ".json_encode($_POST));
             if($current_user!=null && intval($current_user['id'])>0) {

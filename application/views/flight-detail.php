@@ -242,21 +242,6 @@
 										<?php 
 										} ?>
 										
-										
-										<!--<div class="form-group">
-										    <label>SGST <?php echo $setting[0]["sgst"];?> % </label>
-                                    		<input type="text" name="sgst" id="sgst" value="<?php echo number_format(($setting[0]["service_charge"]*$setting[0]["sgst"]/100),2,".",""); ?>" class="form-control" readonly/>                                       
-                                        </div>
-										
-										<div class="form-group">
-										    <label>CGST <?php echo $setting[0]["cgst"];?> % </label>
-                                    		<input type="text" name="cgst" id="cgst" value="<?php echo number_format(($setting[0]["service_charge"]*$setting[0]["cgst"]/100),2,".",""); ?>" class="form-control" readonly/>                                       
-                                        </div>
-										
-										<div class="form-group">
-										    <label>IGST <?php echo $setting[0]["igst"];?> %</label>
-                                    		<input type="text" name="igst" id="igst" value="<?php echo number_format(($setting[0]["service_charge"]*$setting[0]["igst"]/100),2,".",""); ?>" class="form-control" readonly/>                                       
-                                        </div>-->
 										<?php if($this->session->userdata('user_id')==$flight[0]["uid"])
 										{
 											?>
