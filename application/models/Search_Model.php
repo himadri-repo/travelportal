@@ -759,7 +759,7 @@ Class Search_Model extends CI_Model
 	public function get_bookings($companyid=-1, $userid=-1) {
 		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
 		// $sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
-		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge, (b.markup * b.qty) as markup,
+		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge, (b.markup) as markup,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as status,   
@@ -1107,6 +1107,7 @@ Class Search_Model extends CI_Model
 				log_message('info', 'Search_Model::upsert_booking - Customer Booking Info - '.json_encode($ordered_booking));
 				log_message('info', 'Search_Model::upsert_booking - Customer User Wallet Info - '.json_encode($customeruserwallet));
 				log_message('info', 'Search_Model::upsert_booking - Customer Original Booking - '.json_encode($original_booking));
+				log_message('info', 'Search_Model::upsert_booking - Original Customer Info - '.json_encode($customeruser));
 
 				if(isset($booking['activity']) && count($booking['activity'])>0) {
 					$bookingactivity = $booking['activity'][0];
@@ -1171,6 +1172,8 @@ Class Search_Model extends CI_Model
 					if(($is_different_tkt || $pricediff!=0) && $process_db_interaction) {
 						//$price = floatval($selected_ticket['price']) + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
 						$price = $selected_ticket_price + floatval($selected_ticket['admin_markup']) + floatval($ordered_booking['field_value']);
+
+						log_message('info', "Search_Model::upsert_booking - Updating price difference into ticket : $price | price differance action: $pricediffaction");
 						
 						if($pricediffaction==='pass') {
 							$return = $this->update('bookings_tbl', array(
@@ -1180,22 +1183,24 @@ Class Search_Model extends CI_Model
 								'costprice' => $selected_ticket_price,
 								'total' => ($price+$srvchg+$cgst+$sgst)*$qty
 							), array('id' => $original_booking['id']));
+							log_message('info', "Search_Model::upsert_booking - Updating price difference into ticket updated : $return | Ticket: ".intval($selected_ticket['id'])." | Price : $price | Cost price : $selected_ticket_price | Total : ".(($price+$srvchg+$cgst+$sgst)*$qty));
 						}
 						else {
 							$return = $this->update('bookings_tbl', array(
 								'ticket_id' => intval($selected_ticket['id']), 
 							), array('id' => $original_booking['id']));
+							log_message('info', "Search_Model::upsert_booking - Updating price difference into ticket updated (Since absorbe) : $return | Ticket: ".intval($selected_ticket['id']));
 						}
 					}
 
 					//Perform wallet transaction if any recidue present
 					//Pass the price differance to customer if wholesaler accept it
-					if($pricediff!=0 && $customeruserwallet && intval($customeruser['is_admin'])!=1 && $pricediffaction==='pass') {
+					if($pricediff!=0 && $customeruserwallet!=NULL && intval($customeruserwallet['id'])>0 && intval($customeruser['is_admin'])!=1 && $pricediffaction==='pass') {
 						$tbl = 'wallet_transaction_tbl';
 						$wallet_trans_date = date("Y-m-d H:i:s");
 						$transaction_id = -1;
 
-						if($process_db_interaction && intval($customeruserinfo['is_admin'])!=1) {
+						if($process_db_interaction && intval($customeruser['is_admin'])!=1) {
 							$transaction_id = $this->save("wallet_transaction_tbl", array(
 								"wallet_id" => $customeruserwallet['id'], 
 								"date" => $wallet_trans_date, 
@@ -1218,6 +1223,8 @@ Class Search_Model extends CI_Model
 								"created_by" => $customer_userid,
 								"created_on" => $wallet_trans_date
 							));
+
+							log_message('info', "Search_Model::upsert_booking - Updating price difference into ticket updated (Since absorbe) : $return | Ticket: ".intval($selected_ticket['id']));
 						}
 
 						if($transaction_id>-1) {
@@ -1239,7 +1246,7 @@ Class Search_Model extends CI_Model
 							$company = $company[0];
 						}
 
-						if($pricediff!=0 && intval($customeruserinfo['is_admin'])!=1) {
+						if($pricediff!=0 && intval($customeruser['is_admin'])!=1) {
 							log_message('info', "[Search:upsert_booking] Transacting Accounts | User Id: $custuserid | Wallet Id: $custuserwalletid | Previous Wallet Balance: $customeruser_wallet_balance | Transaction amount: $pricediff");
 				
 							$arr=array(
@@ -1249,8 +1256,8 @@ Class Search_Model extends CI_Model
 								"documentid" => $transaction_id,
 								"document_date" => $wallet_trans_date,
 								"document_type" => $pricediff>0?4:3, /* 1 = Booking | 2 = Payment | 3 = Credit Note | 4 = Debit Note | 5 = Refund | 6 = Withdrawl */
-								"debit" => $pricediff < 0 ? abs($pricediff) : 0,
-								"credit" => $pricediff > 0 ? abs($pricediff) : 0,
+								"debit" => $pricediff > 0 ? abs($pricediff) : 0,
+								"credit" => $pricediff < 0 ? abs($pricediff) : 0,
 								"companyid" => $customer_companyid,
 								//"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
 								"created_by" => $custuserid,
@@ -1260,28 +1267,6 @@ Class Search_Model extends CI_Model
 							if($process_db_interaction) {
 								$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
 							}
-
-							// if($customeruser_wallet_balance>=0 && $pricediff>0) {
-							// 	log_message('info', "[Search:upsert_booking] Transacting Accounts | User Id: $custuserid | Wallet Id: $custuserwalletid | Previous Wallet Balance: $customeruser_wallet_balance | Transaction amount: $pricediff");
-				
-							// 	$arr=array(
-							// 		"voucher_no" => $this->Search_Model->get_next_voucherno($company),
-							// 		"transacting_companyid" => $customer_companyid,
-							// 		"transacting_userid" => $custuserid,
-							// 		"documentid" => $transaction_id,
-							// 		"document_date" => $wallet_trans_date,
-							// 		"document_type" => 2, /* Payment receive */
-							// 		"credit" => $pricediff>0?$pricediff:0,
-							// 		"companyid" => $customer_companyid,
-							// 		//"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
-							// 		"created_by" => $custuserid,
-							// 		"created_on" => date("Y-m-d H:i:s")
-							// 	);
-							// 	$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
-							// }
-							// else {
-							// 	log_message('info', "[Search:upsert_booking] Transacting Accounts | User Id: $custuserid | Wallet Id: $custuserwalletid | Previous Wallet Balance: $customeruser_wallet_balance | Transaction amount: $pricediff");
-							// }
 						}
 					}
 

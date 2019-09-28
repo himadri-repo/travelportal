@@ -14,7 +14,7 @@ Class Admin_Model extends CI_Model
 		$this->db->select('m.*');
 		$this->db->from('modules_tbl as m');
 		$this->db->where('m.code & '.$permision);
-        	$this->db->order_by("m.category asc, m.display_order asc");
+        $this->db->order_by("m.category asc, m.display_order asc");
 		$query = $this->db->get();
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 

@@ -67,20 +67,26 @@ class Common extends REST_Controller {
         $modules = $this->Admin_Model->get_modules($currentuser["permission"]);
         $category = ''; //count($modules)>0?$modules[0]["category"]:0;
         $index=0;
-        for ($i=0; $i<count($modules); $i++) { 
-            if($modules[$i]["category"]==$category)
-            {
-                $index++;
+        for ($i=0; $i<count($modules); $i++) {
+            if($modules[$i]["category"] !== NULL) {
+                if($modules[$i]["category"]==$category)
+                {
+                    $index++;
+                }
+                else {
+                    $index = 0;
+                }
+                $menus[$modules[$i]["category"]][$index] = array('name'=>$modules[$i]["name"], 'display_name'=>$modules[$i]["display_name"], 'path'=>$modules[$i]["path"], 'code'=>$modules[$i]["code"], 'active'=>$modules[$i]["active"]);
+                
+                $category = $modules[$i]["category"];
             }
             else {
-                $index = 0;
+                $menus[$modules[$i]["display_name"]][$index] = array('name'=>$modules[$i]["name"], 'display_name'=>$modules[$i]["display_name"], 'path'=>$modules[$i]["path"], 'code'=>$modules[$i]["code"], 'active'=>$modules[$i]["active"]);
             }
-            $menus[$modules[$i]["category"]][$index] = array('name'=>$modules[$i]["name"], 'display_name'=>$modules[$i]["display_name"], 'path'=>$modules[$i]["path"], 'code'=>$modules[$i]["code"], 'active'=>$modules[$i]["active"]);
-            
-            $category = $modules[$i]["category"];
         }
 
-        $this->response($menus, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+        //$this->response($menus, REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
+        $this->set_response($menus, REST_Controller::HTTP_OK);
     }
 
     public function metadata_get($object_type, $companyid=0) {
