@@ -1142,7 +1142,7 @@ Class User_Model extends CI_Model
 				inner join user_tbl usr on ua.userid=usr.id 
 				inner join company_tbl c on usr.companyid=c.id 
 				where controller=\'search\' and method=\'search_one_way\' 
-				order by usr.id, ua.activityid';
+				order by usr.id, ua.activityid DESC';
 				break;
 			default:
 				break;
