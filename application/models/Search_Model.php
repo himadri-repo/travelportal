@@ -1566,6 +1566,93 @@ Class Search_Model extends CI_Model
 		}
 	}
 
+	public function statistics($payload) {
+		$companyid = $payload['filter']['companyid'];
+		$pastdays = isset($payload['filter']['pastdays']) ? intval($payload['filter']['pastdays']) : 7;
+		$sql = "select * from stats_vw where companyid=$companyid";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function historical_sales($payload) {
+		$companyid = $payload['filter']['companyid'];
+		$pastdays = isset($payload['filter']['pastdays']) ? intval($payload['filter']['pastdays']) : 7;
+		$sql = "select bk.seller_companyid, DATE_FORMAT(bk.booking_date, '%m-%d') as `day`, (bk.costprice+bk.markup+bk.srvchg+bk.cgst+bk.sgst) as total
+			from bookings_tbl bk
+			where bk.status=2 and (bk.booking_date>=(DATE_SUB(DATE_FORMAT(now(), '%Y-%m-%d 00:00:00'), INTERVAL $pastdays DAY))) 
+			and (bk.customer_userid!=bk.seller_userid) and bk.seller_companyid=$companyid
+			group by bk.seller_companyid, DATE_FORMAT(bk.booking_date, '%m-%d')";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function inventory_circle($payload) {
+		$companyid = $payload['filter']['companyid'];
+		$pastdays = isset($payload['filter']['pastdays']) ? intval($payload['filter']['pastdays']) : 7;
+		$sql = "select tkt.companyid, concat(c1.code, '-', c2.code) as circle, count(tkt.no_of_person) as inventory
+			from tickets_tbl tkt
+			inner join city_tbl c1 on tkt.source = c1.id
+			inner join city_tbl c2 on tkt.destination = c2.id
+			where tkt.no_of_person>0 and tkt.approved=1 
+			and tkt.available='YES' and trip_type='ONE'
+			and tkt.departure_date_time>=DATE_FORMAT(now(), '%Y-%m-%d') and tkt.companyid=$companyid
+			group by tkt.companyid, concat(c1.code, '-', c2.code)
+			order by count(tkt.no_of_person) DESC
+			limit 12";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function inventory_search($payload) {
+		$companyid = $payload['filter']['companyid'];
+		$pastdays = isset($payload['filter']['pastdays']) ? intval($payload['filter']['pastdays']) : 7;
+		$sql = "select usr.companyid, DATE_FORMAT(usra.requested_on, '%d-%b') as req_date, count(usra.userid) as enquiry
+			from user_activities_tbl usra
+			inner join user_tbl usr on usr.id=usra.userid and usr.active=1
+			where usra.controller='search' and usra.method='search_one_way' 
+			and (usra.requested_on>=(DATE_SUB(DATE_FORMAT(now(), '%Y-%m-%d 00:00:00'), INTERVAL 10 DAY))) 
+			and usr.companyid=$companyid 
+			group by usr.companyid, DATE_FORMAT(usra.requested_on, '%Y-%m-%d')
+			limit 12";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 	private function abbreviate($string) {
 		$abbreviation = "";

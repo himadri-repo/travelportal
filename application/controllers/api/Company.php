@@ -731,7 +731,7 @@ class Company extends REST_Controller {
             $wallet_transactions = $this->User_Model->get_wallet_transactions($payload);
         }
         catch(Exception $ex) {
-
+            log_message('error', $ex);
         }
 
         $this->set_response($wallet_transactions, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
@@ -745,10 +745,30 @@ class Company extends REST_Controller {
             $status = $this->User_Model->settle_wallet_transaction($payload);
         }
         catch(Exception $ex) {
-
+            log_message('error', $ex);
         }
 
         $this->set_response($status, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function statistics_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $stats = array();
+
+        try {
+            $stats['stats'] = $this->Search_Model->statistics($payload);
+
+            $stats['historical_sales'] = $this->Search_Model->historical_sales($payload);
+            $stats['inventory_circle'] = $this->Search_Model->inventory_circle($payload);
+            $stats['inventory_search'] = $this->Search_Model->inventory_search($payload);
+
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($stats, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 }
 
