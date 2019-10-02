@@ -1654,6 +1654,44 @@ Class Search_Model extends CI_Model
 		}
 	}
 
+	public function pnr_search($payload) {
+		$companyid = isset($payload['filter']['companyid']) ? $payload['filter']['companyid'] : -1;
+		$pnr = isset($payload['filter']['pnr']) ? $payload['filter']['pnr'] : '';
+		if($pnr!='') {
+			$sql = "select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
+							cus.first_name, cus.last_name, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
+					from customer_information_tbl cus
+					inner join bookings_tbl bk on bk.id=cus.booking_id -- and bk.status=2
+					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
+					inner join city_tbl c1 on tkt.source=c1.id
+					inner join city_tbl c2 on tkt.destination=c2.id
+					where cus.pnr='$pnr' and (bk.seller_companyid=$companyid)
+					union all
+					select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
+							cus.first_name, cus.last_name, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
+					from customer_information_tbl cus
+					inner join bookings_tbl bk on bk.id=cus.refrence_id -- and bk.status=2
+					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
+					inner join city_tbl c1 on tkt.source=c1.id
+					inner join city_tbl c2 on tkt.destination=c2.id
+					where cus.pnr='$pnr' and (bk.seller_companyid=$companyid and bk.seller_companyid!=bk.customer_companyid)";
+			
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();		
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+	}
+
 	private function abbreviate($string) {
 		$abbreviation = "";
 		$string = ucwords($string);

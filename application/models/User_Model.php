@@ -1133,16 +1133,17 @@ Class User_Model extends CI_Model
 		return $statusValue;
 	}
 
-	public function get_user_activities($mode) {
+	public function get_user_activities($mode, $postedvalue) {
 		$qry = '';
+		$companyid = isset($postedvalue['filter']['companyid']) ? intval($postedvalue['filter']['companyid']) : -1;
 		switch ($mode) {
 			case 'search':
-				$qry = 'select c.display_name as companyname, usr.name membername, usr.mobile, ua.*  
+				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.*  
 				from user_activities_tbl ua 
 				inner join user_tbl usr on ua.userid=usr.id 
 				inner join company_tbl c on usr.companyid=c.id 
-				where controller=\'search\' and method=\'search_one_way\' 
-				order by usr.id, ua.activityid DESC';
+				where controller='search' and method='search_one_way' and usr.companyid=$companyid 
+				order by usr.id, ua.activityid DESC";
 				break;
 			default:
 				break;

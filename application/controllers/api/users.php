@@ -237,7 +237,7 @@ class Users extends REST_Controller {
 
             $cities = $this->User_Model->get('city_tbl', array());
 
-            $user_activities = $this->User_Model->get_user_activities('search');
+            $user_activities = $this->User_Model->get_user_activities('search', $posted_value);
 
             foreach ($user_activities as $activity) {
                 $user_activity = &$activity;

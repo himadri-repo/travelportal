@@ -770,6 +770,21 @@ class Company extends REST_Controller {
 
         $this->set_response($stats, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function pnrsearch_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $result = array();
+
+        try {
+            $result = $this->Search_Model->pnr_search($payload);
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
 
 ?>
