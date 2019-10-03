@@ -147,3 +147,4 @@ $route['api/company/wallet/transactions/settle'] = 'api/Company/settle_wallet_tr
 $route['api/users/activity'] = 'api/Users/get_user_activities';
 $route['api/company/statistics'] = 'api/Company/statistics';
 $route['api/query/pnr'] = 'api/Company/pnrsearch';
+$route['api/save/pnr'] = 'api/Admin/save_pnr';

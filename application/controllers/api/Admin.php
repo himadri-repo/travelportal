@@ -407,4 +407,18 @@ class Admin extends REST_Controller {
 
         $this->set_response($airlines, REST_Controller::HTTP_OK);
     }
+
+    public function save_pnr_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+ 
+        try {
+            $result = $this->Admin_Model->save_pnr($payload);
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }

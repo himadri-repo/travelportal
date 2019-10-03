@@ -987,5 +987,20 @@ Class Admin_Model extends CI_Model
 		  }
 	   return $abbreviation; 
 	}	
+
+	function save_pnr($pnrdetails) {
+		$result = false;
+		log_message('info', json_encode($pnrdetails));
+
+		if($pnrdetails !== NULL && intval($pnrdetails['id'], 10)>0) {
+			$result = $this->db->update('customer_information_tbl', array(
+				'prefix' => $pnrdetails['prefix'], 
+				'first_name' => strtoupper($pnrdetails['first_name']), 
+				'last_name' => strtoupper($pnrdetails['last_name']), 
+			), array("id" => intval($pnrdetails["id"], 10)));
+		}
+
+		return $result;
+	}
 }	
 ?>
