@@ -304,9 +304,9 @@ Class Admin_Model extends CI_Model
 		$this->db->from('system_wallets_tbl wl');
 		$this->db->join('company_tbl cm1', 'wl.companyid=cm1.id', 'left', FALSE);
 		$this->db->join('company_tbl cm2', 'wl.sponsoring_companyid=cm2.id', 'left', FALSE);
-		$this->db->where('wl.companyid = '.$company);
+		$this->db->where("wl.companyid = $companyid");
 		if($customerid > 0) {
-			$this->db->where('wl.userid = '.$customerid);
+			$this->db->where("wl.userid = $customerid");
 		}
 
 		$query = $this->db->get();
