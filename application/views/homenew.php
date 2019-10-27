@@ -12,7 +12,7 @@
 							}
 							?>
 							<h1 class="new-typewriter">
-								<a href="" class="typewrite" data-period="2000" data-type='[ "Hi! <?php echo $name?>, welcome to OxyTra.", "Nothing is important to us, than seeing smile on your face.", "We value our <i><u>Travel Partners</u></i>, to give best support to our customer", "There is only one <b>Boss!</b>, <strong><u>The Customer</u></strong> &#9786;"]'>
+								<a href="" class="typewrite" data-period="2000" data-type='[ "Hi! <?php echo $name?>, welcome to <?php echo $setting[0]['site_title']?>.", "Nothing is important to us, than seeing smile on your face.", "We value our <i><u>Travel Partners</u></i>, to give best support to our customer", "There is only one <b>Boss!</b>, <strong><u>The Customer</u></strong> &#9786;"]'>
 									<span class="wrap"></span>
 								</a>
 							</h1>							

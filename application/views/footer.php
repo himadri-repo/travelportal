@@ -1,5 +1,5 @@
 <!--============ NEWSLETTER-2 =============-->
-        <section id="newsletter-2" class="newsletter"> 
+<section id="newsletter-2" class="newsletter"> 
             <div class="container">
                 <div class="row">
                 	<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
@@ -30,7 +30,9 @@
 
                         <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5 footer-widget ftr-about ftr-our-company">
                             <h3 class="footer-heading"><?php echo $footer[0]["title"]; ?></h3>
-                            <p><?php echo $footer[0]["description"]; ?>.</p>
+                            <!--<p><?php //echo $footer[0]["description"]; ?></p>-->
+							<p><?php echo $setting[0]["site_title"]; ?></p>
+							
                             <ul class="social-links list-inline list-unstyled">
                             	<li><a href="<?php echo $setting[0]["facebook_link"]; ?>" target="_blank"><span><i class="fa fa-facebook"></i></span></a></li>
                             	<li><a href="<?php echo $setting[0]["twitter_link"]; ?>" target="_blank"><span><i class="fa fa-twitter"></i></span></a></li>
@@ -86,7 +88,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="copyright">
-                            <p>© 2018 <a href="#">OxyTra</a>. All rights reserved.</p>
+                            <p>© 2019 <a href="#"><?php echo $setting[0]["site_title"]; ?></a>. All rights reserved.</p>
                         </div><!-- end columns -->
                         
                         <!--<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6" id="terms">

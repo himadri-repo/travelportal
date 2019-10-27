@@ -1,7 +1,7 @@
 <!Doctype html>
 <html lang="en">
 <head>
-        <title>Oxytra</title>
+        <title><?php echo $setting[0]['site_title']?></title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1.0">
         <link rel="icon" href="images/favicon.png" type="image/x-icon">                
@@ -164,7 +164,7 @@
 
 		<div class="sidenav-content">
             <div id="mySidenav" class="sidenav" >
-                <h2 id="web-name"><span><i class="fa fa-plane"></i></span>OXYTRA</h2>
+                <h2 id="web-name"><span><i class="fa fa-plane"></i></span><?php echo $setting[0]['site_title']?></h2>
 
                 <div id="main-menu">
                 	<div class="closebtn">
