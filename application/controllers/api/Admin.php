@@ -146,8 +146,9 @@ class Admin extends REST_Controller {
     public function communication_query_post() {
         $inviteeid = $this->post('inviteeid');
         $invitorid = $this->post('invitorid');
+        $invitation_type = $this->post('invitationType');
 
-        $communications = $this->Admin_Model->search_communications($inviteeid, $invitorid);
+        $communications = $this->Admin_Model->search_communications($inviteeid, $invitorid, $invitation_type);
 
         $this->set_response($communications, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
@@ -217,6 +218,7 @@ class Admin extends REST_Controller {
         }
         $messageItem["title"] = $message["title"];
         $messageItem["active"] = $message["active"];
+        $messageItem["status"] = $message["status"];
         $messageItem["companyid"] = $message["companyid"];
         $messageItem["created_by"] = $message["created_by"];
 
@@ -224,12 +226,14 @@ class Admin extends REST_Controller {
 
         try
         {
+            log_message('info', "Saving messages/invitation into communication table");
+            log_message('info', json_encode($messageItem));
             $communication_update = $this->Admin_Model->message_add($messageItem);
             $messageDetail["pid"] = $communication_update[0]["id"];
             $result["id"] = $communication_update[0]["id"];
         }
         catch(Exception $ex) {
-
+            log_message('error', $ex);
         }
 
         $communicationDetail = $message["details"][0];
@@ -263,6 +267,7 @@ class Admin extends REST_Controller {
         $result = array();
         try
         {
+            log_message('info', json_encode($communicationDetail));
             $communication_detail_update = $this->Admin_Model->message_detail_add($communicationDetail);
             $result["child_id"] = $communication_detail_update[0]["id"];
             $result["message"] = "Records inserted successfully";
@@ -271,6 +276,7 @@ class Admin extends REST_Controller {
         catch(Exception $ex) {
             $result["message"] = "Record insertion failed";
             $result["status"] = false;
+            log_message('error', $ex);
         }
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED

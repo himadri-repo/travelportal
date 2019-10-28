@@ -181,7 +181,7 @@ Class Search_Model extends CI_Model
 				from wholesaler_tbl spl 
 				inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1
 				inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services'
-				inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.active=1
+				inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
 				inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1
 				where spl.salerid=$companyid)
 				union all
@@ -512,7 +512,7 @@ Class Search_Model extends CI_Model
 			from wholesaler_tbl spl 
 			inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1 
 			inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services' 
-			inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.active=1 
+			inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
 			inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1 
 			where spl.salerid=$companyid)     
 			union all 
@@ -723,7 +723,7 @@ Class Search_Model extends CI_Model
 					from wholesaler_tbl spl 
 					inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1
 					inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services'
-					inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.active=1
+					inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
 					inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1
 					inner join company_tbl cmm1 on cmm1.id=spl.companyid
 					left join rateplans_vw slr_rp on spd.rate_plan_id=slr_rp.rateplanid

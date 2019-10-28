@@ -456,6 +456,8 @@ class Search extends Mail_Controller
 			if($tickets && count($tickets)>0) {
 				$ticket = $tickets[0];
 
+				log_message('info', "Selected Ticket => ".json_encode($ticket));
+
 				$suprpid = intval($ticket["rate_plan_id"]);
 				$sellrpid = intval($ticket["seller_rateplan_id"]);
 
