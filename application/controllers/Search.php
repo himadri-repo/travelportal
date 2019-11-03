@@ -15,6 +15,8 @@ class Search extends Mail_Controller
 		$this->load->library('form_validation');
 		$this->load->database();
 		$this->load->library('upload');
+		$this->load->library('parser');
+		//$this->load->library('perser_extension');
 		$this->load->model('User_Model');
 		$this->load->model('Search_Model');
 		$this->load->model('Admin_Model');		
@@ -866,6 +868,7 @@ class Search extends Mail_Controller
 			$ticket = $this->get_ticket($id, $current_user, $company);
 			$status = ($ticket['pnr']!="" && intval($ticket['user_id'])==intval($current_user["id"])) ? "CONFIRMED" : "PENDING";
 			$pnr = $ticket['pnr'];
+			$user_id = intval($ticket['user_id']);
 
 			$is_booking_allowed = $this->is_booking_allowed($total_costprice, $current_user, $wallet);
 
@@ -913,6 +916,12 @@ class Search extends Mail_Controller
 					*/
 					#endregion
 
+					log_message('info', "Current_User : ".json_encode($current_user));
+					log_message('info', "Ticket : ".json_encode($ticket));
+					log_message('info', "Company : ".json_encode($company));
+					log_message('info', "Posted Data : ".json_encode($posteddata));
+					log_message('info', "Customers : ".json_encode($customers));
+
 					$booking_info = $this->save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers);
 
 					$booking_id = intval($booking_info['booking_id']);
@@ -920,12 +929,28 @@ class Search extends Mail_Controller
 					$booking_activity_id = intval($booking_info['booking_activity_id']);
 					$voucher_no = intval($booking_info['voucher_no']);
 					
+					$newbookinginfo=$this->Search_Model->booking_details($booking_id);
+					if($newbookinginfo && count($newbookinginfo)>0) {
+						$newbookinginfo = $newbookinginfo[0];
+					}
+
+					log_message('info', "Booking Info : ".json_encode($booking_info));
+					log_message('info', "Booking Details : ".json_encode($newbookinginfo));
+					
 					$flight = $this->Search_Model->flight_details($id, $companyid);
 					if($flight && count($flight)>0) {
 						$flight = $flight[0];
 					}
 					$trip = ($flight['trip_type']=='ONE')?"ONE WAY":"RETURN";
 					$is_owned_ticket = intval($ticket['companyid'])===$companyid;
+					
+					log_message('info', "Flight : ".json_encode($flight));
+
+					//send email to customer here
+					$this->prepare_send_email("BOOKING_CUSTOMER_EMAIL", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+					//send sms to customer here
+					$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+					//$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata);
 
 					if($is_owned_ticket) {
 						$sale_type = $ticket['sale_type'];
@@ -951,8 +976,10 @@ class Search extends Mail_Controller
 					if($current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
 						$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
 					}
-
-					$wallettransid = intval($transactionresult['wallet_transid']);
+					$wallettransid = 0;
+					if($transactionresult) {
+						$wallettransid = intval($transactionresult['wallet_transid']);
+					}
 
 					if($booking_id>0 && $wallettransid>=0) {
 						log_message('info', "Booking processed in REQUEST mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
@@ -1170,6 +1197,114 @@ class Search extends Mail_Controller
 				#endregion
 			}
 		}
+	}
+
+	protected function prepare_send_email($function, $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo) {
+		$bookingid = $booking_info["booking_id"];
+		switch ($function) {
+			case 'BOOKING_CUSTOMER_EMAIL':
+				$booking_data = $this->preparedata4booking($booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+				break;
+			
+			default:
+				# code...
+				break;
+		}
+
+		$flag = $this->send_email($function, "Booking : $bookingid", $company, $booking_data);
+
+		return $flag;
+	}
+
+	protected function prepare_send_sms($function, $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo) {
+		$bookingid = $booking_info["booking_id"];
+		switch ($function) {
+			case 'BOOKING_CUSTOMER_SMS':
+				$booking_data = $this->preparesmsdata4booking($booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+				break;
+			
+			default:
+				# code...
+				break;
+		}
+
+		$flag = $this->send_sms($function, "Booking : $bookingid", $company, $booking_data);
+
+		return $flag;
+	}
+
+	protected function preparedata4booking($booking_info, $company, $ticket, $customers, $posteddata, $flight, $booking) {
+		$company = $this->get_companyinfo();
+		$current_user = $company["current_user"];
+		$templates = $this->getTemplates();
+		$bookingid = "BK-".$booking_info["booking_id"];
+		$pax = count($customers);
+
+		$first_passenger_name = $customers[0]['prefix'].' '.$customers[0]['first_name'].' '.$customers[0]['last_name'];
+		$to = $customers[0]['email'];
+		$cc = ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? $current_user["email"] : $booking["email"];
+		//$flight['source_city']
+		
+		$data = array(
+            'company_name' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? $current_user["name"] : $company["display_name"],
+			'phone_number' => $current_user["mobile"],
+			'action_url' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? '': $company["baseurl"],
+			'booking_status' => 'PENDING',
+			'pnr' => 'PNR',
+			'booking_number' => $bookingid,
+			'booking_date' => $booking_info["booking_date"],
+			'departure_city' => $flight['source_city'],
+			'arrival_city' => $flight['destination_city'],
+			'airline' => $ticket['aircode'],
+			'flight_number' => $ticket['flight_no'],
+			'departure_date' => $ticket['departure_date_time'],
+			'arrival_date' => $ticket['arrival_date_time'],
+			'no_of_pax' => $pax,
+			'invoice_amount' => number_format($booking['amount'], 2),
+			'first_passenger_name' => $first_passenger_name,
+			'companing_count' => '+'.($pax-1),
+			'to' => $to,
+			'cc' => $cc,
+        );
+
+		return $data;
+	}
+
+	protected function preparesmsdata4booking($booking_info, $company, $ticket, $customers, $posteddata, $flight, $booking) {
+		$company = $this->get_companyinfo();
+		$current_user = $company["current_user"];
+		$templates = $this->getTemplates();
+		$bookingid = "BK-".$booking_info["booking_id"];
+		$pax = count($customers);
+
+		$first_passenger_name = $customers[0]['prefix'].' '.$customers[0]['first_name'].' '.$customers[0]['last_name'];
+		$to = $customers[0]['mobile_no'];
+		$cc = '';
+		//$flight['source_city']
+		
+		$data = array(
+            'company_name' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? $current_user["name"] : $company["display_name"],
+			'phone_number' => $current_user["mobile"],
+			'action_url' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? '': $company["baseurl"],
+			'booking_status' => 'PENDING',
+			'pnr' => 'PNR',
+			'booking_number' => $bookingid,
+			'booking_date' => $booking_info["booking_date"],
+			'departure_city' => $flight['source_city'],
+			'arrival_city' => $flight['destination_city'],
+			'airline' => $ticket['aircode'],
+			'flight_number' => $ticket['flight_no'],
+			'departure_date' => $ticket['departure_date_time'],
+			'arrival_date' => $ticket['arrival_date_time'],
+			'no_of_pax' => $pax,
+			'invoice_amount' => number_format($booking['amount'], 2),
+			'first_passenger_name' => $first_passenger_name,
+			'companing_count' => '+'.($pax-1),
+			'to' => $to,
+			'cc' => $cc,
+        );
+
+		return $data;
 	}
 
 	protected function save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers) {
@@ -2504,6 +2639,55 @@ class Search extends Mail_Controller
 		$company = $this->session->userdata('company');
 		$response["success"]=$this->Search_Model->search_available_date1($this->input->post('source'),$this->input->post('destination'),$this->input->post('trip_type'), $company["id"]);
 		echo json_encode($response);	
+	}
+
+	public function render_template() {
+		$company = $this->get_companyinfo();
+		$templates = $this->getTemplates();
+		$bookingid = 10;
+		
+		$data = array(
+            'company_name' => 'Radharani Holidays',
+			'phone_number' => '+91 9874550200',
+			'action_url' => 'http://www.oxytra.com',
+			'booking_status' => 'CONFIRM',
+			'pnr' => 'ARFIJE',
+			'booking_number' => 'BK-0175/19-20',
+			'booking_date' => '10-10-2019 13:10',
+			'departure_city' => 'Kolkaata (CCU)',
+			'arrival_city' => 'Bagdogra (IXB)',
+			'airline' => 'Go Air',
+			'flight_number' => 'G8-345',
+			'departure_date' => '25-Oct-2019 17:30',
+			'arrival_date' => '25-Oct-2019 20:30',
+			'no_of_pax' => 5,
+			'invoice_amount' => '6450/-',
+			'first_passenger_name' => 'Mr. Sumit Agarwal',
+			'companing_count' => '+4',
+			'to' => 'majumdar.himadri@gmail.com',
+			'cc' => 'majumdar.himadri@gmail.com',
+        );
+
+		$flag = $this->send_email("BOOKING_CUSTOMER_EMAIL", "Booking : $bookingid", $company, $data);
+
+		$template = $this->parser->parse('templates/email/option1/booking_confirmation', $data, TRUE);
+		$template = $this->parser->conditionals($template, $data, TRUE);
+
+		echo $template;
+	}
+
+	public function getTemplates() {
+		$templates = $this->Search_Model->getTemplates();
+
+		if($templates) {
+			for ($i=0; $i < count($templates); $i++) { 
+				$templete = &$templates[$i];
+
+				$templete['default_data_structure'] = json_decode($templete['default_data_structure'], TRUE);
+			}
+		}
+
+		return $templates;
 	}
 
 	public function pdf($id)

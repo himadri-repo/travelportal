@@ -3,17 +3,150 @@ if (!defined('BASEPATH'))
   exit('No direct script access allowed');
 class Mail_Controller  extends CI_Controller 
 {
-	 public function __construct()
-	 {
-            parent::__construct();		
-			$this->load->library('form_validation');
-			//$this->load->library('encrypt');
-			$this->load->library('encryption');
-			$this->load->library('email');
-			$this->load->helper('url');
-            $this->load->library('session');
-			$this->load->helper('form');           			
-    }
+	var $DEFAULT_EMAIL_SETTINGS = array(
+		"protocol" => "",
+		"host" => "",
+		"port" => "",
+		"user" => "",
+		"password" => "",
+	);
+
+	public function __construct()
+	{
+		parent::__construct();		
+		$this->load->library('form_validation');
+		//$this->load->library('encrypt');
+		$this->load->library('encryption');
+		$this->load->library('email');
+		$this->load->helper('url');
+		$this->load->library('session');
+		$this->load->helper('form');           			
+	}
+
+	public function send_sms($function, $subject, $company, $data) {
+		$company = $this->get_companyinfo();
+		$configuration = $company["configuration"];
+		$email_settings = array_merge($this->DEFAULT_EMAIL_SETTINGS, $configuration["email_settings"]);
+		$notification_templates = $configuration["notification_templates"];
+		$template_info = $this->get_templatebycompany($company, $notification_templates, $function);
+
+		$current_user = $company["current_user"];
+
+		$to = $data['to'];
+		$name = $data['company_name']; // $company["display_name"];
+		$flag  = true;
+		if(!SEND_EMAIL)
+			return true;
+
+		$this->load->library('parser');
+        	
+		$data = array_merge($template_info['default_data_structure'], $data);
+
+		// $template = $this->parser->parse('templates/email/option1/booking_confirmation', $data, TRUE);
+		$template = $this->parser->parse($template_info['file_path'], $data, TRUE);
+		$template = $this->parser->conditionals($template, $data, TRUE);
+
+		if(!SEND_SMS)
+			return true;
+			
+		$msg=urlencode($template);
+		$no="91".$to;
+		$curl = curl_init();
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sumit@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 30,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => "GET",
+			CURLOPT_HTTPHEADER => array(
+			"cache-control: no-cache"
+			),
+		));
+
+		$response = curl_exec($curl);
+		$err = curl_error($curl);
+
+		curl_close($curl);
+
+		if ($err) 
+		{
+			log_message("info", "ERROR : SMS sent to $to | $err");
+		  	return $err;
+		} 
+		else 
+		{
+			log_message("info", "SMS sent to $to | $response");
+		  	return $response;
+		}
+	}
+	
+	public function send_email($function, $subject, $company, $data) {
+		$company = $this->get_companyinfo();
+		$configuration = $company["configuration"];
+		$email_settings = array_merge($this->DEFAULT_EMAIL_SETTINGS, $configuration["email_settings"]);
+		$notification_templates = $configuration["notification_templates"];
+		$template_info = $this->get_templatebycompany($company, $notification_templates, $function);
+
+		$current_user = $company["current_user"];
+
+		// $to = "majumdar.himadri@gmail.com"; // $data['to']; //"majumdar.himadri@gmail.com"; //$current_user["email"];
+		// $cc = "majumdar.himadri@gmail.com"; //$current_user['email']; //"majumdar.himadri@gmail.com"; //$current_user["email"];
+		$to = $data['to'];
+		$cc = $data['cc'];
+		$name = $data['company_name']; // $company["display_name"];
+		$flag  = true;
+		if(!SEND_EMAIL)
+			return true;
+
+		$this->load->library('parser');
+        	
+		$config['protocol'] = $email_settings["protocol"]; // "smtp";		
+		$config['smtp_host'] = $email_settings["host"]; // "ssl://smtp.gmail.com";
+		$config['smtp_port'] = $email_settings["port"]; // "465";
+		$config['smtp_user'] = $email_settings["user"]; // "contact.merittree@gmail.com";
+		$config['smtp_pass'] = $email_settings["password"]; // "hm280175";
+		$config['charset'] = "utf-8";
+		$config['mailtype'] = "html";     	
+		$config['send_multipart'] = false;
+
+		$this->load->library('email'); 
+		$this->email->initialize($config);
+
+		$this->email->set_header('MIME-Version', '1.0; charset=utf-8');
+		$this->email->set_header('Content-type', 'text/html');
+		$this->email->set_newline("\r\n");
+
+		$data = array_merge($template_info['default_data_structure'], $data);
+
+		// $template = $this->parser->parse('templates/email/option1/booking_confirmation', $data, TRUE);
+		$template = $this->parser->parse($template_info['file_path'], $data, TRUE);
+		$template = $this->parser->conditionals($template, $data, TRUE);
+
+		// $this->email->from("contact.merittree@gmail.com",$name); 
+		// $this->email->reply_to("contact.merittree@gmail.com",$name);
+		$this->email->from($email_settings["user"],$name); 
+		$this->email->reply_to($email_settings["user"],$name);
+		$this->email->to($to);
+		if($cc && $cc !== '') {
+			$this->email->cc($cc);
+		}
+		$this->email->subject($subject);	
+		$this->email->message($template);
+
+		if ($this->email->send()) {
+			log_message("info", "Email sent to $to");
+			return true;
+		}
+		else {
+			log_message("error", "ERROR => ".$this->email->print_debugger());
+			return $this->email->print_debugger();
+		}
+
+		return $flag;
+	}
 
 	public function send($subject,$data)
 	{	
@@ -38,7 +171,7 @@ class Mail_Controller  extends CI_Controller
 		 $msg1 = $data["msg1"];
 		 $msg2 = $data["msg2"];
 		 
-		 $message='<html><body><table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="font-family:\'Open Sans\',Gill Sans,Arial,Helvetica,sans-serif;max-width:500px;color:#444444;text-align:left;background:#ffffff;border:1px solid #efefef"> 
+		$message='<html><body><table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="font-family:\'Open Sans\',Gill Sans,Arial,Helvetica,sans-serif;max-width:500px;color:#444444;text-align:left;background:#ffffff;border:1px solid #efefef"> 
 					<tbody>
 					<tr>
 						<td bgcolor="#1a1a1a" background="https://ci4.googleusercontent.com/proxy/W2ALyHqtDi_l2MggkjvU3Kx_lXLpTmZgAIShkDbS_fywS0r1NS5timKZDvcG76_FjFp6pZXZ5xPFy7SFqaUZ8SiIYw=s0-d-e1-ft#http://teja1.Job4Artist.in/d1/images/mailerBG.gif" align="center" valign="top"> 
@@ -291,6 +424,48 @@ class Mail_Controller  extends CI_Controller
 		$hash = strtolower(hash('sha512', $hash_string));	
 
 		return $hash;
+	}
+
+	public function get_templatebycompany($company, $companytemplates, $function) {
+		$templates = $this->getTemplates();
+		$templateid = -1;
+		$template_info = array();
+		log_message('info', "Finding configured template for function: $function | company name: ".$company["display_name"]." | templates: ".json_encode($companytemplates));
+		try
+		{
+			for ($i=0; $i < count($companytemplates); $i++) { 
+				$template = $companytemplates[$i];
+				if($template && $template['name'] == $function) {
+					$templateid = intval($template['id']);
+					break;
+				}
+			}
+			log_message('info', "Configured template id for $function is $templateid");
+
+			for ($i=0; $i < count($templates); $i++) { 
+				$template = $templates[$i];
+				if($templateid>-1) {
+					//company specific template is being set for this functional area
+					if($template && intval($template['id']) == $templateid) {	
+						$template_info = $template;
+						break;
+					}
+				}
+				else {
+					if($template && $template['name'] == $function) {
+						$template_info = $template;
+						break;
+					}
+				}
+			}
+
+			log_message('info', "Identified template : ".json_encode($template_info));
+		}
+		catch(Exception $ex) {
+			log_message('error', $ex);
+		}
+
+		return $template_info;
 	}
 }
 ?>

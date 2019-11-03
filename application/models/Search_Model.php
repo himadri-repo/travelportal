@@ -1654,6 +1654,21 @@ Class Search_Model extends CI_Model
 		}
 	}
 
+	public function getTemplates() {
+		$sql = "select * from template_tbl where active=1";
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public function pnr_search($payload) {
 		$companyid = isset($payload['filter']['companyid']) ? $payload['filter']['companyid'] : -1;
 		$pnr = isset($payload['filter']['pnr']) ? $payload['filter']['pnr'] : '';

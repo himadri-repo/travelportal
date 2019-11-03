@@ -396,8 +396,8 @@ Class Admin_Model extends CI_Model
 		$this->db->select("cm.id, cm.title, cm.active, cm.companyid, cm.created_by, cm.created_on, cm.updated_by, cm.updated_on, (select display_name from company_tbl where id=$inviteeid) as invitee, (select display_name from company_tbl where id=$invitorid) as invitor, count(cmd.id) as msgcount, max(cmd.read) as isread, max(cmd.type) as type ");
 		$this->db->from('communication_tbl cm');
 		$this->db->join('communication_detail_tbl cmd', 'cm.id=cmd.pid and cm.active=1', 'inner');
-		$this->db->where("cmd.active=1 and (((from_companyid=$invitorid or to_companyid=$inviteeid) and (cmd.invitation_type=$invitation_type or $invitation_type=-1)) 
-			or ((from_companyid=$inviteeid or to_companyid=$invitorid) and (cmd.invitation_type=$opp_invitation_type or $opp_invitation_type=-1)))");
+		$this->db->where("cmd.active=1 and (((from_companyid=$invitorid and to_companyid=$inviteeid) and (cmd.invitation_type=$invitation_type or $invitation_type=-1)) 
+			or ((from_companyid=$inviteeid and to_companyid=$invitorid) and (cmd.invitation_type=$opp_invitation_type or $opp_invitation_type=-1)))");
 
 		$this->db->group_by("cm.id, cm.title, cm.created_on");
 		$this->db->order_by("cm.created_on desc");
