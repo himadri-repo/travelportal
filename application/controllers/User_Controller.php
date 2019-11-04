@@ -658,6 +658,8 @@ class User_Controller extends Mail_Controller
 			echo json_encode($json);	
 		}
 	}
+
+	/*This method called via ajax. When user login via OTP, after providing OTP this method being called */
 	public function confirm_login_otp()
 	{
 		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
@@ -671,26 +673,43 @@ class User_Controller extends Mail_Controller
 				}
 				else
 				{
-					
+					$company = $this->session->userdata('company');
+
+					$arr = array(
+						'mobile'=>$this->session->userdata('login_mobile'),
+						'password'=>$this->session->userdata('login_password'),
+						'companyid'=>$company["id"],
+						'login_via' => 'OTP'
+					);
+		
+					$result = $this->User_Model->newlogin($arr);
+					if($result==true)
+					{	
+						$this->session->set_userdata('current_user',$result);
+						$this->session->set_userdata('user_id',$result['user_id']);
+						$this->session->set_userdata('name',$result['name']);
+						$json["success"]="Login Successfully";
+					}
+					else {
+						$json["error"]="Either wrong mobile number/email, password Or Your account is not yet approved";
+					}					
 					 
-					 $arr1 = array(
-								 'mobile'=>$this->session->userdata('login_mobile'),						 
-								 'password'=>$this->session->userdata('login_password'),
-								 'active'=>'1'	
-								 );
+					//  $arr1 = array(
+					// 			 'mobile'=>$this->session->userdata('login_mobile'),
+					// 			 'password'=>$this->session->userdata('login_password'),
+					// 			 'active'=>'1'	
+					// 			 );
 								 
 					
-					 $result = $this->User_Model->login($arr1);
-					 if($result==true)
-					 {	
-						$this->session->set_userdata('user_id',$result['user_id']); 			 
-						$json["success"]="Login Successfully";
-					 }
-					 else
-						 $json["error"]="Your Account is not Approved";
-					 
-				}
-			   
+					//  $result = $this->User_Model->login($arr1);
+					//  if($result==true)
+					//  {	
+					// 	$this->session->set_userdata('user_id',$result['user_id']); 			 
+					// 	$json["success"]="Login Successfully";
+					//  }
+					//  else
+					// 	 $json["error"]="Your Account is not Approved";	 
+				}			   
 			}
 			else
 			{
@@ -759,67 +778,69 @@ class User_Controller extends Mail_Controller
 	
 	public function makepayment()
 	{
-		 if ($this->session->userdata('user_id')) 
-		 {
-		 		 $payment_type=isset($_POST["payment_type"])?$_POST["payment_type"]:"";
-		 		 $refrence_id=isset($_POST["refrence_id"])?$_POST["refrence_id"]:"";
-		 		 $cheque_no=isset($_POST["cheque_no"])?$_POST["cheque_no"]:"";
-		 		 $bank=isset($_POST["bank"])?$_POST["bank"]:"";
-		 		 $amount=isset($_POST["amount"])?$_POST["amount"]:"";
-				 
-				 			 
-				 $data=array(
-				 "request_date"=>date("Y-m-d h:i:s"),
-				 "user_id"=>$this->session->userdata('user_id'),
-				 "payment_type"=>$payment_type,
-				 "refrence_id"=>$refrence_id,
-				 "cheque_no"=>$cheque_no,
-				 "bank"=>$bank,
-				 "amount"=>$amount
-				 );	
-				 
-				 $result = $this->User_Model->save("payment_request_tbl",$data);
-				 if($result==true)
-				 {	
-			        $user['user_details']=$this->User_Model->user_details();
-					
-                    $data = array(				            
-				             'name' => "OXYTRA",
-							 'email'=>$user['user_details'][0]["email"],
-							 'msg'=>"Your Payment Request Sent Successfully",
-							 'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> You will get amount on your wallet',
-							 'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-							 );
-			        $this->send("Payment Request",$data);
-					
-					
-					$data1 = array(				            
-				             'name' => $user['user_details'][0]["name"],
-							 'email'=>$user['user_details'][0]["email"],
-							 'mobile'=>$user['user_details'][0]["mobile"],
-							 'msg'=>"A Payment Request is done for ".$amount."",
-							 'user_id'=> $user['user_details'][0]["user_id"],
-							 'msg1'=>'',
-							 'msg2'=>""							 
-							 );
-							 
-					$this->adminsend("Payment Request",$data1);	
-					
-					$no=$user['user_details'][0]["mobile"];
-					$msg="Your Payment Request Sent Successfully. Thanks, OXYTRA";
-					$this->send_message($no,$msg);
-					
-				
-					$no="9800412356";
-					$msg="A Payment Request Sent by User ID : ".$user['user_details'][0]["user_id"]."";
-					$this->send_message($no,$msg);
-				    $json["success"]="Payment Request Sent Successfully";
-				 }
-				 else
-					 $json["error"]=false;
-			 
-			 echo json_encode($json);	
-		 }		 
+		$company = $this->get_companyinfo();
+		$companyname = $company['display_name'];
+		if ($this->session->userdata('user_id')) 
+		{
+			$payment_type=isset($_POST["payment_type"])?$_POST["payment_type"]:"";
+			$refrence_id=isset($_POST["refrence_id"])?$_POST["refrence_id"]:"";
+			$cheque_no=isset($_POST["cheque_no"])?$_POST["cheque_no"]:"";
+			$bank=isset($_POST["bank"])?$_POST["bank"]:"";
+			$amount=isset($_POST["amount"])?$_POST["amount"]:"";
+			
+						
+			$data=array(
+			"request_date"=>date("Y-m-d h:i:s"),
+			"user_id"=>$this->session->userdata('user_id'),
+			"payment_type"=>$payment_type,
+			"refrence_id"=>$refrence_id,
+			"cheque_no"=>$cheque_no,
+			"bank"=>$bank,
+			"amount"=>$amount
+			);	
+			
+			$result = $this->User_Model->save("payment_request_tbl",$data);
+			if($result==true)
+			{	
+			$user['user_details']=$this->User_Model->user_details();
+			
+			$data = array(				            
+						'name' => $companyname,
+						'email'=>$user['user_details'][0]["email"],
+						'msg'=>"Your Payment Request Sent Successfully",
+						'msg1'=>"After Admin Approval of <span class='il'>$companyname</span> You will get amount on your wallet",
+						'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
+						);
+			$this->send("Payment Request",$data);
+			
+			
+			$data1 = array(				            
+						'name' => $user['user_details'][0]["name"],
+						'email'=>$user['user_details'][0]["email"],
+						'mobile'=>$user['user_details'][0]["mobile"],
+						'msg'=>"A Payment Request is done for ".$amount."",
+						'user_id'=> $user['user_details'][0]["user_id"],
+						'msg1'=>'',
+						'msg2'=>""							 
+						);
+						
+			$this->adminsend("Payment Request",$data1);	
+			
+			$no=$user['user_details'][0]["mobile"];
+			$msg="Your Payment Request Sent Successfully. Thanks, $companyname";
+			$this->send_message($no,$msg);
+			
+		
+			$no="9800412356";
+			$msg="A Payment Request Sent by User ID : ".$user['user_details'][0]["user_id"]."";
+			$this->send_message($no,$msg);
+			$json["success"]="Payment Request Sent Successfully";
+			}
+			else
+				$json["error"]=false;
+			
+			echo json_encode($json);	
+		}		 
 	}
 	
 	public function validate_state($state) {
@@ -1565,6 +1586,7 @@ class User_Controller extends Mail_Controller
 				        
 								if(isset($_FILES["request_file"]["name"]))
 								{
+									$ticket_id = 0;
 									$path = $_FILES["request_file"]["tmp_name"];
 									$object = PHPExcel_IOFactory::load($path);
 									$diff=0;
@@ -1610,11 +1632,12 @@ class User_Controller extends Mail_Controller
 												if($num>0)
 												{
 													$ticket_arr=$query->result_array();
-													$id=$ticket_arr[0]["id"];																							
+													$id=$ticket_arr[0]["id"];
+													$ticket_id = $ticket_arr[0]["id"];
 													$this->User_Model->update_table("tickets_tbl",$data,"id",$id);
 												}
 												else
-												  $this->User_Model->save("tickets_tbl",$data);
+													$ticket_id = $this->User_Model->save("tickets_tbl",$data);
 												$diff++;
 											}
 										}
@@ -2159,68 +2182,78 @@ class User_Controller extends Mail_Controller
 	
 	public function forgot_password()
 	{
-		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
-		 {
-			 $this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]');				 			 
-			 if(!$this->form_validation->run()) 
-			 {
+		$companyinfo = $this->get_companyinfo();
+
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
+			$mobile = $this->input->post('mobile');
+			$companyname = $companyinfo['display_name'];
+			$companyid = intval($companyinfo['id']);
+			$this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]');				 			 
+			if(!$this->form_validation->run()) 
+			{
 				$json = array('forgot_mobile' => form_error('mobile', '<div class="error">', '</div>') );       				        																			
-			 }
-			 else
-			 {
-				$CI =   &get_instance();        
-				$check = $CI->db->get_where('user_tbl', array('mobile' => $this->input->post('mobile')));				
-				if ($check->num_rows() == 0) 
+			}
+			else
+			{
+				log_message('info', "Forget password triggered with number: $mobile | Company: $companyname");
+				try
 				{
-				     
-					$json = array('forgot_mobile' =>  '<div class="error">This Mobile No. does not exist in our database</div>');       
-				   
+					$CI =   &get_instance();        
+					$check = $CI->db->get_where('user_tbl', array('mobile' => $mobile, 'companyid' => $companyid));
+					if ($check->num_rows() == 0) 
+					{
+							
+						$json = array('forgot_mobile' =>  '<div class="error">This Mobile No. does not exist in our database</div>');       
+					}
+					else
+					{
+						$result=$check->result();
+						$password=$result[0]->password;
+						$name=$result[0]->name;
+						$json["success"] = "Your Password is sent to your registered Mobile No.";
+						log_message('info', "Password found and sent to : $mobile | Company: $companyname");
+						
+						$msg='Dear '.$name.' '.$password." is your password. Thanks, $companyname";
+						$this->send_message($mobile,$msg);
+					}
 				}
-				else
-				{
-					$result=$check->result();
-		            $password=$result[0]->password;
-					$name=$result[0]->name;
-					$json["success"] =  "Your Password is sent to your Mobile No.";
-					
-					$no=$this->input->post('mobile');
-				    $msg='Dear '.$name.' '.$password.' is your password. Thanks, OXYTRA';
-				    $this->send_message($no,$msg);
-				}					
-				
-			 }
-			 echo json_encode($json);	
-			
-		 }
-		 
-		 
-		
+				catch(Exception $ex) {
+					log_message('error', "Forget Password | Error => $ex");
+				}
+			}
+			echo json_encode($json);
+		}
 	}
 	
 	public function send_login_otp()
 	{
-		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
-		 {
-			 $this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]');				 			 
-			 if(!$this->form_validation->run()) 
-			 {
+		$companyinfo = $this->get_companyinfo();
+		$companyname = $companyinfo['display_name'];
+		$companyid = intval($companyinfo['id']);
+
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
+			$this->form_validation->set_rules('mobile','Mobile No.','required|numeric|xss_clean|max_length[10]|min_length[10]');				 			 
+			if(!$this->form_validation->run()) 
+			{
 				$json = array('otp_mobile' => form_error('mobile', '<div class="error">', '</div>') );       				        																			
-			 }
-			 else
-			 {
+			}
+			else
+			{
 				$CI =   &get_instance();        
 				$check = $CI->db->get_where('user_tbl', array('mobile' => $this->input->post('mobile')));				
 				if ($check->num_rows() == 0) 
 				{
-				     
+						
 					$json = array('otp_mobile' =>  '<div class="error">This Mobile No. does not exist in our database</div>');       
-				   
+					
 				}
 				else
 				{
 					$result=$check->result();
 					$login_mobile=$result[0]->mobile;
-		            $login_password=$result[0]->password;
+					$login_password=$result[0]->password;
 					$name=$result[0]->name;
 					
 					$json["success"] =  "Your Login OTP is sent to your Mobile No.";
@@ -2228,18 +2261,16 @@ class User_Controller extends Mail_Controller
 					$no=$this->input->post('mobile');
 					$login_otp=rand(111111,999999);
 					
-				    $this->session->set_userdata('login_otp',$login_otp);
+					$this->session->set_userdata('login_otp',$login_otp);
 					$this->session->set_userdata('login_mobile',$login_mobile);
 					$this->session->set_userdata('login_password',$login_password);
 					
-				    $msg='Dear '.$name.' '.$login_otp.' is your Login OTP. Thanks, OXYTRA';
-				    $this->send_message($no,$msg);
-				}					
-				
-			 }
-			 echo json_encode($json);	
-			
-		 }		 		 		
+					$msg='Dear '.$name.' '.$login_otp." is your Login OTP. Thanks, $companyname";
+					$this->send_message($no,$msg);
+				}
+			}
+			echo json_encode($json);
+		}		 		 		
 	}
 
 	public function pg_response() {

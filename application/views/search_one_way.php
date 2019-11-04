@@ -405,7 +405,9 @@
 												
 												<?php } ?>
 											</p>
-											
+											<div class="disclaimer">
+												** Seats & rates are subject to availability. Before issuance, please confirm with our support team.
+											</div>
 										</div><!-- end f-list-info -->
 									</div><!-- end list-content -->
 								</div><!-- end f-list-block -->

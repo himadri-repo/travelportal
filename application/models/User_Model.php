@@ -130,6 +130,7 @@ Class User_Model extends CI_Model
 		$email = $data['mobile'];
 		$pwd = $data['password'];
 		$companyid = $data['companyid'];
+		$login_via = isset($data['login_via']) ? $data['login_via'] : '';
 
 		// $this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
 		// 	c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
@@ -143,40 +144,52 @@ Class User_Model extends CI_Model
 		// $this->db->or_where('u.email=', $email);
 		// $query = $this->db->get();
 
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
-			c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
-			wl.type as wallet_type, wl.status as wallet_status, ifnull(ucnf.field_name, \'\') as field_name, ifnull(ucnf.field_display_name, \'\') as field_display_name,
-			ifnull(ucnf.field_value, 0) as admin_markup, ifnull(ucnf.field_value_type, 0) as field_value_type');
-		$this->db->from('user_tbl u');
-		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
-		$this->db->join('system_wallets_tbl wl', 'u.companyid=wl.companyid and wl.userid=(case when u.is_admin=1 then 0 else u.id end) and wl.type=(case when u.is_admin=1 then 1 else 2 end)', 'left');
-		$this->db->join('user_config_tbl ucnf', 'ucnf.user_id=u.id and ucnf.status=1 and ucnf.companyid=c.id and ucnf.field_name=\'markup\'', 'left');
-		$this->db->where('u.companyid=', $companyid);
-		$this->db->where('u.active=', 1);
-		$this->db->where('u.mobile=', $mobile);
-		$this->db->or_where('u.email=', $email);
-		$query = $this->db->get();
+		// $this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
+		// 	c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
+		// 	wl.type as wallet_type, wl.status as wallet_status, ifnull(ucnf.field_name, \'\') as field_name, ifnull(ucnf.field_display_name, \'\') as field_display_name,
+		// 	ifnull(ucnf.field_value, 0) as admin_markup, ifnull(ucnf.field_value_type, 0) as field_value_type', );
+		// $this->db->from('user_tbl u');
+		// $this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
+		// $this->db->join('system_wallets_tbl wl', 'u.companyid=wl.companyid and wl.userid=(case when u.is_admin=1 then 0 else u.id end) and wl.type=(case when u.is_admin=1 then 1 else 2 end)', 'left');
+		// $this->db->join('user_config_tbl ucnf', 'ucnf.user_id=u.id and ucnf.status=1 and ucnf.companyid=c.id and ucnf.field_name=\'markup\'', 'left');
+		// $this->db->where('u.companyid=', $companyid);
+		// $this->db->where('u.active=', 1);
+		// $this->db->where('u.mobile=', $mobile);
+		// $this->db->or_where('u.email=', $email);
+		// $query = $this->db->get();
+
+		$sql = "select u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
+						c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
+						wl.type as wallet_type, wl.status as wallet_status, ifnull(ucnf.field_name, '') as field_name, ifnull(ucnf.field_display_name, '') as field_display_name,
+						ifnull(ucnf.field_value, 0) as admin_markup, ifnull(ucnf.field_value_type, 0) as field_value_type
+				from user_tbl u
+				inner join company_tbl c on u.companyid=c.id
+				left join system_wallets_tbl wl on u.companyid=wl.companyid and wl.userid=(case when u.is_admin=1 then 0 else u.id end) and wl.type=(case when u.is_admin=1 then 1 else 2 end)
+				left join user_config_tbl ucnf on ucnf.user_id=u.id and ucnf.status=1 and ucnf.companyid=c.id and ucnf.field_name='markup'
+				where u.companyid=$companyid and u.active=1 and (u.mobile='$mobile' or u.email='$email')";
+
+		$query = $this->db->query($sql);		
 
 		if ($query->num_rows() > 0) 
 		{
 			$data = $query->result_array()[0];
-			if(sha1($data['password'])==$pwd || $data['password']==$pwd) {
+			if($login_via === '') {
+				if(sha1($data['password'])==$pwd || $data['password']==$pwd) {
+					unset($data['password']);
+					$data['user_id'] = $data['id'];
+	
+					return $data;
+				}
+				else {
+					return false;
+				}
+			}
+			else {
 				unset($data['password']);
 				$data['user_id'] = $data['id'];
 
 				return $data;
 			}
-			else {
-				return false;
-			}
-			
-			// foreach ($query->result_array() as $row) 
-			// {
-			//   $data['user_id'] = $row['id'];
-			//   $data['name'] = $row['name'];
-            // }			
-            //return $data;
-			
 		}
 		else
 		{

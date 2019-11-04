@@ -1517,30 +1517,30 @@ class Search extends Mail_Controller
 		return $flag;
 	}
 
-	protected function get_companyinfo()
-	{
-		$company = $this->session->userdata('company');
-		$companyinfo = &$company;
-		$companyinfo['configuration'] = json_decode($company['setting']['configuration'], true);
-		$companyinfo['account_settings'] = isset($companyinfo['configuration']['account_settings'])?$companyinfo['configuration']['account_settings']:array();
-		$company_account_settings = $companyinfo['account_settings'];
+	// protected function get_companyinfo()
+	// {
+	// 	$company = $this->session->userdata('company');
+	// 	$companyinfo = &$company;
+	// 	$companyinfo['configuration'] = json_decode($company['setting']['configuration'], true);
+	// 	$companyinfo['account_settings'] = isset($companyinfo['configuration']['account_settings'])?$companyinfo['configuration']['account_settings']:array();
+	// 	$company_account_settings = $companyinfo['account_settings'];
 		
-		$ticket_account = null;
-		if(count($company_account_settings)>0) {
-			for($idx=0; $idx<count($company_account_settings); $idx++) {
-				if($company_account_settings[$idx]['module']=='ticket_sale') {
-					$ticket_account = $company_account_settings[$idx];
-					break;
-				}
-			}
-		}
-		$companyinfo['ticket_sale_account'] = $ticket_account;
-		$companyinfo['current_user'] = $this->session->userdata('current_user');
+	// 	$ticket_account = null;
+	// 	if(count($company_account_settings)>0) {
+	// 		for($idx=0; $idx<count($company_account_settings); $idx++) {
+	// 			if($company_account_settings[$idx]['module']=='ticket_sale') {
+	// 				$ticket_account = $company_account_settings[$idx];
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// 	$companyinfo['ticket_sale_account'] = $ticket_account;
+	// 	$companyinfo['current_user'] = $this->session->userdata('current_user');
 
-		log_message("info", "Company Info : ".json_encode($companyinfo));
+	// 	log_message("info", "Company Info : ".json_encode($companyinfo));
 
-		return $companyinfo;
-	}
+	// 	return $companyinfo;
+	// }
 
 	protected function is_booking_valid($companyid) {
 		$hasduplicatecustomers = false;
@@ -1829,7 +1829,7 @@ class Search extends Mail_Controller
 					"documentid" => $booking_id_new,
 					"document_date" => $booking_date,
 					"document_type" => 1,
-					"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? $costprice : $total),
+					"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? $costprice : $total_costprice),
 					"companyid" => $companyid,
 					"credited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
 					"created_by" => $this->session->userdata('user_id')

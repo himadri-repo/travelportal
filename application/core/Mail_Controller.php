@@ -54,7 +54,8 @@ class Mail_Controller  extends CI_Controller
 		$curl = curl_init();
 
 		curl_setopt_array($curl, array(
-			CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sumit@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+			// CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+			CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_ENCODING => "",
 			CURLOPT_MAXREDIRS => 10,
@@ -345,7 +346,8 @@ class Mail_Controller  extends CI_Controller
 		  $no="91".$no;
 		  $curl = curl_init();
 		  curl_setopt_array($curl, array(
-		  CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sumit@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+		//   CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sumit@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+		  CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
 		  CURLOPT_RETURNTRANSFER => true,
 		  CURLOPT_ENCODING => "",
 		  CURLOPT_MAXREDIRS => 10,
@@ -466,6 +468,31 @@ class Mail_Controller  extends CI_Controller
 		}
 
 		return $template_info;
+	}
+
+	protected function get_companyinfo()
+	{
+		$company = $this->session->userdata('company');
+		$companyinfo = &$company;
+		$companyinfo['configuration'] = json_decode($company['setting']['configuration'], true);
+		$companyinfo['account_settings'] = isset($companyinfo['configuration']['account_settings'])?$companyinfo['configuration']['account_settings']:array();
+		$company_account_settings = $companyinfo['account_settings'];
+		
+		$ticket_account = null;
+		if(count($company_account_settings)>0) {
+			for($idx=0; $idx<count($company_account_settings); $idx++) {
+				if($company_account_settings[$idx]['module']=='ticket_sale') {
+					$ticket_account = $company_account_settings[$idx];
+					break;
+				}
+			}
+		}
+		$companyinfo['ticket_sale_account'] = $ticket_account;
+		$companyinfo['current_user'] = $this->session->userdata('current_user');
+
+		log_message("info", "Company Info : ".json_encode($companyinfo));
+
+		return $companyinfo;
 	}
 }
 ?>
