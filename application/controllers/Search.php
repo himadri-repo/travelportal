@@ -196,6 +196,8 @@ class Search extends Mail_Controller
 					}
 					$total = $ticket['total'];
 					$ticket["new"] = 1;
+
+					log_message('info', "Ticket -> ".json_encode($ticket));
 				}	
 				
 				$result["flight"]=$tickets;

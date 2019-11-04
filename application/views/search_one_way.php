@@ -287,6 +287,9 @@
 																	$splcode = 'oxytra-spl-8';
 																}
 															}
+															else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+																$splcode = $flight[$key]["companyname"];
+															}
 														?>
 														<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>
 														<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>
