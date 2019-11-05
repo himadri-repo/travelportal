@@ -317,18 +317,22 @@
 												<?php } ?>
 												
 												<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
-													<?php if($flight[$key]["adult_total"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
-													<?php }?>
+													<?php if($flight[$key]["live_fare"]>0) {?>
+														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+													<?php } else {?>
+														<li class="live-price">&nbsp;</li>
+													<?php } ?>
 														<?php
 														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
 														$final_total = $flight[$key]["price"];
 														?>
 														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
 												<?php } else {?>
-													<?php if($flight[$key]["adult_total"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["adult_total"],2,".",",").' (live)'; ?></li>
-													<?php }?>
+													<?php if($flight[$key]["live_fare"]>0) {?>
+														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+													<?php } else {?>
+														<li class="live-price">&nbsp;</li>
+													<?php } ?>
 														<?php
 														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
 														$final_total = $flight[$key]["price"];

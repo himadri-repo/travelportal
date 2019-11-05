@@ -69,6 +69,46 @@ class Search extends Mail_Controller
 
 			if($_SERVER['REQUEST_METHOD'] == 'POST' && $source>0 && $destination>0) 
 			{			  
+				$source_city = $this->User_Model->get('city_tbl', array('id' => $source));
+				if($source_city && count($source_city)>0) {
+					$source_city = $source_city[0];
+				}
+				$destination_city = $this->User_Model->get('city_tbl', array('id' => $destination));
+				if($destination_city && count($destination_city)>0) {
+					$destination_city = $destination_city[0];
+				}
+
+				$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
+				$url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=012f84558a572cb4ccc4b4c84a15d523&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
+	
+				$curl = curl_init();
+
+				curl_setopt_array($curl, array(
+					CURLOPT_URL => $url,
+					CURLOPT_RETURNTRANSFER => true,
+					CURLOPT_ENCODING => "",
+					CURLOPT_MAXREDIRS => 10,
+					CURLOPT_TIMEOUT => 30,
+					CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+					CURLOPT_CUSTOMREQUEST => "GET",
+					CURLOPT_HTTPHEADER => array(
+					"cache-control: no-cache"
+					),
+				));
+		
+				$response = curl_exec($curl);
+				$err = curl_error($curl);
+		
+				curl_close($curl);
+
+				$live_ticket_data = json_decode($response, true);
+				if($live_ticket_data && count($live_ticket_data)>0) {
+					$live_ticket_data = $live_ticket_data['data']['onwardflights'];
+				}
+				else {
+					$live_ticket_data = NULL;
+				}
+		
 				$company = $this->session->userdata('company');
 				$currentuser = $this->session->userdata('current_user');
 
@@ -145,6 +185,29 @@ class Search extends Mail_Controller
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
+					$live_ticket = NULL;
+					if($live_ticket_data && count($live_ticket_data)>0) {
+						for ($tk=0; $tk < count($live_ticket_data); $tk++) {
+							$live_ticket = $live_ticket_data[$tk];
+							$cachekey = $live_ticket['carrierid'].' '.$live_ticket['flightno'];
+							$flight_no = str_replace('_', '', str_replace('-', '', $ticket['flight_no']));
+							if($live_ticket && intval($live_ticket['stops'])===0 && $flight_no===$cachekey) {
+								break;
+							}
+							else {
+								$live_ticket = NULL;
+							}
+						}
+					}
+
+					if($live_ticket) {
+						$ticket['live_fare'] = floatval($live_ticket['fare']['adulttotalfare']);
+						$ticket['seatsavailable'] = intval($live_ticket['seatsavailable']);
+					}
+					else {
+						$ticket['live_fare'] = -1;
+						$ticket['seatsavailable'] = -1;
+					}
 					$suprpd = [];
 					$sellrpd = [];
 					$suprpid = intval($ticket["rate_plan_id"]);

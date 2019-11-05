@@ -3594,7 +3594,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .f-list-img .offer-price-1 .price{
 	float:right;
-	margin-top:8px;
+	margin-top:-18px;
 }
 
 .f-list-img .offer-price-1 .costprice{
@@ -3605,13 +3605,14 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 }
 
 .f-list-img .offer-price-1 .live-price {
-	float:right;
-	font-size: 15px;
+	/*float:right;*/
+	font-size: 14px;
 	font-weight: 500;
-	color: #ffffff /*#d7d6d6*/;
-	text-decoration: line-through;	
+	color: #e6e027 /*#d7d6d6*/;
+	/*text-decoration: line-through;*/
+	text-transform: capitalize;
     display: block;
-    margin: -15px -10px;
+    /*margin: -15px -10px;*/
 }
 
 @media(max-width:768px){
