@@ -1352,9 +1352,9 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 		Main Block
    ----------------------------------------------------- */
 
-.main-block{
+/*.main-block{*/
 	/*transition:.4s;*/
-}
+/*}*/
 
 .main-img{
 	position:relative;
@@ -6175,3 +6175,82 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /* Ripple Effect */
 /*a{overflow:hidden}.btn{text-transform: uppercase; letter-spacing: 0px;overflow:hidden;position:relative;-webkit-transition:all 0.2s ease;-moz-transition:all 0.2s ease;-o-transition:all 0.2s ease;transition:all 0.2s ease;z-index:0}.ink{display:block;position:absolute;background:rgba(255,255,255,.3);border-radius:100%;-webkit-transform:scale(0);-moz-transform:scale(0);-o-transform:scale(0);transform:scale(0)}.animate{-webkit-animation:ripple 0.65s linear;-moz-animation:ripple 0.65s linear;-ms-animation:ripple 0.65s linear;-o-animation:ripple 0.65s linear;animation:ripple 0.65s linear}@-webkit-keyframes ripple{100%{opacity:0;-webkit-transform:scale(2.5)}}@-moz-keyframes ripple{100%{opacity:0;-moz-transform:scale(2.5)}}@-o-keyframes ripple{100%{opacity:0;-o-transform:scale(2.5)}}@keyframes ripple{100%{opacity:0;transform:scale(2.5)}}*/
 /* Ripple Effect */
+
+.visible-section {
+	display: block;
+	visibility: visible;
+	opacity: 100;
+}
+
+.invisible-section {
+	display: none;
+	visibility: hidden;
+	opacity: 0;
+}
+
+.edit-item {
+    padding: 10px 5px;
+    background-color: #0f2322;
+	color: #ffffff;
+	/*transition: height 400ms;*/
+	transition: visibility 0s linear 200ms, opacity 500ms;
+}
+
+.edit-item label {
+	padding: 7px 10px;
+	text-align: right;
+	width: 100%;
+}
+
+@media(max-width:768px) {
+	.edit-item label {
+		text-align: left;
+	}	
+
+	.f-list-img .offer-price-1 .costprice{
+		float:none;
+		color: #ffffff;
+		text-transform: none;
+		margin-top:0px;
+		text-align: left;
+	}		
+}
+
+.action_icons {
+	display: inline-block;
+    padding: 0px 15px;
+    width: 103%;
+    background-color: #faa61a;
+    margin-left: -6px;
+    margin-right: -5px;
+    margin-bottom: -5px;
+	overflow-x: hidden;
+}
+
+.action_icons ul {
+	list-style-type: none;
+    padding: 0px 5px;
+    float: right;
+    /* display: inline-block; */
+    font-size: x-large;
+}
+
+.action_icons ul li {
+	color: #000080;
+    padding: 5px;
+    cursor: pointer;
+	display: inline-block;
+}
+
+.action_icons ul li button {
+	font-size: 13px !important;
+	color: #ffffff;
+	background-color: #000080;
+	transition: font-size 0.25s ease 0s;
+	-webkit-transition: font-size 0.25s ease 0s;
+}
+
+.action_icons ul li button:hover {
+	font-size: 16px !important;
+	color: #ffffff;
+}

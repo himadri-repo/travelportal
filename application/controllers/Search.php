@@ -182,15 +182,39 @@ class Search extends Mail_Controller
 				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
 				$tickets = $this->Search_Model->search_one_wayV2($arr);
+				$modifiable_attributes = [];
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
+
+					$modifiable_attributes[] = array('id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no'], 'source_city' => $ticket['source_city'], 
+						'destination_city' => $ticket['destination_city'], 
+						'departure_date' => date("d-m-Y",strtotime($ticket['departure_date_time'])), 
+						'departure_time' => date("H:i",strtotime($ticket['departure_date_time'])), 
+						'arrival_date' => date("d-m-Y",strtotime($ticket['arrival_date_time'])),
+						'arrival_time' => date("H:i",strtotime($ticket['arrival_date_time'])), 
+						'flight_no' => $ticket['flight_no'], 
+						'no_of_person' => $ticket['no_of_person'], 
+						'price' => $ticket['price'], 
+						'terminal' => $ticket['terminal'], 
+						'no_of_person' => $ticket['no_of_person'], 
+						'tag' => $ticket['tag']
+					);
 					$live_ticket = NULL;
 					if($live_ticket_data && count($live_ticket_data)>0) {
 						for ($tk=0; $tk < count($live_ticket_data); $tk++) {
 							$live_ticket = $live_ticket_data[$tk];
-							$cachekey = $live_ticket['carrierid'].' '.$live_ticket['flightno'];
-							$flight_no = str_replace('_', '', str_replace('-', '', $ticket['flight_no']));
+							$cachekey = $live_ticket['carrierid'].'-'.$live_ticket['flightno'];
+							//$flight_no = str_replace('_', '', str_replace('-', '', $ticket['flight_no']));
+							$flight_no = trim($ticket['flight_no']);
+							$fl_no = 0;
+							preg_match_all('/\d+$/', $flight_no, $matches);
+							if(count($matches)>0 && count($matches[0])>0) {
+								$fl_no = intval($matches[0][0]);
+							}
+							$flight_no = $ticket['aircode'].'-'.$fl_no;
+							log_message('info', "Matching ticket with live ticket - ".$ticket['id']." => "."$flight_no | $cachekey");
+
 							if($live_ticket && intval($live_ticket['stops'])===0 && $flight_no===$cachekey) {
 								break;
 							}
@@ -264,6 +288,7 @@ class Search extends Mail_Controller
 				}	
 				
 				$result["flight"]=$tickets;
+				$result["flight_attributes"]=$modifiable_attributes;
 				$result["rateplan"]=$rateplans; // $default_rp;
 				$result["currentuser"]=$currentuser;
 				
@@ -2826,6 +2851,124 @@ class Search extends Mail_Controller
 		{
 			redirect("/search");
 		}	
+	}
+
+	public function save_ticket_post() {
+		$mode = $this->input->post('mode');
+		$payload = $this->input->post('payload');
+		$company = $this->get_companyinfo();
+		$current_user = $company['current_user'];
+		$companyid = intval($company['id']);
+		$result = [];
+
+		$ticket = $payload['source_ticket'];
+		$dept_date_time = date('Y-m-d H:i:s', strtotime($ticket['departure_date'].' '.$ticket['departure_time'].':00'));
+		$arrv_date_time = date('Y-m-d H:i:s', strtotime($ticket['arrival_date'].' '.$ticket['arrival_time'].':00'));
+
+		if($mode==='update') {
+			//Same ticket should be updated. Before doing it please check the logged-in user is the owner of the ticket or not
+			$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($ticket['id'])));
+			if($targetticket && count($targetticket)>0) {
+				$targetticket = $targetticket[0];
+			}
+			log_message('info', "Taking action ($mode) on Ticket - ".$ticket['id']." => ".json_encode($ticket)." | ".json_encode($targetticket));
+			if(intval($targetticket['companyid']) === $companyid) {
+				if($this->Search_Model->update('tickets_tbl', array(
+					'flight_no' => $ticket['flight_no'], 
+					'no_of_person' => $ticket['no_of_person'], 
+					'max_no_of_person' => $ticket['no_of_person'], 
+					'availibility' => $ticket['no_of_person'], 
+					'available' => intval($ticket['no_of_person'])>0?'YES':'NO', 
+					'price' => $ticket['price'], 
+					'departure_date_time' => $dept_date_time,
+					'arrival_date_time' => $arrv_date_time,
+					'tag' => $ticket['tag'],
+					'updated_by' => $current_user['id'],
+					'updated_on' => date("Y-m-d H:i:s")
+				), array('id' => intval($ticket['id'])))) {
+					$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($ticket['id'])));
+					if($targetticket && count($targetticket)>0) {
+						$targetticket = $targetticket[0];
+					}
+					$result['status'] ='Ticket successfully saved';
+					$result['code'] =200;
+					$result['data'] =$targetticket;
+				}
+			}
+			else {
+				$result['status'] ='You are not authorized to make any changes to this ticket';
+				$result['code'] =401;
+				$result['data'] =[];
+			}
+
+			echo json_encode($result, JSON_HEX_APOS);
+		} else if($mode==='clone') {
+			//This ticket will be cloned and create a new ticket under current companyid. But if the same ticket is present 
+			$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($ticket['id'])));
+			if($targetticket && count($targetticket)>0) {
+				$targetticket = &$targetticket[0];
+			}
+			log_message('info', "Taking action ($mode) on Ticket - ".$ticket['id']." => ".json_encode($ticket)." | ".json_encode($targetticket));
+			if(intval($targetticket['companyid']) !== $companyid) {
+				unset($targetticket['id']);
+				unset($targetticket['pnr']);
+				unset($targetticket['created_date']);
+				unset($targetticket['created_on']);
+				unset($targetticket['data_collected_from']);
+				unset($targetticket['last_sync_key']);
+				unset($targetticket['updated_by']);
+				unset($targetticket['updated_on']);
+
+				try
+				{
+					$targetticket['companyid'] = $companyid;
+					$targetticket['cloned_from'] = intval($ticket['id']);
+					$targetticket['flight_no'] = $ticket['flight_no'];
+					$targetticket['no_of_person'] = $ticket['no_of_person'];
+					$targetticket['max_no_of_person'] = $ticket['no_of_person'];
+					$targetticket['availibility'] = $ticket['no_of_person'];
+					$targetticket['available'] = intval($ticket['no_of_person'])>0?'YES':'NO';
+					$targetticket['created_by'] = $current_user['id'];
+					$targetticket['price'] = $ticket['price'];
+					$targetticket['total'] = $ticket['price'];
+					$targetticket['tag'] = $ticket['tag'];
+					$targetticket['departure_date_time'] = $dept_date_time;
+					$targetticket['arrival_date_time'] = $arrv_date_time;
+					$targetticket['booking_freeze_by'] = $dept_date_time;
+					$targetticket['user_id'] = $current_user['id'];
+					$targetticket['ticket_no'] = "CLONED-".$targetticket['ticket_no'];
+
+					$tktid = $this->Search_Model->save('tickets_tbl', $targetticket);
+
+					if($tktid>0) {
+						$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($tktid)));
+						if($targetticket && count($targetticket)>0) {
+							$targetticket = $targetticket[0];
+						}
+						$result['status'] ='Ticket successfully cloned';
+						$result['code'] =200;
+						$result['data'] =$targetticket;
+	
+						log_message('info', "Taking cloned - ".$tktid." => ".json_encode($targetticket));
+					}
+					else {
+						$result['status'] ='Ticket clonning failed. Check with admin.';
+						$result['code'] =501;
+						$result['data'] =[];
+					}
+				}
+				catch(Exception $ex) {
+					log_message('error', "Clone Error => $ex");
+				}
+			}
+			else {
+				$result['status'] ="This ticket belongs to you only, can't clone it. You can modify this ticket if needed.";
+				$result['code'] =501;
+				$result['data'] =[];
+			}
+
+			echo json_encode($result, JSON_HEX_APOS);
+		}
 	}
 
 	/*

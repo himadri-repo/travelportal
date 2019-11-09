@@ -204,222 +204,244 @@
 								<span>Show cost price</span>
 							</div>
                              <?php
-								
 								if(!empty($flight))
 								{
 									foreach($flight as $key=>$value)
-									{
-									    
-									    
-								?>
-								
-								<?php 
-								$class = "";
-								//echo $flight[$key]["user_id"] . " - " . $this->session->userdata('user_id');
-								if($flight[$key]["user_id"]==$this->session->userdata('user_id')) {
-									//echo "supplier_ticket";
-									$class = "supplier_ticket";
-								} 
-								else {
-									$class = "";
-									//echo "<br/>NOT supplier_ticket";
-								}
-								?>
-								<div class="list-block main-block f-list-block <?php echo $class?>">
-									<div class="list-content">
-									
-										<div class="main-img list-img f-list-img">
-											<div class="row">
-												<div class="col-xs-3 col-sm-3 col-md-3">
-													<a href="#">
-														<div class="f-img" style="padding:2px 0 0px 2px">
-															<?php if($flight[$key]["sale_type"]=="quote"){ ?>
-															<img src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive" style="max-width:70px;" alt="flight-img" />
-															<?php } else { ?>
-															<img src="<?php echo base_url(); ?>upload/thumb/<?php echo $flight[$key]["image"];?>" class="img-responsive" style="max-width:70px;" alt="flight-img" />
-															<?php } ?>
-														</div><!-- end f-list-img -->
-													</a>
-												</div> <!-- end of left column -->
-												<div class="col-xs-9 col-sm-9 col-md-9">
-													<ul class="list-unstyled flight-timing <?php echo $class?>">
-														<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<?php if($flight[$key]["adult_total"]>0) {?>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["dept_date_time"])); ?>)</li>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrv_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrv_date_time"])); ?>)</li>
-														<?php }
-														else {?>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
-														<?php }
-														 } ?>
-													</ul>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
-											<div class="row">
-												<div class="col-xs-12 col-sm-12 col-md-12">
-													<div class="f-fl-title">
-														<?php
-															$splcode = 'special fare';
-															if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
-																if($flight[$key]["data_collected_from"]=='airiq') {
-																	$splcode = 'oxytra-spl-1';
-																}
-																else if($flight[$key]["data_collected_from"]=='e2f') {
-																	$splcode = 'oxytra-spl-2';
-																}
-																else if($flight[$key]["data_collected_from"]=='moh') {
-																	$splcode = 'oxytra-spl-3';
-																}
-																else if($flight[$key]["data_collected_from"]=='mair') {
-																	$splcode = 'oxytra-spl-4';
-																}
-																else if($flight[$key]["data_collected_from"]=='doshi') {
-																	$splcode = 'oxytra-spl-5';
-																}
-																else if($flight[$key]["data_collected_from"]=='mpt') {
-																	$splcode = 'oxytra-spl-6';
-																}
-																else if($flight[$key]["data_collected_from"]=='tmz') {
-																	$splcode = 'oxytra-spl-7';
-																}
-																else if($flight[$key]["data_collected_from"]=='indr') {
-																	$splcode = 'oxytra-spl-8';
-																}
-															}
-															else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
-																$splcode = $flight[$key]["companyname"];
-															}
-														?>
-														<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>
-														<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>
-													</div>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
+									{?>
+										<?php 
+										$class = "";
+										//echo $flight[$key]["user_id"] . " - " . $this->session->userdata('user_id');
+										if($flight[$key]["user_id"]==$this->session->userdata('user_id')) {
+											//echo "supplier_ticket";
+											$class = "supplier_ticket";
+										} 
+										else {
+											$class = "";
+											//echo "<br/>NOT supplier_ticket";
+										}
+										?>
+										<div class="list-block main-block f-list-block <?php echo $class?>">
+											<div class="list-content">
+											
+												<div class="main-img list-img f-list-img">
+													<div class="row">
+														<div class="col-xs-3 col-sm-3 col-md-3">
+															<a href="#">
+																<div class="f-img" style="padding:2px 0 0px 2px">
+																	<?php if($flight[$key]["sale_type"]=="quote"){ ?>
+																	<img src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive" style="max-width:70px;" alt="flight-img" />
+																	<?php } else { ?>
+																	<img src="<?php echo base_url(); ?>upload/thumb/<?php echo $flight[$key]["image"];?>" class="img-responsive" style="max-width:70px;" alt="flight-img" />
+																	<?php } ?>
+																</div><!-- end f-list-img -->
+															</a>
+														</div> <!-- end of left column -->
+														<div class="col-xs-9 col-sm-9 col-md-9">
+															<ul class="list-unstyled flight-timing <?php echo $class?>">
+																<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+																<?php if($flight[$key]["adult_total"]>0) {?>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["dept_date_time"])); ?>)</li>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrv_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrv_date_time"])); ?>)</li>
+																<?php }
+																else {?>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
+																<?php }
+																} ?>
+															</ul>
+														</div> <!-- end of column -->
+													</div> <!-- end of row -->
+													<div class="row">
+														<div class="col-xs-12 col-sm-12 col-md-12">
+															<div class="f-fl-title">
+																<?php
+																	$splcode = 'special fare';
+																	if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+																		if($flight[$key]["data_collected_from"]=='airiq') {
+																			$splcode = 'oxytra-spl-1';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='e2f') {
+																			$splcode = 'oxytra-spl-2';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='moh') {
+																			$splcode = 'oxytra-spl-3';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='mair') {
+																			$splcode = 'oxytra-spl-4';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='doshi') {
+																			$splcode = 'oxytra-spl-5';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='mpt') {
+																			$splcode = 'oxytra-spl-6';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='tmz') {
+																			$splcode = 'oxytra-spl-7';
+																		}
+																		else if($flight[$key]["data_collected_from"]=='indr') {
+																			$splcode = 'oxytra-spl-8';
+																		}
+																	}
+																	else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+																		$splcode = $flight[$key]["companyname"];
+																	}
+																?>
+																<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>
+																<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>
+															</div>
+														</div> <!-- end of column -->
+													</div> <!-- end of row -->
 
-											<?php
-											
-											//$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
-											if($flight[$key]["adult_total"]>0) {
-												$dateDiff = intval((strtotime($flight[$key]["arrv_date_time"])-strtotime($flight[$key]["dept_date_time"]))/60);
-											}
-											else {
-												$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
-											}
-											
-											?>
-											<ul class="list-unstyled list-inline offer-price-1">
-											    <?php if($flight[$key]["sale_type"]!="quote"){ ?>
-													<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></span></li>
-												<?php } else {?>
-												<!-- <li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?></span></li> -->
-													<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?></span></li>
-												<?php } ?>
-												
-												<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
-													<?php if($flight[$key]["live_fare"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
-													<?php } else {?>
-														<li class="live-price">&nbsp;</li>
-													<?php } ?>
-														<?php
-														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
-														$final_total = $flight[$key]["price"];
-														?>
-														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
-												<?php } else {?>
-													<?php if($flight[$key]["live_fare"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
-													<?php } else {?>
-														<li class="live-price">&nbsp;</li>
-													<?php } ?>
-														<?php
-														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
-														$final_total = $flight[$key]["price"];
-														if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-															$final_total += $flight[$key]["admin_markup"];
-														}
-														?>
-														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
-												<?php } ?>
-												
-												<?php if($currentuser['is_admin']=='1') { ?>
-													<?php 
-													//$costprice = $flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
-													$costprice = floatval($flight[$key]['cost_price']);
-													//$costprice = $flight[$key]["total"] + $flight[$key]["spl_markup"] + $flight[$key]["spl_srvchg"] + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_cgst'] / 100) + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_sgst'] / 100);
-													?>
-													<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
-												<?php } else {
-													if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-														$costprice = $flight[$key]["price"]; ?>
-														<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
-													<?php }?>
-												<?php } ?>
-											</ul>
-											<!--<ul class="list-unstyled flight-timing <?php echo $class?>">
-											    <?php if($flight[$key]["sale_type"]!="quote"){ ?>
-												<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
-												<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
-											    <?php } ?>
-											</ul>-->
-										</div><!-- end f-list-img -->
-										
-										<div class="list-info f-list-info <?php echo $class?>" style="padding:5px 5px 0 5px;">
-											<!--<h3 class="block-title" style="font-size:12px !important"><a href="#"  style="font-size:12px"><?php echo $flight[$key]["source_city"]; ?> To <?php echo $flight[$key]["destination_city"]; ?></a>&nbsp;&nbsp; ( Oneway Flight )</h3> -->
-											<ul class="list-unstyled flight-timing <?php echo $class?>">
-												<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["source_city"]; ?></li>
-												<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["destination_city"]; ?></li>
-											</ul>
-											<div class="row">
-												<div class="col-xs-6 col-sm-6 col-md-6" style="border-right: 1px solid #dedfe0;">
-													<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<div class="block-minor" style="font-size:12px">
-															<span>
-																<i class="fa fa-users"></i>
-																<div class="seats-title"><?php echo $flight[$key]["no_of_person"];?>&nbsp;&nbsp; seat(s) left,</div>
-																<div class="stop-title"><i class="fa fa-plane"></i>&nbsp;<?php echo ($flight[$key]["no_of_stops"]>0?$flight[$key]["no_of_stops"].'Stop':'Direct')?></div>
-															</span>
-														</div>
-													<?php } else {?>
-														<p class="block-minor">&nbsp;</p>
-													<?php } ?>
-												</div> <!-- end of column -->
-												<div class="col-xs-6 col-sm-6 col-md-6">
-													<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<p class="block-minor" style="float:right"><span><i class="fa fa-hotel"></i>&nbsp;&nbsp;<?php echo $flight[$key]["class"]." Class";?></span></p>
-													<?php } else {?>
-														<p class="block-minor" style="float:right">&nbsp;</p>
+													<?php
 													
+													//$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+													if($flight[$key]["adult_total"]>0) {
+														$dateDiff = intval((strtotime($flight[$key]["arrv_date_time"])-strtotime($flight[$key]["dept_date_time"]))/60);
+													}
+													else {
+														$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+													}
+													
+													?>
+													<ul class="list-unstyled list-inline offer-price-1">
+														<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+															<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></span></li>
+														<?php } else {?>
+														<!-- <li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?></span></li> -->
+															<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?></span></li>
+														<?php } ?>
+														
+														<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
+															<?php if($flight[$key]["live_fare"]>0) {?>
+																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+															<?php } else {?>
+																<li class="live-price">&nbsp;</li>
+															<?php } ?>
+																<?php
+																// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
+																$final_total = $flight[$key]["price"];
+																?>
+																<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
+														<?php } else {?>
+															<?php if($flight[$key]["live_fare"]>0) {?>
+																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+															<?php } else {?>
+																<li class="live-price">&nbsp;</li>
+															<?php } ?>
+																<?php
+																// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
+																$final_total = $flight[$key]["price"];
+																if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+																	$final_total += $flight[$key]["admin_markup"];
+																}
+																?>
+																<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
+														<?php } ?>
+														
+														<?php if($currentuser['is_admin']=='1') { ?>
+															<?php 
+															//$costprice = $flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
+															$costprice = floatval($flight[$key]['cost_price']);
+															//$costprice = $flight[$key]["total"] + $flight[$key]["spl_markup"] + $flight[$key]["spl_srvchg"] + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_cgst'] / 100) + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_sgst'] / 100);
+															?>
+															<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
+														<?php } else {
+															if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+																$costprice = $flight[$key]["price"]; ?>
+																<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
+															<?php }?>
+														<?php } ?>
+													</ul>
+													<!--<ul class="list-unstyled flight-timing <?php echo $class?>">
+														<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+														<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
+														<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
+														<?php } ?>
+													</ul>-->
+												</div><!-- end f-list-img -->
+												
+												<div class="list-info f-list-info <?php echo $class?>" style="padding:5px 5px 0 5px;">
+													<!--<h3 class="block-title" style="font-size:12px !important"><a href="#"  style="font-size:12px"><?php echo $flight[$key]["source_city"]; ?> To <?php echo $flight[$key]["destination_city"]; ?></a>&nbsp;&nbsp; ( Oneway Flight )</h3> -->
+													<ul class="list-unstyled flight-timing <?php echo $class?>">
+														<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["source_city"]; ?></li>
+														<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["destination_city"]; ?></li>
+													</ul>
+													<div class="row">
+														<div class="col-xs-6 col-sm-6 col-md-6" style="border-right: 1px solid #dedfe0;">
+															<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+																<div class="block-minor" style="font-size:12px">
+																	<span>
+																		<i class="fa fa-users"></i>
+																		<div class="seats-title"><?php echo $flight[$key]["no_of_person"];?>&nbsp;&nbsp; seat(s) left,</div>
+																		<div class="stop-title"><i class="fa fa-plane"></i>&nbsp;<?php echo ($flight[$key]["no_of_stops"]>0?$flight[$key]["no_of_stops"].'Stop':'Direct')?></div>
+																	</span>
+																</div>
+															<?php } else {?>
+																<p class="block-minor">&nbsp;</p>
+															<?php } ?>
+														</div> <!-- end of column -->
+														<div class="col-xs-6 col-sm-6 col-md-6">
+															<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+																<p class="block-minor" style="float:right"><span><i class="fa fa-hotel"></i>&nbsp;&nbsp;<?php echo $flight[$key]["class"]." Class";?></span></p>
+															<?php } else {?>
+																<p class="block-minor" style="float:right">&nbsp;</p>
+															
+															<?php } ?>
+														</div> <!-- end of column -->
+													</div> <!-- end of row -->
+													<p class="block-minor" style="margin: 25px 0px 0px 0px;">
+														<?php if($flight[$key]["sale_type"]!="quote"){ ?>
+														<span><?php if($flight[$key]["refundable"]=="Y") echo "Refundable";else echo "Non Refundable";?></span> 
+														<?php } ?>
+														<?php if($flight[$key]["sale_type"]=="request"){ ?>
+															<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
+														<?php } ?>
+													
+														<?php if($flight[$key]["sale_type"]=="live"){ ?>
+															<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
+														<?php } ?>
+														
+														<?php if($flight[$key]["sale_type"]=="quote"){ ?>
+														<!--<a style="margin-top:0" href="<?php echo base_url(); ?>search/sendquote/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">GET QUOTE</a>-->
+														<a style="cursor:pointer" class="btn btn-orange btn_send_quote_request" data-toggle="modal" data-target="#getquote" color="<?php echo $flight[$key]["id"];?>">GET QUOTE</a>
+														
+														<?php } ?>
+													</p>
+													<div class="disclaimer">
+														** Seats & rates are subject to availability. Before issuance, please confirm with our support team.
+													</div>
+													<?php if($currentuser['is_admin']=='1') { ?>
+														<div class="action_icons">
+															<ul>
+																<?php if( intval($flight[$key]["companyid"]) === intval($currentuser['companyid']) ) { ?>
+																	<li title='Edit ticket' alt='Edit ticket'>
+																		<button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#ticket_form" data-mode='update' data-object="<?= htmlspecialchars(json_encode($flight_attributes[$key], JSON_HEX_APOS));?>">
+																			<span>
+																				<i class="fa fa-pencil" aria-hidden="true"></i>
+																			</span>
+																		</button>
+																	</li>
+																<?php } ?>
+																<?php if( intval($flight[$key]["companyid"]) !== intval($currentuser['companyid']) ) { ?>
+																	<li title='Clone ticket' alt='Clone ticket'>
+																		<button type="button" class="btn btn-outline-info" data-toggle="modal" data-target="#ticket_form" data-mode='clone' data-object="<?= htmlspecialchars(json_encode($flight_attributes[$key], JSON_HEX_APOS));?>">
+																			<span>
+																				<i class="fa fa-files-o" aria-hidden="true"></i>
+																			</span>
+																		</button>
+																	</li>
+																<?php } ?>
+															</ul>
+														</div>
 													<?php } ?>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
-											<p class="block-minor" style="margin: 25px 0px 0px 0px;">
-												<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-												<span><?php if($flight[$key]["refundable"]=="Y") echo "Refundable";else echo "Non Refundable";?></span> 
-												<?php } ?>
-												<?php if($flight[$key]["sale_type"]=="request"){ ?>
-													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
-												<?php } ?>
-											
-												<?php if($flight[$key]["sale_type"]=="live"){ ?>
-													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
-												<?php } ?>
-												
-												<?php if($flight[$key]["sale_type"]=="quote"){ ?>
-												<!--<a style="margin-top:0" href="<?php echo base_url(); ?>search/sendquote/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">GET QUOTE</a>-->
-												<a style="cursor:pointer" class="btn btn-orange btn_send_quote_request" data-toggle="modal" data-target="#getquote" color="<?php echo $flight[$key]["id"];?>">GET QUOTE</a>
-												
-												<?php } ?>
-											</p>
-											<div class="disclaimer">
-												** Seats & rates are subject to availability. Before issuance, please confirm with our support team.
-											</div>
-										</div><!-- end f-list-info -->
-									</div><!-- end list-content -->
-								</div><!-- end f-list-block -->
-								<?php
-									    
+												</div><!-- end f-list-info -->
+											</div><!-- end list-content -->
+										</div><!-- end f-list-block -->
+										<!-- Button trigger modal -->
+										<!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+											Launch demo modal
+										</button> -->
+										<?php
 								    }
 								}
                                 else
@@ -449,7 +471,84 @@
                     </div><!-- end row -->
                 </div><!-- end container -->
             </div><!-- end flight-listings -->
-        </section><!-- end innerpage-wrapper -->
+		</section><!-- end innerpage-wrapper -->
+
+		<!-- ticket modify / ticket clone dialog -->
+		<div class="modal fade" id="ticket_form" tabindex="-1" role="dialog" aria-labelledby="ticket_form_label" aria-hidden="true" style="z-index: 10000;">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ticket_form_label" style="display: initial;">Modal title</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="container-fluid">
+						<div class="row">
+							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 edit-item" id="edit-item">
+								<div class="row">
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>Flight #</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input type="text" id="flight_number" class="form-control" placeholder="Please enter [Flight Number]" autocomplete="off" value="" required/>
+									</div>
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>Dept. Date</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="dd/mm/yyyy" name="dept_date" id="dept_date" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" value="" readonly/>
+										<input class="form-control" placeholder="HH:mm" style="width: 35%; display: inline-block; padding: 0px 2px;" name="dept_date_time" id="dept_date_time" pattern="[0-9]{2}:[0-9]{2}" value=""/>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>No Of PAX</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input type="text" id="no_of_pax" class="form-control" placeholder="Please enter [PAX]" autocomplete="off" value="" required/>
+									</div>
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>Arrival Date</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="dd/mm/yyyy" name="arrv_date" id="arrv_date" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" value="" readonly/>
+										<input class="form-control" placeholder="HH:mm" style="width: 35%; display: inline-block; padding: 0px 2px;" name="arrv_date_time" id="arrv_date_time" pattern="[0-9]{2}:[0-9]{2}" value=""/>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>Price</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input type="text" id="price" class="form-control" placeholder="Please enter [Ticket Base Price]" autocomplete="off" value="" required/>  
+									</div>
+									<div class="col-sm-6 col-md-2 col-lg-2">
+										<!-- Flight Number, PAX & base rate -->
+										<label>TAG</label>
+									</div>
+									<div class="col-sm-6 col-md-4 col-lg-4">
+										<input type="text" id="tag" class="form-control" placeholder="Please enter [TAG]" autocomplete="off" value="" required/>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button id="btncloseticketform" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button id="btnsaveticket" type="button" class="btn btn-primary" data-ticket="" onclick="javascript:save_ticket(this);">Save changes</button>
+				</div>
+				</div>
+			</div>
+		</div>		
+
         <div id="getquote" class="modal custom-modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -482,5 +581,112 @@
 						$('.costprice').hide();
 					}
 				});
+
+				$('#ticket_form').on('show.bs.modal', function (event) {
+					var button = $(event.relatedTarget); // Button that triggered the modal
+					var flight = button.data('object'); // Extract info from data-* attributes
+					var mode = button.data('mode'); // Extract info from data-* attributes
+
+					// If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+					// Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+					var modal = $(this);
+
+					$(this).draggable({
+						handle: ".modal-header"
+					});					
+					modal.find('.modal-title').text(`${mode} ticket ` + flight['source_city'] + ' to ' + flight['destination_city']);
+					modal.find('.modal-body #flight_number').val(flight['flight_no']);
+					//modal.find('.modal-body #dept_date').val(formatDate(flight['departure_date']));
+					modal.find('.modal-body #dept_date').val(moment(flight['departure_date'], 'DD-MM-YYYY').format('DD-MM-YYYY'));
+					modal.find('.modal-body #dept_date_time').val(flight['departure_time']);
+					//modal.find('.modal-body #arrv_date').val(formatDate(flight['arrival_date']));
+					modal.find('.modal-body #arrv_date').val(moment(flight['arrival_date'], 'DD-MM-YYYY').format('DD-MM-YYYY'));
+					modal.find('.modal-body #arrv_date_time').val(flight['arrival_time']);
+					modal.find('.modal-body #no_of_pax').val(flight['no_of_person']);
+					modal.find('.modal-body #price').val(flight['price']);
+					modal.find('.modal-body #tag').val(flight['tag']);
+
+					modal.find('.modal-footer #btnsaveticket').data('ticket', flight);
+					modal.find('.modal-footer #btnsaveticket').data('mode', mode);
+					
+				});
 			});
+
+			function save_ticket(ev) {
+				var modelButton = $(ev);
+
+				var ticket = modelButton.data('ticket');
+				var mode = modelButton.data('mode');
+				var modal = $('#ticket_form');
+
+				ticket.flight_no = modal.find('.modal-body #flight_number').val();
+				ticket.departure_date = moment(modal.find('.modal-body #dept_date').val(), 'DD-MM-YYYY').format('YYYY-MM-DD');
+				ticket.departure_time = modal.find('.modal-body #dept_date_time').val();
+				ticket.arrival_date = moment(modal.find('.modal-body #arrv_date').val(), 'DD-MM-YYYY').format('YYYY-MM-DD');
+				ticket.arrival_time = modal.find('.modal-body #arrv_date_time').val();
+				ticket.no_of_person = modal.find('.modal-body #no_of_pax').val();
+				ticket.price = modal.find('.modal-body #price').val();
+				ticket.tag = modal.find('.modal-body #tag').val();
+
+				//alert(JSON.stringify(ticket));
+				var url = document.location.href;
+				url = url.substr(0, url.lastIndexOf('/'));
+
+				post_update(
+					{
+						url: `${url}/save_ticket_post`,
+						data: {mode: mode, payload: {source_ticket: ticket}},
+						error: function() {
+							alert('ERROR');
+						},
+						success: function(data) {
+							if(data && parseInt(data['code'])===200) {
+								document.location.reload();
+							}
+							else {
+								alert(`${data.status} (${data.code})`);
+							}
+						}
+					}
+				);
+			}
+
+			function post_update(payload) {
+				$.ajax({
+					url: payload.url, //'/ajax-requestPost',
+					type: 'POST',
+					data: payload.data,
+					error: function() {
+						//alert('Something is wrong');
+						payload.error();
+					},
+					success: function(data) {
+						payload.success(JSON.parse(data));
+							// $("tbody").append("<tr><td>"+title+"</td><td>"+description+"</td></tr>");
+							// alert("Record added successfully");  
+					}
+				});
+			}
+
+			function formatDate(date) {
+				var d = new Date(date),
+					month = '' + (d.getMonth() + 1),
+					day = '' + d.getDate(),
+					year = d.getFullYear();
+
+				if (month.length < 2) 
+					month = '0' + month;
+				if (day.length < 2) 
+					day = '0' + day;
+
+				return [year, month, day].join('-');
+			}
+
+			function edit_ticket(id) {
+				$('#ticket_form').modal('show');
+			}
+				
+			function clone_ticket(id) {
+				alert(`Clone : Ticket Id ${id}`);
+			}
 		</script>

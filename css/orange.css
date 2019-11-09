@@ -292,6 +292,7 @@ p{
 	border:0px;
 	border-radius:0px;
 	border-bottom: 1px solid #FAA61A;
+	z-index: 9999 !important;
 }
   
 .main-navbar .navbar-header .navbar-brand {
@@ -961,9 +962,9 @@ p{
 		Main Block
    ----------------------------------------------------- */
 
-.main-block:hover{
+/*.main-block:hover{
 	transform:translateY(-10px);
-}
+}*/
 
 /*.main-block:hover .main-img img{
 	transform:scale(1.15);
@@ -2643,13 +2644,14 @@ p{
 		List Block
    ----------------------------------------------------- */
 
-.list-block {
+/* .list-block {
 	transition: 1s;
-}
+} */
 
 .list-block:hover{
-	box-shadow:0px 0px 16px rgba(0,0,0,0.15);
-	transform: scale(1.03);
+	/*box-shadow:0px 0px 16px rgba(0,0,0,0.15);*/
+	box-shadow: 0px 0px 16px rgba(202, 107, 15, 0.75);
+	/*transform: scale(1.03);*/
 }
 
 .list-info{

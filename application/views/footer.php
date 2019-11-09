@@ -121,7 +121,8 @@
         <script src="<?php echo base_url(); ?>js/custom-video.js"></script>
 		<script src="<?php echo base_url(); ?>script/user_script.js"></script>
         <script src="<?php echo base_url(); ?>script/contact.js"></script>
-
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+        
         <script language="javascript">
             window.onscroll = function() {myFunction()};
 

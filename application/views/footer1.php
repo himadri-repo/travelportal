@@ -120,6 +120,7 @@
         <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 		<script>
             $(document).ready(function()
             {
@@ -217,17 +218,19 @@
                     try
                     {
                         getAvailableTickets($("#source").val(), $("#destination").val());
+
+                        $('.datepicker').datepicker("show");
                         //alert('hi');
-                        setTimeout(function() {
-                            try
-                            {
-                                $('.datepicker').datepicker("show");
-                            }
-                            catch(e) {
-                                console.log(e);
-                                //alert(e);
-                            }
-                        }, 0);
+                        // setTimeout(function() {
+                        //     try
+                        //     {
+                        //         $('.datepicker').datepicker("show");
+                        //     }
+                        //     catch(e) {
+                        //         console.log(e);
+                        //         //alert(e);
+                        //     }
+                        // }, 0);
                     }
                     catch(e) {
                         console.log(e);
@@ -241,7 +244,7 @@
                     changeMonth: true,
                     changeYear: true,
                     minDate: 0,
-                    showAnim: "fold",
+                    /*showAnim: "fold",*/
                     //The calendar is recreated OnSelect for inline calendar
                     onSelect: function (date, dp) {
                         updateDatePickerCells(dp);
@@ -252,6 +255,9 @@
                     beforeShow: function(elem, dp) { //This is for non-inline datepicker
                         //alert(JSON.stringify(dp));
                         updateDatePickerCells(dp);
+                        // var dt = new Date();
+                        // dt.setDate(dt.getDate()-1);
+                        // return {minDate: dt};
                     }
                 });
                 //updateDatePickerCells();
@@ -264,6 +270,11 @@
                     //console.log(JSON.stringify(dp));
                     let mth = dp.drawMonth; //dp.selectedMonth;
                     let yr = dp.drawYear; //dp.selectedMonth;
+
+                    if(yr===0) {
+                        mth = new Date().getMonth();
+                        yr = new Date().getFullYear();
+                    }
                     
                     // console.log('selected item');
                     // console.log($('#departure_date').val());
