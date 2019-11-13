@@ -340,14 +340,14 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_wholesalers() {
-		$this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
+		$this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
 		$this->db->from('company_tbl c');
 		$this->db->join('company_services_tbl csrv', 'csrv.companyid=c.id and csrv.active=1 and c.active=1', 'inner');
 		$this->db->join('metadata_tbl md', 'md.associated_object_type=\'services\' and csrv.serviceid=md.id and md.active=1', 'inner');
 		$this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
 		$this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
 		$this->db->where('(c.type & 4)=4');
-		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, usr.email');
+		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email');
 		$this->db->order_by('c.display_name');
 
 		$query = $this->db->get();
@@ -363,14 +363,14 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_suppliers() {
-		$this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
+		$this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
 		$this->db->from('company_tbl c');
 		$this->db->join('company_services_tbl csrv', 'csrv.companyid=c.id and csrv.active=1 and c.active=1', 'inner');
 		$this->db->join('metadata_tbl md', 'md.associated_object_type=\'services\' and csrv.serviceid=md.id and md.active=1', 'inner');
 		$this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
 		$this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
 		$this->db->where('(c.type & 2)=2');
-		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, usr.email');
+		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email');
 		$this->db->order_by('c.display_name');
 
 		$query = $this->db->get();

@@ -148,3 +148,4 @@ $route['api/users/activity'] = 'api/Users/get_user_activities';
 $route['api/company/statistics'] = 'api/Company/statistics';
 $route['api/query/pnr'] = 'api/Company/pnrsearch';
 $route['api/save/pnr'] = 'api/Admin/save_pnr';
+$route['api/save/company/generalinfo'] = 'api/Company/save_generalinfo';

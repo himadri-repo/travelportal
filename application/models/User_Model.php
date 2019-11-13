@@ -90,7 +90,7 @@ Class User_Model extends CI_Model
 	}
 
 	public function get_userbyid($uid) {
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype, c.state, c.country, c.pin ');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.id=', $uid);
@@ -108,7 +108,7 @@ Class User_Model extends CI_Model
 	}
 
 	public function getUserByUUID($uuid) {
-		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype');
+		$this->db->select('u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type as ctype, c.state, c.country, c.pin ');
 		$this->db->from('user_tbl u');
 		$this->db->join('company_tbl c', 'u.companyid=c.id', 'inner');
 		$this->db->where('u.uid=', $uuid);
@@ -158,7 +158,7 @@ Class User_Model extends CI_Model
 		// $this->db->or_where('u.email=', $email);
 		// $query = $this->db->get();
 
-		$sql = "select u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, 
+		$sql = "select u.*, c.code as ccode, c.name as cname, c.display_name as cdisplay_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.state, c.country, c.pin, 
 						c.type as ctype, wl.id as wallet_id, wl.display_name as wallet_name, wl.sponsoring_companyid, wl.allowed_transactions, wl.balance as wallet_balance, 
 						wl.type as wallet_type, wl.status as wallet_status, ifnull(ucnf.field_name, '') as field_name, ifnull(ucnf.field_display_name, '') as field_display_name,
 						ifnull(ucnf.field_value, 0) as admin_markup, ifnull(ucnf.field_value_type, 0) as field_value_type

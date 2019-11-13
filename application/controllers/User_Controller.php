@@ -208,10 +208,11 @@ class User_Controller extends Mail_Controller
 			}
 			
 			$result['city']=$this->User_Model->select("city_tbl");
-	        $result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
-			
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);	
 
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_ticket',$result);
@@ -231,9 +232,11 @@ class User_Controller extends Mail_Controller
 		{ 
 	        			
 			$result['testimonials']=$this->User_Model->testimonials();
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
-			
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+				
 			$result['mywallet']= $this->getMyWallet();
 
 		    $this->load->view('header1',$result);			
@@ -254,9 +257,11 @@ class User_Controller extends Mail_Controller
 			$result['usermodel'] = $this->User_Model;
 			$result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->my_booking_order();
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 			
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking',$result);
@@ -275,9 +280,11 @@ class User_Controller extends Mail_Controller
 		{ 
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->booking_details($id);
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 	        $result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_details',$result);
@@ -296,9 +303,11 @@ class User_Controller extends Mail_Controller
 		{ 
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->booking_orders();
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_booking_orders',$result);
@@ -317,9 +326,11 @@ class User_Controller extends Mail_Controller
 		{ 
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['sale_order']=$this->User_Model->cancel_request();
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);			
 			$this->load->view('user_cancel_request',$result);
@@ -344,9 +355,11 @@ class User_Controller extends Mail_Controller
 			$result["flight"][0]["total"]=$result["flight"][0]["total"];
 			$result["flight"][0]["qty"]=$result["flight"][0]["qty"];
 			$result["flight"][0]["id"]=$id;								  			  			 
-			$result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 			$this->load->view('header1',$result);;
 			$this->load->view('edit_booking',$result);						
@@ -452,9 +465,11 @@ class User_Controller extends Mail_Controller
 	
 	public function verify()
 	{
-		$result["setting"]=$this->Search_Model->setting();
+		//$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$result['mywallet']= $this->getMyWallet();
+		$company = $this->getCurrentCompany();
+		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		$this->load->view('header1',$result);
 		$this->load->view('verify');
@@ -464,9 +479,11 @@ class User_Controller extends Mail_Controller
 	
 	public function login_otp()
 	{
-		$result["setting"]=$this->Search_Model->setting();
+		$company = $this->getCurrentCompany();
+		//$result["setting"]=$this->Search_Model->setting();
 		$result["footer"]=$this->Search_Model->get_post(5);
 		$result['mywallet']= $this->getMyWallet();
+		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		$this->load->view('header1',$result);
 		$this->load->view('login_otp');
@@ -1972,11 +1989,14 @@ class User_Controller extends Mail_Controller
 	{
 		if ($this->session->userdata('user_id')) 
 		{
-			$result["setting"]=$this->Search_Model->setting();
-				$result["footer"]=$this->Search_Model->get_post(5);
+			//$result["setting"]=$this->Search_Model->setting();
+			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['city']=$this->User_Model->select("city_tbl");	
 			$result['airline']=$this->User_Model->select("airline_tbl");
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+
 
 		    $this->load->view('header1',$result);
 			$this->load->view('ticket-form');
@@ -1994,9 +2014,11 @@ class User_Controller extends Mail_Controller
 	{
 		if ($this->session->userdata('user_id')) 
 		{
-			$result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);
 			$this->load->view('testimonial-form');
@@ -2014,11 +2036,13 @@ class User_Controller extends Mail_Controller
 	{
 		if ($this->session->userdata('user_id')) 
 		{
-			$result["setting"]=$this->Search_Model->setting();
+			//$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['city']=$this->User_Model->select("city_tbl");	
 			$result['airline']=$this->User_Model->select("airline_tbl");
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);
 			$this->load->view('return-ticket-form');
@@ -2044,12 +2068,15 @@ class User_Controller extends Mail_Controller
 			if ($check->num_rows() > 0) 
 			{
 			   
-				$result["setting"]=$this->Search_Model->setting();
+				//$result["setting"]=$this->Search_Model->setting();
 				$result["footer"]=$this->Search_Model->get_post(5);
 				$result['city']=$this->User_Model->select("city_tbl");	
 				$result['airline']=$this->User_Model->select("airline_tbl");
 				$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
 				$result['mywallet']= $this->getMyWallet();
+				$company = $this->session->userdata("company");
+				$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+	
 
 				if($result["flight"][0]["trip_type"]=="ONE")
 				{
@@ -2085,9 +2112,11 @@ class User_Controller extends Mail_Controller
 			if ($check->num_rows() > 0) 
 			{
 			   
-				$result["setting"]=$this->Search_Model->setting();
+				//$result["setting"]=$this->Search_Model->setting();
 				$result['mywallet']= $this->getMyWallet();
-
+				$company = $this->session->userdata("company");
+				$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+	
 				$this->load->view('header1',$result);
 				$this->load->view('ticket-form');
 				$this->load->view('footer');
@@ -2138,9 +2167,11 @@ class User_Controller extends Mail_Controller
 		{ 
 	        $result['user_details']=$this->User_Model->user_details();
 			$result['wallet_transaction']=$this->User_Model->wallet_transaction();
-	        $result["setting"]=$this->Search_Model->setting();
+	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
+			$company = $this->session->userdata("company");
+			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
 
 		    $this->load->view('header1',$result);
 			$this->load->view('user_transaction',$result);

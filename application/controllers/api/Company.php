@@ -785,6 +785,64 @@ class Company extends REST_Controller {
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function save_generalinfo_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $result = array();
+
+        try {
+            if($payload && intval($payload['id'])>0) {
+                $id = intval($payload['id']);
+                //update company_tbl
+                $result = $this->Search_Model->update('company_tbl', array(
+                    'name' => $payload['display_name'],
+                    'display_name' => $payload['display_name'],
+                    'address' => $payload['address'],
+                    'state' => intval($payload['state']),
+                    'country' => intval($payload['country']),
+                    'primary_user_id' => intval($payload['primary_user_id']), /*We also need to update in user_tbl against this user id*/
+                    'gst_no' => $payload['gst'],
+                    'pan' => $payload['pan'],
+                    'active' => $payload['active']?1:0,
+                ), array('id' => $id));
+
+                //update attributes_tbl table
+                //Site_Title
+                $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['display_name']), array('companyid' => $id, 'code' => 'site_title'));
+                //Phone Number
+                $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['phone']), array('companyid' => $id, 'code' => 'phone_no'));
+                //Fax
+                $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['fax']), array('companyid' => $id, 'code' => 'fax'));
+                //Email
+                $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['email']), array('companyid' => $id, 'code' => 'email'));
+                //Change Admin of the account
+                $result = $this->Search_Model->update('user_tbl', array('is_admin' => 0), array('companyid' => $id));
+                $result = $this->Search_Model->update('user_tbl', array('is_admin' => 1), array('id' => intval($payload['country']), 'companyid' => $id));
+
+                $company = $this->Search_Model->get('company_tbl', array('id' => $id));
+                if($company && count($company) > 0) {
+                    $company = $company[0];
+                }
+
+                $result = array();
+                $result['code'] = 200;
+                $result['message'] = 'Record saved successfully';
+                $result['data'] = $company;
+            }
+            else {
+                $result = array();
+                $result['code'] = 501;
+                $result['message'] = 'Record could not be saved as invalid primary id passed';
+                $result['data'] = [];
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }
 
 ?>

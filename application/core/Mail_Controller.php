@@ -494,5 +494,21 @@ class Mail_Controller  extends CI_Controller
 
 		return $companyinfo;
 	}
+
+	public function getCurrentCompany() {
+		$companies = $this->Admin_Model->get_companies();
+		$company = null;
+		$siteUrl = siteURL();
+
+		for($idx=0; $idx<count($companies); $idx++) {
+			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+				$company = $companies[$idx];
+				log_message('debug', "Get current company => ".json_encode($company, false));
+				break;
+			}
+		}
+
+		return $company;
+	}
 }
 ?>
