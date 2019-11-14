@@ -2163,15 +2163,41 @@ class User_Controller extends Mail_Controller
 	
 	public function transaction()
 	{
-		if ($this->session->userdata('user_id')) 
+		$userid=$this->input->post('user');
+		$dt_from=$this->input->post('dt_from');
+		if ($dt_from && $dt_from!== '') {
+			$dt_from = date_create($dt_from." 00:00:00");
+		}
+
+		$dt_to=$this->input->post('dt_to');
+		if ($dt_to && $dt_to!== '') {
+			$dt_to = date_create($dt_to." 23:59:59");
+		}
+
+		if($userid && intval($userid) > 0) {
+			$userid = intval($userid);
+		}
+		else {
+			$userid = intval($this->session->userdata('user_id'));
+		}
+
+		if ($userid>0) 
 		{ 
+			$target_user = $this->User_Model->get_userbyid($userid);
 	        $result['user_details']=$this->User_Model->user_details();
-			$result['wallet_transaction']=$this->User_Model->wallet_transaction();
+			$result['wallet_transaction']=$this->User_Model->wallet_transaction($userid, $dt_from, $dt_to);
 	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
 			$company = $this->session->userdata("company");
 			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+			
+			$customers = $this->Search_Model->get_customers(intval($company['id']), 1, 'B2B');
+			$result["agents"]=$customers;
+			$customers = $this->Search_Model->get_customers(intval($company['id']), 1, 'B2C');
+			$result["retail"]=$customers;
+			$result["userid"]=$userid;
+			$result["target_user"] = $target_user;
 
 		    $this->load->view('header1',$result);
 			$this->load->view('user_transaction',$result);

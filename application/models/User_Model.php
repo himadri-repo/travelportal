@@ -809,7 +809,7 @@ Class User_Model extends CI_Model
 		}
          	
     }
-	public function wallet_transaction() 
+	public function wallet_transaction($userid = -1, $dt_from, $dt_to) 
 	{    
         // $arr=array("w.user_id"=>$this->session->userdata('user_id'));  	
 		// $this->db->select('w.date,w.amount,w.booking_id,w.type,w.narration,b.id as booking_no,t.ticket_no,b.pnr,c.city as source,ct.city as destination,u.name,b.status');
@@ -824,20 +824,60 @@ Class User_Model extends CI_Model
 		// $query = $this->db->get();	
 
 		$current_user = $this->session->userdata('current_user');
-		if($current_user) {
-			if(intval($current_user['is_admin'])===1) {
-				$arr=array("w.companyid" => $current_user['companyid'], 'w.userid' => 0);
+		$whr = '';
+
+		if($userid === -1) {
+			//user id is not passed so normal process
+			if($current_user) {
+				if(intval($current_user['is_admin'])===1) {
+					$arr=array("w.companyid" => $current_user['companyid'], 'w.userid' => 0);
+					$whr = "wl.companyid = ".$current_user['companyid']." and wl.userid = 0";
+				}
+				else {
+					$arr=array("w.userid" => $current_user['id']);
+					$whr = "wl.userid = ".$current_user['id'];
+				}
 			}
 			else {
-				$arr=array("w.userid" => $current_user['id']);
+				$arr=array("w.userid" => $this->session->userdata('user_id'));
+				$whr = "wl.userid = ".$this->session->userdata('user_id');
 			}
 		}
 		else {
-			$arr=array("w.userid" => $this->session->userdata('user_id'));
+			if($current_user) {
+				if(intval($current_user['is_admin'])===1 && $userid === intval($current_user['id'])) {
+					$arr=array("w.companyid" => $current_user['companyid'], 'w.userid' => 0);
+					$whr = "wl.companyid = ".$current_user['companyid']." and wl.userid = 0";
+				}
+				else {
+					$arr=array("w.userid" => $userid);
+					$whr = "wl.userid = $userid";
+				}
+			}
+			else {
+				//$arr=array("w.userid" => $this->session->userdata('user_id'));
+				$arr=array("w.userid" => $userid);
+				$whr = "wl.userid = $userid";
+			}
 		}
-		
 
-		$this->db->select('w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, u.name, b.status, w.status as wallet_trans_status');
+		$arr_old = $arr;
+		
+		if($dt_from) {
+			$arr["DATE_FORMAT(w.date, '%Y-%m-%d %H:%i:%s')>="] = date_format($dt_from, 'Y-m-d H:i:s');
+			$whr = $whr." and DATE_FORMAT(wl.date, '%Y-%m-%d %H:%i:%s') < '".date_format($dt_from, 'Y-m-d H:i:s')."'";
+		}
+		else {
+			$whr = $whr." and DATE_FORMAT(wl.date, '%Y-%m-%d %H:%i:%s') < '1970-01-01 00:00:00'";
+		}
+
+		if($dt_to) {
+			$arr["DATE_FORMAT(w.date, '%Y-%m-%d %H:%i:%s')<="] = date_format($dt_to, 'Y-m-d H:i:s');
+		}
+
+		$this->db->select("w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, 
+				u.name, b.status, w.status as wallet_trans_status,
+				ifnull((select sum(case wl.dr_cr_type when 'DR' then -wl.amount else wl.amount end) as total from wallet_transaction_tbl wl where $whr),0) as OB ");
 		$this->db->from('wallet_transaction_tbl w');
 		$this->db->join('bookings_tbl as b', 'w.trans_documentid = b.id and w.trans_type=20','left');
 		$this->db->join('tickets_tbl as t', 't.id = b.ticket_id','left');
@@ -846,6 +886,9 @@ Class User_Model extends CI_Model
 		$this->db->join('user_tbl as u', 'u.id = b.customer_userid','left');
         $this->db->where($arr);
 		$this->db->order_by("w.id", "ASC");
+
+		//$query2 = $this->db->get_compiled_select();
+
 		$query = $this->db->get();	
 		
 		

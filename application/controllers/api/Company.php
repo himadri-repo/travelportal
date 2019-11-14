@@ -786,6 +786,75 @@ class Company extends REST_Controller {
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+    public function save_logo_post($companyid) {
+        $company = $this->Admin_Model->get_company($companyid);
+        if($company && count($company)>0) {
+            $company = $company[0];
+        }
+
+        $result = array();
+        if(isset($_FILES['logo']) && $_FILES['logo']['error'] == 0) {
+            $file = $_FILES['logo'];
+            $path = realpath('./upload').DIRECTORY_SEPARATOR;
+            log_message('info', "Logo upload to real path $path");
+            $path_parts = pathinfo($file['tmp_name']);
+            $newfilepath = '';
+            $filename = '';
+
+            if(strpos($file['type'], 'image')>=0) {
+                if(!file_exists($path.$file['name'])) {
+                    log_message('info', "New logo file moved from ".$file['tmp_name']." to ".$path.$file['name']);
+                    move_uploaded_file($file['tmp_name'], $path.$file['name']);
+                    $newfilepath = $path.$file['name'];
+                    $filename = $file['name'];
+                }
+                else {
+                    move_uploaded_file($file['tmp_name'], $path.$company['code'].'.'.$path_parts['extension']);
+                    $newfilepath = $path.$company['code'].'.'.$path_parts['extension'];
+                    $filename = $company['code'].'.'.$path_parts['extension'];
+                }
+
+                if($newfilepath !== '') {
+                    $flag = $this->Search_Model->update('attributes_tbl', array('datavalue' => $filename), array('companyid' => $companyid, 'code' => 'logo'));
+                    if($flag) {
+                        $result['code'] = 200;
+                        $result['message'] = "Logo file uploaded and processed successfully";
+                        $result['data'] = ['companyid' => $companyid, 'name' => $filename, 'type' => $file['type'], 'error' => $file['error'], 'size' => $file['size']];
+                    }
+                    else {
+                        $result['code'] = 504;
+                        $result['message'] = "Unable to update record to company";
+                        $result['data'] = ['companyid' => $companyid, 'name' => $filename, 'type' => $file['type'], 'error' => $file['error'], 'size' => $file['size']];
+                    }
+                }
+                else {
+                    $result['code'] = 503;
+                    $result['message'] = "Sorry unable to process the uploaded image file";
+                    $result['data'] = ['companyid' => $companyid, 'name' => $filename, 'type' => $file['type'], 'error' => $file['error'], 'size' => $file['size']];
+                }
+            }
+            else {
+                $result['code'] = 502;
+                $result['message'] = "Uploaded file must be an image file";
+                $result['data'] = ['companyid' => $companyid, 'name' => $file['name'], 'type' => $file['type'], 'error' => $file['error'], 'size' => $file['size']];
+            }
+        }
+        else {
+            $result['code'] = 501;
+            $result['message'] = "File not uploaded or some error occured during upload. File must be an image";
+            $result['data'] = [];
+        }
+
+        try {
+            //$result = $this->Search_Model->pnr_search($payload);
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
     public function save_generalinfo_post() {
         $payload = $this->security->xss_clean($this->input->raw_input_stream);
         $payload = json_decode($payload, true);
@@ -816,6 +885,36 @@ class Company extends REST_Controller {
                 $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['fax']), array('companyid' => $id, 'code' => 'fax'));
                 //Email
                 $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['email']), array('companyid' => $id, 'code' => 'email'));
+                //facebook_link
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['facebook_link']), 
+                    array('code' => 'facebook_link', 'name' => 'Facebook Link', 'display_name' => 'Facebook Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['facebook_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'facebook_link'));
+
+                //twitter_link
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['twitter_link']), 
+                    array('code' => 'twitter_link', 'name' => 'Twitter Link', 'display_name' => 'Twitter Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['twitter_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'twitter_link'));
+
+                //youtube_link
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['youtube_link']), 
+                    array('code' => 'youtube_link', 'name' => 'Youtube Link', 'display_name' => 'Youtube Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['youtube_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'youtube_link'));
+
+                //pinterest_link
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['pinterest_link']), 
+                    array('code' => 'pinterest_link', 'name' => 'Pinterest Link', 'display_name' => 'Pinterest Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['pinterest_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'pinterest_link'));
+
+                //instagram_link
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['instagram_link']), 
+                    array('code' => 'instagram_link', 'name' => 'Instagram Link', 'display_name' => 'Instagram Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['instagram_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'instagram_link'));
+
+                //map
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['map']), 
+                    array('code' => 'map', 'name' => 'Google Map', 'display_name' => 'Google Map', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['map'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
+                    array('companyid' => $id, 'code' => 'map'));
+
                 //Change Admin of the account
                 $result = $this->Search_Model->update('user_tbl', array('is_admin' => 0), array('companyid' => $id));
                 $result = $this->Search_Model->update('user_tbl', array('is_admin' => 1), array('id' => intval($payload['country']), 'companyid' => $id));

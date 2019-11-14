@@ -1716,5 +1716,38 @@ Class Search_Model extends CI_Model
 		  }
 	   return $abbreviation; 
 	}
+
+	public function save_attribute($tblname, $update_data, $insert_data, $filter) {
+		$this->db->where($filter);
+		$flag = $this->db->update($tblname,$update_data);
+		$no_of_rows = $this->db->affected_rows();
+		if ($flag && $no_of_rows>0) 
+		{					
+            return true;
+		}
+		else
+		{
+			$flag = $this->save($tblname, $insert_data);
+			return $flag;
+		}
+	}
+
+	public function get_customers($companyid, $only_active=1, $type='B2B') {
+		$this->db->select('usr.* ');
+		$this->db->from('user_tbl usr ');
+		$this->db->where("usr.companyid=$companyid and usr.type='$type' ");
+		$this->db->order_by('usr.is_admin desc, usr.name asc');
+		$query = $this->db->get();
+		//echo $this->db->last_query();die();
+		
+		if($query->num_rows() > 0) 
+		{
+            return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}         	
+	}
 }
 ?>

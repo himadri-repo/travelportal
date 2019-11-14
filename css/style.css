@@ -4912,7 +4912,7 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 }
 
 .dashboard-listing.invoices{
-	margin-top:50px;
+	margin-top:10px; /* it was 50px;*/
 }
 
 .invoices td.invoice-icon{
