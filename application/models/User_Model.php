@@ -1194,7 +1194,7 @@ Class User_Model extends CI_Model
 		$companyid = isset($postedvalue['filter']['companyid']) ? intval($postedvalue['filter']['companyid']) : -1;
 		switch ($mode) {
 			case 'search':
-				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.*  
+				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.activityid, ua.userid, ua.remote_ip, ua.request_method, ua.remote_port, ua.user_agent, ua.is_ajax, CONVERT_TZ(ua.requested_on, '-07:00', '+05:30') as requested_on, ua.uri, ua.posted_data, ua.server_data, ua.controller, ua.method, ua.http_cookie
 				from user_activities_tbl ua 
 				inner join user_tbl usr on ua.userid=usr.id 
 				inner join company_tbl c on usr.companyid=c.id 

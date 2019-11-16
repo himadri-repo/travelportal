@@ -289,6 +289,7 @@ class Admin extends REST_Controller {
             $rateplans = $this->Admin_Model->rateplanByCompanyid($companyid);
         }
         catch(Exception $ex) {
+            log_message('error', $ex);
         }
         $this->set_response($rateplans, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
@@ -300,6 +301,7 @@ class Admin extends REST_Controller {
             $rateplansdetails = $this->Admin_Model->rateplandetails($rateplanid);
         }
         catch(Exception $ex) {
+            log_message('error', $ex);
         }
         $this->set_response($rateplansdetails, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
@@ -396,7 +398,7 @@ class Admin extends REST_Controller {
             $cities = $this->Admin_Model->get_cities();
         }
         catch(Exception $ex) {
-
+            log_message('error', $ex);
         }
 
         $this->set_response($cities, REST_Controller::HTTP_OK);
@@ -408,7 +410,7 @@ class Admin extends REST_Controller {
             $airlines = $this->Admin_Model->get_airlines();
         }
         catch(Exception $ex) {
-
+            log_message('error', $ex);
         }
 
         $this->set_response($airlines, REST_Controller::HTTP_OK);
@@ -427,4 +429,16 @@ class Admin extends REST_Controller {
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function accounts_get() {
+        try
+        {
+            $accounts = $this->Admin_Model->get_accounts();
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($accounts, REST_Controller::HTTP_OK);
+   }
 }

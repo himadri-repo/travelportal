@@ -886,32 +886,32 @@ class Company extends REST_Controller {
                 //Email
                 $result = $this->Search_Model->update('attributes_tbl', array('datavalue' => $payload['email']), array('companyid' => $id, 'code' => 'email'));
                 //facebook_link
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['facebook_link']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['facebook_link'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'facebook_link', 'name' => 'Facebook Link', 'display_name' => 'Facebook Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['facebook_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'facebook_link'));
 
                 //twitter_link
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['twitter_link']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['twitter_link'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'twitter_link', 'name' => 'Twitter Link', 'display_name' => 'Twitter Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['twitter_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'twitter_link'));
 
                 //youtube_link
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['youtube_link']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['youtube_link'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'youtube_link', 'name' => 'Youtube Link', 'display_name' => 'Youtube Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['youtube_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'youtube_link'));
 
                 //pinterest_link
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['pinterest_link']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['pinterest_link'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'pinterest_link', 'name' => 'Pinterest Link', 'display_name' => 'Pinterest Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['pinterest_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'pinterest_link'));
 
                 //instagram_link
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['instagram_link']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['instagram_link'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'instagram_link', 'name' => 'Instagram Link', 'display_name' => 'Instagram Link', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['instagram_link'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'instagram_link'));
 
                 //map
-                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['map']), 
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => $payload['map'], 'updated_by' => intval($payload['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
                     array('code' => 'map', 'name' => 'Google Map', 'display_name' => 'Google Map', 'category' => 'General', 'datatype' => 'string', 'datavalue' => $payload['map'], 'target_object_type' => 'company', 'target_object_id' => $id, 'active' => 1, 'companyid' => $id, 'created_by' => intval($payload['primary_user_id'])), 
                     array('companyid' => $id, 'code' => 'map'));
 
@@ -938,6 +938,48 @@ class Company extends REST_Controller {
         }
         catch(Exception $ex) {
             log_message('error', $ex);
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function save_bankdetails_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $result = array();
+
+        try
+        {
+            $companyid = $payload['companyid'];
+            $bankdetails = $payload['bankdetails'];
+
+            $company = $this->Admin_Model->get_company($companyid);
+            if($company && count($company)>0) {
+                $company = $company[0];
+            }
+    
+            if(intval($companyid) > 0) {
+                $result = $this->Search_Model->save_attribute('attributes_tbl', array('datavalue' => json_encode($bankdetails), 'updated_by' => intval($company['primary_user_id']), 'updated_on' => date('Y-m-d H:i:s')), 
+                    array('code' => 'bank_accounts', 'name' => 'Bank Accounts', 'display_name' => 'Bank Accounts', 'category' => 'Financial', 'datatype' => 'object', 'datavalue' => json_encode($bankdetails), 'target_object_type' => 'company', 'target_object_id' => $companyid, 'active' => 1, 'companyid' => $companyid, 'created_by' => intval($company['primary_user_id'])), 
+                    array('companyid' => $companyid, 'code' => 'bank_accounts'));
+            }
+
+            $company = $this->Admin_Model->get_company($companyid);
+            if($company && count($company)>0) {
+                $company = $company[0];
+            }
+            
+            $result = array();
+            $result['code'] = 200;
+            $result['message'] = 'Bank details saved successfully';
+            $result['data'] = $company;
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+            $result = array();
+            $result['code'] = 501;
+            $result['message'] = $ex;
+            $result['data'] = [];
         }
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED

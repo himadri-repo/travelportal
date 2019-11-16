@@ -1013,5 +1013,22 @@ Class Admin_Model extends CI_Model
 
 		return $result;
 	}
+
+	function get_accounts() {
+		$this->db->select("ag.* ", FALSE);
+		$this->db->from('account_groups_tbl ag');
+		$this->db->where("ag.status=1", NULL, FALSE);
+
+		$query = $this->db->get();
+		//$qry = $this->db->last_query();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else
+		{
+			return false;
+		}
+	}
 }	
 ?>
