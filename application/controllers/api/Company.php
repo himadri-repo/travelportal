@@ -873,6 +873,7 @@ class Company extends REST_Controller {
                     'primary_user_id' => intval($payload['primary_user_id']), /*We also need to update in user_tbl against this user id*/
                     'gst_no' => $payload['gst'],
                     'pan' => $payload['pan'],
+                    'pin' => $payload['pin'],
                     'active' => $payload['active']?1:0,
                 ), array('id' => $id));
 
@@ -916,8 +917,10 @@ class Company extends REST_Controller {
                     array('companyid' => $id, 'code' => 'map'));
 
                 //Change Admin of the account
-                $result = $this->Search_Model->update('user_tbl', array('is_admin' => 0), array('companyid' => $id));
-                $result = $this->Search_Model->update('user_tbl', array('is_admin' => 1), array('id' => intval($payload['country']), 'companyid' => $id));
+                //We should not make all existing admin as non-admin
+                //We can have new admin but can't have only one admin throught the company
+                //$result = $this->Search_Model->update('user_tbl', array('is_admin' => 0), array('companyid' => $id));
+                $result = $this->Search_Model->update('user_tbl', array('is_admin' => 1), array('id' => intval($payload['primary_user_id']), 'companyid' => $id));
 
                 $company = $this->Search_Model->get('company_tbl', array('id' => $id));
                 if($company && count($company) > 0) {

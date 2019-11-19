@@ -441,7 +441,8 @@ class User_Controller extends Mail_Controller
 			$company["setting"] = array(
 				"configuration" => $result["setting"][0]["configuration"], 
 				"payment_gateway" => $result["setting"][0]['payment_gateway'],
-				"bank_accounts" => $result["setting"][0]['bank_accounts']
+				"bank_accounts" => $result["setting"][0]['bank_accounts'],
+				"api_integration" => $result["setting"][0]['api_integration']
 			);
 		}
 

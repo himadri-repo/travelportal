@@ -248,6 +248,7 @@ Class Search_Model extends CI_Model
 			'bank_accounts' => '',
 			'payment_gateway' => '',
 			'configuration' => '',
+			'api_integration' => '',
 			'service_charge' => 0.00,
 			'cgst' => 0.00,
 			'igst' => 0.00

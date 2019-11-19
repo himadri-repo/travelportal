@@ -64,6 +64,9 @@ class Search extends Mail_Controller
 	{ 
 		if ($this->session->userdata('user_id')) 
 		{	
+			$company = $this->session->userdata('company');
+			$current_user = $this->session->userdata('current_user');
+			$companyid = $company["id"];
 			$source = intval($this->input->post('source'));
 			$destination = intval($this->input->post('destination'));
 
@@ -76,6 +79,64 @@ class Search extends Mail_Controller
 				$destination_city = $this->User_Model->get('city_tbl', array('id' => $destination));
 				if($destination_city && count($destination_city)>0) {
 					$destination_city = $destination_city[0];
+				}
+
+				// Load 3rd party inventory
+				$thirdparty_tickets = null;
+				if($companyid == 7) {
+					$api_integration = null;
+					$company_settings = $this->Search_Model->company_setting($companyid);
+					$airlines = $this->Search_Model->get('airline_tbl', array());
+
+					if($company_settings && is_array($company_settings) && count($company_settings)>0) {
+						$company_settings = $company_settings[0];
+						$api_integration = isset($company_settings['api_integration'])?$company_settings['api_integration']:null;
+					}
+					$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+					$default_rateplan_id = 0;
+					$default_b2b_rateplan_id = 0;
+					$default_b2c_rateplan_id = 0;
+					if($rateplans && is_array($rateplans) && count($rateplans)>0) {
+						$default_rateplan_id = intval($rateplans[0]['id']);
+					}
+
+					if($api_integration) {
+						$api_uid = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserID'])) ? $api_integration['tenant_config']['UserID'] : '9800412356';
+						$api_pwd = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserPassword'])) ? $api_integration['tenant_config']['UserPassword'] : '4434045132';
+						$default_b2b_rateplan_id = isset($api_integration['B2B_rateplanid'])?$api_integration['B2B_rateplanid']:-1;
+						$default_b2c_rateplan_id = isset($api_integration['B2C_rateplanid'])?$api_integration['B2C_rateplanid']:-1;
+						
+						if($current_user['type'] == 'B2B') {
+							$default_rateplan_id = $default_b2b_rateplan_id;
+						}
+						else {
+							$default_rateplan_id = $default_b2c_rateplan_id;
+						}
+
+						$config = array("companyid" => $companyid, "host" => "demo.api", "userid" => $api_uid, "userpassword" => $api_pwd, "url" => "http://demoapi.tripmaza.com/");
+					}
+					else {
+						$config = array("companyid" => $companyid, "host" => "demo.api", "userid" => "9800412356", "userpassword" => "4434045132", "url" => "http://demoapi.tripmaza.com/");
+					}
+
+					$this->load->library('api_tripmaza', $config);
+
+					$thirdparty_tickets = $this->load_thirdparty_inventory();
+
+					$thirdparty_tickets = $this->search_inventory(array(
+						'no_of_person' => intval($this->input->post('no_of_person')),
+						'departure_date' => $this->input->post('departure_date'),
+						'source_city_code' => trim($source_city['code']),
+						'destination_city_code' => trim($destination_city['code']),
+						'direct' => 1,
+						'one_stop' => 0,
+						'company' => $company,
+						'current_user' => $current_user,
+						'default_rateplan_id' => $default_rateplan_id,
+						'airlines' => $airlines
+					));
+
+					log_message('info', 'Final TMZ Tickets Data'.json_encode($thirdparty_tickets));
 				}
 
 				$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
@@ -154,8 +215,6 @@ class Search extends Mail_Controller
 				$result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE", $company["id"]);
 				//$result["flight"]=$this->Search_Model->search_one_way($arr);
 
-				$company = $this->session->userdata('company');
-				$companyid = $company["id"];
 				$usertype = $currentuser["type"];
 				$is_admin = $currentuser["is_admin"];
 
@@ -182,6 +241,12 @@ class Search extends Mail_Controller
 				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
 				$tickets = $this->Search_Model->search_one_wayV2($arr);
+
+				//append thirdparty tickets
+				if($thirdparty_tickets && is_array($thirdparty_tickets) && count($thirdparty_tickets)>0) {
+					$tickets = $this->append_thiredparty_tickets($tickets, [$thirdparty_tickets]);
+				}
+
 				$modifiable_attributes = [];
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
@@ -318,6 +383,37 @@ class Search extends Mail_Controller
 		}
 		else
 			redirect("/login");  
+	}
+
+	private function append_thiredparty_tickets(&$tickets, $thirdpartyinventory) {
+		if($thirdpartyinventory && is_array($thirdpartyinventory) && count($thirdpartyinventory)>0) {
+			for($partyidx=0; $partyidx < count($thirdpartyinventory); $partyidx++) {
+				$thirdpartytickets = $thirdpartyinventory[$partyidx];
+				for($i=0; $i<count($thirdpartytickets); $i++) {
+					$ticket = $thirdpartytickets[$i];
+
+					if($ticket) {
+						array_push($tickets, $ticket);
+					}
+				}
+			}
+
+			return $tickets;
+		}
+		else {
+			return $tickets;
+		}
+	}
+
+	private function load_thirdparty_inventory() {
+		return $this->api_tripmaza->reauthenticate();
+	}
+
+	private function search_inventory($data) {
+		// $config = array("companyid" => $companyid, "host" => "demo.api", "userid" => "9800412356", "userpassword" => "4434045132", "url" => "http://demoapi.tripmaza.com/");
+
+		// $this->load->library('api_tripmaza', $config);
+		return $this->api_tripmaza->search_inventory($data);
 	}
 
 	private function get_rateplan_detail_by_head($headname, $rateplandetails) {

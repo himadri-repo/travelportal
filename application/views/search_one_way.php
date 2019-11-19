@@ -215,9 +215,13 @@
 											//echo "supplier_ticket";
 											$class = "supplier_ticket";
 										} 
+										else if($flight[$key]["user_id"]==-1) {
+											//API ticket
+											$class = "api_ticket";
+											//echo "<br/>NOT supplier_ticket";
+										}
 										else {
 											$class = "";
-											//echo "<br/>NOT supplier_ticket";
 										}
 										?>
 										<div class="list-block main-block f-list-block <?php echo $class?>">
@@ -410,7 +414,7 @@
 													<div class="disclaimer">
 														** Seats & rates are subject to availability. Before issuance, please confirm with our support team.
 													</div>
-													<?php if($currentuser['is_admin']=='1') { ?>
+													<?php if($currentuser['is_admin']=='1' && $flight[$key]["sale_type"]!=="api") { ?>
 														<div class="action_icons">
 															<ul>
 																<?php if( intval($flight[$key]["companyid"]) === intval($currentuser['companyid']) ) { ?>

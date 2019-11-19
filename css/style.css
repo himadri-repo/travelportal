@@ -6087,6 +6087,10 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	background-color: #addcd9 !important;
 }
 
+.api_ticket {
+	background-color: #d2ecad !important;
+}
+
 .f-fl-title span {
 	padding: 2px 0px 5px 7px;
 	font-family: "Calibre", system-ui, -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Lucida Grande", "Helvetica Neue", "Helvetica", "Fira Sans", "Roboto", "Noto", "Droid Sans", "Cantarell", "Oxygen", "Ubuntu", "Franklin Gothic Medium", "Century Gothic", "Liberation Sans", sans-serif;
