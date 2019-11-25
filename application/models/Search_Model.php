@@ -778,9 +778,11 @@ Class Search_Model extends CI_Model
 				INNER JOIN city_tbl destination ON destination.id = t.destination 
 				LEFT OUTER JOIN rateplans_vw rpvw on b.rateplanid=rpvw.rateplanid
 				LEFT OUTER JOIN user_config_tbl ucfg on ucfg.user_id=u.id
-				WHERE (t.sale_type!='live') and 				
-					((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid))
+				WHERE ((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid))
 				ORDER BY b.id DESC";
+				// (t.sale_type!='live') and 
+				// We are allowing all booking to be visible, be it live or request
+
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
@@ -807,7 +809,8 @@ Class Search_Model extends CI_Model
 		$this->db->join("company_tbl sc", "b.seller_companyid = sc.id", FALSE);
 		$this->db->join("city_tbl source", "source.id = t.source", FALSE);
 		$this->db->join("city_tbl destination", "destination.id = t.destination", FALSE);
-		$this->db->where("(t.sale_type!='live')");
+		//$this->db->where("(t.sale_type!='live')"); 
+		// Commenting above one to allow API level booking as api booking is always 'live'
 		$this->db->where($argv);
 
 		$query = $this->db->get();
@@ -875,10 +878,12 @@ Class Search_Model extends CI_Model
 			from customer_information_tbl cus  
 			inner join bookings_tbl b on (b.id=cus.booking_id or b.id=cus.refrence_id)  
 			inner join tickets_tbl t on t.id = b.ticket_id  
-			where (cus.booking_id=$bookingid or $bookingid=-1) and (t.sale_type!='live') and   
+			where (cus.booking_id=$bookingid or $bookingid=-1) and  
 				(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or   
 				((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid)))";
 		
+		// commenting "(t.sale_type!='live') and" due to live API booking
+
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
@@ -1483,7 +1488,7 @@ Class Search_Model extends CI_Model
 					"target_userid"=>$parameters["target_userid"], 
 					"target_companyid"=>$parameters["target_companyid"], 
 					"requesting_to"=>$parameters["requesting_to"], 
-					"status"=>$parameters["status"], 
+					"status" => (intval($parameters["status"])===2 ? 32 : $parameters["status"]), 
 					"notes"=>'',
 					"created_by"=>$parameters["created_by"], 
 					"created_on"=>date("Y-m-d H:i:s")
@@ -1519,6 +1524,7 @@ Class Search_Model extends CI_Model
 									"companyid"=> intval($parameters["customer_companyid"]),
 									"booking_id"=>$booking_id,
 									"pnr"=>$parameters["pnr"],
+									"status" => (intval($parameters["status"])===2 ? 2 : 1), 
 									"created_by"=>$parameters["created_by"],
 									"created_on"=>date("Y-m-d H:i:s")
 								);

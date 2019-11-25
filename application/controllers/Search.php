@@ -60,13 +60,74 @@ class Search extends Mail_Controller
 			redirect("/login");
 	}
 	
+	public function getThirdpartyIntegrations($companyid, $user) {
+		$selected_3pp_api = [];
+		$company_settings = $this->Search_Model->company_setting($companyid);
+		$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+		$default_rateplan_id = -1;
+		if($rateplans && is_array($rateplans) && count($rateplans)>0) {
+			$default_rateplan_id = intval($rateplans[0]['id']);
+		}
+
+		$thirdparty_apis = $this->Search_Model->get('thirdparty_api_tbl', array('status' => 1, 'category' => "'INVENTORY_SOURCE'"));
+		if($company_settings && is_array($company_settings) && count($company_settings)>0) {
+			$company_settings = $company_settings[0];
+			$api_integrations = isset($company_settings['api_integration'])?json_decode($company_settings['api_integration'], TRUE):null;
+
+			if ($api_integrations && is_array($api_integrations) && count($api_integrations)>0 && 
+				$thirdparty_apis && is_array($thirdparty_apis) && count($thirdparty_apis)>0) {
+				foreach ($api_integrations as $api_integration) {
+					if(isset($api_integration['enabled']) && boolval($api_integration['enabled']) && isset($api_integration['thirdparty_name'])) {
+						$api_name = $api_integration['thirdparty_name'];
+						$conf_3pp = null;
+						// $conf_3pp = array_filter($thirdparty_apis, array(function($api, $val) {
+						// 	return ($api['name'] === $val);
+						// }, $api_name));
+						foreach ($thirdparty_apis as $api) {
+							if($api['name'] === $api_name) {
+								$conf_3pp = $api;
+								break;
+							}
+						}
+
+						if($conf_3pp && is_array($conf_3pp) && count($conf_3pp)>0) {
+							//$conf_3pp = $conf_3pp[0];
+							$thirdparty_api = array(
+								'companyid' => $companyid,
+								'name' => $api_integration['thirdparty_name'],
+								'library_name' => $conf_3pp['library_name'],
+								'enabled' => (isset($api_integration['enabled']) && boolval($api_integration['enabled'])),
+								'url' => (isset($api_integration['mode']) && $api_integration['mode'] === 'test') ? $conf_3pp['test_url'] : $conf_3pp['live_url'],
+								'supplier_companyid' => intval($api_integration['sponsor_config']['Companyid']),
+								'supplier_rateplanid' => intval($api_integration['sponsor_config']['Rateplanid']),
+								'seller_companyid' => intval($companyid),
+								'seller_rateplan' => (($user['type']==='EMP') ? -1 : 
+												(($user['type']==='B2B') ? intval($api_integration['tenant_config']['B2B_rateplanid']) : 
+												(($user['type']==='B2C') ? intval($api_integration['tenant_config']['B2C_rateplanid']) : $default_rateplan_id))),
+								'host' => (isset($api_integration['sponsor_config']['Host'])?$api_integration['sponsor_config']['Host']:''),
+								'userid' => ((isset($api_integration['tenant_config']['UserID']) && $api_integration['tenant_config']['UserID'] !== '') ? 
+												$api_integration['tenant_config']['UserID'] : $api_integration['sponsor_config']['UserID']),
+								'password' => ((isset($api_integration['tenant_config']['UserPassword']) && $api_integration['tenant_config']['UserPassword'] !== '') ? 
+												$api_integration['tenant_config']['UserPassword'] : $api_integration['sponsor_config']['UserPassword'])
+							);
+
+							array_push($selected_3pp_api, $thirdparty_api);
+						}
+					}
+				}
+			}
+		}
+
+		return $selected_3pp_api;
+	}
+
 	public function search_one_way()
 	{ 
 		if ($this->session->userdata('user_id')) 
 		{	
 			$company = $this->session->userdata('company');
 			$current_user = $this->session->userdata('current_user');
-			$companyid = $company["id"];
+			$companyid = intval($company["id"]);
 			$source = intval($this->input->post('source'));
 			$destination = intval($this->input->post('destination'));
 
@@ -83,62 +144,110 @@ class Search extends Mail_Controller
 
 				// Load 3rd party inventory
 				$thirdparty_tickets = null;
-				if($companyid == 7) {
+				//read company settings.
+				//what all thirdparty integration enabled, work on those library only.
+				$listof3ppintegrations = $this->getThirdpartyIntegrations($companyid, $current_user);
+				if($companyid === 1 || $companyid === 7) {
+					//
 					$api_integration = null;
 					$company_settings = $this->Search_Model->company_setting($companyid);
 					$airlines = $this->Search_Model->get('airline_tbl', array());
 
-					if($company_settings && is_array($company_settings) && count($company_settings)>0) {
-						$company_settings = $company_settings[0];
-						$api_integration = isset($company_settings['api_integration'])?$company_settings['api_integration']:null;
-					}
-					$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
-					$default_rateplan_id = 0;
-					$default_b2b_rateplan_id = 0;
-					$default_b2c_rateplan_id = 0;
-					if($rateplans && is_array($rateplans) && count($rateplans)>0) {
-						$default_rateplan_id = intval($rateplans[0]['id']);
-					}
+					#region commented
+					// $thirdparty_apis = $this->Search_Model->get('thirdparty_api_tbl', array('name' => "'tmz'"));
+					// $url = "http://demoapi.tripmaza.com/";
+					// if($thirdparty_apis && is_array($thirdparty_apis) && count($thirdparty_apis)>0) {
+					// 	$thirdparty_apis = $thirdparty_apis[0];
+					// }
 
-					if($api_integration) {
-						$api_uid = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserID'])) ? $api_integration['tenant_config']['UserID'] : '9800412356';
-						$api_pwd = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserPassword'])) ? $api_integration['tenant_config']['UserPassword'] : '4434045132';
-						$default_b2b_rateplan_id = isset($api_integration['B2B_rateplanid'])?$api_integration['B2B_rateplanid']:-1;
-						$default_b2c_rateplan_id = isset($api_integration['B2C_rateplanid'])?$api_integration['B2C_rateplanid']:-1;
+					// if($company_settings && is_array($company_settings) && count($company_settings)>0) {
+					// 	$company_settings = $company_settings[0];
+					// 	$api_integration = isset($company_settings['api_integration'])?json_decode($company_settings['api_integration'], TRUE):null;
+					// 	$selected_3pp_api = null;
+					// 	for($i=0; $api_integration && $i<count($api_integration); $i++) {
+					// 		if($api_integration[$i]['thirdparty_name'] === 'tmz') {
+					// 			$selected_3pp_api = $api_integration[$i];
+					// 			break;
+					// 		}
+					// 	}
+
+					// 	$api_integration = $selected_3pp_api;
+					// }
+					// $rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+					// $default_rateplan_id = 0;
+					// $default_b2b_rateplan_id = 0;
+					// $default_b2c_rateplan_id = 0;
+					// if($rateplans && is_array($rateplans) && count($rateplans)>0) {
+					// 	$default_rateplan_id = intval($rateplans[0]['id']);
+					// }
+
+					// $flag = true;
+					// if($api_integration && $api_integration!=='' && isset($api_integration['tenant_config']) && isset($api_integration['sponsor_config']) 
+					// 	&& isset($api_integration['enabled']) && $api_integration['enabled']) {
+					// 	$supl_companyid = isset($api_integration['sponsor_config']['Companyid'])? intval($api_integration['sponsor_config']['Companyid']) : -1;
+					// 	$supl_rateplan_id = isset($api_integration['sponsor_config']['Rateplanid'])? intval($api_integration['sponsor_config']['Rateplanid']) : -1;
+					// 	$host = isset($api_integration['sponsor_config']['Host'])? $api_integration['sponsor_config']['Host'] : "demo.api";
+					// 	$mode = isset($api_integration['mode'])? $api_integration['mode'] : "test";
+					// 	if($mode === 'test') {
+					// 		$url = (isset($thirdparty_apis['test_url']) && $thirdparty_apis['test_url']!=='')?$thirdparty_apis['test_url']:$url;
+					// 	}
+
+					// 	$api_uid = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserID'])) ? $api_integration['tenant_config']['UserID'] : $api_integration['sponsor_config']['UserID']; //'9800412356';
+					// 	$api_pwd = (isset($api_integration['tenant_config']) && isset($api_integration['tenant_config']['UserPassword'])) ? $api_integration['tenant_config']['UserPassword'] : $api_integration['sponsor_config']['UserPassword']; //'4434045132';
+					// 	$default_b2b_rateplan_id = isset($api_integration['B2B_rateplanid'])?$api_integration['B2B_rateplanid']:-1;
+					// 	$default_b2c_rateplan_id = isset($api_integration['B2C_rateplanid'])?$api_integration['B2C_rateplanid']:-1;
 						
-						if($current_user['type'] == 'B2B') {
-							$default_rateplan_id = $default_b2b_rateplan_id;
+					// 	if($current_user['type'] == 'B2B') {
+					// 		$default_rateplan_id = $default_b2b_rateplan_id;
+					// 	}
+					// 	else {
+					// 		$default_rateplan_id = $default_b2c_rateplan_id;
+					// 	}
+
+					// 	$config = array("companyid" => $companyid, "host" => $host, "userid" => $api_uid, "userpassword" => $api_pwd, "url" => "http://demoapi.tripmaza.com/");
+					// }
+					// else {
+					// 	$config = array("companyid" => $companyid, "host" => "demo.api", "userid" => "9800412356", "userpassword" => "4434045132", "url" => "http://demoapi.tripmaza.com/");
+					// 	$flag = false;
+					// }
+					#endregion
+					
+					$thirdparty_tickets = [];
+					if($listof3ppintegrations && is_array($listof3ppintegrations) && count($listof3ppintegrations)>0) {
+
+						foreach ($listof3ppintegrations as $api) {
+							$api_3pp_name = $api['name'];
+							$this->load->library($api['library_name'], $api);
+
+							$load_lib = $this->load_thirdparty_inventory($api['library_name']);
+	
+							$tkts_3pp = $this->search_inventory($api['library_name'], array(
+								'no_of_person' => intval($this->input->post('no_of_person')),
+								'departure_date' => $this->input->post('departure_date'),
+								'source_city' => $source_city,
+								'destination_city' => $destination_city,
+								'source_city_code' => trim($source_city['code']),
+								'destination_city_code' => trim($destination_city['code']),
+								'direct' => 1,
+								'one_stop' => 0,
+								'company' => $company,
+								'current_user' => $current_user,
+								'supl_companyid' => $api['supplier_companyid'],
+								'supl_rateplan_id' => $api['supplier_rateplanid'],
+								'default_rateplan_id' => $api['seller_rateplan'],
+								'airlines' => $airlines
+							));
+	
+							log_message('info', "3pp ($api_3pp_name) => ".json_encode($tkts_3pp));
+
+							if($tkts_3pp && is_array($tkts_3pp) && count($tkts_3pp)>0) {
+								array_push($thirdparty_tickets, ...$tkts_3pp);
+							}
 						}
-						else {
-							$default_rateplan_id = $default_b2c_rateplan_id;
-						}
-
-						$config = array("companyid" => $companyid, "host" => "demo.api", "userid" => $api_uid, "userpassword" => $api_pwd, "url" => "http://demoapi.tripmaza.com/");
 					}
-					else {
-						$config = array("companyid" => $companyid, "host" => "demo.api", "userid" => "9800412356", "userpassword" => "4434045132", "url" => "http://demoapi.tripmaza.com/");
-					}
-
-					$this->load->library('api_tripmaza', $config);
-
-					$thirdparty_tickets = $this->load_thirdparty_inventory();
-
-					$thirdparty_tickets = $this->search_inventory(array(
-						'no_of_person' => intval($this->input->post('no_of_person')),
-						'departure_date' => $this->input->post('departure_date'),
-						'source_city_code' => trim($source_city['code']),
-						'destination_city_code' => trim($destination_city['code']),
-						'direct' => 1,
-						'one_stop' => 0,
-						'company' => $company,
-						'current_user' => $current_user,
-						'default_rateplan_id' => $default_rateplan_id,
-						'airlines' => $airlines
-					));
-
-					log_message('info', 'Final TMZ Tickets Data'.json_encode($thirdparty_tickets));
 				}
 
+				//Live ticket checks
 				$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
 				$url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=012f84558a572cb4ccc4b4c84a15d523&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
 	
@@ -241,6 +350,10 @@ class Search extends Mail_Controller
 				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
 				$tickets = $this->Search_Model->search_one_wayV2($arr);
+				if(!$tickets)
+				{
+					$tickets = [];
+				}
 
 				//append thirdparty tickets
 				if($thirdparty_tickets && is_array($thirdparty_tickets) && count($thirdparty_tickets)>0) {
@@ -352,6 +465,8 @@ class Search extends Mail_Controller
 					log_message('info', "Ticket -> ".json_encode($ticket));
 				}	
 				
+				$this->session->set_userdata('tickets',$tickets);
+
 				$result["flight"]=$tickets;
 				$result["flight_attributes"]=$modifiable_attributes;
 				$result["rateplan"]=$rateplans; // $default_rp;
@@ -405,15 +520,109 @@ class Search extends Mail_Controller
 		}
 	}
 
-	private function load_thirdparty_inventory() {
-		return $this->api_tripmaza->reauthenticate();
+	private function load_thirdparty_inventory($libname) {
+		//call_user_func(array($classname, 'say_hello'));
+
+		//return $this->api_tripmaza->reauthenticate();
+		if(isset($this->$libname)) {
+			return $this->$libname->reauthenticate();
+		}
+		else {
+			log_message('error', "Library ($libname) not loaded yet. Can't call library method load_thirdparty_inventory");
+			return [];
+		}
 	}
 
-	private function search_inventory($data) {
+	private function search_inventory($libname, $data) {
 		// $config = array("companyid" => $companyid, "host" => "demo.api", "userid" => "9800412356", "userpassword" => "4434045132", "url" => "http://demoapi.tripmaza.com/");
 
+		$ticket_format = array(
+			"library" => $libname,
+			"id" => 0,
+			"uid" => 0,
+			"remarks" => "Live inventory",
+			"source" => 0,
+			"destination" => 0,
+			"source1" => 0,
+			"destination1" => 0,
+			"pnr" => "",
+			"source_city" => "",
+			"destination_city" => "",
+			"trip_type" => "ONE",
+			"departure_date_time" => "",
+			"arrival_date_time" => "",
+			"departure_date_time1" => "",
+			"arrival_date_time1" => "",
+			"flight_no" => "",
+			"terminal" => "NA",
+			"flight_no1" => "",
+			"terminal" => "",
+			"terminal1" => "",
+			"terminal2" => "",
+			"terminal3" => "",
+			"no_of_person" => 0,
+			"class" => "ECONOMY",
+			"no_of_stops" => 0,
+			"data_collected_from" => "",
+			"sale_type" => "",
+			"refundable" => "",
+			"total" => 0.00,
+			"airline" => null,
+			"image" => "faculty_1554735599.png",
+			"aircode" => "",
+			"ticket_no" => "",
+			"price" => 2400,
+			"companyid" => 0,
+			"companyname" => "",
+			"user_id" => -1,
+			"updated_on" => "",
+			"updated_by" => "",
+			"tag" => null,
+			"admin_markup" => 0,
+			"last_sync_key" => "",
+			"approved" => 1,
+			"rate_plan_id" => -1,
+			"supplierid" => -1,
+			"sellerid" => -1,
+			"seller_rateplan_id" => -1,
+			"dept_date_time" => null,
+			"arrv_date_time" => null,
+			"adultbasefare" => null,
+			"adult_tax_fees" => null,
+			"timediff" => null,
+			"departure_terminal" => null,
+			"arrival_terminal" => null,
+			"adult_total" => null,
+			"live_fare" => -1,
+			"seatsavailable" => 0,
+			"whl_markup" => 0.00,
+			"whl_srvchg" => 0.00,
+			"whl_cgst" => 0,
+			"whl_sgst" => 0,
+			"whl_igst" => 0,
+			"whl_disc" => 0,
+			"spl_markup" => 0,
+			"spl_srvchg" => 0,
+			"spl_cgst" => 0,
+			"spl_sgst" => 0,
+			"spl_igst" => 0,
+			"spl_disc" => 0,
+			"cost_price" => 0.00,
+			"new" => 1
+		);
+
+		$data['ticket_format'] = $ticket_format;
+
 		// $this->load->library('api_tripmaza', $config);
-		return $this->api_tripmaza->search_inventory($data);
+		//return $this->api_tripmaza->search_inventory($data);
+		if(isset($this->$libname)) {
+			return $this->$libname->search_inventory($data);
+		}
+		else {
+			log_message('error', "Library ($libname) not loaded yet. Can't call library method - search_inventory");
+			return [];
+		}
+		
 	}
 
 	private function get_rateplan_detail_by_head($headname, $rateplandetails) {
@@ -616,6 +825,7 @@ class Search extends Mail_Controller
 	public function flightdetails($id)
 	{
 		$current_user = $this->session->userdata('current_user');
+		$posted_tickets = $this->session->userdata('tickets');
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{			  
 			$company = $this->session->userdata('company');
@@ -640,6 +850,17 @@ class Search extends Mail_Controller
 			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 	
 			$tickets = $this->Search_Model->flight_details($id, $companyid);
+			if(!($tickets && is_array($tickets) && count($tickets)>0)) {
+				//This ticket is an API ticket. Not available in local table
+				$tickets = [];
+
+				foreach($posted_tickets as $posted_ticket) {
+					if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+						array_push($tickets, $posted_ticket);
+						break;
+					}
+				}
+			}
 			
 			if($tickets && count($tickets)>0) {
 				$ticket = $tickets[0];
@@ -694,7 +915,9 @@ class Search extends Mail_Controller
 				}
 		
 				//$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup);
-				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+				if($ticket['sale_type'] !== 'api') {
+					$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+				}
 
 				$result["flight"]=array($ticket); 
 				$result["currentuser"]=$current_user;
@@ -769,7 +992,7 @@ class Search extends Mail_Controller
 
 		try
 		{
-			if($ticket['supplierid'] !== $companyid) {
+			if(intval($ticket['supplierid']) !== intval($companyid)) {
 				//sourced tickets
 				for ($j=0; $j < count($rateplan_details); $j++) { 
 					$rpdetail = $rateplan_details[$j];
@@ -889,6 +1112,19 @@ class Search extends Mail_Controller
 			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 
 			$tickets = $this->Search_Model->flight_details($id, $companyid);
+			if(!($tickets && is_array($tickets) && count($tickets)>0)) {
+				//This ticket is an API ticket. Not available in local table
+				$tickets = [];
+				$posted_tickets = $this->session->userdata('tickets');
+
+				foreach($posted_tickets as $posted_ticket) {
+					if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+						array_push($tickets, $posted_ticket);
+						break;
+					}
+				}
+			}
+
 			$result["flight"]=$tickets;
 			if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
 			{
@@ -941,7 +1177,9 @@ class Search extends Mail_Controller
 					$usertype = 'EMP';
 				}
 
-				$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+				if($ticket['sale_type'] !== 'api') {
+					$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+				}
 
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();
@@ -1011,8 +1249,192 @@ class Search extends Mail_Controller
 		}
 	}
 
+	public function book_api_ticket($payload) {
+		$result = null;
+
+		$ticket = $payload['ticket'];
+		$current_user = $payload['current_user'];
+		$company = $payload['company'];
+		$companyid = intval($company['id']);
+		$posteddata = $payload['posteddata'];
+		$customers = $payload['customers'];
+
+		$admin_user = $this->User_Model->get('user_tbl', array('id' => $company['primary_user_id']));
+		if($admin_user && is_array($admin_user) && count($admin_user)>0) {
+			$admin_user = $admin_user[0];
+		}
+
+		$payload['admin_user'] = $admin_user;
+
+		log_message('info', 'Booking via API => [Customers]'.json_encode($customers));
+
+		if($ticket && $ticket['sale_type']=='api' && isset($ticket['library'])) {
+			$library = $ticket['library'];
+			log_message('info', "Selected library -> $library");
+			$listof3ppintegrations = $this->getThirdpartyIntegrations($companyid, $current_user);
+
+			$api = null;
+			for($i=0; $i<count($listof3ppintegrations); $i++) {
+				if($listof3ppintegrations[$i]['library_name'] === $library) {
+					$api = $listof3ppintegrations[$i];
+					break;
+				}
+			}
+
+			$this->load->library($library, $api);
+			//$this->load_thirdparty_inventory($library);
+
+			$returnValue = $this->$library->book($payload);
+	
+			log_message('info', 'Booking API Result '.json_encode($returnValue));
+
+			if($returnValue) {
+				$payload['booking_details'] = $returnValue;
+				$booking_details = $this->$library->get_booking_details($payload);
+				log_message('info', 'Booking Details from API => '.json_encode($returnValue));
+
+				if($returnValue && isset($returnValue['bookingid']) && intval($returnValue['bookingid'])>0) {
+					$bookingid = intval($returnValue['bookingid']);
+
+					$result = array(
+						'company' => $company,
+						'admin_user' => $admin_user,
+						'current_user' => $current_user,
+						'ticket' => $ticket,
+						'customers' => $customers,
+						'booking_confirmation' => $returnValue,
+						'itinerary' => $booking_details
+					);
+
+					$synthetic_ticket = $this->create_synthetic_ticket($result);
+
+					$result['synthetic_ticket'] = $synthetic_ticket;
+				}
+
+				log_message('info', 'Api call paylod => '.json_encode($result));
+			}
+		}
+		
+		return $result;
+	}
+
+	public function create_synthetic_ticket($payload) {
+		if(!$payload || !is_array($payload)) return NULL;
+
+		$company =  $payload['company'];
+		$admin_user =  $payload['admin_user'];
+		$current_user =  $payload['current_user'];
+		$ticket =& $payload['ticket'];
+		$customers = $payload['customers'];
+		$booking_confirmation = $payload['booking_confirmation'];
+		$itinerary = $payload['itinerary'];
+		$duplicate_ticket = null;
+		$tktid = -1;
+
+		if ($ticket && is_array($ticket)) {
+			$duplicate_ticket = $this->isDuplicateTicketPresent(array('companyid' => $ticket['companyid'], 'aid' => $ticket['id'], 'data_collected_from' => "'".$ticket['data_collected_from']."'"));
+			if($duplicate_ticket && is_array($duplicate_ticket) && count($duplicate_ticket)>0) {
+				$duplicate_ticket = $duplicate_ticket[0];
+				$tktid = $duplicate_ticket['id'];
+			}
+			else {
+				//lets create a duplicate ticket same as $ticket passed (API Ticket)
+				$tktid = $this->Search_Model->save('tickets_tbl', array(
+					'aid' => $ticket['id'],
+					'created_date' => date('Y-m-d H:i:s'),
+					'source' => $ticket['source'],
+					'destination' => $ticket['destination'],
+					'source1' => $ticket['source1'],
+					'destination1' => $ticket['destination1'],
+					'trip_type' => $ticket['trip_type'],
+					'departure_date_time' => $ticket['departure_date_time'],
+					'arrival_date_time' => $ticket['arrival_date_time'],
+					'pnr' => $itinerary['pnr'],
+					"trip_type" => $ticket['trip_type'],
+					"departure_date_time1" => $ticket['departure_date_time1'],
+					"arrival_date_time1" => $ticket['arrival_date_time1'],
+					"flight_no" => $ticket['flight_no'],
+					"flight_no1" => $ticket['flight_no1'],
+					"terminal" => isset($ticket['terminal'])?$ticket['terminal']:'',
+					"terminal1" => isset($ticket['terminal1'])?$ticket['terminal1']:'',
+					"terminal2" => isset($ticket['terminal2'])?$ticket['terminal2']:'',
+					"terminal3" => isset($ticket['terminal3'])?$ticket['terminal3']:'',
+					"no_of_person" => 0, //$ticket['no_of_person'], //Making this as a temporary fix. With live booking this will be changed
+					"max_no_of_person" => 0, // $ticket['no_of_person'], //Making this as a temporary fix. With live booking this will be changed
+					"class" => $ticket['class'],
+					"class1" => $ticket['class'],
+					"no_of_stops" => $ticket['no_of_stops'],
+					// "stops_name" => $ticket['stop_name'],
+					// "no_of_stops1" => $ticket['no_of_stops1'],
+					// "stops_name1" => $ticket['stops_name1'],
+					"airline" => $ticket['airline'],
+					// "airline1" => $ticket['airline1'],
+					"aircode" => $ticket['aircode'],
+					// "aircode1" => $ticket['aircode1'],
+					"ticket_no" => $ticket['ticket_no'],
+					"price" => $ticket['price'],
+					// "baggage" => $ticket['baggage'],
+					// "meal" => $ticket['meal'],
+					// "markup" => $ticket['markup'],
+					"admin_markup" => $ticket['adminmarkup'],
+					// "discount" => $ticket['discount'],
+					"total" => $ticket['total'],
+					"sale_type" => 'live',
+					"refundable" => $ticket['refundable'],
+					"availibility" => 0, //$ticket['no_of_person'], //Making this as a temporary fix. With live booking this will be changed
+					"user_id" => $admin_user['id'],
+					"remarks" => $ticket['remarks'],
+					"approved" => '1',
+					"available" => 'NO', //'YES', //Making this as a temporary fix. With live booking this will be changed
+					"data_collected_from" => $ticket['data_collected_from'],
+					"last_sync_key" => $ticket['last_sync_key'],
+					"created_by" => $admin_user['id'],
+					"companyid" => $ticket['companyid'],
+					"price_child" => 0.00,
+					"price_infant" => 0.00,
+					"cancel_rate" => 0.00,
+					"booking_freeze_by" => $ticket['departure_date_time'],
+					"tag" => ("Booking id: ".$booking_confirmation['bookingid']),
+					"library_name" => $ticket['library'],
+					"api_extra_data" => json_encode(array(
+						'itinerary' => $itinerary, 
+						'ResultIndex' => intval($ticket['ResultIndex']),
+						'SearchIndex' => intval($ticket['SearchIndex']),
+						'SuppSource' => intval($ticket['SuppSource']),
+						'SuppTokenId' => $ticket['SuppTokenId'],
+						'SuppTraceId' => $ticket['SuppTraceId'],
+						'tokenid' => $ticket['tokenid'],
+						'clientid' => $ticket['clientid'],
+						'agencytype' => $ticket['agencytype'],
+					), JSON_UNESCAPED_SLASHES)
+				));
+			}
+		}
+
+		if($tktid>0) {
+			$duplicate_ticket = $this->get_ticket($tktid, $current_user, $company, null);
+		}
+
+		return $duplicate_ticket;
+	}
+
+	public function isDuplicateTicketPresent($condition)  {
+		if(!$condition || !is_array($condition)) return NULL;
+
+		return $this->Search_Model->getTableData('tickets_tbl', $condition);
+	}
+
 	public function book($id)
 	{
+		$posted_tickets = $this->session->userdata('tickets');
+		$ordering_ticket = null;
+		foreach($posted_tickets as $posted_ticket) {
+			if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+				$ordering_ticket = $posted_ticket;
+				break;
+			}
+		}
+
 		$amount=floatval($this->input->post('total'));
 		$costprice=floatval($this->input->post('costprice'));
 		$qty=intval($this->input->post('qty'));
@@ -1051,7 +1473,7 @@ class Search extends Mail_Controller
 
 		if (isset($date) && isset($qty)) {
 
-			$ticket = $this->get_ticket($id, $current_user, $company);
+			$ticket = $this->get_ticket(($ordering_ticket===null? $id : -1), $current_user, $company, $ordering_ticket);
 			$status = ($ticket['pnr']!="" && intval($ticket['user_id'])==intval($current_user["id"])) ? "CONFIRMED" : "PENDING";
 			$pnr = $ticket['pnr'];
 			$user_id = intval($ticket['user_id']);
@@ -1075,7 +1497,7 @@ class Search extends Mail_Controller
 			{
 				try {
 					$result=$this->User_Model->user_details();
-					if($pnr!="" && $this->session->userdata('user_id')==$user_id)
+					if($pnr!="" && $this->session->userdata('user_id')==$user_id || $ticket['sale_type']==='api')
 						$status="CONFIRM";
 					else
 						$status="PENDING";	
@@ -1108,6 +1530,32 @@ class Search extends Mail_Controller
 					log_message('info', "Posted Data : ".json_encode($posteddata));
 					log_message('info', "Customers : ".json_encode($customers));
 
+					if($ticket['sale_type'] === 'api') {
+						//Call API to book ticket
+						$result = $this->book_api_ticket(array(
+							'current_user' => $current_user,
+							'ticket' => $ticket,
+							'company' => $company,
+							'posteddata' => $posteddata,
+							'customers' => $customers
+						));
+
+						if(!$result) {
+							redirect("search/beforebook/$id");
+						}
+						else {
+							//for the time being insert a new ticket against API billing company. If present no need to create duplicate.
+							if($result && isset($result['synthetic_ticket'])) {
+								$ticket = $result['synthetic_ticket'];
+								$id = intval($ticket['id']);
+								$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
+								$pnr = $ticket['pnr'];
+								$user_id = intval($ticket['user_id']);
+							}
+							
+						}
+					}
+
 					$booking_info = $this->save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers);
 
 					$booking_id = intval($booking_info['booking_id']);
@@ -1124,6 +1572,10 @@ class Search extends Mail_Controller
 					log_message('info', "Booking Details : ".json_encode($newbookinginfo));
 					
 					$flight = $this->Search_Model->flight_details($id, $companyid);
+					if(!($flight && is_array($flight) && count($flight)>0)) {
+						$flight = array($ordering_ticket);
+					}
+
 					if($flight && count($flight)>0) {
 						$flight = $flight[0];
 					}
@@ -1154,7 +1606,7 @@ class Search extends Mail_Controller
 						log_message('info', "This is sourced ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
 					}
 
-					if(isset($ticket['pnr']) && $ticket['pnr']=='') {
+					if((isset($ticket['pnr']) && $ticket['pnr']=='')) {
 						log_message('info', "Original sale type: $sale_type | PNR: ".$ticket['pnr']." | Changed to REQUEST sale type");
 						$sale_type = 'request';
 					}
@@ -1503,7 +1955,7 @@ class Search extends Mail_Controller
 			"customer_companyid"=>$company["id"],
 			"seller_userid"=>$ticket['seller_userid'],
 			"seller_companyid"=>$ticket['seller_companyid'],
-			"status"=>0,
+			"status"=>(($status==='CONFIRMED')?2:0),
 			"price"=>floatval($posteddata['price']),
 			"admin_markup"=>floatval($ticket['adminmarkup']),
 			"markup"=>0,
@@ -1617,19 +2069,24 @@ class Search extends Mail_Controller
 		return array('wallet_transid' => $wallet_transid, 'voucher_no' => $voucher_no);
 	}
 	
-	protected function get_ticket($ticketid, $current_user, $company) {
+	protected function get_ticket($ticketid, $current_user, $company, $passedticket) {
 		$CI =   &get_instance();
-		$ticket = $CI->db->get_where('tickets_tbl', array('id' => $ticketid));
-		$result1=$ticket->result_array();
-		
-		if(isset($result1) && count($result1)>0) {
-			$ticket = $result1[0];
-		} else {
-			$ticket = NULL;
 
-			return $ticket;
+		if($ticketid>-1) {
+			$ticket = $CI->db->get_where('tickets_tbl', array('id' => $ticketid));
+			$result1=$ticket->result_array();
+			if(isset($result1) && count($result1)>0) {
+				$ticket = $result1[0];
+			} else {
+				$ticket = NULL;
+	
+				return $ticket;
+			}
 		}
-
+		else {
+			$ticket = $passedticket;
+		}
+		
 		$no_of_person=$ticket["no_of_person"];
 		$user_id=$ticket["user_id"];
 		$pnr=$ticket["pnr"];

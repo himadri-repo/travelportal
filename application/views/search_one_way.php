@@ -401,7 +401,7 @@
 															<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
 														<?php } ?>
 													
-														<?php if($flight[$key]["sale_type"]=="live"){ ?>
+														<?php if($flight[$key]["sale_type"]=="live" || $flight[$key]["sale_type"]=="api"){ ?>
 															<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
 														<?php } ?>
 														
