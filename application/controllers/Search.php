@@ -1620,6 +1620,7 @@ class Search extends Mail_Controller
 					$allow_email_sms = true;
 					if($allow_email_sms) {
 						//send email to customer here
+						$posteddata['booking_status'] = $status;
 						$this->prepare_send_email("BOOKING_CUSTOMER_EMAIL", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
 						//send sms to customer here
 						$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
@@ -1961,6 +1962,8 @@ class Search extends Mail_Controller
 		$templates = $this->getTemplates();
 		$bookingid = "BK-".$booking_info["booking_id"];
 		$pax = count($customers);
+		$pnr = (isset($ticket['pnr'])?$ticket['pnr']:'');
+		$status = isset($posteddata['booking_status'])?$posteddata['booking_status']:'PENDING';
 
 		$first_passenger_name = $customers[0]['prefix'].' '.$customers[0]['first_name'].' '.$customers[0]['last_name'];
 		$to = $customers[0]['email'];
@@ -1971,8 +1974,8 @@ class Search extends Mail_Controller
             'company_name' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? $current_user["name"] : $company["display_name"],
 			'phone_number' => $current_user["mobile"],
 			'action_url' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? '': $company["baseurl"],
-			'booking_status' => 'PENDING',
-			'pnr' => 'PNR',
+			'booking_status' => $status,
+			'pnr' => $pnr,
 			'booking_number' => $bookingid,
 			'booking_date' => $booking_info["booking_date"],
 			'departure_city' => $flight['source_city'],
@@ -1998,6 +2001,8 @@ class Search extends Mail_Controller
 		$templates = $this->getTemplates();
 		$bookingid = "BK-".$booking_info["booking_id"];
 		$pax = count($customers);
+		$pnr = (isset($ticket['pnr'])?$ticket['pnr']:'');
+		$status = isset($posteddata['booking_status'])?$posteddata['booking_status']:'PENDING';
 
 		$first_passenger_name = $customers[0]['prefix'].' '.$customers[0]['first_name'].' '.$customers[0]['last_name'];
 		$to = $customers[0]['mobile_no'];
@@ -2008,8 +2013,8 @@ class Search extends Mail_Controller
             'company_name' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? $current_user["name"] : $company["display_name"],
 			'phone_number' => $current_user["mobile"],
 			'action_url' => ($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1')? '': $company["baseurl"],
-			'booking_status' => 'PENDING',
-			'pnr' => 'PNR',
+			'booking_status' => $status,
+			'pnr' => $pnr,
 			'booking_number' => $bookingid,
 			'booking_date' => $booking_info["booking_date"],
 			'departure_city' => $flight['source_city'],

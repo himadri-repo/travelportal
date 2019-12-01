@@ -1,1 +1,1 @@
-Dear User, Your Booking is CONFIRMED from {departure_city} to {arrival_city} FLT No: {flight_number} DOJ: {departure_date} AM PNR: {pnr} | {first_passenger_name} {companing_count}
+Dear User, Your Booking is {booking_status} from {departure_city} to {arrival_city} FLT No: {flight_number} DOJ: {departure_date} AM {if booking_status == 'CONFIRMED'}PNR: {pnr}{/if} | {first_passenger_name} {if companing_count > 0}+{companing_count}{/if}
