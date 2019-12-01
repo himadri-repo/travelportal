@@ -220,6 +220,16 @@ class Search extends Mail_Controller
 							$this->load->library($api['library_name'], $api);
 
 							$load_lib = $this->load_thirdparty_inventory($api['library_name']);
+							$suplcompanyid = intval($api['supplier_companyid']);
+							if($suplcompanyid>-1) {
+								$supplier_company = $this->Admin_Model->get_company($api['supplier_companyid']);
+								if($supplier_company && is_array($supplier_company) && count($supplier_company)>0) {
+									$supplier_company = $supplier_company[0];
+								}
+							}
+							else {
+								$supplier_company = $company;
+							}
 	
 							$tkts_3pp = $this->search_inventory($api['library_name'], array(
 								'no_of_person' => intval($this->input->post('no_of_person')),
@@ -233,6 +243,7 @@ class Search extends Mail_Controller
 								'company' => $company,
 								'current_user' => $current_user,
 								'supl_companyid' => $api['supplier_companyid'],
+								'supl_company' => $supplier_company,
 								'supl_rateplan_id' => $api['supplier_rateplanid'],
 								'default_rateplan_id' => $api['seller_rateplan'],
 								'airlines' => $airlines
@@ -571,7 +582,7 @@ class Search extends Mail_Controller
 			"image" => "faculty_1554735599.png",
 			"aircode" => "",
 			"ticket_no" => "",
-			"price" => 2400,
+			"price" => 0,
 			"companyid" => 0,
 			"companyname" => "",
 			"user_id" => -1,
@@ -1179,6 +1190,7 @@ class Search extends Mail_Controller
 
 				if($ticket['sale_type'] !== 'api') {
 					$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+					$this->session->set_userdata('current_ticket',$ticket);
 				}
 
 				$service_charge = floatval($this->input->post('service_charge'));
@@ -1336,6 +1348,22 @@ class Search extends Mail_Controller
 			if($duplicate_ticket && is_array($duplicate_ticket) && count($duplicate_ticket)>0) {
 				$duplicate_ticket = $duplicate_ticket[0];
 				$tktid = $duplicate_ticket['id'];
+				$tag = $duplicate_ticket['tag'];
+				$api_extra_data = array(json_decode($duplicate_ticket['api_extra_data'], TRUE), array('itinerary' => $itinerary, 'ResultIndex' => intval($ticket['ResultIndex']),'SearchIndex' => intval($ticket['SearchIndex']),'SuppSource' => intval($ticket['SuppSource']),'SuppTokenId' => $ticket['SuppTokenId'],'SuppTraceId' => $ticket['SuppTraceId'],'tokenid' => $ticket['tokenid'],'clientid' => $ticket['clientid'],'agencytype' => $ticket['agencytype']));
+
+				$result = $this->Search_Model->update('tickets_tbl', 
+					array(
+						'departure_date_time' => $ticket['departure_date_time'], 
+						'arrival_date_time' => $ticket['arrival_date_time'],
+						"terminal" => isset($ticket['terminal'])?$ticket['terminal']:'',
+						"total" => $ticket['total'],
+						"price" => $ticket['price'],
+						"tag" => "$tag | ".("Booking id: ".$booking_confirmation['bookingid']),
+						"api_extra_data" => json_encode($api_extra_data, JSON_UNESCAPED_SLASHES),
+						"updated_by" => $admin_user['id'],
+						"updated_on" => date('Y-m-d H:i:s')
+					),
+					array('id' => $tktid));
 			}
 			else {
 				//lets create a duplicate ticket same as $ticket passed (API Ticket)
@@ -1413,6 +1441,8 @@ class Search extends Mail_Controller
 
 		if($tktid>0) {
 			$duplicate_ticket = $this->get_ticket($tktid, $current_user, $company, null);
+
+			log_message('info', "Synthetic Ticket Created: ".json_encode($duplicate_ticket));
 		}
 
 		return $duplicate_ticket;
@@ -1426,11 +1456,14 @@ class Search extends Mail_Controller
 
 	public function book($id)
 	{
+		$isapi = false;
+		$current_ticket = $this->session->userdata('current_ticket');
 		$posted_tickets = $this->session->userdata('tickets');
 		$ordering_ticket = null;
 		foreach($posted_tickets as $posted_ticket) {
 			if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
 				$ordering_ticket = $posted_ticket;
+				$isapi = true;
 				break;
 			}
 		}
@@ -1444,16 +1477,7 @@ class Search extends Mail_Controller
 		$igst = $this->input->post('igst');
 		$rateplanid = $this->input->post('rateplanid');
 
-		$posteddata = array(
-			"total_amount" => $amount, 
-			"costprice" => $costprice, 
-			"qty" => $qty, 
-			"date" => $date, 
-			"price" => $price, 
-			"service_charge" => $service_charge, 
-			"igst" => $igst, 
-			"rateplanid" => $rateplanid 
-		);
+		$posteddata = array( "total_amount" => $amount, "costprice" => $costprice, "qty" => $qty, "date" => $date, "price" => $price, "service_charge" => $service_charge, "igst" => $igst, "rateplanid" => $rateplanid );
 		
 		$company = $this->get_companyinfo();
 		$current_user = $company['current_user'];
@@ -1465,7 +1489,6 @@ class Search extends Mail_Controller
 		if($form_valid['hasduplicatecustomers']!='true') {
 			redirect("search/beforebook/$id");
 		}
-		//$result["footer"]=$this->Search_Model->get_post(5);
 
 		$wallet=$this->get_walletbalance($current_user);
 		$wallet_balance = $wallet['balance'];
@@ -1532,13 +1555,7 @@ class Search extends Mail_Controller
 
 					if($ticket['sale_type'] === 'api') {
 						//Call API to book ticket
-						$result = $this->book_api_ticket(array(
-							'current_user' => $current_user,
-							'ticket' => $ticket,
-							'company' => $company,
-							'posteddata' => $posteddata,
-							'customers' => $customers
-						));
+						$result = $this->book_api_ticket(array('current_user' => $current_user,'ticket' => $ticket,'company' => $company,'posteddata' => $posteddata,'customers' => $customers));
 
 						if(!$result) {
 							redirect("search/beforebook/$id");
@@ -1546,22 +1563,39 @@ class Search extends Mail_Controller
 						else {
 							//for the time being insert a new ticket against API billing company. If present no need to create duplicate.
 							if($result && isset($result['synthetic_ticket'])) {
-								$ticket = $result['synthetic_ticket'];
+								$ticket = array_merge($ticket, $result['synthetic_ticket']);
 								$id = intval($ticket['id']);
 								$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
 								$pnr = $ticket['pnr'];
 								$user_id = intval($ticket['user_id']);
-							}
-							
+							}	
+						}
+					}
+					else {
+						//$posteddata = array( "total_amount" => $amount, "costprice" => $costprice, "qty" => $qty, "date" => $date, "price" => $price, "service_charge" => $service_charge, "igst" => $igst, "rateplanid" => $rateplanid );
+						//$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+						// $ticket['cost_price'] = $costprice;
+						// $ticket['whl_srvchg'] = $service_charge;
+						if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+							$ticket = array_merge($current_ticket, $ticket);
 						}
 					}
 
+					$suplcompany = $this->Admin_Model->get_company(intval($ticket['companyid']));
+					if($suplcompany && is_array($suplcompany) && count($suplcompany)>0) {
+						$suplcompany = $suplcompany[0];
+					}
+
+					$is_owned_ticket = intval($ticket['companyid'])===$companyid;
+					$posteddata['isownticket'] = $is_owned_ticket;
+					$posteddata['isapi'] = $isapi;
 					$booking_info = $this->save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers);
 
 					$booking_id = intval($booking_info['booking_id']);
 					$booking_date = $booking_info['booking_date'];
 					$booking_activity_id = intval($booking_info['booking_activity_id']);
 					$voucher_no = intval($booking_info['voucher_no']);
+					$sale_type = isset($booking_info['sale_type'])?$booking_info['sale_type']:'request';
 					
 					$newbookinginfo=$this->Search_Model->booking_details($booking_id);
 					if($newbookinginfo && count($newbookinginfo)>0) {
@@ -1580,47 +1614,74 @@ class Search extends Mail_Controller
 						$flight = $flight[0];
 					}
 					$trip = ($flight['trip_type']=='ONE')?"ONE WAY":"RETURN";
-					$is_owned_ticket = intval($ticket['companyid'])===$companyid;
 					
 					log_message('info', "Flight : ".json_encode($flight));
 
-					//send email to customer here
-					$this->prepare_send_email("BOOKING_CUSTOMER_EMAIL", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
-					//send sms to customer here
-					$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
-					//$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata);
-
-					if($is_owned_ticket) {
-						$sale_type = $ticket['sale_type'];
-						log_message('info', "This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
-					}
-					else {
-						$supplier_contract = $this->Search_Model->get_suppliers_contract($companyid, intval($ticket['companyid']));
-						if($supplier_contract && count($supplier_contract)>0) {
-							$supplier_contract = $supplier_contract[0];
-						}
-
-						if(isset($supplier_contract['sale_type'])) {
-							$sale_type = $ticket['sale_type'];
-						}
-						log_message('info', "This is sourced ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
-					}
-
-					if((isset($ticket['pnr']) && $ticket['pnr']=='')) {
-						log_message('info', "Original sale type: $sale_type | PNR: ".$ticket['pnr']." | Changed to REQUEST sale type");
-						$sale_type = 'request';
+					$allow_email_sms = true;
+					if($allow_email_sms) {
+						//send email to customer here
+						$this->prepare_send_email("BOOKING_CUSTOMER_EMAIL", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+						//send sms to customer here
+						$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo);
+						//$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata);
 					}
 
 					if($current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
 						$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
 					}
+
+					log_message('info', "Going to transact system wallet | Status => $status | Sale.Type => $sale_type");
+					//if($status === 'CONFIRMED' && !$is_owned_ticket) {
+					if(($sale_type === 'live' || $isapi) && !$is_owned_ticket) {
+						//This ticket is not own ticket and status became confirmed. So money has to be moved to wholsaler to supplier account
+						$posteddata['status'] = $status;
+						$posteddata['current_user'] = $current_user;
+						$posteddata['mode'] = 'DR';
+						$posteddata['transtype'] = 20;
+						$posteddata['transreftype'] = 'PURCHASE';
+						$posteddata['narration'] = "Buying supplier ticket (id: $booking_id)";
+				
+						$transactionresult = $this->do_system_wallet_transaction($company, $suplcompany, $ticket, $newbookinginfo, $posteddata);
+						log_message('info', "System Wallet Transaction => ".json_encode($transactionresult));
+					}
+
 					$wallettransid = 0;
-					if($transactionresult) {
-						$wallettransid = intval($transactionresult['wallet_transid']);
+					if($transactionresult && is_array($transactionresult) && isset($transactionresult['trans_id'])) {
+						$wallettransid = intval($transactionresult['trans_id']);
+					}
+
+					if($is_owned_ticket) {
+						$sale_type = $ticket['sale_type'];
+						log_message('info', "1. This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
+					}
+					else {
+						//$sale_type = $ticket['sale_type'];
+						log_message('info', "2. This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
+						$suplbookinginfo = null;
+						$parent_booking_status = 'PENDING';
+						if($isapi || $sale_type==='live') {
+							//get the booking info of supplier.
+							//Assuming since its API means ticket is in live booking
+							$posteddata['isapi'] = $isapi;
+							$suplbookinginfo = $this->do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany);
+							$parent_booking_status = isset($suplbookinginfo['book_status']) ? $suplbookinginfo['book_status'] : 'PENDING';
+						}
+
+						if(!$isapi && $sale_type==='live' && $parent_booking_status==="APPROVED") {
+							//lets reduce ticket count
+							$posteddata['qty'] = isset($newbookinginfo['qty'])?intval($newbookinginfo['qty']):0;
+							$posteddata['ticketid'] = isset($newbookinginfo['ticket_id'])?intval($newbookinginfo['ticket_id']):0;
+							$updated_ticket = $this->do_reducee_inventory($posteddata);
+						}
+					}
+
+					if((isset($ticket['pnr']) && $ticket['pnr']=='')) {
+						$sale_type = 'request';
+						log_message('info', "Original sale type: $sale_type | PNR: ".$ticket['pnr']." | Changed to $sale_type sale type");
 					}
 
 					if($booking_id>0 && $wallettransid>=0) {
-						log_message('info', "Booking processed in REQUEST mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
+						log_message('info', "Booking processed in $sale_type mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
 						redirect("/search/thankyou/".$booking_id."");
 					}
 					else {
@@ -1837,6 +1898,29 @@ class Search extends Mail_Controller
 		}
 	}
 
+	protected function do_reducee_inventory($payload) {
+		$result = [];
+		$qty = intval($payload['qty']);
+		$ticketid = intval($payload['ticketid']);
+
+		try
+		{
+			$returnvalue = $this->Search_Model->do_reducee_inventory($ticketid, $qty);
+
+			$ticket = $this->Search_Model->get('tickets_tbl', array('id' => $ticketid));
+			if($ticket && isset($ticket) && is_array($ticket) && count($ticket)>0) {
+				$ticket = $ticket[0];
+
+				log_message('info', "Updated Ticket => ".json_encode($ticket));
+				$result['ticket'] = $ticket;
+			}
+		}
+		catch(Exception $ex) {
+			log_message('info', "Error => $ex");
+		}
+		return $result;
+	}
+
 	protected function prepare_send_email($function, $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo) {
 		$bookingid = $booking_info["booking_id"];
 		switch ($function) {
@@ -1945,8 +2029,57 @@ class Search extends Mail_Controller
 		return $data;
 	}
 
-	protected function save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers) {
+	protected function save_booking($current_user, $ticket, &$status, $wallet, $company, $posteddata, $customers) {
 		$booking_date = date("Y-m-d H:i:s");
+		$companyid = intval($company['id']);
+		$isownticket = boolval($posteddata['isownticket']);
+		$system_wallet_balance = 0;
+		$sale_type = "request";
+		$isapi = isset($posteddata['isapi']) ? boolval($posteddata['isapi']) : false;
+		$pnr = isset($ticket['pnr'])?$ticket['pnr']:'';
+
+		if($companyid !== intval($ticket['companyid'])) {
+			$supplier_contract = $this->Search_Model->get_suppliers_contract($companyid, intval($ticket['companyid']));
+			if($supplier_contract && is_array($supplier_contract) && count($supplier_contract)>0) {
+				$supplier_contract = $supplier_contract[0];
+				if($supplier_contract && is_array($supplier_contract) && count($supplier_contract)>0) {
+					$system_wallet_entry =  $this->Search_Model->get_wallet_balance($companyid, -1);
+					if($system_wallet_entry && is_array($system_wallet_entry) && count($system_wallet_entry)>0) {
+						$system_wallet_balance = floatval($system_wallet_entry['balance']);
+	
+						log_message('info', "Wallet Balance => company: $companyid | user: -1 | Balance: $system_wallet_balance => ".json_encode($system_wallet_entry));
+					}
+				}
+	
+				if($supplier_contract && isset($supplier_contract['sale_type']) && $supplier_contract['sale_type']!=='') {
+					if($supplier_contract['sale_type'] === 'live') {
+						$sale_type = "live";
+						if($system_wallet_balance>=floatval($posteddata['costprice'])) {
+							$status = 'CONFIRMED';
+						}
+						else {
+							log_message('info', "Wholesaler don't have enough ticket value ");
+							$status = 'PENDING';
+						}
+					}
+					else if($isapi && $pnr !== '') {
+						$status = 'CONFIRMED';
+						$sale_type = "live";
+					}
+					else {
+						$status = 'PENDING';
+						$sale_type = "request";
+					}
+				}
+			}
+		}
+
+		$status_code = (($status==='CONFIRMED')?2:0);
+		if($sale_type === "live" && $status!=='CONFIRMED') {
+			$status_code = 4;
+		}
+		
+
 		$arr = array(
 			"booking_date"=>$booking_date,
 			"ticket_id"=>$ticket["id"],
@@ -1955,7 +2088,7 @@ class Search extends Mail_Controller
 			"customer_companyid"=>$company["id"],
 			"seller_userid"=>$ticket['seller_userid'],
 			"seller_companyid"=>$ticket['seller_companyid'],
-			"status"=>(($status==='CONFIRMED')?2:0),
+			"status"=>$status_code,
 			"price"=>floatval($posteddata['price']),
 			"admin_markup"=>floatval($ticket['adminmarkup']),
 			"markup"=>0,
@@ -1974,16 +2107,141 @@ class Search extends Mail_Controller
 			"target_companyid"=>intval($ticket['seller_companyid']),
 			"requesting_to"=>intval($ticket['requesting_to']),
 			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice'] * intval($posteddata['qty'])) : floatval($posteddata['total_amount'])),
-			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid']
+			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
+			"isownticket" => boolval($posteddata['isownticket'])
 		);
 
 		if(floatval($posteddata['total_amount'])>0) {
 			//insert data into booking_activity_tbl
 			$booking_result = $this->Search_Model->book_ticket($arr, $company, $current_user, $ticket, $wallet, $posteddata, $customers);
-			return array("booking_id" => $booking_result['booking_id'], "booking_date" => $arr['booking_date'], "booking_activity_id" => $booking_result['booking_activity_id'], "voucher_no" => $booking_result['voucher_no']);
+			return array("booking_id" => $booking_result['booking_id'], "booking_date" => $arr['booking_date'], "booking_activity_id" => $booking_result['booking_activity_id'], 
+				"voucher_no" => $booking_result['voucher_no'], 'wallet_balance' => $system_wallet_balance, 'book_status' => $status, 'sale_type' => $sale_type);
 		}
 		else {
-			return array("booking_id" => -1, "booking_date" => date("Y-m-d H:i:s"), "booking_activity_id" => -1, "voucher_no" => -1);
+			return array("booking_id" => -1, "booking_date" => date("Y-m-d H:i:s"), "booking_activity_id" => -1, "voucher_no" => -1, 'wallet_balance' => $system_wallet_balance, 'book_status' => '', 'sale_type' => $sale_type);
+		}
+	}
+
+	protected function do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany) {
+		$booking_date = date("Y-m-d H:i:s");
+		$companyid = intval($company['id']);
+		$seller_userid = intval($company['primary_user_id']);
+		$supl_compannyid = intval($suplcompany['id']);
+		$supl_userid = intval($suplcompany['primary_user_id']);
+		$seller_wallet = $this->Search_Model->get_wallet_balance($companyid, -1);
+		$supplier_wallet = $this->Search_Model->get_wallet_balance($supl_compannyid, -1);
+
+		$seller_user = $this->User_Model->get_userbyid($seller_userid);
+
+		$parent_bookingid = intval($newbookinginfo['id']);
+		
+		$baseprice = floatval($ticket['total']);
+		$spl_markup = floatval($ticket['spl_markup']);
+		$price = ($baseprice+$spl_markup);
+		$spl_srvchg = floatval($ticket['spl_srvchg']);
+		// $spl_cgst = round(($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100), 0);
+		// $spl_sgst = round(($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100), 0);
+		$spl_cgst = floatval($ticket['spl_cgst']);
+		$spl_sgst = floatval($ticket['spl_sgst']);
+		$spl_igst = ($spl_cgst + $spl_sgst);
+
+		$whl_costrate = floatval($ticket['cost_price']); //($baseprice + $spl_markup + $spl_srvchg) + ($spl_cgst + $spl_sgst);
+
+		$whl_costprice = $whl_costrate * intval($posteddata['qty']);
+
+		log_message('info', "Ticket for supplier booking => ".json_encode($ticket));
+		log_message('info', "Booking commercials => $price - $spl_markup - $spl_srvchg - $spl_cgst - $spl_sgst - $spl_igst - $whl_costprice - $whl_costrate");
+		//$supplier_company = $this->Admin_Model->get_company($supl_compamnyid);
+
+		$isownticket = boolval($posteddata['isownticket']);
+		$isapi = boolval($posteddata['isapi']);
+		$sale_type = boolval($ticket['sale_type']);
+
+		$status = 'PENDING';
+		if($sale_type === 'live') {
+			$status = 'CONFIRMED';
+		}
+		$system_wallet_balance = 0;
+
+		if($companyid !== $supl_compannyid) {
+			$saller_contract = $this->Search_Model->get_wholesaler_contract($companyid, $supl_compannyid);
+			if($saller_contract && is_array($saller_contract) && count($saller_contract)>0) {
+				$saller_contract = $saller_contract[0];
+				if($saller_contract && is_array($saller_contract) && count($saller_contract)>0) {
+					$system_wallet_entry =  $this->Search_Model->get_wallet_balance($companyid, -1);
+					if($system_wallet_entry && is_array($system_wallet_entry) && count($system_wallet_entry)>0) {
+						$system_wallet_balance = floatval($system_wallet_entry['balance']);
+	
+						log_message('info', "Wallet Balance => company: $companyid | user: -1 | Balance: $system_wallet_balance => ".json_encode($system_wallet_entry));
+					}
+				}
+	
+				if($saller_contract && isset($saller_contract['sale_type']) && $saller_contract['sale_type']!=='') {
+					if($saller_contract['sale_type'] === 'live') {
+						if($system_wallet_balance>=floatval($posteddata['costprice'])) {
+							$status = 'CONFIRMED';
+						}
+						else {
+							log_message('info', "Wholesaler don't have enough ticket value ");
+							$status = 'PENDING';
+						}
+					}
+				}
+			}
+		}
+
+		if(isset($ticket["pnr"]) && trim($ticket["pnr"]) === '') {
+			$status = 'PENDING';
+		}
+		else {
+			if($isapi && trim($ticket["pnr"]) !== '') {
+				$status = 'CONFIRMED';
+			}
+		}
+
+		$arr = array(
+			"booking_date"=>$booking_date,
+			"ticket_id"=>$ticket["id"],
+			"pbooking_id" => $parent_bookingid>0?$parent_bookingid:null,
+			"pnr" => $ticket["pnr"],
+			"customer_userid" => intval($company["primary_user_id"]),
+			"customer_companyid" => intval($company["id"]),
+			"seller_userid" => intval($suplcompany['primary_user_id']),
+			"seller_companyid" => $supl_compannyid,
+			"status" => (($status==='CONFIRMED')?2:0),
+			"price" => $price,
+			"admin_markup" => 0,
+			"markup" => $spl_markup,
+			"srvchg" => $spl_srvchg,
+			"cgst" => $spl_cgst, /* This is wrong should be directly taken from cgst value */
+			"sgst" => $spl_sgst, /* This is wrong should be directly taken from sgst value */
+			"igst" => $spl_igst,
+			"total" => $whl_costprice,
+			"costprice" => $baseprice,
+			"rateplanid" => intval($posteddata['rateplanid']),
+			"qty" => intval($posteddata['qty']),
+			"adult" => intval($posteddata['qty']),
+			"created_by" => $seller_userid,
+			"requesting_by" => 4,  //always 4 because requesting by is wholesaler
+			"target_userid" => intval($ticket['seller_userid']),
+			"target_companyid" => intval($ticket['seller_companyid']),
+			"requesting_to" => 8, // intval($ticket['requesting_to']), always supplier
+			"debit" => $whl_costprice,
+			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
+			"isownticket" => boolval($posteddata['isownticket']),
+			"seller_company" => $suplcompany
+		);
+
+		if($whl_costprice>0) {
+			//insert data into booking_activity_tbl
+			$posteddata['booking_type'] = 'WHL-SPL';
+			$booking_result = $this->Search_Model->book_ticket($arr, $company, $seller_user, $ticket, $seller_wallet, $posteddata, null);
+			unset($posteddata['booking_type']);
+			return array("booking_id" => $booking_result['booking_id'], "booking_date" => $arr['booking_date'], "booking_activity_id" => $booking_result['booking_activity_id'], 
+				"voucher_no" => $booking_result['voucher_no'], 'wallet_balance' => $system_wallet_balance, 'book_status' => $status);
+		}
+		else {
+			return array("booking_id" => -1, "booking_date" => date("Y-m-d H:i:s"), "booking_activity_id" => -1, "voucher_no" => -1, 'wallet_balance' => $system_wallet_balance, 'book_status' => '');
 		}
 	}
 
@@ -2067,6 +2325,99 @@ class Search extends Mail_Controller
 		}
 
 		return array('wallet_transid' => $wallet_transid, 'voucher_no' => $voucher_no);
+	}
+
+	protected function do_system_wallet_transaction($company, $suplcompany, $ticket, $newbookinginfo, $posteddata) {
+		$wholesaler_wallet = $this->Search_Model->get_wallet_balance(intval($company['id']), -1);
+		$supplier_wallet = $this->Search_Model->get_wallet_balance(intval($suplcompany['id']), -1);
+
+		$whl_wallet_id = intval($wholesaler_wallet['id']);
+		$spl_wallet_id = intval($supplier_wallet['id']);
+
+		$baseprice = intval($ticket['total']);
+		$spl_costprice = $baseprice;
+		$whl_costprice = intval($ticket['cost_price']);
+		$pax = intval($newbookinginfo['qty']);
+		$whl_totalcost = $pax*$whl_costprice;
+		$current_user = $posteddata['current_user'];
+
+		$mode = $posteddata['mode'];
+		$transtype = intval($posteddata['transtype']);
+		$transreftype = $posteddata['transreftype'];
+		$narration = $posteddata['narration'];
+
+		$booking_id = intval($newbookinginfo['id']);
+		$booking_date = date('Y-m-d H:i:s', strtotime($newbookinginfo['date']));
+		$transid = uniqid();
+
+		log_message('info', "[Search:do_system_wallet_transaction] | Wholesaler Wallet.ID: $whl_wallet_id | Supplier Wallet.ID: $spl_wallet_id | Baseprice: $baseprice | SPL.Cost: $spl_costprice | WHL.Cost: $whl_costprice | PAX: $pax");
+		$wallet_trans_date = date("Y-m-d H:i:s");
+		
+		$arr=array(
+			'wallet_id' => $whl_wallet_id,
+			'date' => $wallet_trans_date,
+			'trans_id' => $transid,
+			'companyid' => intval($company['id']),
+			'userid' => 0,
+			'amount' => $whl_totalcost,
+			'dr_cr_type'=> $mode, //'DR',
+			'trans_type' => $transtype, // 20, /*20 is for Ticket Booking */
+			'trans_ref_id'=>$booking_id,
+			'trans_ref_date'=>$booking_date,
+			'trans_ref_type' => $transreftype, //'PURCHASE',
+			'trans_tracking_id' => $transid,
+			'trans_documentid' => $booking_id,
+			'narration' => $narration, // "Buying supplier ticket (id: $booking_id)",
+			'sponsoring_companyid' => -1, //$current_user['sponsoring_companyid'],
+			'created_by'=>intval($current_user['id']),
+			'status'=>1,
+			'approved_by'=>$company['primary_user_id'],
+			'approved_on'=>date("Y-m-d H:i:s"),
+			'target_companyid'=>intval($suplcompany['id'])
+		);					 
+
+		//wholesaler's wallet got debited for this ticket supplied by supplier
+		$result = $this->Search_Model->transact_wallet($arr);
+		$wallet_transid = -1;
+		if($result && intval($result['trans_id'])>0) {
+			$wallet_transid = intval($result['trans_id']);
+			log_message('info', "[Search:do_system_wallet_transaction | Wholesaler Side] | Wallet transaction successful - $wallet_transid");
+		}
+		//$wallet_transid = $this->Search_Model->save("wallet_transaction_tbl",$arr);
+
+		//supplier system wallet should credited with same amount as Payment
+		$arr=array(
+			'wallet_id' => $spl_wallet_id,
+			'date' => $wallet_trans_date,
+			'trans_id' => $transid,
+			'companyid' => intval($suplcompany['id']),
+			'userid' => 0,
+			'amount' => $whl_totalcost,
+			'dr_cr_type'=> ($mode=='DR'?'CR':'DR'), //'DR',
+			'trans_type' => $transtype, // 20, /*20 is for Ticket Booking */
+			'trans_ref_id'=>$booking_id,
+			'trans_ref_date'=>$booking_date,
+			'trans_ref_type' => 'PAYMENT', //'PURCHASE',
+			'trans_tracking_id' => $transid,
+			'trans_documentid' => $wallet_transid,
+			'narration' => $narration, // "Buying supplier ticket (id: $booking_id)",
+			'sponsoring_companyid' => -1, //$current_user['sponsoring_companyid'],
+			'created_by'=>intval($current_user['id']),
+			'status'=>1,
+			'approved_by'=>$suplcompany['primary_user_id'],
+			'approved_on'=>date("Y-m-d H:i:s"),
+			'target_companyid'=>intval($suplcompany['id'])
+		);					 
+
+		//wholesaler's wallet got debited for this ticket supplied by supplier
+		$result = $this->Search_Model->transact_wallet($arr);
+		$wallet_transid = -1;
+		if($result && intval($result['trans_id'])>0) {
+			$wallet_transid = intval($result['trans_id']);
+			log_message('info', "[Search:do_system_wallet_transaction | Supplier Side] | Wallet transaction successful - $wallet_transid");
+		}
+
+		return $result;
 	}
 	
 	protected function get_ticket($ticketid, $current_user, $company, $passedticket) {

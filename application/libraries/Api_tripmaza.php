@@ -146,6 +146,7 @@ class Api_tripmaza extends Api {
         $airlines = $payload['airlines'];
         $supl_companyid = intval($payload['supl_companyid']);
         $supl_rateplan_id = intval($payload['supl_rateplan_id']);
+        $supl_company = $payload['supl_company'];
         
         $tickets = [];
 
@@ -203,6 +204,8 @@ class Api_tripmaza extends Api {
                             }
 
                             $no_of_seats = intval($tmzticket['Segments'][0][0]['NoOfSeatAvailable']);
+                            $no_of_seats = $no_of_seats>0?$no_of_seats:$pax;
+                            $price = round(floatval($tmzticket['Fare']['OfferedFare'])/$no_of_seats, 0);
                             $ticket = array(
                                 'id' => (100100000 + intval($tmzticket['ResultIndex'])),
                                 'uid' => intval($company['primary_user_id']),
@@ -219,30 +222,30 @@ class Api_tripmaza extends Api {
                                 'terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
                                 'departure_terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
                                 'arrival_terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
-                                'no_of_person' => $no_of_seats>0?$no_of_seats:$pax,
-                                'seatsavailable' => $no_of_seats>0?$no_of_seats:$pax,
+                                'no_of_person' => $no_of_seats,
+                                'seatsavailable' => $no_of_seats,
                                 'tag' => $tmzticket['FareRules'][0]['FareRuleDetail'],
                                 'data_collected_from' => 'tmz_api',
                                 'sale_type' => 'api', /*This will be live only but for now making it API //live */
                                 'refundable' => $tmzticket['IsRefundable']?'Y':'N',
-                                'total' => floatval($tmzticket['Fare']['OfferedFare']),
+                                'total' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
                                 'airline' => $lastairline['id'],
                                 'aircode' => $tmzticket['Segments'][0][0]['Airline']['AirlineCode'],
                                 'ticket_no' => 'TMZ-TKT-'.intval($tmzticket['ResultIndex']),
-                                'price' => floatval($tmzticket['Fare']['OfferedFare']),
-                                'cost_price' => floatval($tmzticket['Fare']['OfferedFare']),
+                                'price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                'cost_price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
                                 'approved' => 1,
                                 'class' => 'ECONOMY',
                                 'no_of_stops' => intval($tmzticket['Segments'][0][0]['SegmentIndicator']),
-                                'companyid' => $company['id'],
-                                'companyname' => $company['display_name'],
-                                'user_id' => -1,
+                                'companyid' => intval($supl_company['id']), //$company['id'], This has to be supplier company id. Means who own the ticket
+                                'companyname' => $supl_company['display_name'],
+                                'user_id' => intval($supl_company['primary_user_id']), // -1,
                                 'admin_markup' => 0,
                                 'rate_plan_id' => $supl_rateplan_id,
                                 'supplierid' => $supl_companyid,
                                 'sellerid' => $company['id'],
                                 'seller_rateplan_id' => $default_rateplan_id,
-                                'adult_total' => 0.00,
+                                'adult_total' => $price, //0.00,
                                 'image' => $image,
                                 'ResultIndex' => intval($tmzticket['ResultIndex']),
                                 'SearchIndex' => intval($tmzticket['SearchIndex']),

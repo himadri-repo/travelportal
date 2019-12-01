@@ -310,7 +310,7 @@
 								 }
 								}
 								?>
-                                <button type="submit" class="btn btn-orange">Confirm Booking</button>
+                                <button type="submit" id="btnbook" name="btnbook" class="btn btn-orange">Confirm Booking</button>
                             </form>
                             
                         </div><!-- end columns -->
@@ -320,6 +320,7 @@
             </div><!-- end flight-booking -->
         </section><!-- end innerpage-wrapper -->
         <script language="javascript">
+		var issubmitted = false;
 		function validate_customers() {
 
 			var prefix = $("select[name='prefix[]'");
@@ -331,31 +332,41 @@
 			var proceed = true;
 			var name = '';
 			var msg = 'Invalid input. Please check your form.';
-			for(i=0; i<counts; i++) {
-				prefix = $(prefix[i]).val().trim();
-				firstname = $(first_name[i]).val().trim();
-				lastname = $(last_name[i]).val().trim();
-				name = prefix+' '+firstname+' '+lastname;
-				var key = prefix+'_'+firstname+'_'+lastname;
+			if(issubmitted) return false;
 
-				if(prefix=='' || firstname=='' || lastname=='') {
-					proceed = false;
-					msg = 'Title, First name and Last name of the all the customers are mandatory';
-					break;
+			for(i=0; i<counts; i++) {
+				try
+				{
+					prefix = $(prefix[i]).val().trim();
+					firstname = $(first_name[i]).val().trim();
+					lastname = $(last_name[i]).val().trim();
+					name = prefix+' '+firstname+' '+lastname;
+					var key = prefix+'_'+firstname+'_'+lastname;
+
+					if(prefix=='' || firstname=='' || lastname=='') {
+						proceed = false;
+						msg = 'Title, First name and Last name of the all the customers are mandatory';
+						break;
+					}
+					
+					if(keys[key]===null || keys[key]===undefined) {
+						keys[key] = true;
+					} else {
+						proceed = false;
+						msg = 'Duplicate name not allowed [' + name + ']';
+						break;
+					}
 				}
-				
-				if(keys[key]===null || keys[key]===undefined) {
-					keys[key] = true;
-				} else {
-					proceed = false;
-					msg = 'Duplicate name not allowed [' + name + ']';
-					break;
+				catch(e) {
+					console.log(e);
 				}
-				
 			}
 
 			if(!proceed) {
 				alert(msg);
+			} else {
+				issubmitted = true;
+				$('#btnbook').hide();
 			}
 
 			return proceed;

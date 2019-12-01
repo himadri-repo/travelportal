@@ -1447,22 +1447,35 @@ Class Search_Model extends CI_Model
 		$booking_id = -1;
 		$booking_activity_id = -1;
 		$voucher_no = -1;
+		$booking_type = isset($posteddata['booking_type']) ? $posteddata['booking_type'] : '';
 		$amount = floatval($parameters["total"]);
+		$isownticket = boolval($parameters["isownticket"]);
+		$parentbooking_id = isset($parameters["pbooking_id"])?intval($parameters["pbooking_id"]):0;
+		$seller_company = isset($parameters["seller_company"]) ? $parameters["seller_company"] : [];
+		$pnr = isset($parameters["pnr"]) ? $parameters["pnr"] : '';
+		$status = intval($parameters["status"]);
+		if($pnr==='') {
+			$status = 0;
+			$parameters["status"] = $status;
+		}
 
 		if($amount>0) {
 			try {
 				$this->db->trans_begin();
 				log_message("info", "SearchModel:book_ticket-BeforeSave-{'bookingid': $booking_id, 'booking_activity_id': $booking_activity_id, 'parameters': ".json_encode($parameters)."}");
 
+				#region Wholesaler side booking
+				//Save booking from end users perspective
 				$booking_id = $this->save("bookings_tbl", array(
 					"booking_date"=>$parameters["booking_date"], 
 					"ticket_id"=>$parameters["ticket_id"], 
-					"pnr"=>$parameters["pnr"], 
+					"pbooking_id" => $parentbooking_id, 
+					"pnr"=>$pnr, 
 					"customer_userid"=>$parameters["customer_userid"], 
 					"customer_companyid"=>$parameters["customer_companyid"], 
 					"seller_userid"=>$parameters["seller_userid"], 
 					"seller_companyid"=>$parameters["seller_companyid"], 
-					"status"=>$parameters["status"], 
+					"status"=>$status, 
 					"price"=>$parameters["price"], 
 					"admin_markup"=>$parameters["admin_markup"], 
 					"markup"=>$parameters["markup"], 
@@ -1479,14 +1492,15 @@ Class Search_Model extends CI_Model
 					"created_on"=>date("Y-m-d H:i:s"),
 				));
 
+				//Save booking activity from end users perspective
 				$booking_activity_id = $this->save("booking_activity_tbl", array(
 					"booking_id"=>$booking_id,
 					"activity_date"=>$parameters["booking_date"],
 					"source_userid"=>$parameters["customer_userid"], 
 					"source_companyid"=>$parameters["customer_companyid"], 
 					"requesting_by"=>$parameters["requesting_by"], 
-					"target_userid"=>$parameters["target_userid"], 
-					"target_companyid"=>$parameters["target_companyid"], 
+					"target_userid"=>$parameters["seller_userid"], 
+					"target_companyid"=>$parameters["seller_companyid"], 
 					"requesting_to"=>$parameters["requesting_to"], 
 					"status" => (intval($parameters["status"])===2 ? 32 : $parameters["status"]), 
 					"notes"=>'',
@@ -1494,49 +1508,96 @@ Class Search_Model extends CI_Model
 					"created_on"=>date("Y-m-d H:i:s")
 				));
 
+				//Perform account transaction if booking is saved
+				$voucher_no = 0;
+				$whl_voucher_no = 0;
+				$spl_voucher_no = 0;
 				if(intval($booking_id)>0) {
-					$voucher_no = $this->save("account_transactions_tbl", array(
-						"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
-						"transacting_companyid" => $parameters["customer_companyid"], 
-						"transacting_userid" => $parameters["customer_userid"], 
-						"documentid" => $booking_id, 
-						"document_date" => $parameters["booking_date"], 
-						"document_type" => 1,
-						"debit" => $parameters["debit"],  
-						"companyid" => $parameters["customer_companyid"],  
-						"credited_accountid" => $parameters["ticket_account"],  
-						"created_by"=>$parameters["created_by"]
-					));
+					if($booking_type==='') {
+						$voucher_no = $this->save("account_transactions_tbl", array(
+							"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
+							"transacting_companyid" => $parameters["customer_companyid"], 
+							"transacting_userid" => $parameters["customer_userid"], 
+							"documentid" => $booking_id, 
+							"document_date" => $parameters["booking_date"], 
+							"document_type" => 1,
+							"debit" => $parameters["debit"],  
+							"companyid" => $parameters["customer_companyid"],  
+							"credited_accountid" => $parameters["ticket_account"],  
+							"created_by"=>$parameters["created_by"]
+						));
+					}
+					else if($booking_type==='WHL-SPL') {
+						$whl_voucher_no = $this->save("account_transactions_tbl", array(
+							"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
+							"transacting_companyid" => $parameters["seller_companyid"], 
+							"transacting_userid" => 0, //$parameters["customer_userid"],  This is in between wholesaler and supplier primary account so userid is zero
+							"documentid" => $booking_id, 
+							"document_date" => $parameters["booking_date"], 
+							"document_type" => 1,
+							"debit" => $parameters["debit"],  
+							"companyid" => $parameters["customer_companyid"],  
+							"credited_accountid" => $parameters["ticket_account"],  
+							"created_by"=>$parameters["created_by"]
+						));
+
+						$spl_voucher_no = $this->save("account_transactions_tbl", array(
+							"voucher_no" => $this->Search_Model->get_next_voucherno($seller_company), 
+							"transacting_companyid" => $parameters["customer_companyid"], 
+							"transacting_userid" => 0, //$parameters["customer_userid"],  This is in between wholesaler and supplier primary account so userid is zero
+							"documentid" => $booking_id, 
+							"document_date" => $parameters["booking_date"], 
+							"document_type" => 1,
+							"credit" => $parameters["debit"],  
+							"companyid" => $parameters["seller_companyid"],  
+							"credited_accountid" => $parameters["ticket_account"],  
+							"created_by"=>$parameters["created_by"]
+						));
+					}
 				}
 
-				foreach($customers as $customer)
-				{
-					try
+				//Add customer informations for the booking
+				if($customers && is_array($customers) && count($customers)>0 && $booking_id>0 && $parentbooking_id === 0) {
+					foreach($customers as $customer)
 					{
-						$arr=array("prefix"=>$customer["prefix"],
-									"first_name"=>$customer["first_name"],
-									"last_name"=>$customer["last_name"],
-									"mobile_no"=>$customer["mobile_no"],
-									"age"=>$customer["age"], 
-									"ticket_fare"=>round($amount/intval($parameters["qty"]), 0),
-									"costprice"=>round(floatval($parameters["costprice"]), 0),
-									"email"=>$customer["email"], 
-									"companyid"=> intval($parameters["customer_companyid"]),
-									"booking_id"=>$booking_id,
-									"pnr"=>$parameters["pnr"],
-									"status" => (intval($parameters["status"])===2 ? 2 : 1), 
-									"created_by"=>$parameters["created_by"],
-									"created_on"=>date("Y-m-d H:i:s")
-								);
-						$custinfo = $this->save("customer_information_tbl",$arr);
-						log_message("info", "SearchModel:book_ticket-AfterSave: Customer Id: $custinfo | customer-".json_encode($arr));
-					}
-					catch(Exception $ex1) {
-						log_message("error", $ex1);
+						try
+						{
+							$arr=array("prefix"=>$customer["prefix"],
+										"first_name"=>$customer["first_name"],
+										"last_name"=>$customer["last_name"],
+										"mobile_no"=>$customer["mobile_no"],
+										"age"=>$customer["age"], 
+										"ticket_fare"=>round($amount/intval($parameters["qty"]), 0),
+										"costprice"=>round(floatval($parameters["costprice"]), 0),
+										"email"=>$customer["email"], 
+										"companyid"=> intval($parameters["customer_companyid"]),
+										"booking_id"=>$booking_id,
+										"airline_ticket_no"=>$parameters["pnr"],
+										"pnr"=>$parameters["pnr"],
+										"status" => (intval($parameters["status"])===2 ? 2 : 1), 
+										"created_by"=>$parameters["created_by"],
+										"created_on"=>date("Y-m-d H:i:s")
+									);
+							$custinfo = $this->save("customer_information_tbl",$arr);
+							log_message("info", "SearchModel:book_ticket-AfterSave: Customer Id: $custinfo | customer-".json_encode($arr));
+						}
+						catch(Exception $ex1) {
+							log_message("error", $ex1);
+						}
 					}
 				}
+				else if($parentbooking_id>0 && $booking_id>0) {
+					$flag = $this->update('customer_information_tbl', 
+							array('refrence_id' => $booking_id, 'status' => (intval($parameters["status"])===2 ? 2 : 1), 'updated_by' => $parameters["created_by"], 'updated_on' => date("Y-m-d H:i:s")),
+							array('booking_id' => $parentbooking_id, 'status !=' => 127));
+					$no_of_rows = $this->db->affected_rows();
+					if ($flag && $no_of_rows>0) {
+						log_message('info', "customer_information_tbl : $no_of_rows number of records updated with refrence booking id from supplier side");
+					}
+				}
+				#endregion
 
-				log_message("info", "SearchModel:book_ticket-AfterSave-{'bookingid': $booking_id, 'booking_activity_id': $booking_activity_id, 'voucher_no': $voucher_no, 'parameters': ".json_encode($parameters)."}");
+				log_message("info", "SearchModel:book_ticket-AfterSave-{'bookingid': $booking_id, 'booking_activity_id': $booking_activity_id, 'voucher_no': $voucher_no, 'spl_voucher_no': $spl_voucher_no, 'whl_voucher_no': $whl_voucher_no, 'parameters': ".json_encode($parameters)."}");
 
 				if($booking_id>0 && $booking_activity_id>0) {
 					$this->db->trans_complete();
@@ -1551,15 +1612,38 @@ Class Search_Model extends CI_Model
 			}
 		}
 
-		return array('booking_id'=> $booking_id, 'booking_activity_id' => $booking_activity_id, 'voucher_no' => $voucher_no);
+		return array('booking_id'=> $booking_id, 'booking_activity_id' => $booking_activity_id, 'voucher_no' => $voucher_no, 'spl_voucher_no' => $spl_voucher_no, 'whl_voucher_no' => $whl_voucher_no);
 	}
 
 	public function get_suppliers_contract($wholesalerid, $supplierid=-1) {
+		if(intval($wholesalerid) === intval($supplierid)) return false;
+
 		$sql = "select 	spl.code, spl.primary_user_id, spl.supplierid, spl.companyid, spls.serviceid, spls.allowfeed, spls.markup_rate, spls.markup_type, spls.rate_plan_id, spls.status, 
 						spls.communicationid, spls.tracking_id, case when spls.transaction_type=1 then 'request' else 'live' end as sale_type
 				from supplier_tbl spl
 				inner join supplier_services_tbl spls on spl.id=spls.supplier_rel_id and spl.active=1
 				where spl.companyid=$wholesalerid and (spl.supplierid=$supplierid or $supplierid=-1)";
+		
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function get_wholesaler_contract($wholesalerid, $supplierid=-1) {
+		if(intval($wholesalerid) === intval($supplierid)) return false;
+
+		$sql = "select 	whl.code, whl.primary_user_id, whl.salerid, whl.companyid, whls.serviceid, whls.allowfeed, whls.markup_rate, whls.markup_type, whls.rate_plan_id, whls.status, 
+						whls.communicationid, whls.tracking_id, case when whls.transaction_type=1 then 'request' else 'live' end as sale_type
+				from wholesaler_tbl whl
+				inner join wholesaler_services_tbl whls on whl.id=whls.wholesaler_rel_id and whl.active=1
+				where whl.companyid=$supplierid and (whl.salerid=$wholesalerid or $wholesalerid=-1)";
 		
 		$query = $this->db->query($sql);
 		//echo $this->db->last_query();die();
@@ -1755,6 +1839,136 @@ Class Search_Model extends CI_Model
 		{
 			return false;
 		}         	
+	}
+
+	public function get_wallet_balance($companyid, $userid=-1) {
+		if(intval($userid)>0 && intval($companyid)>0) {
+			$sql = "select id, name, display_name, companyid, userid, sponsoring_companyid, allowed_transactions, wallet_account_code, balance, type, status, created_by, created_on, updated_by, updated_on 
+				from system_wallets_tbl 
+				where sponsoring_companyid=$companyid and companyid=$companyid and userid=$userid";
+		}
+		else if(intval($companyid)>0) {
+			$sql = "select id, name, display_name, companyid, userid, sponsoring_companyid, allowed_transactions, wallet_account_code, balance, type, status, created_by, created_on, updated_by, updated_on 
+				from system_wallets_tbl 
+				where sponsoring_companyid=-1 and companyid=$companyid and userid=0";
+		}
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			$wallet_entry = $query->result_array();
+			if($wallet_entry && is_array($wallet_entry) && count($wallet_entry)>0) {
+				return $wallet_entry[0];
+			}
+			else {
+				return false;
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public function do_reducee_inventory($ticketid=0, $qty=0) {
+		if (intval($qty)<=0 || intval($ticketid)<=0) {
+			return null;
+		}
+
+		$flag = false;
+		$current_ticket = $this->get('tickets_tbl', array('id' => $ticketid));
+		if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+			$current_ticket = $current_ticket[0];
+
+			$current_qty = intval($current_ticket['no_of_person']);
+			$available = ($current_qty - intval($qty));
+		}
+
+		$sql = "update tickets_tbl set no_of_person = no_of_person-$qty, max_no_of_person = max_no_of_person-$qty, availibility = availibility-$qty, available = '".($available==0?'NO':'YES')."' where id=$ticketid";
+		$query = $this->db->query($sql);
+		$no_of_rows = $this->db->affected_rows();
+		if ($query && $no_of_rows>0) {
+			log_message('info', "Ticket qty reduced");
+			$flag = true;
+		}
+
+		return $flag;
+	}
+
+	public function transact_wallet($payload) {
+		if($payload==null) return false;
+
+		$result = [];
+		$wallet_id = intval($payload['wallet_id']);
+		$bookingid = intval($payload['trans_ref_id']);
+		$updated_by = intval($payload['approved_by']);
+		$updated_on = date("Y-m-d H:i:s");
+		if($bookingid>0) {
+			try
+			{
+				$wallet = $this->get_wallet_balance(intval($payload['companyid']), -1);
+				$total_cost = $payload['amount'];
+
+				if($payload['dr_cr_type'] == 'DR') {
+					$final_balance = floatval($wallet['balance'])-$total_cost;
+				}
+				else if($payload['dr_cr_type'] == 'CR') {
+					$final_balance = floatval($wallet['balance'])+$total_cost;
+				}
+				$this->db->trans_begin();
+
+				$wallet_transid = $this->save("wallet_transaction_tbl",$payload);
+				$result['trans_id'] = $wallet_transid;
+				if($wallet_transid>0) {
+					//update($tbl,$data,$arr) 
+					$wallet_update = $this->db->update("system_wallets_tbl", 
+						array('balance' => $final_balance, 'updated_by' => $updated_by, 'updated_on' => $updated_on), 
+						array('id' => $wallet_id, 'status' => 1));
+					$no_of_rows = $this->db->affected_rows();
+					$result['summary_updated'] = $wallet_update && $no_of_rows>0;
+					$result['wallet_balance'] = $final_balance;
+
+					if($wallet_update && $no_of_rows>0) {
+						$result['status'] = true;
+						log_message('info', 'Search_Model::transact_wallet - Wallet transaction inserted '.json_encode($payload));
+						log_message('info', "Search_Model::transact_wallet - Wallet summary updated with final value | Final value: $final_balance");
+						$this->db->trans_complete();
+					}
+					else {
+						$result['status'] = false;
+						$result['error'] = "Error: Wallet summery could not updated with final value | Final value: $final_balance";
+						log_message('error', "Search_Model::transact_wallet - Error: Wallet summery could not updated with final value | Final value: $final_balance");
+						$this->db->trans_rollback();
+					}
+				}
+				else {
+					$result['status'] = false;
+					$result['error'] = "Error: Wallet transaction failed";
+					log_message('error', 'Search_Model::transact_wallet - Error: Wallet transaction failed'.json_encode($payload));
+					$this->db->trans_rollback();
+				}
+			}
+			catch(Exception $ex) {
+				$result['trans_id'] = 0;
+				$result['summary_updated'] = false;
+				$result['wallet_balance'] = 0;
+				$result['status'] = false;
+				$result['error'] = "Error: Wallet transaction failed";
+				log_message('error', 'Search_Model::transact_wallet - Error: '.$ex);
+				$this->db->trans_rollback();
+			}
+		}
+		else {
+			$result['trans_id'] = 0;
+			$result['summary_updated'] = false;
+			$result['wallet_balance'] = 0;
+			$result['status'] = false;
+			$result['error'] = "Error: Booking id can't be invalid";
+			log_message('error', "Search_Model::transact_wallet - Booking id can't be invalid ".json_encode($payload));
+		}
+
+		return $result;
 	}
 }
 ?>
