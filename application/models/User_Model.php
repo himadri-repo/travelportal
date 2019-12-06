@@ -435,10 +435,10 @@ Class User_Model extends CI_Model
 		$current_user = $this->session->userdata('current_user');
 		
 		if($current_user['is_admin']=='1' && ($current_user['type']=='B2B' || $current_user['type']=='EMP')) {
-			$arr=array("customer_companyid"=> $current_user['companyid'], 'pbooking_id' => NULL); 
+			$arr=array("customer_companyid"=> $current_user['companyid'], 'ifnull(pbooking_id,0)' => 0); 
 		}
 		else {
-			$arr=array("customer_userid"=>$this->session->userdata('user_id'), 'pbooking_id' => NULL); 
+			$arr=array("customer_userid"=>$this->session->userdata('user_id'), 'ifnull(pbooking_id,0)' => 0); 
 		}
 
 		// $this->db->select('b.pnr,b.status,u.user_id,u.name,b.id,b.date,b.qty,b.rate,b.amount,b.total,c.city as source_city,ct.city as destination_city,t.trip_type,b.customer_id, 
@@ -1192,13 +1192,18 @@ Class User_Model extends CI_Model
 	public function get_user_activities($mode, $postedvalue) {
 		$qry = '';
 		$companyid = isset($postedvalue['filter']['companyid']) ? intval($postedvalue['filter']['companyid']) : -1;
+		$userid = isset($postedvalue['filter']['admin_userid']) ? intval($postedvalue['filter']['admin_userid']) : -1;
+		$fromdate = isset($postedvalue['filter']['fromdate']) ? ($postedvalue['filter']['fromdate']) : '';
+		$todate = isset($postedvalue['filter']['todate']) ? ($postedvalue['filter']['todate']) : '';
 		switch ($mode) {
 			case 'search':
-				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.activityid, ua.userid, ua.remote_ip, ua.request_method, ua.remote_port, ua.user_agent, ua.is_ajax, CONVERT_TZ(ua.requested_on, '-07:00', '+05:30') as requested_on, ua.uri, ua.posted_data, ua.server_data, ua.controller, ua.method, ua.http_cookie
-				from user_activities_tbl ua 
-				inner join user_tbl usr on ua.userid=usr.id 
-				inner join company_tbl c on usr.companyid=c.id 
-				where controller='search' and method='search_one_way' and usr.companyid=$companyid 
+				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.activityid, ua.userid, ua.remote_ip, ua.request_method, ua.remote_port, ua.user_agent, ua.is_ajax, CONVERT_TZ(ua.requested_on, '-07:00', '+05:30') as requested_on, ua.uri, ua.posted_data, ua.server_data, ua.controller, ua.method, ua.http_cookie    
+				from user_activities_tbl ua    
+				inner join user_tbl usr on ua.userid=usr.id   
+				inner join company_tbl c on usr.companyid=c.id   
+				where controller='search' and method='search_one_way' and usr.companyid=$companyid and usr.id<>$userid  and   
+				(('$fromdate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')>='$fromdate') and 
+				('$todate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')<='$todate'))
 				order by usr.id, ua.activityid DESC";
 				break;
 			default:

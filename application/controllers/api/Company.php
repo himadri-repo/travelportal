@@ -250,6 +250,7 @@ class Company extends REST_Controller {
         $this->set_response($services, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+/*
     public function bookings_get($companyid, $userid) {
         if($userid === NULL || $userid==='') {
             $userid = -1;
@@ -320,6 +321,106 @@ class Company extends REST_Controller {
             $ticket = $this->Search_Model->get_ticket(intval($booking['ticket_id']));
             if($ticket && count($ticket)>0)
                 $booking['ticket'] = $ticket[0];
+        }
+
+        $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+*/
+
+    public function bookings_post($companyid, $userid) {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $filter = json_decode($stream_clean, true);
+        $fromdate = null;
+        $todate = null;
+        
+        if($filter && isset($filter['fromdate'])) {
+            $fromdate = Date($filter['fromdate']);
+        }
+        if($filter && isset($filter['todate'])) {
+            $todate = Date($filter['todate']);
+        }
+
+        if($userid === NULL || $userid==='') {
+            $userid = -1;
+        }
+        if($companyid === NULL || $companyid==='') {
+            $companyid = -1;
+        }
+
+        $companyid = intval($companyid);
+        $userid = intval($userid);
+
+        $rateplans = $this->Admin_Model->rateplanByCompanyid(-1);
+
+        $customers = $this->Search_Model->get_booking_customers(-1, intval($companyid), intval($userid), $fromdate, $todate);
+
+        $bookings = $this->Search_Model->get_bookings(intval($companyid), intval($userid), $fromdate, $todate);
+
+        $tickets = $this->Search_Model->get_tickets(intval($companyid), $fromdate);
+
+        for ($i=0; $bookings && $i < count($bookings); $i++) { 
+            $booking = &$bookings[$i];
+            $objrateplan = NULL;
+            foreach ($rateplans as $rateplan) {
+                if($booking['rateplanid']===$rateplan['id']) {
+                    $objrateplan = $rateplan;
+                    break;
+                }
+            }
+
+            $booking['rateplan'] = $objrateplan;
+
+            $booking_activities = $this->Search_Model->get_booking_activity(intval($booking['id']));
+            if($booking_activities) {
+                $booking['booking_activities'] = $booking_activities;
+            }
+
+            $customer_list = array();
+
+            if($customers && count($customers)>0) {
+                $lastcustid = 0;
+                foreach ($customers as $customer) {
+                    $cust_companyid = intval($customer['companyid']);
+                    $cust_bookingid = intval($customer['cus_booking_id']);
+                    $cust_refid = intval($customer['refrence_id']);
+                    $bookid = intval($booking['id']);
+                    // if((intval($customer['booking_id']) === intval($booking['id']) || (intval($customer['booking_id']) === intval($booking['parent_booking_id'])))
+                    if((($companyid === $cust_companyid && ($cust_bookingid === $bookid || $cust_refid === $bookid))
+                        || ($companyid !== $cust_companyid && $cust_refid === $bookid))
+                        && $lastcustid !== intval($customer['id'])) 
+                    {
+                        $customer_list[] = $customer;
+                    }
+                    $lastcustid = intval($customer['id']);
+                }
+            }
+
+            $booking['customers'] = $customer_list;
+            
+            $b2bmarkup_value = 0;
+            if($booking['customer_type']=='B2B' && intval($booking['is_admin'])==0) {
+                $b2bmarkup_value = floatval($booking['field_value']);
+            }
+            
+            $booking['rate'] = floatval($booking['rate']) - $b2bmarkup_value;
+            $booking['amount'] = floatval($booking['amount']) - ($b2bmarkup_value * intval($booking['qty']));
+            $booking['total'] = floatval($booking['total']) - ($b2bmarkup_value * intval($booking['qty']));
+
+            $ticket = null;
+            for ($ti=0; $ti<count($tickets); $ti++) { 
+                $ticket = $tickets[$ti];
+                if($ticket && is_array($ticket) && isset($ticket['id']) && intval($ticket['id']) === intval($booking['ticket_id'])) {
+                    $booking['ticket'] = $ticket; 
+                }
+            }
+
+            if(!isset($booking['ticket'])) {
+                $booking['ticket'] = array();
+            }
+
+            //$ticket = $this->Search_Model->get_ticket(intval($booking['ticket_id']));
+            // if($ticket && count($ticket)>0)
+            //     $booking['ticket'] = $ticket[0];
         }
 
         $this->set_response($bookings, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED

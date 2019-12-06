@@ -1596,7 +1596,13 @@ class Search extends Mail_Controller
 					$booking_activity_id = intval($booking_info['booking_activity_id']);
 					$voucher_no = intval($booking_info['voucher_no']);
 					$sale_type = isset($booking_info['sale_type'])?$booking_info['sale_type']:'request';
-					
+					$book_status = isset($booking_info['book_status'])?$booking_info['book_status']:'PENDING';
+					log_message('info', "After Save_Book call => Sale Type : $sale_type | Book Status : $book_status");
+
+					if($book_status == 'PENDING' && !$isapi && !$is_owned_ticket) {
+						$sale_type = "request";
+					}
+					log_message('info', "After validation => Sale Type : $sale_type | Book Status : $book_status");
 					$newbookinginfo=$this->Search_Model->booking_details($booking_id);
 					if($newbookinginfo && count($newbookinginfo)>0) {
 						$newbookinginfo = $newbookinginfo[0];
@@ -1653,11 +1659,16 @@ class Search extends Mail_Controller
 
 					if($is_owned_ticket) {
 						$sale_type = $ticket['sale_type'];
+						$parent_booking_status = 'PENDING';
+						$posteddata['isapi'] = $isapi;
+						if($sale_type=='live' && $status=='CONFIRMED') {
+							$parent_booking_status = 'APPROVED';
+						}
 						log_message('info', "1. This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
 					}
 					else {
 						//$sale_type = $ticket['sale_type'];
-						log_message('info', "2. This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
+						log_message('info', "2. This is not own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
 						$suplbookinginfo = null;
 						$parent_booking_status = 'PENDING';
 						if($isapi || $sale_type==='live') {
@@ -1666,15 +1677,23 @@ class Search extends Mail_Controller
 							$posteddata['isapi'] = $isapi;
 							$suplbookinginfo = $this->do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany);
 							$parent_booking_status = isset($suplbookinginfo['book_status']) ? $suplbookinginfo['book_status'] : 'PENDING';
-						}
-
-						if(!$isapi && $sale_type==='live' && $parent_booking_status==="APPROVED") {
-							//lets reduce ticket count
-							$posteddata['qty'] = isset($newbookinginfo['qty'])?intval($newbookinginfo['qty']):0;
-							$posteddata['ticketid'] = isset($newbookinginfo['ticket_id'])?intval($newbookinginfo['ticket_id']):0;
-							$updated_ticket = $this->do_reducee_inventory($posteddata);
+							if($sale_type=='live' && $parent_booking_status=='CONFIRMED') {
+								$parent_booking_status = 'APPROVED';
+							}
+	
+							log_message('info', "parent booking status : Wholesaler id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type | parent_booking_status => ".json_encode($suplbookinginfo, TRUE));
 						}
 					}
+
+					log_message('info', "Before ticket reducing : Wholesaler id : $companyid | Supplier id : $seller_companyid | API: $isapi | Sale.Type: $sale_type | parent_booking_status: $parent_booking_status");
+					
+					if(!$isapi && $sale_type==='live' && $parent_booking_status==="APPROVED") {
+						//lets reduce ticket count
+						$posteddata['qty'] = isset($newbookinginfo['qty'])?intval($newbookinginfo['qty']):0;
+						$posteddata['ticketid'] = isset($newbookinginfo['ticket_id'])?intval($newbookinginfo['ticket_id']):0;
+						$updated_ticket = $this->do_reducee_inventory($posteddata);
+					}
+
 
 					if((isset($ticket['pnr']) && $ticket['pnr']=='')) {
 						$sale_type = 'request';
@@ -2039,7 +2058,7 @@ class Search extends Mail_Controller
 		$companyid = intval($company['id']);
 		$isownticket = boolval($posteddata['isownticket']);
 		$system_wallet_balance = 0;
-		$sale_type = "request";
+		$sale_type = $ticket['sale_type']; //"request";
 		$isapi = isset($posteddata['isapi']) ? boolval($posteddata['isapi']) : false;
 		$pnr = isset($ticket['pnr'])?$ticket['pnr']:'';
 
@@ -2076,6 +2095,11 @@ class Search extends Mail_Controller
 						$sale_type = "request";
 					}
 				}
+			}
+		} 
+		else {
+			if($sale_type ==='live' && $pnr!=='') {
+				$status = 'CONFIRMED';
 			}
 		}
 

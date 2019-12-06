@@ -702,8 +702,11 @@ Class Search_Model extends CI_Model
 		}         	
 	 }
 
-	 public function get_tickets($companyid) {
-		$dt_from = date("Y-m-d H:i:s");
+	 public function get_tickets($companyid, $dt_from=NULL) {
+		if($dt_from==NULL || $dt_from=='') {
+			$dt_from = date("Y-m-d H:i:s");
+		}
+
 		$sql = "select tkt.id, tkt.source sourceid, ct1.city source, tkt.destination destinationid, ct2.city destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no   
 					,tkt.terminal, tkt.no_of_person, tkt.class, tkt.airline airlineid, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, tkt.price_child, tkt.price_infant, tkt.cancel_rate, tkt.booking_freeze_by, sl1.wsl_markup_rate as admin_markup, cm.id as companyid, tkt.user_id   
 					,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.last_sync_key, tkt.approved, sl1.display_name as supplier, tkt.sale_type, tkt.refundable, tkt.pnr,  tkt.baggage, tkt.meal,  
@@ -757,9 +760,13 @@ Class Search_Model extends CI_Model
 		}         	
 	 }
 
-	public function get_bookings($companyid=-1, $userid=-1) {
+	public function get_bookings($companyid=-1, $userid=-1, $fromdate=NULL, $todate=NULL) {
 		// (((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or  
 		// $sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price+b.markup) as rate,b.qty,((b.price+b.markup) * b.qty) as amount,(b.cgst+b.sgst) as igst,b.srvchg as service_charge,
+
+		$fromdate = $fromdate === NULL ? '' : $fromdate;
+		$todate = $todate === NULL ? '' : $todate;
+
 		$sql = "SELECT 	t.departure_date_time, t.arrival_date_time, b.id,b.booking_date as date, b.booking_confirm_date as process_date,b.pnr,(b.price) as rate,b.qty,((b.price) * b.qty) as amount,((b.cgst+b.sgst) * b.qty) as igst,(b.srvchg * b.qty) as service_charge, (b.markup) as markup,
 						b.total,t.trip_type,u.user_id,u.name, us.name as seller,us.user_id as seller_id, source.city as source_city,destination.city as destination_city, t.flight_no, t.aircode, t.ticket_no, t.class,
 						cc.id as customer_companyid, cc.display_name as customer_companyname, sc.id as seller_companyid, sc.display_name as seller_companyname, t.id as ticket_id,
@@ -779,6 +786,7 @@ Class Search_Model extends CI_Model
 				LEFT OUTER JOIN rateplans_vw rpvw on b.rateplanid=rpvw.rateplanid
 				LEFT OUTER JOIN user_config_tbl ucfg on ucfg.user_id=u.id
 				WHERE ((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid))
+					  and (('$fromdate'='' or DATE_FORMAT(b.booking_date,'%Y-%m-%d %H:%i:%s')>='$fromdate') and ('$todate'='' or DATE_FORMAT(b.booking_date,'%Y-%m-%d %H:%i:%s')<='$todate')) 
 				ORDER BY b.id DESC";
 				// (t.sale_type!='live') and 
 				// We are allowing all booking to be visible, be it live or request
@@ -870,7 +878,10 @@ Class Search_Model extends CI_Model
 		}         	
 	}
 
-	public function get_booking_customers($bookingid=-1, $companyid=-1, $userid=-1) {
+	public function get_booking_customers($bookingid=-1, $companyid=-1, $userid=-1, $fromdate=NULL, $todate=NULL) {
+		$fromdate = $fromdate === NULL ? '' : $fromdate;
+		$todate = $todate === NULL ? '' : $todate;
+
 		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.age, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status,  
 				b.id as booking_id, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,  
 				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as booking_status,  
@@ -879,6 +890,7 @@ Class Search_Model extends CI_Model
 			inner join bookings_tbl b on (b.id=cus.booking_id or b.id=cus.refrence_id)  
 			inner join tickets_tbl t on t.id = b.ticket_id  
 			where (cus.booking_id=$bookingid or $bookingid=-1) and  
+				(('$fromdate'='' or DATE_FORMAT(b.booking_date,'%Y-%m-%d %H:%i:%s')>='$fromdate') and ('$todate'='' or DATE_FORMAT(b.booking_date,'%Y-%m-%d %H:%i:%s')<='$todate')) and   
 				(((b.customer_userid=$userid or $userid=-1) and ($companyid=-1 or b.customer_companyid=$companyid)) or   
 				((b.seller_userid=$userid or $userid=-1) and ($companyid=-1 or b.seller_companyid=$companyid)))";
 		
@@ -1767,20 +1779,20 @@ Class Search_Model extends CI_Model
 			$sql = "select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
 							cus.first_name, cus.last_name, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
 					from customer_information_tbl cus
-					inner join bookings_tbl bk on bk.id=cus.booking_id -- and bk.status=2
+					inner join bookings_tbl bk on bk.id=cus.booking_id and bk.status=2
 					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
 					inner join city_tbl c1 on tkt.source=c1.id
 					inner join city_tbl c2 on tkt.destination=c2.id
-					where cus.pnr='$pnr' and (bk.seller_companyid=$companyid)
+					where cus.pnr like '$pnr%' and (bk.seller_companyid=$companyid)
 					union all
 					select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
 							cus.first_name, cus.last_name, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
 					from customer_information_tbl cus
-					inner join bookings_tbl bk on bk.id=cus.refrence_id -- and bk.status=2
+					inner join bookings_tbl bk on bk.id=cus.refrence_id and bk.status=2
 					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
 					inner join city_tbl c1 on tkt.source=c1.id
 					inner join city_tbl c2 on tkt.destination=c2.id
-					where cus.pnr='$pnr' and (bk.seller_companyid=$companyid and bk.seller_companyid!=bk.customer_companyid)";
+					where cus.pnr like '$pnr%' and (bk.seller_companyid=$companyid and bk.seller_companyid!=bk.customer_companyid)";
 			
 			$query = $this->db->query($sql);
 			//echo $this->db->last_query();die();
