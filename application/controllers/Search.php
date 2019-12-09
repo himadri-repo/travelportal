@@ -1562,7 +1562,7 @@ class Search extends Mail_Controller
 						}
 						else {
 							//for the time being insert a new ticket against API billing company. If present no need to create duplicate.
-							if($result && isset($result['synthetic_ticket'])) {
+							if($result && isset($result['synthetic_ticket']) && $ticket && is_array($ticket)) {
 								$ticket = array_merge($ticket, $result['synthetic_ticket']);
 								$id = intval($ticket['id']);
 								$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
@@ -1623,7 +1623,7 @@ class Search extends Mail_Controller
 					
 					log_message('info', "Flight : ".json_encode($flight));
 
-					$allow_email_sms = true;
+					$allow_email_sms = false;
 					if($allow_email_sms) {
 						//send email to customer here
 						$posteddata['booking_status'] = $status;
@@ -2137,7 +2137,8 @@ class Search extends Mail_Controller
 			"requesting_to"=>intval($ticket['requesting_to']),
 			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice'] * intval($posteddata['qty'])) : floatval($posteddata['total_amount'])),
 			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
-			"isownticket" => boolval($posteddata['isownticket'])
+			"isownticket" => boolval($posteddata['isownticket']),
+			"sale_type" => $sale_type
 		);
 
 		if(floatval($posteddata['total_amount'])>0) {
@@ -2258,7 +2259,8 @@ class Search extends Mail_Controller
 			"debit" => $whl_costprice,
 			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
 			"isownticket" => boolval($posteddata['isownticket']),
-			"seller_company" => $suplcompany
+			"seller_company" => $suplcompany,
+			"sale_type" => $sale_type
 		);
 
 		if($whl_costprice>0) {

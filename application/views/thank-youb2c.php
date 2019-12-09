@@ -260,14 +260,14 @@
 													if($details[$key]['customer_status']=='PENDING' || $details[$key]['customer_status']=='APPROVED') {
 														?>
 														<tr>
-														<td><?php echo $ctr;?></td>
-														<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
-														<!-- <td><?php echo $details[$key]["age"];?></td>
-														<td><?php echo $details[$key]["mobile_no"];?></td>
-														<td><?php echo $details[$key]["cemail"];?></td> -->
-														<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
-														<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
-													</tr>
+															<td><?php echo $ctr;?></td>
+															<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
+															<!-- <td><?php echo $details[$key]["age"];?></td>
+															<td><?php echo $details[$key]["mobile_no"];?></td>
+															<td><?php echo $details[$key]["cemail"];?></td> -->
+															<td><?php echo ($details[0]["status"]==='APPROVED' && $details[0]['customer_status']=='APPROVED') ? $details[$key]["pnr"] : '';?></td>
+															<td><?php echo ($details[0]["status"]==='APPROVED' && $details[0]['customer_status']=='APPROVED') ? $details[$key]["airline_ticket_no"] : '';?></td>
+														</tr>
 														<?php
 														$ctr++;
 													}
@@ -362,7 +362,7 @@
 													</td>
 
 
-                                                	<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
+                                                	<td><?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING");?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
 
 													<!-- <td><?php echo $details[0]["source"];?></td>
                                                     <td><?php echo $details[0]["destination"];?></td>													 -->
@@ -486,8 +486,7 @@
 														</div>
 													</td>
 
-
-                                                	<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff1/60)." Hours ".($dateDiff1%60)." Minutes"; ?></td>
+                                                	<td><?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING");?><br/><?php echo intval($dateDiff1/60)." Hours ".($dateDiff1%60)." Minutes"; ?></td>
 
 													<!-- <td><?php echo $details[0]["source"];?></td>
                                                     <td><?php echo $details[0]["destination"];?></td>													 -->
@@ -599,7 +598,7 @@
 													<label>Grand Total : </label><?php echo number_format($details[0]["total"],2,".",","); ?></td>
 													
 													<td>            
-													   <?php echo $details[0]["status"]."<br>";?>
+													   <?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING")."<br>";?>
 												  	</td>
 												</tr>
                                         	</tbody>

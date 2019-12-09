@@ -1,6 +1,11 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+class Sale_Direction {
+	const Wholesaler_To_Supplier = 1;
+	const Supplier_To_Wholesaler = 2;
+}
+
 Class Search_Model extends CI_Model
 {
     public function __construct()
@@ -954,20 +959,67 @@ Class Search_Model extends CI_Model
 		}
 	}
 
+	protected function getPartnerRelationship($direction, $wholesalerid=-1, $supplierid=-1, $default_sale_type='request') {
+		$sale_type = $default_sale_type;
+		if($wholesalerid===-1 || $supplierid===-1) {
+			return $sale_type;
+		}
+
+		if($direction === Sale_Direction::Wholesaler_To_Supplier) {
+			$saller_contract = $this->get_wholesaler_contract($wholesalerid, $supplierid);
+		} else if($direction === Sale_Direction::Supplier_To_Wholesaler) {
+			$saller_contract = $this->get_suppliers_contract($wholesalerid, $supplierid);
+		}
+
+		if($saller_contract && is_array($saller_contract) && count($saller_contract)>0) {
+			$saller_contract = $saller_contract[0];
+			log_message('info', "Contract => $direction | ".json_encode($saller_contract, TRUE));
+
+			$sale_type = $saller_contract['sale_type'];
+		}
+
+		log_message('info', "Identified sale_type: $sale_type");
+
+		return $sale_type;
+	}
+
 	public function upsert_booking($booking, $selected_ticket, $original_booking, $pricediffaction) {
 		if($booking === NULL) return;
 		$returnedValue = NULL;
 		$tbl = 'bookings_tbl';
 		$process_db_interaction = true;
+		$booking_id = isset($booking['id'])?intval($booking['id']):-1;
+		$parent_booking_id = isset($booking['pbooking_id'])?intval($booking['pbooking_id']):0;
+		$customer_companyid = isset($booking['customer_companyid'])?intval($booking['customer_companyid']):-1;
+		$seller_companyid = isset($booking['seller_companyid'])?intval($booking['seller_companyid']):-1;
+		$sale_type = (isset($booking['ticket']) && isset($booking['ticket']['sale_type']))?$booking['ticket']['sale_type']:'request';
+		$pnr = ($selected_ticket && isset($selected_ticket['pnr']))?$selected_ticket['pnr']:'';
+
+		$direction = Sale_Direction::Wholesaler_To_Supplier;
+
+		//First time wholesaler's booking id set as parent_booking_id and passed to create new booking id for supplier
+		//That's why if $booking_id is greater than 0 means its Supplier to Wholesaler call
+		if($booking_id>0) {
+			$direction = Sale_Direction::Supplier_To_Wholesaler;
+		} else {
+			$direction = Sale_Direction::Wholesaler_To_Supplier;
+		}
+
+		if($customer_companyid>-1 && $seller_companyid>-1 && $customer_companyid!==$seller_companyid) {
+			$sale_type = $this->getPartnerRelationship($direction, $customer_companyid, $seller_companyid);
+		}
+		if($pnr === '') {
+			$sale_type = 'request';
+		}
 
 		log_message('info', 'Search_Model::upsert_booking - '.json_encode($booking));
 
-		if($booking['id']>0) {
+		if($booking_id>0) {
 			try
 			{
 				$this->db->trans_begin();
 
-				log_message('info', 'Search_Model::upsert_booking - Updating existing booking information | Booking id: '.$booking['id']);
+				log_message('info', 'Search_Model::upsert_booking - Updating existing booking information | Booking id: '.$booking_id);
 				$bookingStatus = $booking['status'];
 				if(isset($booking['ticket'])) {
 					$ticket = $this->get_ticket($booking['ticket']['id'])[0];
@@ -975,10 +1027,15 @@ Class Search_Model extends CI_Model
 				log_message('info', 'Search_Model::upsert_booking - Booking Status : '.($bookingStatus==2?'Processed':($bookingStatus==1?'Hold':'')));
 				// this is old booking. so needs to be updated
 				if($process_db_interaction) {
-					$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking['id']));
+					if(intval($booking['status']) === 8) {
+						$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => ''), array('id' => $booking_id));
+					}
+					else {
+						$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => $booking['pnr']), array('id' => $booking_id));
+					}
 				}
 
-				log_message('info', 'Search_Model::upsert_booking - Booking updated : $bookingupdate');
+				log_message('info', "Search_Model::upsert_booking - Booking updated : $bookingupdate");
 				$bookingactivity = null; 
 				if(isset($booking['activity']) && count($booking['activity'])>0) {
 					$bookingactivity = $booking['activity'][0];
@@ -988,7 +1045,7 @@ Class Search_Model extends CI_Model
 					if($process_db_interaction) {
 						$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
 					}
-					log_message('info', 'Search_Model::upsert_booking - Booking activity updated : $returnedValue');
+					log_message('info', "Search_Model::upsert_booking - Booking activity updated : $returnedValue");
 				}
 
 				$customers = null; 
@@ -1017,7 +1074,7 @@ Class Search_Model extends CI_Model
 
 						if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
 							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
-							log_message('info', 'Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets');
+							log_message('info', "Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets");
 						}
 					}
 				}
@@ -1072,6 +1129,10 @@ Class Search_Model extends CI_Model
 				$customeruserinfo = $this->get('user_tbl', array('id' => $customer_userid));
 				$customercompanyinfo = $this->get('company_tbl', array('id' => $customer_companyid));
 
+				if($sale_type === 'live') {
+					$booking['status'] = 2; //processed
+				}
+
 				if($customeruserinfo!=NULL && count($customeruserinfo)>0) {
 					$customeruserinfo = $customeruserinfo[0];
 				}
@@ -1106,6 +1167,10 @@ Class Search_Model extends CI_Model
 					$sellerwallet = $sellerwallet[0];
 				}
 
+				$current_ticket = $this->get('tickets_tbl', array('id' => intval($selected_ticket['id'])));
+				if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+					$current_ticket = $current_ticket[0];
+				}
 
 				$markup = floatval($ordered_booking['markup']);
 				$srvchg = floatval($ordered_booking['srvchg']);
@@ -1165,6 +1230,11 @@ Class Search_Model extends CI_Model
 					$tbl = 'booking_activity_tbl';
 					$bookingid = intval($booking_id);
 					$bookingactivity['booking_id'] = $booking_id;
+					
+					if($sale_type === 'live') {
+						$bookingactivity['status'] = 32; //processed
+					}
+
 
 					//Updating customer information into table
 					log_message('info', 'Search_Model::upsert_booking - Customer List'.json_encode($customers));
@@ -1172,6 +1242,12 @@ Class Search_Model extends CI_Model
 						$customer = &$customers[$i];
 						if(intval($customer['refrence_id']) === -1) {
 							$customer['refrence_id'] = $booking_id;
+
+							if($sale_type==='live' && $pnr!=='') {
+								$customer['airline_ticket_no'] = $pnr;
+								$customer['pnr'] = $pnr;
+								$customer['status'] = 2;
+							}
 
 							if($process_db_interaction) {
 								$return = $this->update('customer_information_tbl', $customer, array('id' => $customer['id']));
@@ -1363,6 +1439,21 @@ Class Search_Model extends CI_Model
 						}
 					}
 
+					if($sale_type==='live' && $current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+						//This is live booking so ticket count should be reduced
+						if($process_db_interaction) {
+							$no_of_person = intval($current_ticket['no_of_person']) - $qty;
+							$ticket_return = $this->update('tickets_tbl', array(
+								'no_of_person' => $no_of_person, // intval($selected_ticket['id']), 
+								'max_no_of_person' => $no_of_person, // intval($selected_ticket['id']), 
+								'availibility' => $no_of_person, // intval($selected_ticket['id']), 
+								'available' => $no_of_person>0?'YES':'NO'
+							), array('id' => intval($selected_ticket['id'])));
+
+							log_message('info', "Search_Model::upsert_booking - Ticket count reduced by $qty as transaction is $sale_type | Result =>  $ticket_return | Ticket: ".intval($selected_ticket['id']));
+						}
+					}
+
 					$this->db->trans_complete();
 				}
 				else {
@@ -1375,7 +1466,7 @@ Class Search_Model extends CI_Model
 			}
 		}
 
-		return $returnedValue;
+		return array('booking_id' => $returnedValue, 'sale_type' => $sale_type);
 	}
 
 	public function get_wallet($userid=-1, $companyid=-1) {
@@ -1464,9 +1555,11 @@ Class Search_Model extends CI_Model
 		$isownticket = boolval($parameters["isownticket"]);
 		$parentbooking_id = isset($parameters["pbooking_id"])?intval($parameters["pbooking_id"]):0;
 		$seller_company = isset($parameters["seller_company"]) ? $parameters["seller_company"] : [];
+		$sale_type = isset($parameters["sale_type"]) ? $parameters["sale_type"] : 'request';
 		$pnr = isset($parameters["pnr"]) ? $parameters["pnr"] : '';
 		$status = intval($parameters["status"]);
-		if($pnr==='') {
+		
+		if($pnr==='' && $parentbooking_id>0) {
 			$status = 0;
 			$parameters["status"] = $status;
 		}

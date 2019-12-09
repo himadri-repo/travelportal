@@ -221,9 +221,11 @@
 						<tr>
 							<td><?php echo $ctr;?></td>
 							<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></td>
-							<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
-							<td><?php echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td>
-							<!-- <td><?php echo $details[$key]["pnr"];?></td> -->
+							<td><?php echo ($details[0]["status"]==='APPROVED' && $details[0]['customer_status']=='APPROVED') ? $details[$key]["pnr"] : '';?></td>
+							<td><?php echo ($details[0]["status"]==='APPROVED' && $details[0]['customer_status']=='APPROVED') ? $details[$key]["airline_ticket_no"] : '';?></td>
+							<!-- <td><?php //echo $details[0]["status"]==='APPROVED' ? $details[$key]["pnr"] : '';?></td>
+							<td><?php //echo $details[0]["status"]==='APPROVED' ? $details[$key]["airline_ticket_no"] : '';?></td> -->
+							<!-- <td><?php //echo $details[$key]["pnr"];?></td> -->
 						</tr>
 					<?php
 						$ctr++;
@@ -292,7 +294,7 @@
 							</div>
 						</td>
 
-						<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
+						<td><?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING");?><br/><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></td>
 					</tr>
 					<?php
 					if($details[0]["trip_type"]=="ROUND") {
@@ -336,7 +338,7 @@
 						</td>
 
 
-						<td><?php echo $details[0]["status"];?><br/><?php echo intval($dateDiff1/60)." Hours ".($dateDiff1%60)." Minutes"; ?></td>
+						<td><?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING");?><br/><?php echo intval($dateDiff1/60)." Hours ".($dateDiff1%60)." Minutes"; ?></td>
 					</tr>
 					<?php 
 					}
@@ -400,7 +402,7 @@
 							?>
 						</td>
 						
-						<td style="text-align: center;"><?php echo $details[0]["status"]."<br>";?></td>
+						<td style="text-align: center;"><?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING")."<br>";?></td>
 					</tr>
 				</tbody>
 			</table>

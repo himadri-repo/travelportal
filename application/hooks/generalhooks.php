@@ -31,10 +31,13 @@ class GeneralHooks {
         else if(stristr($servername, "localhost") !== FALSE || (stristr($servername, '192.168.') !== FALSE) || (stristr($servername, '127.0.0') !== FALSE)) {
            //$config['base_url'] = $protocol.$host;
            $CI->config->set_item('base_url', $protocol.$host);
+
+           log_message('info', '1. Final URL => '.$protocol.$host);
         }
         else {
             //$allowed_hosts = ['oxytra.pankh.com', 'airiq.pankh.com','wholesaler.example.com', 'supplier.example.com', 'example.com', 'www.example.com', 'www.oxytra.com', 'wholesaler.oxytra.com', 'supplier.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
             //$config['base_url'] = in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
+            log_message('info', '2. Final URL => '.in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com");
             $CI->config->set_item('base_url', in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com");
         }
     }

@@ -695,6 +695,7 @@ class Company extends REST_Controller {
         try
         {
             foreach ($bookings as $booking) {
+                log_message('info', "Booking to be settled => ".json_encode($booking));
                 $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking, $selectedTicket, $originalbooking, $pricediffaction));
             }
         }
