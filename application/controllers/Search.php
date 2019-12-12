@@ -1656,6 +1656,7 @@ class Search extends Mail_Controller
 					if($transactionresult && is_array($transactionresult) && isset($transactionresult['trans_id'])) {
 						$wallettransid = intval($transactionresult['trans_id']);
 					}
+					
 
 					if($is_owned_ticket) {
 						$sale_type = $ticket['sale_type'];
