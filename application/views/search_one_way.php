@@ -199,7 +199,7 @@
                             
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-8 content-side" id="top_div">
-							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="z-index: 999; background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo (($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') ? 'block': 'none'); ?>">
+							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="z-index: 999; background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo (($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') ? 'block': 'none') ?>">
 								<input type="checkbox" id="showcostprice" name="showcostprice" checked style="display: inline-block; width: 12pt; height: 12pt; cursor: pointer;"/>
 								<span>Show cost price</span>
 							</div>
