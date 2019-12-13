@@ -2632,6 +2632,37 @@ class User_Controller extends Mail_Controller
 	   return $abbreviation; 
 	}
 
+	public function change_password() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+		$postedvalue = json_decode($stream_clean, true);
+		
+		$uid=$postedvalue['id'];
+		$current_pwd=trim($postedvalue['current_pwd']);
+		$new_pwd=trim($postedvalue['new_pwd']);
+		$confirm_pwd=trim($postedvalue['confirm_pwd']);
+		$msg = '';
+		$bflag = false;
+
+		log_message('info', "[User_Control:change_password]=> user password change initiated | User Id: $uid | Current PWD: $current_pwd | New PWD: $new_pwd | Confirm PWD: $confirm_pwd");
+		$user_info = $this->User_Model->get('user_tbl', array('id' => $uid, 'password' => "$current_pwd"));
+		if($user_info && is_array($user_info) && count($user_info)>0) {
+			$user_info = $user_info[0];
+		}
+
+		if($user_info && isset($user_info['password']) && $user_info['password'] === $current_pwd && $new_pwd === $confirm_pwd) {
+			$result = $this->User_Model->update(array('password' => "$new_pwd"), $uid);
+			log_message('info', "[User_Control:change_password]=> Password changed => User Id: $uid | New PWD: $new_pwd | Result : $result");
+
+			$msg = 'Password successfully changed';
+			$bflag = true;
+		}
+		else {
+			$msg = 'No user found with the data provided';
+		}
+
+		echo json_encode(array('status' => $bflag, 'message' => $msg));
+	}
+
 	public function update_profile() {
         $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
         $postedvalue = json_decode($stream_clean, true);

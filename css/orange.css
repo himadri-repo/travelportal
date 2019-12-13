@@ -292,7 +292,7 @@ p{
 	border:0px;
 	border-radius:0px;
 	border-bottom: 1px solid #FAA61A;
-	z-index: 9999 !important;
+	z-index: 999 !important;
 }
   
 .main-navbar .navbar-header .navbar-brand {

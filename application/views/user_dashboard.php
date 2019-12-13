@@ -318,6 +318,7 @@
                                                                 <?php } ?>
                                                             </ul>
                                                             <button class="btn" data-toggle="modal" data-target="#edit-profile"><i class="fa fa-pencil"></i> Edit Profile</button>
+                                                            <button class="btn" data-toggle="modal" data-target="#change-password" style="margin-left: 10px;"><i class="fa fa-key"></i> Change Password</button>
                                                         </div><!-- end columns -->
                                                         
                                                        
@@ -385,7 +386,49 @@
                 </div><!-- end container -->   
             </div><!-- end contact-us -->
         </section><!-- end innerpage-wrapper -->
-        
+
+		<!-- Change Password -->
+        <div id="change-password" class="modal custom-modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+					<form id="frm_edit_user" action="<?php echo base_url(); ?>user/change_password" method="post">
+						<input type="hidden" id="userid" name="userid" value="<?php echo $user_details[0]['id']?>"/>
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+							<h3 class="modal-title">Change Password</h3>
+						</div><!-- end modal-header -->
+						
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-xs-12 col-sm-12 col-md-12">
+									<div class="form-group">
+										<label>Current Password</label>
+										<input type="password" class="form-control" placeholder="Current Password" name="current_pwd" id="current_pwd" value="" required/>
+									</div><!-- end form-group -->
+								</div><!-- end col -->
+							</div><!-- end row -->
+							<div class="row">
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>New Password</label>
+										<input type="password" class="form-control" placeholder="New Password"  name="new_pwd" id="new_pwd" value="" required/>
+									</div><!-- end form-group -->							                            
+								</div><!-- end col -->
+								<div class="col-xs-6 col-sm-6 col-md-6">
+									<div class="form-group">
+										<label>Confirm Password</label>
+										<input type="password" class="form-control" placeholder="Confirm Password"  name="confirm_pwd" id="confirm_pwd" value="" required/>
+									</div><!-- end form-group -->							                            
+								</div><!-- end col -->
+							</div>
+							<button id="btn_update" type="button" class="btn btn-orange" onclick="javascript:change_pwd(<?php echo $user_details[0]['id']?>);">Save Changes</button>
+							<div class="form-group error" id="status"></div>
+						</div><!-- end modal-bpdy -->
+					</form>
+                </div><!-- end modal-content -->
+            </div><!-- end modal-dialog -->
+        </div><!-- end change password -->
+
         <div id="edit-profile" class="modal custom-modal fade" role="dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -797,6 +840,63 @@
 			// 		$("#email").addClass('error');
 			// 	}
 			// });
+
+			function change_pwd(uid) {
+				let current_pwd = $('#current_pwd').val();
+				let new_pwd = $('#new_pwd').val();
+				let confirm_pwd = $('#confirm_pwd').val();
+				let flag = true;
+				let data = {
+					'id': uid,
+					'current_pwd': current_pwd,
+					'new_pwd': new_pwd,
+					'confirm_pwd': confirm_pwd,
+				};
+
+				if(current_pwd === '' || current_pwd === null || current_pwd === undefined || new_pwd === '' || confirm_pwd === '' 
+					|| new_pwd === null || new_pwd === undefined || confirm_pwd === null || confirm_pwd === undefined)
+				{
+					alert('Please provide your current password, new password and confirm password');
+					return false;
+				}
+				if(new_pwd !== confirm_pwd) {
+					alert('New Password and Confirm Password should be same');
+					return false;
+				}
+				if(new_pwd === current_pwd) {
+					alert('Current password can`t be used as new password. Please use some different password.');
+					return false;
+				}
+
+				$.ajax({
+					url: '<?php echo base_url(); ?>user/change_password',
+					dataType: 'json',
+					type: 'POST',
+					contentType: 'application/json',
+					data: JSON.stringify(data),
+					processData: false,
+					success: function( data, textStatus, jQxhr ){
+						if(data && data.status) {
+							if($('#status').hasClass('error')) {
+								$('#status').removeClass('error');
+								$('#status').addClass('success');
+							}
+							$('#status').html( data.message );
+							setTimeout(() => {
+								window.location.href = '<?php echo base_url(); ?>user/logout';
+							}, 3000);
+						}
+						else {
+							$('#status').html( data.message );
+						}
+					},
+					error: function( jqXhr, textStatus, errorThrown ){
+						console.log( errorThrown );
+					}
+				});				
+
+				return flag;
+			}
 
 			function update_profile(uid) {
 				let name = $('#name').val();
