@@ -347,7 +347,7 @@ Class Admin_Model extends CI_Model
 		$this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
 		$this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
 		$this->db->where('(c.type & 4)=4');
-		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email');
+		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue');
 		$this->db->order_by('c.display_name');
 
 		$query = $this->db->get();
@@ -370,7 +370,7 @@ Class Admin_Model extends CI_Model
 		$this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
 		$this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
 		$this->db->where('(c.type & 2)=2');
-		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email');
+		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue');
 		$this->db->order_by('c.display_name');
 
 		$query = $this->db->get();

@@ -1601,222 +1601,212 @@ class User_Controller extends Mail_Controller
 			$sale_type="quote";			
 			if($this->input->post('request_trip_type')=="ONE" )
 			{
-				        
-								if(isset($_FILES["request_file"]["name"]))
-								{
-									$ticket_id = 0;
-									$path = $_FILES["request_file"]["tmp_name"];
-									$object = PHPExcel_IOFactory::load($path);
-									$diff=0;
-									foreach($object->getWorksheetIterator() as $worksheet)
-									{
-										
-										$highestRow = $worksheet->getHighestRow();
-										$highestColumn = $worksheet->getHighestColumn();
-										for($row=2; $row<=$highestRow; $row++)
-										{
-											$source = $worksheet->getCellByColumnAndRow(0, $row)->getValue();
-											$destination = $worksheet->getCellByColumnAndRow(1, $row)->getValue();
-											$date = $worksheet->getCellByColumnAndRow(2, $row)->getValue();
-											$available = $worksheet->getCellByColumnAndRow(3, $row)->getValue();
-											
-											$CI =   &get_instance();	
-											$query = $CI->db->get_where('city_tbl', array('code' => $source));				
-											$source_arr=$query->result_array();
-											$query = $CI->db->get_where('city_tbl', array('code' => $destination));				
-											$destination_arr=$query->result_array();
-											if(!empty($source) && !empty($destination) && !empty($date) && !empty($available))
-											{
-												$data = 
-												array
-												(
-													'source'		=>	$source_arr[0]["id"],
-													'destination'	=>  $destination_arr[0]["id"],
-													'departure_date_time'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date)),
-													'available'		=>	$available,
-													'no_of_person'=>  "10000",
-													'max_no_of_person'=> "10000",
-													'trip_type'=>$this->input->post("request_trip_type"),
-													'sale_type'=>$sale_type,
-													'user_id'=>$this->session->userdata('user_id'),
-													'approved'=>0
-												);
-												
-												$departure_date_time=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date));
-												$departure_date_time=$departure_date_time." 00:00:00";
-												$CI =   &get_instance();        
-												$query  =   $CI->db->get_where('tickets_tbl',array('source =' =>$source_arr[0]["id"],'destination'=>$destination_arr[0]["id"],'departure_date_time'=>$departure_date_time,"trip_type"=>"ONE",'user_id'=>$this->session->userdata('user_id')));
-												$num=$query->num_rows();
-												if($num>0)
-												{
-													$ticket_arr=$query->result_array();
-													$id=$ticket_arr[0]["id"];
-													$ticket_id = $ticket_arr[0]["id"];
-													$this->User_Model->update_table("tickets_tbl",$data,"id",$id);
-												}
-												else
-													$ticket_id = $this->User_Model->save("tickets_tbl",$data);
-												$diff++;
-											}
-										}
-										
-									}
-									
-									$user['user_details']=$this->User_Model->user_details();
-									$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
-									$data = array(				            
-											 'name' => "OXYTRA",
-											 'email'=>$user['user_details'][0]["email"],
-											 'msg'=>"You have added ".$diff." Request Mode (ONE WAY) ticket for  ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."",
-											 'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> Your Tickets will available for sale',
-											 'msg2'=>"Enjoy! You are connected to no.1 Air Ticket booking site"
-											 );
-									$this->send("Ticket Added",$data);
-
-
-									$data1 = array(				            
-											 'name' => $user['user_details'][0]["name"],
-											 'email'=>$user['user_details'][0]["email"],
-											 'mobile'=>$user['user_details'][0]["mobile"],
-											 'msg'=>$diff." New Request Mode (ONE WAY) ticket for  Added ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]." ",
-											 'user_id'=> $user['user_details'][0]["user_id"],
-											 'msg1'=>'',
-											 'msg2'=>""							 
-											 );
-											 
-									$this->adminsend("Ticket Added",$data1);	
-
-									$no=$user['user_details'][0]["mobile"];
-									$msg=$diff." New (ONE WAY) Ticket Added";
-									$this->send_message($no,$msg);
-
-
-									$no="9800412356";
-									$msg=$diff." Request (ONE WAY) ticket Added by:".$user['user_details'][0]["user_id"]." for ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."";
-									$this->send_message($no,$msg);
-
-
-									$this->session->set_flashdata('msg', 'Ticket Added Successfully');							
-									redirect("/user");							
-									$this->session->flashdata('msg');
-									
-									
-								}
+				if(isset($_FILES["request_file"]["name"]))
+				{
+					$ticket_id = 0;
+					$path = $_FILES["request_file"]["tmp_name"];
+					$object = PHPExcel_IOFactory::load($path);
+					$diff=0;
+					foreach($object->getWorksheetIterator() as $worksheet)
+					{
 						
+						$highestRow = $worksheet->getHighestRow();
+						$highestColumn = $worksheet->getHighestColumn();
+						for($row=2; $row<=$highestRow; $row++)
+						{
+							$source = $worksheet->getCellByColumnAndRow(0, $row)->getValue();
+							$destination = $worksheet->getCellByColumnAndRow(1, $row)->getValue();
+							$date = $worksheet->getCellByColumnAndRow(2, $row)->getValue();
+							$available = $worksheet->getCellByColumnAndRow(3, $row)->getValue();
+							
+							$CI =   &get_instance();	
+							$query = $CI->db->get_where('city_tbl', array('code' => $source));				
+							$source_arr=$query->result_array();
+							$query = $CI->db->get_where('city_tbl', array('code' => $destination));				
+							$destination_arr=$query->result_array();
+							if(!empty($source) && !empty($destination) && !empty($date) && !empty($available))
+							{
+								$data = 
+								array
+								(
+									'source'		=>	$source_arr[0]["id"],
+									'destination'	=>  $destination_arr[0]["id"],
+									'departure_date_time'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date)),
+									'available'		=>	$available,
+									'no_of_person'=>  "10000",
+									'max_no_of_person'=> "10000",
+									'trip_type'=>$this->input->post("request_trip_type"),
+									'sale_type'=>$sale_type,
+									'user_id'=>$this->session->userdata('user_id'),
+									'approved'=>0
+								);
 								
-						 						 																					
+								$departure_date_time=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date));
+								$departure_date_time=$departure_date_time." 00:00:00";
+								$CI =   &get_instance();        
+								$query  =   $CI->db->get_where('tickets_tbl',array('source =' =>$source_arr[0]["id"],'destination'=>$destination_arr[0]["id"],'departure_date_time'=>$departure_date_time,"trip_type"=>"ONE",'user_id'=>$this->session->userdata('user_id')));
+								$num=$query->num_rows();
+								if($num>0)
+								{
+									$ticket_arr=$query->result_array();
+									$id=$ticket_arr[0]["id"];
+									$ticket_id = $ticket_arr[0]["id"];
+									$this->User_Model->update_table("tickets_tbl",$data,"id",$id);
+								}
+								else
+									$ticket_id = $this->User_Model->save("tickets_tbl",$data);
+								$diff++;
+							}
+						}
+						
+					}
+					
+					$user['user_details']=$this->User_Model->user_details();
+					$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
+					$data = array(				            
+								'name' => "OXYTRA",
+								'email'=>$user['user_details'][0]["email"],
+								'msg'=>"You have added ".$diff." Request Mode (ONE WAY) ticket for  ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."",
+								'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> Your Tickets will available for sale',
+								'msg2'=>"Enjoy! You are connected to no.1 Air Ticket booking site"
+								);
+					$this->send("Ticket Added",$data);
+
+
+					$data1 = array(				            
+								'name' => $user['user_details'][0]["name"],
+								'email'=>$user['user_details'][0]["email"],
+								'mobile'=>$user['user_details'][0]["mobile"],
+								'msg'=>$diff." New Request Mode (ONE WAY) ticket for  Added ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]." ",
+								'user_id'=> $user['user_details'][0]["user_id"],
+								'msg1'=>'',
+								'msg2'=>""							 
+								);
+								
+					$this->adminsend("Ticket Added",$data1);	
+
+					$no=$user['user_details'][0]["mobile"];
+					$msg=$diff." New (ONE WAY) Ticket Added";
+					$this->send_message($no,$msg);
+
+
+					$no="9800412356";
+					$msg=$diff." Request (ONE WAY) ticket Added by:".$user['user_details'][0]["user_id"]." for ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."";
+					$this->send_message($no,$msg);
+
+
+					$this->session->set_flashdata('msg', 'Ticket Added Successfully');							
+					redirect("/user");							
+					$this->session->flashdata('msg');
+					
+					
+				}
 			}
 			else
 			{
 				if(isset($_FILES["request_file"]["name"]))
 				{
-									$path = $_FILES["request_file"]["tmp_name"];
-									$object = PHPExcel_IOFactory::load($path);
-									$diff=0;
-									foreach($object->getWorksheetIterator() as $worksheet)
-									{
-										
-										$highestRow = $worksheet->getHighestRow();
-										$highestColumn = $worksheet->getHighestColumn();
-										for($row=2; $row<=$highestRow; $row++)
-										{
-											$source = $worksheet->getCellByColumnAndRow(0, $row)->getValue();
-											$destination = $worksheet->getCellByColumnAndRow(1, $row)->getValue();
-											$date = $worksheet->getCellByColumnAndRow(2, $row)->getValue();
-											$date1 = $worksheet->getCellByColumnAndRow(3, $row)->getValue();
-											$available = $worksheet->getCellByColumnAndRow(4, $row)->getValue();
-											
-											$CI =   &get_instance();	
-											$query = $CI->db->get_where('city_tbl', array('code' => $source));				
-											$source_arr=$query->result_array();
-											$query = $CI->db->get_where('city_tbl', array('code' => $destination));				
-											$destination_arr=$query->result_array();
-											if(!empty($source) && !empty($destination) && !empty($date) && !empty($available))
-											{
-												$data = 
-												array
-												(
-													'source'		=>	$source_arr[0]["id"],
-													'destination'	=>  $destination_arr[0]["id"],
-													'departure_date_time'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date)),
-													'departure_date_time1'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date1)),
-													'available'		=>	$available,
-													'no_of_person'=>    "10000",
-													'max_no_of_person'=> "10000",
-													'trip_type'=>$this->input->post("request_trip_type"),
-													'sale_type'=>$sale_type,
-													'user_id'=>$this->session->userdata('user_id'),
-													'approved'=>0
-												);
-												
-												$departure_date_time=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date));
-												$departure_date_time=$departure_date_time." 00:00:00";
-												
-												$departure_date_time1=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date1));
-												$departure_date_time1=$departure_date_time1." 00:00:00";
-												$CI =   &get_instance();        
-												$query  =   $CI->db->get_where('tickets_tbl',array('source =' =>$source_arr[0]["id"],'destination'=>$destination_arr[0]["id"],'departure_date_time'=>$departure_date_time,'departure_date_time1'=>$departure_date_time1,"trip_type"=>"ROUND",'user_id'=>$this->session->userdata('user_id')));
-												$num=$query->num_rows();
-												if($num>0)
-												{
-													$ticket_arr=$query->result_array();													
-													$id=$ticket_arr[0]["id"];																							
-													$this->User_Model->update_table("tickets_tbl",$data,"id",$id);
-												}
-												else
-												  $this->User_Model->save("tickets_tbl",$data);
-												$diff++;
-											}
-										}
-										
-									}
-									
-									
-									$user['user_details']=$this->User_Model->user_details();
-									$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
-									$data = array(				            
-											 'name' => "OXYTRA",
-											 'email'=>$user['user_details'][0]["email"],
-											 'msg'=>"You have added ".$diff." Request Mode (RETURN) ticket for  ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]." ",
-											 'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> Your Tickets will available for sale',
-											 'msg2'=>"Enjoy! You are connected to no.1 Air Ticket booking site"
-											 );
-									$this->send("Ticket Added",$data);
-
-
-									$data1 = array(				            
-											 'name' => $user['user_details'][0]["name"],
-											 'email'=>$user['user_details'][0]["email"],
-											 'mobile'=>$user['user_details'][0]["mobile"],
-											 'msg'=>$diff." New Request Mode (RETURN) ticket for  Added ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."",
-											 'user_id'=> $user['user_details'][0]["user_id"],
-											 'msg1'=>'',
-											 'msg2'=>""							 
-											 );
-											 
-									$this->adminsend("Ticket Added",$data1);	
-
-									$no=$user['user_details'][0]["mobile"];
-									$msg=$diff." New (RETURN) Ticket Added";
-									$this->send_message($no,$msg);
-
-
-									$no="9800412356";
-									$msg=$diff." Request (RETURN) ticket Added by:".$user['user_details'][0]["user_id"]." for ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."";
-									$this->send_message($no,$msg);
-
-
-									$this->session->set_flashdata('msg', 'Ticket Added Successfully');							
-									redirect("/user");							
-									$this->session->flashdata('msg');		
-									
-									
-				}
+					$path = $_FILES["request_file"]["tmp_name"];
+					$object = PHPExcel_IOFactory::load($path);
+					$diff=0;
+					foreach($object->getWorksheetIterator() as $worksheet)
+					{
 						
+						$highestRow = $worksheet->getHighestRow();
+						$highestColumn = $worksheet->getHighestColumn();
+						for($row=2; $row<=$highestRow; $row++)
+						{
+							$source = $worksheet->getCellByColumnAndRow(0, $row)->getValue();
+							$destination = $worksheet->getCellByColumnAndRow(1, $row)->getValue();
+							$date = $worksheet->getCellByColumnAndRow(2, $row)->getValue();
+							$date1 = $worksheet->getCellByColumnAndRow(3, $row)->getValue();
+							$available = $worksheet->getCellByColumnAndRow(4, $row)->getValue();
+							
+							$CI =   &get_instance();	
+							$query = $CI->db->get_where('city_tbl', array('code' => $source));				
+							$source_arr=$query->result_array();
+							$query = $CI->db->get_where('city_tbl', array('code' => $destination));				
+							$destination_arr=$query->result_array();
+							if(!empty($source) && !empty($destination) && !empty($date) && !empty($available))
+							{
+								$data = 
+								array
+								(
+									'source'		=>	$source_arr[0]["id"],
+									'destination'	=>  $destination_arr[0]["id"],
+									'departure_date_time'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date)),
+									'departure_date_time1'			=>	date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date1)),
+									'available'		=>	$available,
+									'no_of_person'=>    "10000",
+									'max_no_of_person'=> "10000",
+									'trip_type'=>$this->input->post("request_trip_type"),
+									'sale_type'=>$sale_type,
+									'user_id'=>$this->session->userdata('user_id'),
+									'approved'=>0
+								);
 								
+								$departure_date_time=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date));
+								$departure_date_time=$departure_date_time." 00:00:00";
+								
+								$departure_date_time1=date('Y-m-d', PHPExcel_Shared_Date::ExcelToPHP($date1));
+								$departure_date_time1=$departure_date_time1." 00:00:00";
+								$CI =   &get_instance();        
+								$query  =   $CI->db->get_where('tickets_tbl',array('source =' =>$source_arr[0]["id"],'destination'=>$destination_arr[0]["id"],'departure_date_time'=>$departure_date_time,'departure_date_time1'=>$departure_date_time1,"trip_type"=>"ROUND",'user_id'=>$this->session->userdata('user_id')));
+								$num=$query->num_rows();
+								if($num>0)
+								{
+									$ticket_arr=$query->result_array();													
+									$id=$ticket_arr[0]["id"];																							
+									$this->User_Model->update_table("tickets_tbl",$data,"id",$id);
+								}
+								else
+									$this->User_Model->save("tickets_tbl",$data);
+								$diff++;
+							}
+						}
+						
+					}
+					
+					
+					$user['user_details']=$this->User_Model->user_details();
+					$result["flight"]=$this->Search_Model->flight_details($ticket_id, $companyid);  
+					$data = array(				            
+								'name' => "OXYTRA",
+								'email'=>$user['user_details'][0]["email"],
+								'msg'=>"You have added ".$diff." Request Mode (RETURN) ticket for  ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]." ",
+								'msg1'=>'After Admin Approval of <span class="il">OXYTRA</span> Your Tickets will available for sale',
+								'msg2'=>"Enjoy! You are connected to no.1 Air Ticket booking site"
+								);
+					$this->send("Ticket Added",$data);
+
+
+					$data1 = array(				            
+								'name' => $user['user_details'][0]["name"],
+								'email'=>$user['user_details'][0]["email"],
+								'mobile'=>$user['user_details'][0]["mobile"],
+								'msg'=>$diff." New Request Mode (RETURN) ticket for  Added ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."",
+								'user_id'=> $user['user_details'][0]["user_id"],
+								'msg1'=>'',
+								'msg2'=>""							 
+								);
+								
+					$this->adminsend("Ticket Added",$data1);	
+
+					$no=$user['user_details'][0]["mobile"];
+					$msg=$diff." New (RETURN) Ticket Added";
+					$this->send_message($no,$msg);
+
+
+					$no="9800412356";
+					$msg=$diff." Request (RETURN) ticket Added by:".$user['user_details'][0]["user_id"]." for ".$source_arr[0]["city"]." to ".$destination_arr[0]["city"]."";
+					$this->send_message($no,$msg);
+
+
+					$this->session->set_flashdata('msg', 'Ticket Added Successfully');							
+					redirect("/user");							
+					$this->session->flashdata('msg');		
+				}
 			}
-			
-		
 		}
         else
 		{

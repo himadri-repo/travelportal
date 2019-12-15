@@ -1071,8 +1071,12 @@ Class Search_Model extends CI_Model
 						} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
 							$inv_mode = 'no_update_stock';
 						}
+						log_message('info', "Search_Model::upsert_booking - Current customer record => ".json_encode($customer_info[0], TRUE));
+						log_message('info', "Search_Model::upsert_booking - To be changed Current record => ".json_encode($customers[$i], TRUE));
+						log_message('info', "Search_Model::upsert_booking - customer updated $i - inv_mode: $inv_mode | customers: $no_of_tickets | ticket inventory count: ".intval($ticket['no_of_person']));
 
-						if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
+						// if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
+						if(($no_of_tickets>0 || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
 							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
 							log_message('info', "Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets");
 						}

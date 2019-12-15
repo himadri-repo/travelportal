@@ -81,7 +81,8 @@ class Admin extends REST_Controller {
             $result["parent_msg"] = "Wholesaler saved successfully";
         }
         catch(Exception $ex) {
-            console.log($ex);
+            //console.log($ex);
+            log_message('error', $ex);
         }
 
         try
@@ -121,7 +122,8 @@ class Admin extends REST_Controller {
             $result["parent_msg"] = "Supplier saved successfully";
         }
         catch(Exception $ex) {
-            console.log($ex);
+            //console.log($ex);
+            log_message('error', $ex);
         }
 
         try
