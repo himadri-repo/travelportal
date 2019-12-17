@@ -1195,15 +1195,18 @@ Class User_Model extends CI_Model
 		$userid = isset($postedvalue['filter']['admin_userid']) ? intval($postedvalue['filter']['admin_userid']) : -1;
 		$fromdate = isset($postedvalue['filter']['fromdate']) ? ($postedvalue['filter']['fromdate']) : '';
 		$todate = isset($postedvalue['filter']['todate']) ? ($postedvalue['filter']['todate']) : '';
+		// (('$fromdate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')>='$fromdate') and 
+		// ('$todate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')<='$todate'))
+
 		switch ($mode) {
 			case 'search':
-				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.activityid, ua.userid, ua.remote_ip, ua.request_method, ua.remote_port, ua.user_agent, ua.is_ajax, CONVERT_TZ(ua.requested_on, '-07:00', '+05:30') as requested_on, ua.uri, ua.posted_data, ua.server_data, ua.controller, ua.method, ua.http_cookie    
+				$qry = "select c.display_name as companyname, usr.name membername, usr.mobile, ua.activityid, ua.userid, ua.remote_ip, ua.request_method, ua.remote_port, ua.user_agent, ua.is_ajax, CONVERT_TZ(ua.requested_on, '+00:00', '+05:30') as requested_on, ua.uri, ua.posted_data, ua.server_data, ua.controller, ua.method, ua.http_cookie    
 				from user_activities_tbl ua    
 				inner join user_tbl usr on ua.userid=usr.id   
 				inner join company_tbl c on usr.companyid=c.id   
 				where controller='search' and method='search_one_way' and usr.companyid=$companyid and usr.id<>$userid  and   
-				(('$fromdate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')>='$fromdate') and 
-				('$todate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '-07:00', '+05:30'), '%Y-%m-%d %H:%i:%s')<='$todate'))
+				(('$fromdate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '+00:00', '+05:30'), '%Y-%m-%d %H:%i:%s')>='$fromdate') and 
+				('$todate'='' or DATE_FORMAT(CONVERT_TZ(ua.requested_on, '+00:00', '+05:30'), '%Y-%m-%d %H:%i:%s')<='$todate'))
 				order by usr.id, ua.activityid DESC";
 				break;
 			default:

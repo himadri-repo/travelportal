@@ -701,6 +701,7 @@ class Company extends REST_Controller {
         }
         catch(Exception $ex) {
             // $bookings = array();
+            log_message('error', $ex);
         }
 
         $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED

@@ -989,11 +989,14 @@ Class Search_Model extends CI_Model
 		$tbl = 'bookings_tbl';
 		$process_db_interaction = true;
 		$booking_id = isset($booking['id'])?intval($booking['id']):-1;
-		$parent_booking_id = isset($booking['pbooking_id'])?intval($booking['pbooking_id']):0;
+		$parent_booking_id = isset($booking['parent_booking_id'])?intval($booking['parent_booking_id']):0;
 		$customer_companyid = isset($booking['customer_companyid'])?intval($booking['customer_companyid']):-1;
 		$seller_companyid = isset($booking['seller_companyid'])?intval($booking['seller_companyid']):-1;
 		$sale_type = (isset($booking['ticket']) && isset($booking['ticket']['sale_type']))?$booking['ticket']['sale_type']:'request';
 		$pnr = ($selected_ticket && isset($selected_ticket['pnr']))?$selected_ticket['pnr']:'';
+
+		$ticketid = -1;
+		$bookingupdate = -1;
 
 		$direction = Sale_Direction::Wholesaler_To_Supplier;
 
@@ -1013,6 +1016,7 @@ Class Search_Model extends CI_Model
 		}
 
 		log_message('info', 'Search_Model::upsert_booking - '.json_encode($booking));
+		$status = intval($booking['status']);
 
 		if($booking_id>0) {
 			try
@@ -1021,11 +1025,64 @@ Class Search_Model extends CI_Model
 
 				log_message('info', 'Search_Model::upsert_booking - Updating existing booking information | Booking id: '.$booking_id);
 				$bookingStatus = $booking['status'];
+
 				if(isset($booking['ticket'])) {
-					$ticket = $this->get_ticket($booking['ticket']['id'])[0];
+					$ticketid = intval($booking['ticket']['id']);
+					$ticket = $this->get_ticket($ticketid);
+					if($ticket && is_array($ticket) && count($ticket)) {
+						$ticket = $ticket[0];
+					}
 				}
 				log_message('info', 'Search_Model::upsert_booking - Booking Status : '.($bookingStatus==2?'Processed':($bookingStatus==1?'Hold':'')));
+
+				//First update customers and see enough tickets available to fulfil current requirement
+				$customers = null; 
+				$no_of_tickets = 0;
+				$inv_mode = '';
+				if(isset($booking['customers']) && count($booking['customers'])>0 && $parent_booking_id>0) {
+					$customers = $booking['customers'];
+					unset($booking['customers']);
+					$tbl = 'customer_information_tbl';
+
+					for ($i=0; $i < count($customers); $i++) { 
+						$returnedValue = -1;
+						$ticket = $this->get_ticket($ticketid);
+						if($ticket && is_array($ticket) && count($ticket)) {
+							$ticket = $ticket[0];
+						}
+	
+						$customer_info = $this->get($tbl, array('id' => $customers[$i]['id']));
+
+						if(($customers[$i]['status'] == 2 || $customers[$i]['status'] == 8) && $customer_info && intval($customer_info[0]['status']) !==8)
+						{
+							// Approved or Hold
+							$no_of_tickets++;
+						} else if(($customers[$i]['status'] == 3) && $customer_info && intval($customer_info[0]['status']) === 8) {
+							//Previously kept on Hold. Now rejecting it.
+							$no_of_tickets++;
+							$inv_mode = 'return_stock';
+						} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
+							$inv_mode = 'no_update_stock';
+						}
+						log_message('info', "Search_Model::upsert_booking - Current customer record => ".json_encode($customer_info[0], TRUE));
+						log_message('info', "Search_Model::upsert_booking - To be changed Current record => ".json_encode($customers[$i], TRUE));
+						log_message('info', "Search_Model::upsert_booking - customer updated $i - inv_mode: $inv_mode | customers: $no_of_tickets | ticket inventory count: ".intval($ticket['no_of_person']));
+
+						if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
+							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
+							log_message('info', "Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets");
+						}
+						else {
+							$returnedValue = $this->update($tbl, array('pnr'=> '', 'airline_ticket_no'=> '', 'status'=> 1), array('booking_id' => $parent_booking_id, 'status' => 2));
+							$status = 0;
+							$process_db_interaction = false;
+							break;
+						}
+					}
+				}
+				
 				// this is old booking. so needs to be updated
+				$tbl = 'bookings_tbl';
 				if($process_db_interaction) {
 					if(intval($booking['status']) === 8) {
 						$bookingupdate = $this->update($tbl, array('message'=> $booking['notes'], 'status' => $booking['status'], 'pnr' => ''), array('id' => $booking_id));
@@ -1046,41 +1103,6 @@ Class Search_Model extends CI_Model
 						$returnedValue = $this->update($tbl, array('notes'=> $bookingactivity['notes'], 'status' => $bookingactivity['status']), array('activity_id' => $bookingactivity['activity_id']));
 					}
 					log_message('info', "Search_Model::upsert_booking - Booking activity updated : $returnedValue");
-				}
-
-				$customers = null; 
-				$no_of_tickets = 0;
-				$inv_mode = '';
-				if(isset($booking['customers']) && count($booking['customers'])>0) {
-					$customers = $booking['customers'];
-					unset($booking['customers']);
-					$tbl = 'customer_information_tbl';
-
-					for ($i=0; $i < count($customers); $i++) { 
-						$returnedValue = -1;
-						$customer_info = $this->get($tbl, array('id' => $customers[$i]['id']));
-
-						if(($customers[$i]['status'] == 2 || $customers[$i]['status'] == 8) && $customer_info && intval($customer_info[0]['status']) !==8)
-						{
-							// Approved or Hold
-							$no_of_tickets++;
-						} else if(($customers[$i]['status'] == 3) && $customer_info && intval($customer_info[0]['status']) === 8) {
-							//Previously kept on Hold. Now rejecting it.
-							$no_of_tickets++;
-							$inv_mode = 'return_stock';
-						} else if(($customers[$i]['status'] == 2) && $customer_info && intval($customer_info[0]['status']) === 8) {
-							$inv_mode = 'no_update_stock';
-						}
-						log_message('info', "Search_Model::upsert_booking - Current customer record => ".json_encode($customer_info[0], TRUE));
-						log_message('info', "Search_Model::upsert_booking - To be changed Current record => ".json_encode($customers[$i], TRUE));
-						log_message('info', "Search_Model::upsert_booking - customer updated $i - inv_mode: $inv_mode | customers: $no_of_tickets | ticket inventory count: ".intval($ticket['no_of_person']));
-
-						// if((intval($ticket['no_of_person'])>=$no_of_tickets || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
-						if(($no_of_tickets>0 || $inv_mode == 'return_stock' || $inv_mode == 'no_update_stock') && $process_db_interaction) {
-							$returnedValue = $this->update($tbl, array('pnr'=> $customers[$i]['pnr'], 'airline_ticket_no'=> $customers[$i]['airline_ticket_no'], 'status'=> $customers[$i]['status']), array('id' => $customers[$i]['id']));
-							log_message('info', "Search_Model::upsert_booking - Booking customer updated : $returnedValue | Inventory Node: $inv_mode | No Of Tickets : $no_of_tickets");
-						}
-					}
 				}
 
 				if(($booking['status'] == 2 || $booking['status'] == 1 || $inv_mode == 'return_stock') && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
@@ -1470,7 +1492,12 @@ Class Search_Model extends CI_Model
 			}
 		}
 
-		return array('booking_id' => $returnedValue, 'sale_type' => $sale_type);
+		if($status === 0) {
+			return array('status' => false, 'booking_id' => -1, 'sale_type' => $sale_type, 'message' => 'This ticket does`t have enough PAX left. Please add some PAX into this ticket.');
+		}
+		else {
+			return array('status' => true, 'booking_id' => $returnedValue, 'sale_type' => $sale_type, 'message' => 'Successfully saved');
+		}
 	}
 
 	public function get_wallet($userid=-1, $companyid=-1) {
