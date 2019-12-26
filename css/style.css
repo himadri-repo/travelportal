@@ -3606,11 +3606,14 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .f-list-img .offer-price-1 .live-price {
 	/*float:right;*/
-	font-size: 14px;
-	font-weight: 500;
-	color: #e6e027 /*#d7d6d6*/;
-	/*text-decoration: line-through;*/
-	text-transform: capitalize;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    text-decoration: line-through;
+    line-height: 1.0em;
+    font-weight: 300;
+    color: #e6e027 /*#d7d6d6*/;
+    /* text-decoration: line-through;*/
+    text-transform: capitalize;
     display: block;
     /*margin: -15px -10px;*/
 }

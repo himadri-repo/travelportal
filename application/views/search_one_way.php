@@ -199,7 +199,10 @@
                             
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-8 content-side" id="top_div">
-							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="z-index: 999; background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo (($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') ? 'block': 'none') ?>">
+							<?php 
+								$currentuserstyle = (($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') ? 'block': 'none');
+							?>
+							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="z-index: 99; background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo $currentuserstyle;?> ">
 								<input type="checkbox" id="showcostprice" name="showcostprice" checked style="display: inline-block; width: 12pt; height: 12pt; cursor: pointer;"/>
 								<span>Show cost price</span>
 							</div>
@@ -242,14 +245,17 @@
 														</div> <!-- end of left column -->
 														<div class="col-xs-9 col-sm-9 col-md-9">
 															<ul class="list-unstyled flight-timing <?php echo $class?>">
+																<?php
+																$auto_corrected = $flight[$key]["live_corrected"];
+																?>
 																<?php if($flight[$key]["sale_type"]!="quote"){ ?>
 																<?php if($flight[$key]["adult_total"]>0) {?>
 																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["dept_date_time"])); ?>)</li>
 																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrv_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrv_date_time"])); ?>)</li>
 																<?php }
 																else {?>
-																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
-																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>) <span style="color: red;"><?= ($auto_corrected?'*':'') ?></span></li>
+																	<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>) <span style="color: red;"><?= ($auto_corrected?'*':'') ?></span></li>
 																<?php }
 																} ?>
 															</ul>
@@ -290,7 +296,7 @@
 																		$splcode = $flight[$key]["companyname"];
 																	}
 																?>
-																<span><?php echo $flight[$key]["aircode"] . '-' . $flight[$key]["flight_no"]?></span>
+																<span><?= '('.$flight[$key]["aircode"] . ') ' . $flight[$key]["flight_no"]?></span>
 																<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>
 															</div>
 														</div> <!-- end of column -->
@@ -317,7 +323,7 @@
 														
 														<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
 															<?php if($flight[$key]["live_fare"]>0) {?>
-																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").'</br>(system fare - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
 															<?php } else {?>
 																<li class="live-price">&nbsp;</li>
 															<?php } ?>
@@ -328,7 +334,7 @@
 																<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
 														<?php } else {?>
 															<?php if($flight[$key]["live_fare"]>0) {?>
-																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").' (live - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
+																<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").'</br>(system fare - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
 															<?php } else {?>
 																<li class="live-price">&nbsp;</li>
 															<?php } ?>

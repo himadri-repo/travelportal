@@ -902,6 +902,54 @@ Class User_Model extends CI_Model
 			  echo $this->db->last_query();die();
 		}
 	}
+
+	public function	get_account_transaction($companyid, $transacting_companyid=-1, $userid=0, $dt_from, $dt_to) {
+		if(!$dt_from) {
+			//$dt_from = getDate(strtotime(date('Y-m-d 00:00:00', strtotime('-'.(intval(date("d"))-1).' day'))));
+			$dt_from = date_create(date('Y-m-d 00:00:00', strtotime('-'.(intval(date("d"))-1).' day')));
+		}
+		if(!$dt_to) {
+			//$dt_to = getDate(strtotime(date('Y-m-d 23:59:59')));
+			$dt_to = date_create(date('Y-m-d 23:59:59'));
+		}
+		log_message('debug', "User_Model:get_account_transaction :: Posted value => Companyid: $companyid | Transacting_companyid: $transacting_companyid | userid: $userid | dt_from: ".date_format($dt_from, 'Y-m-d H:i:s')." | dt_to: ".date_format($dt_to, 'Y-m-d H:i:s'));
+
+		if($transacting_companyid>-1) {
+			$qry = "select 	acc.date, acc.voucher_no, acc.transaction_type, acc.documentid, acc.document_date, acc.document_type, acc.narration, 
+							acc.credit, acc.debit, acc.status, 
+							ifnull(
+								(select sum(acc1.debit-acc1.credit) as total from account_transactions_tbl acc1 
+								where acc1.companyid=$companyid and acc1.status=1 and acc1.transacting_companyid=$transacting_companyid and acc1.transacting_userid=$userid and DATE_FORMAT(acc1.date, '') < '".date_format($dt_from, 'Y-m-d H:i:s')."')
+							,0) as OB
+					from account_transactions_tbl acc
+					where acc.companyid=$companyid and acc.status=1 and acc.transacting_companyid=$transacting_companyid and acc.transacting_userid=$userid and 
+						DATE_FORMAT(acc.date, '%Y-%m-%d %H:%i:%s')>='".date_format($dt_from, 'Y-m-d H:i:s')."' and 
+						DATE_FORMAT(acc.date, '%Y-%m-%d %H:%i:%s')<='".date_format($dt_to, 'Y-m-d H:i:s')."'";
+		} else {
+			$qry = "select 	acc.date, acc.voucher_no, acc.transaction_type, acc.documentid, acc.document_date, acc.document_type, acc.narration, 
+							acc.credit, acc.debit, acc.status, 
+							ifnull(
+								(select sum(acc1.debit-acc1.credit) as total from account_transactions_tbl acc1 
+								where acc1.companyid=$companyid and acc1.status=1 and acc1.transacting_companyid>=$transacting_companyid and acc1.transacting_userid=$userid and DATE_FORMAT(acc1.date, '') < '".date_format($dt_from, 'Y-m-d H:i:s')."')
+							,0) as OB
+					from account_transactions_tbl acc
+					where acc.companyid=$companyid and acc.status=1 and acc.transacting_companyid>=$transacting_companyid and acc.transacting_userid=$userid and 
+						DATE_FORMAT(acc.date, '%Y-%m-%d %H:%i:%s')>='".date_format($dt_from, 'Y-m-d H:i:s')."' and 
+						DATE_FORMAT(acc.date, '%Y-%m-%d %H:%i:%s')<='".date_format($dt_to, 'Y-m-d H:i:s')."'";
+		}
+
+		$query = $this->db->query($qry);
+
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();		
+		}
+		else
+		{
+			return false;
+		}
+	}
 	
 	public function get_users($companyid) {
 		$arr = array('(u.type in (\'EMP\') or u.is_admin=1) and u.companyid='=>$companyid);

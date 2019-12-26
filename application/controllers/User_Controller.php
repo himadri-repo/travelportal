@@ -2154,7 +2154,11 @@ class User_Controller extends Mail_Controller
 	
 	public function transaction()
 	{
+		$company = $this->session->userdata('company');
+		$companyid = intval($company["id"]);
 		$userid=$this->input->post('user');
+		$partner_type = '';
+		$account_type = 'wallet';
 		$dt_from=$this->input->post('dt_from');
 		if ($dt_from && $dt_from!== '') {
 			$dt_from = date_create($dt_from." 00:00:00");
@@ -2163,6 +2167,25 @@ class User_Controller extends Mail_Controller
 		$dt_to=$this->input->post('dt_to');
 		if ($dt_to && $dt_to!== '') {
 			$dt_to = date_create($dt_to." 23:59:59");
+		}
+
+		$account_type = $this->input->post('account_type');
+		if(!$account_type) {
+			$account_type = "wallet";
+		}
+
+		$target_usertype = "";
+		if($userid && !is_int($userid) && (startsWith($userid, 'WHL') || startsWith($userid, 'SPL'))) {
+			if(startsWith($userid, 'WHL')) {
+				$partner_type = 'WHL';
+				$userid = str_replace('WHL', '', $userid);
+				$target_usertype = 'WHL';
+			}
+			else if(startsWith($userid, 'SPL')) {
+				$partner_type = 'SPL';
+				$userid = str_replace('SPL', '', $userid);
+				$target_usertype = 'SPL';
+			}
 		}
 
 		if($userid && intval($userid) > 0) {
@@ -2174,20 +2197,71 @@ class User_Controller extends Mail_Controller
 
 		if ($userid>0) 
 		{ 
-			$target_user = $this->User_Model->get_userbyid($userid);
-	        $result['user_details']=$this->User_Model->user_details();
-			$result['wallet_transaction']=$this->User_Model->wallet_transaction($userid, $dt_from, $dt_to);
+			if($target_usertype === '') {
+				$target_user = $this->User_Model->get_userbyid($userid);
+			}
+			else {
+				$partner_company = $this->User_Model->get('company_tbl', array('id' => $userid));
+				if($partner_company && is_array($partner_company) && count($partner_company)>0) {
+					$partner_company = $partner_company[0];
+
+					//$primary_userid = $partner_company['primary_user_id'];
+				}
+				$target_user = $partner_company;
+			}
+			$result['user_details']=$this->User_Model->user_details();
+			
+			if($account_type === 'wallet') {
+				$result['wallet_transaction']=$this->User_Model->wallet_transaction($userid, $dt_from, $dt_to);
+				$result['account_transaction'] = [];
+			}
+			else if($account_type === 'account') {
+				$result['wallet_transaction'] = [];
+				if($target_usertype === '') {
+					if(isset($result['user_details']) && count($result['user_details'])>0) {
+						if(isset($target_user['is_admin'])) {
+							$userdetails = $target_user; //$result['user_details'][0];
+						}
+						else {
+							$userdetails = $result['user_details'][0];
+						}
+						if(intval($userdetails['is_admin']) === 1) {
+							$result['account_transaction'] = $this->User_Model->get_account_transaction($companyid, (intval($userdetails['companyid'])==$companyid?-1:intval($userdetails['companyid'])), 0, $dt_from, $dt_to);
+						}
+						else {
+							$result['account_transaction'] = $this->User_Model->get_account_transaction($companyid, $companyid, $userid, $dt_from, $dt_to);	
+						}
+					}
+					else {
+						$result['account_transaction'] = $this->User_Model->get_account_transaction($companyid, $userid, 0, $dt_from, $dt_to);
+					}
+				}
+				else {
+					$result['account_transaction'] = $this->User_Model->get_account_transaction($companyid, $userid, 0, $dt_from, $dt_to);
+				}
+			}
 	        //$result["setting"]=$this->Search_Model->setting();
 			$result["footer"]=$this->Search_Model->get_post(5);
 			$result['mywallet']= $this->getMyWallet();
 			$company = $this->session->userdata("company");
-			$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+			$companyid = isset($company["id"])?intval($company["id"]):-1;
+			$result["setting"]=$this->Search_Model->company_setting($companyid);
 			
-			$customers = $this->Search_Model->get_customers(intval($company['id']), 1, 'B2B');
+			$customers = $this->Search_Model->get_customers($companyid, 1, 'B2B');
 			$result["agents"]=$customers;
-			$customers = $this->Search_Model->get_customers(intval($company['id']), 1, 'B2C');
+			$customers = $this->Search_Model->get_customers($companyid, 1, 'B2C');
 			$result["retail"]=$customers;
+
+			$wholesalers = $this->Admin_Model->get_wholesalers($companyid);
+			$suppliers = $this->Admin_Model->get_suppliers($companyid);
+
+			$result["wholesalers"]=$wholesalers;
+			$result["suppliers"]=$suppliers;
+
+			$result["company"]=$company;
 			$result["userid"]=$userid;
+			$result["target_usertype"] = $target_usertype;
+			$result["account_type"] = $account_type;
 			$result["target_user"] = $target_user;
 
 		    $this->load->view('header1',$result);
@@ -2198,7 +2272,6 @@ class User_Controller extends Mail_Controller
 		{
 			redirect('/login');
 		}
-		
 	}
 	
 	public function updatepnr()

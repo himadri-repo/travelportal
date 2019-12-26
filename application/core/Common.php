@@ -71,4 +71,21 @@ function array2json($arr, $code) {
     if($is_list) return '[' . $json . ']';//Return numerical JSON
     return '{' . $json . '}';//Return associative JSON
 }
+
+function startsWith ($string, $startString) 
+{ 
+    $len = strlen($startString); 
+    return (substr($string, 0, $len) === $startString); 
+} 
+
+// Function to check the string is ends  
+// with given substring or not 
+function endsWith($string, $endString) 
+{ 
+    $len = strlen($endString); 
+    if ($len == 0) { 
+        return true; 
+    } 
+    return (substr($string, -$len) === $endString); 
+} 
 ?>

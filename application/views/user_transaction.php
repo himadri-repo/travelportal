@@ -56,7 +56,7 @@
                         <div class="col-xs-12 col-sm-12 col-md-12">
                         	<!--<div class="dashboard-heading">
                                 <h2>OXY <span>TRA</span></h2>								
-                                <p>Hi <?php echo $user_details[0]["name"];?>, Welcome to OXY TRA</p>
+                                <p>Hi <?php //echo $user_details[0]["name"];?>, Welcome to OXY TRA</p>
                                 
                             </div> -->
 							<?php 
@@ -64,6 +64,8 @@
 								$dt_to = isset($_POST['dt_to'])?$_POST['dt_to']:'';
 								$user_name = $target_user['name'];
 								$uuserid = intval($target_user['id']);
+
+								$uuserid = $target_usertype.$uuserid;
 							?>
                             
                             <div id="dashboard-tabs">                            	                            	
@@ -71,20 +73,29 @@
                                 	<div id="dsh-dashboard" class="tab-pane in active fade" style="border-top: 1px solid #e6e7e8;">
 										<?php if(intval($user_details[0]['is_admin']) === 1) { ?>
 											<div class="row">
-												<div class="col-xs-12 col-sm-12 col-md-12" style="padding: 30px 30px 0px; 30px">
-													<form action="<?php echo base_url()?>user/transaction" method="POST">
+												<form action="<?php echo base_url()?>user/transaction" method="POST">
+													<div class="col-xs-12 col-sm-12 col-md-12" style="padding: 30px 30px 0px 30px;">
 														<div class="row">
 															<div class="col-xs-3 col-sm-3 col-md-3 col-lg-3">
 																<div class="form-group dropdown" style="margin: 3px 10px;">
 																	<label for="user">Select account:</label>
 																	<select class="form-control" id="user" name="user">
+																		<option value="<?= intval($user_details[0]['id']); ?>" <?= (($target_usertype === '' && $uuserid == intval($user_details[0]['id']))? 'selected' : '') ?>><?= $company['name']; ?></option>
 																		<?php 
-																		for ($i=0; $i < count($agents); $i++) { ?>
-																			<option value="<?= $agents[$i]['id']; ?>" <?= (($uuserid == intval($agents[$i]['id']))? 'selected' : '') ?>>(B2B) - <?= $agents[$i]['name']; ?></option>
+																		for ($i=0; $agents && $i < count($agents); $i++) { ?>
+																			<option value="<?= $agents[$i]['id']; ?>" <?= (($target_usertype === '' && $uuserid == intval($agents[$i]['id']))? 'selected' : '') ?>>(B2B) - <?= $agents[$i]['name']; ?></option>
 																		<?php } ?>
 																		<?php 
-																		for ($i=0; $i < count($retail); $i++) { ?>
-																			<option value="<?= $retail[$i]['id']; ?>" <?= (($uuserid == intval($retail[$i]['id']))? 'selected' : '') ?>>(B2C) - <?= $retail[$i]['name']; ?></option>
+																		for ($i=0; $retail && $i < count($retail); $i++) { ?>
+																			<option value="<?= $retail[$i]['id']; ?>" <?= (($target_usertype === '' && $uuserid == intval($retail[$i]['id']))? 'selected' : '') ?>>(B2C) - <?= $retail[$i]['name']; ?></option>
+																		<?php } ?>
+																		<?php 
+																		for ($i=0; $wholesalers && $i < count($wholesalers); $i++) { ?>
+																			<option value="WHL<?= $wholesalers[$i]['id']; ?>" <?= (($uuserid == $target_usertype.intval($wholesalers[$i]['id']))? 'selected' : '') ?>>(WHL) - <?= $wholesalers[$i]['display_name']; ?></option>
+																		<?php } ?>
+																		<?php 
+																		for ($i=0; $suppliers && $i < count($suppliers); $i++) { ?>
+																			<option value="SPL<?= $suppliers[$i]['id']; ?>" <?= (($uuserid == $target_usertype.intval($suppliers[$i]['id']))? 'selected' : '') ?>>(SPL) - <?= $suppliers[$i]['display_name']; ?></option>
 																		<?php } ?>
 																	</select>
 																</div>
@@ -109,13 +120,25 @@
 																</div>
 															</div>
 														</div>
-													</form>
-												</div>
+													</div>
+													<div class="col-xs-12 col-sm-12 col-md-12">
+														<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+															<div class="form-group" style="margin: 0px 15px 20px 15px;" id="trans_type" name="trans_type">
+																<label for="account_type_wlt">Wallet Transactions</label>
+																<input type="radio" class="" name="account_type" id="account_type_wlt" value="wallet" <?= (($account_type == "wallet")? 'checked' : '') ?> style="margin: 0px 10px 0px 0px;"/>
+																<label for="account_type_acc">Account Transactions</label>
+																<input type="radio" class="" name="account_type" id="account_type_acc" value="account" <?= (($account_type == "account")? 'checked' : '') ?>/>
+															</div>
+														</div>
+														<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+														</div>
+													</div>												
+												</form>
 											</div>
 										<?php } ?>
 										<div class="row">
 											<div class="col-xs-12 col-sm-12 col-md-12">
-												<h1 style="background-color: #faa61a; color: #ffffff; margin: 0px 15px; padding: 5px 10px; text-align: right;"><?=$user_name?></h1>
+												<h1 style="background-color: #faa61a; color: #ffffff; margin: 0px 15px; padding: 5px 10px; text-align: right;"><?= $target_usertype===''? '' : '('.$target_usertype.') '?><?=$user_name?> (<?= $account_type?> transaction)</h1>
 											</div>
 										</div>
 										<div class="row">
@@ -125,6 +148,7 @@
 													<div class="table-responsive">
 														<table class="table table-hover">
 															<tbody>
+																<?php if($account_type==='wallet') { ?>
 																<tr>
 																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">SI</h3></th>
 																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Date</h3></th>
@@ -134,8 +158,20 @@
 																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Credit</h3></th>
 																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Debit</h3></th>
 																</tr>
+																<?php } 
+																else { ?>
+																<tr>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">SI</h3></th>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Date</h3></th>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Narration</h3></th>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Voucher #</h3></th> 
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Credit</h3></th>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Debit</h3></th>
+																	<th class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Balance</h3></th>
+																</tr>
+																<?php } ?>
 																<?php
-																if(is_array($wallet_transaction))
+																if($wallet_transaction && is_array($wallet_transaction) && count($wallet_transaction)>0)
 																{
 																	$ob = floatval($wallet_transaction[0]['OB']);
 																	foreach($wallet_transaction as $key=>$value)
@@ -228,6 +264,41 @@
 																	$ctr++;
 																	}
 																} 
+																else if($account_transaction && is_array($account_transaction) && count($account_transaction)>0) { 
+																	$ob = floatval($account_transaction[0]['OB']);
+																	foreach($account_transaction as $key=>$value)
+																	{
+																		if($ctr === 1 && $ob!==0.00) { 
+																		?>
+																			<tr>
+																				<td colspan="4" class="dash-list-icon invoice-icon"><h3 class="dash-listing-heading" style="padding:15px 10px; color: #000000;">Opening Balance</h3></td>
+																				<?php if($ob<0) { ?>
+																					<td class="dash-list-icon invoice-icon"><h3 class="dash-listing-heading" style="padding:15px 10px; color: #000000;"></h3></td>
+																					<td class="dash-list-icon invoice-icon"><h3 class="dash-listing-heading" style="padding:15px 10px; color: #ff0000;">₹ <?php echo number_format(abs($ob),2,".",",");?></h3></td>
+																				<?php } else { ?>
+																					<td class="dash-list-icon invoice-icon"><h3 class="dash-listing-heading" style="padding:15px 10px; color: #1f800f;">₹ <?php echo number_format(abs($ob),2,".",",");?></h3></td>
+																					<td class="dash-list-icon invoice-icon"><h3 class="dash-listing-heading" style="padding:15px 10px; color: #000000;"></h3></td>
+																				<?php } ?>
+																			</tr>
+																		<?php }
+
+																		$ob += (floatval($account_transaction[$key]["debit"]) - floatval($account_transaction[$key]["credit"]));
+																	?>
+																	<tr>
+																		<td class="dash-list-icon invoice-icon"><?php echo $ctr; ?></td>
+																		<td class="dash-list-icon invoice-icon"><?php echo date("d/m/Y h:i:s",strtotime($account_transaction[$key]["date"])); ?></td>
+																		<td class="dash-list-icon invoice-icon"><?= $account_transaction[$key]["narration"]; ?></td>
+																		<td class="dash-list-icon invoice-icon"><?= $account_transaction[$key]["voucher_no"]; ?></td>
+																		<td class="dash-list-icon invoice-icon"><?= number_format(abs($account_transaction[$key]["credit"]),2,".",","); ?></td>
+																		<td class="dash-list-icon invoice-icon"><?= number_format(abs($account_transaction[$key]["debit"]),2,".",","); ?></td>
+																		<td class="dash-list-icon invoice-icon"><?= number_format(abs($ob),2,".",","); ?></td>
+																	</tr>
+																	<?php 
+																	$ctr++;
+																	} ?>
+																<?php 
+																	$total = $ob;
+																}
 																?>
 																<tr>
 																	<td colspan="3" class="dash-list-icon invoice-icon" style="width:auto;padding-left:0;padding-top:0"><h3 class="dash-listing-heading" style="padding:15px 10px">Total</h3></td>
@@ -262,6 +333,24 @@
 					$(".dropdown-menu li").filter(function() {
 						$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
 					});
+				});
+
+				$("#user").change(function() {
+					console.log($(this).val());
+					
+					try {
+						// var userid = $(this).val();
+						// if(userid.indexOf('SPL')>-1 || userid.indexOf('WHL')>-1) {
+						// 	//$('#trans_type').prop('disabled', true);
+						// 	$('#trans_type').show();
+						// }
+						// else {
+						// 	$('#trans_type').hide();
+						// }
+					}
+					catch(e) {
+						console.log(e);
+					}
 				});
 			});
 		</script>
