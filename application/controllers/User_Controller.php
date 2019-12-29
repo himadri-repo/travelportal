@@ -2473,7 +2473,7 @@ class User_Controller extends Mail_Controller
 			$this->form_validation->set_rules('bank', 'Bank', 'callback_validate_bank');
 			$this->form_validation->set_rules('branch', 'Branch', 'callback_validate_branch');
 			$this->form_validation->set_rules('account_no', 'Account No', 'callback_validate_accountno');
-			$this->form_validation->set_rules('amount','Amount','required|trim|xss_clean|max_length[6]|min_length[3]');
+			$this->form_validation->set_rules('amount','Amount','required|trim|xss_clean|max_length[8]|min_length[3]');
 			$this->form_validation->set_rules('reference_id','Reference No','callback_validate_referenceid');
 			$this->form_validation->set_rules('target_accountid','Reference No','callback_validate_target_accountid');
 			

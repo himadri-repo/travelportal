@@ -509,7 +509,7 @@
 									</div>
 									<div class="form-group col-sm-6 col-md-6" id="div_amount">
 										<label>Amount</label>
-										<input type="number" min=500 max=100000 class="form-control" name="amount" id="amount" placeholder="5000" />
+										<input type="number" min=500 max=10000000 class="form-control" name="amount" id="amount" placeholder="5000" />
 									</div>
 								</div>
 								<div class="row" id="div_refrence">

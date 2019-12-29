@@ -282,7 +282,7 @@
 																			</tr>
 																		<?php }
 
-																		$ob += (floatval($account_transaction[$key]["debit"]) - floatval($account_transaction[$key]["credit"]));
+																		$ob += (floatval($account_transaction[$key]["credit"]) - floatval($account_transaction[$key]["debit"]));
 																	?>
 																	<tr>
 																		<td class="dash-list-icon invoice-icon"><?php echo $ctr; ?></td>

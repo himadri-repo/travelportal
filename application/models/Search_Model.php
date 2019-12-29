@@ -1124,22 +1124,25 @@ Class Search_Model extends CI_Model
 						$customer_company = $customer_company[0];
 					}
 					//This is the place where we should add customer user's account transaction as purchased ticket
-					$vc_no = $this->Search_Model->get_next_voucherno($customer_company);
-					$whl_voucher_no = $this->save("account_transactions_tbl", array(
-						"voucher_no" => $vc_no, 
-						"transacting_companyid" => $customer_companyid, 
-						"transacting_userid" => intval($ordered_booking['customer_userid']),
-						"documentid" => $booking_id, 
-						"document_date" => $ordered_booking['booking_date'], 
-						"document_type" => 1,
-						"transaction_type" => "SALES",
-						"credit" => $booking['total'],  
-						"companyid" => $customer_companyid,  
-						"credited_accountid" => 7,  
-						"created_by"=>$ordered_booking['customer_userid'],
-						"narration" => "Sales booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
-					));
-					log_message('debug', "[SAVED] Booking Id: $booking_id | Booking Status: $bookingStatus | Amount: ".$ordered_booking['total']." | Voucher No: $vc_no");
+
+					//Commenting this as before final Sales entry agaisnt customer user, we are creating purchase order against customer user.
+
+					// $vc_no = $this->Search_Model->get_next_voucherno($customer_company);
+					// $whl_voucher_no = $this->save("account_transactions_tbl", array(
+					// 	"voucher_no" => $vc_no, 
+					// 	"transacting_companyid" => $customer_companyid, 
+					// 	"transacting_userid" => intval($ordered_booking['customer_userid']),
+					// 	"documentid" => $booking_id, 
+					// 	"document_date" => $ordered_booking['booking_date'], 
+					// 	"document_type" => 1,
+					// 	"transaction_type" => "SALES",
+					// 	"credit" => $booking['total'],  
+					// 	"companyid" => $customer_companyid,  
+					// 	"credited_accountid" => 7,  
+					// 	"created_by"=>$ordered_booking['customer_userid'],
+					// 	"narration" => "Sales booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
+					// ));
+					// log_message('debug', "[SAVED] Booking Id: $booking_id | Booking Status: $bookingStatus | Amount: ".$ordered_booking['total']." | Voucher No: $vc_no");
 				}
 
 				if(($booking['status'] == 2 || $booking['status'] == 1 || $inv_mode == 'return_stock') && $no_of_tickets>0 && intval($booking['parent_booking_id'])>0) {
@@ -1779,6 +1782,8 @@ Class Search_Model extends CI_Model
 				$whl_voucher_no = 0;
 				$spl_voucher_no = 0;
 				if(intval($booking_id)>0) {
+					$walletbalance = isset($parameters['wallet_balance'])?floatval($parameters['wallet_balance']):0;
+					//if($booking_type==='' && $current_user && isset($current_user['is_admin']) && intval($current_user['is_admin'])===0 && $walletbalance>=floatval($parameters["debit"])) {
 					if($booking_type==='' && $current_user && isset($current_user['is_admin']) && intval($current_user['is_admin'])===0) {
 						$voucher_no = $this->save("account_transactions_tbl", array(
 							"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
@@ -1787,12 +1792,12 @@ Class Search_Model extends CI_Model
 							"documentid" => $booking_id, 
 							"document_date" => $parameters["booking_date"], 
 							"document_type" => 1,
-							"transaction_type" => "COLLECTION",
+							"transaction_type" => "PURCHASE", /* It was COLLECTION. Changing it to PURCHASE as it is PURCHASE for B2B & B2C */
 							"debit" => $parameters["debit"],  
 							"companyid" => $parameters["customer_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
-							"narration"=>"Collection received towards (Booking id: $booking_id | booking date: ".$parameters["booking_date"].")"
+							"narration"=>"Purchase booking (Booking id: $booking_id | booking date: ".$parameters["booking_date"].")"
 						));
 					}
 					else if($booking_type==='WHL-SPL') {
@@ -1949,7 +1954,7 @@ Class Search_Model extends CI_Model
 	public function historical_sales($payload) {
 		$companyid = $payload['filter']['companyid'];
 		$pastdays = isset($payload['filter']['pastdays']) ? intval($payload['filter']['pastdays']) : 7;
-		$sql = "select bk.seller_companyid, DATE_FORMAT(bk.booking_date, '%m-%d') as `day`, (bk.costprice+bk.markup+bk.srvchg+bk.cgst+bk.sgst) as total
+		$sql = "select bk.seller_companyid, DATE_FORMAT(bk.booking_date, '%m-%d') as `day`, sum(bk.costprice+bk.markup+bk.srvchg+bk.cgst+bk.sgst) as total
 			from bookings_tbl bk
 			where bk.status=2 and (bk.booking_date>=(DATE_SUB(DATE_FORMAT(now(), '%Y-%m-%d 00:00:00'), INTERVAL $pastdays DAY))) 
 			and (bk.customer_userid!=bk.seller_userid) and bk.seller_companyid=$companyid

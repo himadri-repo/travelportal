@@ -1595,6 +1595,7 @@ class Search extends Mail_Controller
 					log_message('debug', "Posted Data : ".json_encode($posteddata));
 					log_message('debug', "Customers : ".json_encode($customers));
 
+					//Book Live ticket as this is via API
 					if($ticket['sale_type'] === 'api') {
 						//Call API to book ticket
 						$result = $this->book_api_ticket(array('current_user' => $current_user,'ticket' => $ticket,'company' => $company,'posteddata' => $posteddata,'customers' => $customers));
@@ -1614,10 +1615,6 @@ class Search extends Mail_Controller
 						}
 					}
 					else {
-						//$posteddata = array( "total_amount" => $amount, "costprice" => $costprice, "qty" => $qty, "date" => $date, "price" => $price, "service_charge" => $service_charge, "igst" => $igst, "rateplanid" => $rateplanid );
-						//$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
-						// $ticket['cost_price'] = $costprice;
-						// $ticket['whl_srvchg'] = $service_charge;
 						if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
 							$ticket = array_merge($current_ticket, $ticket);
 						}
@@ -1723,27 +1720,31 @@ class Search extends Mail_Controller
 						$customer_companyid = $company['id'];
 						log_message('debug', "Ticket fullfilled so lets give customer user`s accounts entry");
 						log_message('debug', "Booking Id: $booking_id | Booking Status: $status | Amount: ".$ordered_booking['total']);
-						$customer_company = $this->Search_Model->get('company_tbl', array('id' => $customer_companyid));
-						if($customer_company && is_array($customer_company) && count($customer_company)>0) { 
-							$customer_company = $customer_company[0];
-						}
-						//This is the place where we should add customer user's account transaction as purchased ticket
-						$vc_no = $this->Search_Model->get_next_voucherno($customer_company);
-						$whl_voucher_no = $this->Search_Model->save("account_transactions_tbl", array(
-							"voucher_no" => $vc_no, 
-							"transacting_companyid" => $customer_companyid, 
-							"transacting_userid" => intval($ordered_booking['customer_userid']),
-							"documentid" => $booking_id, 
-							"document_date" => $ordered_booking['booking_date'], 
-							"document_type" => 1,
-							"transaction_type" => "SALES",
-							"credit" => $total_costprice,  
-							"companyid" => $customer_companyid,  
-							"credited_accountid" => 7,  
-							"created_by"=>$ordered_booking['customer_userid'],
-							"narration" => "Sales booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
-						));
-						log_message('debug', "[SAVED] Booking Id: $booking_id | Booking Status: $status | Amount: ".$ordered_booking['total']." | Voucher No: $vc_no");
+
+						// Commenting it as B2B/B2C customer already debited as PURCHASE
+						// $customer_company = $this->Search_Model->get('company_tbl', array('id' => $customer_companyid));
+						// if($customer_company && is_array($customer_company) && count($customer_company)>0) { 
+						// 	$customer_company = $customer_company[0];
+						// }
+						// //This is the place where we should add customer user's account transaction as purchased ticket
+						// $vc_no = $this->Search_Model->get_next_voucherno($customer_company);
+						// $whl_voucher_no = $this->Search_Model->save("account_transactions_tbl", array(
+						// 	"voucher_no" => $vc_no, 
+						// 	"transacting_companyid" => $customer_companyid, 
+						// 	"transacting_userid" => intval($ordered_booking['customer_userid']),
+						// 	"documentid" => $booking_id, 
+						// 	"document_date" => $ordered_booking['booking_date'], 
+						// 	"document_type" => 1,
+						// 	"transaction_type" => "PURCHASE", //Changing it to Purchase for customer. It was Sales.
+						// 	//"credit" => $total_costprice,  
+						// 	"debit" => $total_costprice,  
+						// 	"companyid" => $customer_companyid,  
+						// 	"credited_accountid" => 7,  
+						// 	"created_by"=>$ordered_booking['customer_userid'],
+						// 	"narration" => "Sales booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
+						// ));
+
+						log_message('debug', "[SAVED] Booking Id: $booking_id | Booking Status: $status | Amount: ".$ordered_booking['total']);
 					}
 
 					if($is_owned_ticket) {
@@ -2030,7 +2031,8 @@ class Search extends Mail_Controller
 			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice'] * intval($posteddata['qty'])) : floatval($posteddata['total_amount'])),
 			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
 			"isownticket" => boolval($posteddata['isownticket']),
-			"sale_type" => $sale_type
+			"sale_type" => $sale_type,
+			"wallet_balance" => $system_wallet_balance
 		);
 
 		if(floatval($posteddata['total_amount'])>0) {
@@ -2229,21 +2231,23 @@ class Search extends Mail_Controller
 				log_message('debug', "[Search:do_wallet_transaction] Transacting Accounts | User Id: $userid | Wallet Id: $walletid | Previous Wallet Balance: $wallet_amount | Transaction amount: $amount");
 
 				/* Correction made as it was set as credit, but once the amount deducted from account it should be debit. So changing it to Debit and marking it as COLLECTION */
-				$arr=array(
-					"voucher_no" => $this->Search_Model->get_next_voucherno($company),
-					"transacting_companyid" => $companyid,
-					"transacting_userid" => intval($current_user['id']),
-					"documentid" => $wallet_transid,
-					"document_date" => $wallet_trans_date,
-					"document_type" => 2, /* Payment receive */
-					"transaction_type" => "COLLECTION",
-					"debit" => ($amount<=$wallet_amount)?$amount:$wallet_amount,
-					"companyid" => $companyid,
-					"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
-					"created_by" => intval($current_user['id']),
-					"narration" => (($amount<=$wallet_amount)?"Full":"Partial")." collection received towards (Booking id: $booking_id dated: $booking_date"
-				);
-				$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
+				// Commenting code below
+				// $arr=array(
+				// 	"voucher_no" => $this->Search_Model->get_next_voucherno($company),
+				// 	"transacting_companyid" => $companyid,
+				// 	"transacting_userid" => intval($current_user['id']), 
+				// 	"documentid" => $wallet_transid,
+				// 	"document_date" => $wallet_trans_date,
+				// 	"document_type" => 2, /* Payment receive */
+				// 	"transaction_type" => "PURCHASE",
+				// 	//"debit" => ($amount<=$wallet_amount)?$amount:$wallet_amount,
+				// 	"debit" => $amount,
+				// 	"companyid" => $companyid,
+				// 	"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
+				// 	"created_by" => intval($current_user['id']),
+				// 	"narration" => (($amount<=$wallet_amount)?"Full":"Partial")." collection received towards (Booking id: $booking_id dated: $booking_date"
+				// );
+				// $voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
 			}
 			else {
 				log_message('debug', "[Search:do_wallet_transaction] Enough wallet balance not present | User Id: $userid | Wallet Id: $walletid | Previous Wallet Balance: $wallet_amount | Transaction amount: $amount");

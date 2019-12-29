@@ -875,7 +875,7 @@ Class User_Model extends CI_Model
 			$arr["DATE_FORMAT(w.date, '%Y-%m-%d %H:%i:%s')<="] = date_format($dt_to, 'Y-m-d H:i:s');
 		}
 
-		$this->db->select("w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, 
+		$this->db->select("w.wallet_id, swlt.balance, w.date, w.amount, w.trans_ref_id as booking_id, w.trans_ref_type as type, w.bank, w.branch, w.narration, b.id as booking_no, t.ticket_no, b.pnr, c.city as source, ct.city as destination, 
 				u.name, b.status, w.status as wallet_trans_status,
 				ifnull((select sum(case wl.dr_cr_type when 'DR' then -wl.amount else wl.amount end) as total from wallet_transaction_tbl wl where $whr),0) as OB ");
 		$this->db->from('wallet_transaction_tbl w');
@@ -884,6 +884,7 @@ Class User_Model extends CI_Model
 		$this->db->join('city_tbl as c', 'c.id = t.source','left');
 		$this->db->join('city_tbl as ct', 'ct.id = t.destination','left');		
 		$this->db->join('user_tbl as u', 'u.id = b.customer_userid','left');
+		$this->db->join('system_wallets_tbl as swlt', 'swlt.id = w.wallet_id','left');
         $this->db->where($arr);
 		$this->db->order_by("w.id", "ASC");
 
@@ -1169,7 +1170,8 @@ Class User_Model extends CI_Model
 					// }
 					//save data to account_transactions_tbl;
 					//If wallet balance is there and amount realized from wallet then add that to accounts
-					if($account_balance<0 && intval($status)==1) {
+					//if($account_balance<0 && intval($status)==1) {
+					if(intval($status)==1) {						
 						$company = $this->get('company_tbl', array('id'=>$companyid));
 						if($company && count($company)>0) {
 							$company = $company[0];
@@ -1181,7 +1183,9 @@ Class User_Model extends CI_Model
 							"documentid" => $id,
 							"document_date" => $wallet_trans['date'],
 							"document_type" => 2, /* Payment receive */
-							"credit" => abs($account_balance)>$trans_amount?$trans_amount:abs($account_balance),
+							"transaction_type" => "DEPOSIT",
+							//"credit" => abs($account_balance)>$trans_amount?$trans_amount:abs($account_balance),
+							"credit" => $trans_amount,
 							"companyid" => $companyid,
 							"debited_accountid" => (($setting==null || !isset($setting['accountid']))? -1: $setting['accountid']),
 							"created_by" => $userid
