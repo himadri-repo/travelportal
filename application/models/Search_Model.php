@@ -2007,7 +2007,7 @@ Class Search_Model extends CI_Model
 			where usra.controller='search' and usra.method='search_one_way' 
 			and (usra.requested_on>=(DATE_SUB(DATE_FORMAT(now(), '%Y-%m-%d 00:00:00'), INTERVAL 10 DAY))) 
 			and usr.companyid=$companyid 
-			group by usr.companyid, DATE_FORMAT(usra.requested_on, '%Y-%m-%d')
+			group by usr.companyid, DATE_FORMAT(usra.requested_on, '%d-%b')
 			limit 12";
 		
 		$query = $this->db->query($sql);

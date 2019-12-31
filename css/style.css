@@ -2489,6 +2489,9 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 /* -----------------------------------------------------
 		Newsletter
    ----------------------------------------------------- */
+.newsletter {
+	display: none;
+}
 
 .newsletter h2{
 	font-weight:900;
@@ -2712,6 +2715,10 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 .footer-widget.ftr-about .social-links li{
 	margin-right:12px;
 	margin-top:10px;
+}
+
+.ftr-in-touch {
+	display: none;
 }
 
 .footer-widget.ftr-in-touch form{

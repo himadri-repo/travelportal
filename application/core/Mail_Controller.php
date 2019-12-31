@@ -470,6 +470,10 @@ class Mail_Controller  extends CI_Controller
 		return $template_info;
 	}
 
+	public function getTemplates() {
+		
+	}
+
 	protected function get_companyinfo()
 	{
 		$company = $this->session->userdata('company');

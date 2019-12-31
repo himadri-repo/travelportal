@@ -39,7 +39,7 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <span for="address" class="form-title">Address *</span>
+                                            <span for="address" class="form-title">Address</span>
                                             <textarea id="address" class="form-control" name="address" rows="3"></textarea>
                                         </div>
 

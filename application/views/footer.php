@@ -1,5 +1,5 @@
 <!--============ NEWSLETTER-2 =============-->
-<section id="newsletter-2" class="newsletter"> 
+        <section id="newsletter-2" class="newsletter"> 
             <div class="container">
                 <div class="row">
                 	<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">

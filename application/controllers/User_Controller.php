@@ -498,7 +498,7 @@ class User_Controller extends Mail_Controller
 		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		 {
 			 $this->form_validation->set_rules('name', 'Name', 'required|trim|xss_clean');
-			 $this->form_validation->set_rules('address', 'Address', 'required|trim|xss_clean');
+			 $this->form_validation->set_rules('address', 'Address', 'trim|xss_clean');
 			 $this->form_validation->set_rules('state', 'State', 'required|callback_validate_state');
 			 $this->form_validation->set_rules('country', 'Country', 'required|callback_validate_country');
 			 $this->form_validation->set_rules('email','Email','required|trim|xss_clean|valid_email|callback_unique_email');
