@@ -1196,7 +1196,7 @@ Class Search_Model extends CI_Model
 							"companyid" => $customer_companyid,  
 							"credited_accountid" => 7,  
 							"created_by"=>$ordered_booking['customer_userid'],
-							"narration" => "Purchase booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
+							"narration" => "Purchase booking (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($ordered_booking['booking_date'].'+00:00'))
 						));
 
 						log_message('debug', "Purchase voucher raised => $whl_voucher_no | VC => $vc_no");
@@ -1215,7 +1215,7 @@ Class Search_Model extends CI_Model
 							"companyid" => $seller_companyid,  
 							"credited_accountid" => 7,  
 							"created_by"=>$ordered_booking['customer_userid'],
-							"narration" => "Sales booking (Booking id: $booking_id dated: ".$ordered_booking['booking_date']
+							"narration" => "Sales booking (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($ordered_booking['booking_date'].'+00:00'))
 						));
 
 						log_message('debug', "Sales voucher raised => $whl_voucher_no | VC => $vc_no");
@@ -1534,7 +1534,7 @@ Class Search_Model extends CI_Model
 								"companyid" => $seller_companyid,  
 								"credited_accountid" => 7,  //some dummy value
 								"created_by" => $customer_userid,
-								"narration" => "Collection received towards (Booking id: $bookingid dated: ".$booking["booking_date"]
+								"narration" => "Collection received towards (Booking id: $bookingid dated: ".date("Y-m-d H:i:s", strtotime($booking["booking_date"].'+00:00'))
 							));	
 						}
 
@@ -1587,7 +1587,7 @@ Class Search_Model extends CI_Model
 								"companyid" => $customer_companyid,  
 								"credited_accountid" => 7,  //some dummy value
 								"created_by" => $customer_userid,
-								"narration" => "Payment made towards (Booking id: $bookingid dated: ".$booking["booking_date"]
+								"narration" => "Payment made towards (Booking id: $bookingid dated: ".date("Y-m-d H:i:s", strtotime($booking["booking_date"].'+00:00'))
 							));	
 						}
 
@@ -1802,7 +1802,7 @@ Class Search_Model extends CI_Model
 							"companyid" => $parameters["customer_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
-							"narration"=>"Purchase booking (Booking id: $booking_id | booking date: ".$parameters["booking_date"].")"
+							"narration"=>"Purchase booking (Booking id: $booking_id | booking date: ".date("Y-m-d H:i:s", strtotime($parameters["booking_date"].'+00:00')).")"
 						));
 					}
 					else if($booking_type==='WHL-SPL' && $status!==0) {
@@ -1820,7 +1820,7 @@ Class Search_Model extends CI_Model
 							"companyid" => $parameters["customer_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
-							"narration" => "Purchase booking - (Booking id: $booking_id dated: ".$parameters["booking_date"].')'
+							"narration" => "Purchase booking - (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($parameters["booking_date"].'+00:00')).')'
 						));
 
 						$whl_voucher_no = $this->save("account_transactions_tbl", array(
@@ -1836,7 +1836,7 @@ Class Search_Model extends CI_Model
 							"companyid" => $parameters["seller_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
-							"narration" => "Sales booking (Booking id: $booking_id dated: ".$parameters["booking_date"]
+							"narration" => "Sales booking (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($parameters["booking_date"].'+00:00')).')'
 						));
 					}
 				}

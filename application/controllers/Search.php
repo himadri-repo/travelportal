@@ -2335,7 +2335,7 @@ class Search extends Mail_Controller
 			"companyid" => intval($suplcompany['id']),  
 			"credited_accountid" => 7,  //some dummy value
 			"created_by" => $suplcompany['primary_user_id'],
-			"narration" => "Collection received towards (Booking id: $booking_id dated: $booking_date"
+			"narration" => "Collection received towards (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($booking_date.'+00:00'))
 		));	
 		//$wallet_transid = $this->Search_Model->save("wallet_transaction_tbl",$arr);
 
@@ -2385,7 +2385,7 @@ class Search extends Mail_Controller
 			"companyid" => intval($company['id']),  
 			"credited_accountid" => 7,  //some dummy value
 			"created_by" => intval($company['primary_user_id']),
-			"narration" => "Payment made towards (Booking id: $booking_id dated: $booking_date"
+			"narration" => "Payment made towards (Booking id: $booking_id dated: ".date("Y-m-d H:i:s", strtotime($booking_date.'+00:00'))
 		));	
 
 		return $result;
