@@ -26,7 +26,7 @@
                                 
                                 <ul class="nav nav-tabs">
 								    <li class="active"><a href="#tab-one-way" data-toggle="tab">One Way</a></li>
-                                	<li ><a href="#tab-round-trip" data-toggle="tab" style="display:none;">Round Trip</a></li>
+                                	<li ><a href="#tab-round-trip" data-toggle="tab">Round Trip</a></li>
                                 	
                                 </ul>
                                 

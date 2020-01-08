@@ -1191,7 +1191,8 @@ Class Search_Model extends CI_Model
 							"document_date" => $ordered_booking['booking_date'], 
 							"document_type" => 1,
 							"transaction_type" => "PURCHASE",
-							"debit" => $ordered_booking['total'],  
+							//"debit" => $ordered_booking['total'],  
+							"credit" => $ordered_booking['total'],  /* Amount is credited to Seller from supplier as ticket needs to be issued later */
 							"companyid" => $customer_companyid,  
 							"credited_accountid" => 7,  
 							"created_by"=>$ordered_booking['customer_userid'],
@@ -1209,7 +1210,8 @@ Class Search_Model extends CI_Model
 							"document_date" => $ordered_booking['booking_date'], 
 							"document_type" => 1,
 							"transaction_type" => "SALES",
-							"credit" => $ordered_booking['total'],  
+							//"credit" => $ordered_booking['total'],  
+							"debit" => $ordered_booking['total'],   /* Ticket issued to wholesaler from supplier */
 							"companyid" => $seller_companyid,  
 							"credited_accountid" => 7,  
 							"created_by"=>$ordered_booking['customer_userid'],
@@ -1527,7 +1529,8 @@ Class Search_Model extends CI_Model
 								"document_date" => $booking['booking_date'], 
 								"document_type" => 1,
 								"transaction_type" => "COLLECTION",
-								"debit" => floatval($booking['total']),  
+								//"debit" => floatval($booking['total']),  
+								"credit" => floatval($booking['total']),   /* Collection received from Customer so posting it to his credit account */
 								"companyid" => $seller_companyid,  
 								"credited_accountid" => 7,  //some dummy value
 								"created_by" => $customer_userid,
@@ -1579,7 +1582,8 @@ Class Search_Model extends CI_Model
 								"document_date" => $booking['booking_date'], 
 								"document_type" => 1,
 								"transaction_type" => "PAYMENT",
-								"credit" => floatval($booking['total']),  
+								//"credit" => floatval($booking['total']),  
+								"debit" => floatval($booking['total']),  /* Payment made by customer to supplier. So posting it to supplier's debit and opposit credit posting being done by supplier */
 								"companyid" => $customer_companyid,  
 								"credited_accountid" => 7,  //some dummy value
 								"created_by" => $customer_userid,
@@ -1793,14 +1797,16 @@ Class Search_Model extends CI_Model
 							"document_date" => $parameters["booking_date"], 
 							"document_type" => 1,
 							"transaction_type" => "PURCHASE", /* It was COLLECTION. Changing it to PURCHASE as it is PURCHASE for B2B & B2C */
-							"debit" => $parameters["debit"],  
+							"debit" => $parameters["debit"],  /*Payment made by B2B/B2C towards wholesaler company. But ticket is not being issued. So amount is being posed towards B2B/B2C's accounts */
+							//"credit" => $parameters["debit"],  
 							"companyid" => $parameters["customer_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
 							"narration"=>"Purchase booking (Booking id: $booking_id | booking date: ".$parameters["booking_date"].")"
 						));
 					}
-					else if($booking_type==='WHL-SPL') {
+					else if($booking_type==='WHL-SPL' && $status!==0) {
+						log_message("debug", "SearchModel:book_ticket-WHL-SPL-Making Account transaction: $booking_id, 'booking_activity_id': $booking_activity_id, 'parameters': ".json_encode($parameters)."}");
 						$whl_voucher_no = $this->save("account_transactions_tbl", array(
 							"voucher_no" => $this->Search_Model->get_next_voucherno($company), 
 							"transacting_companyid" => $parameters["seller_companyid"], 
@@ -1809,11 +1815,12 @@ Class Search_Model extends CI_Model
 							"document_date" => $parameters["booking_date"], 
 							"document_type" => 1,
 							"transaction_type" => "PURCHASE",
-							"debit" => $parameters["debit"],  
+							//"debit" => $parameters["debit"],  
+							"credit" => $parameters["debit"],  /*Payment was made before and that time amount posted as Debit and since ticket purchased from supplier so same amount should be credited to supplier's ladger also */
 							"companyid" => $parameters["customer_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],
-							"narration" => "Purchase booking (Booking id: $booking_id dated: ".$parameters["booking_date"]
+							"narration" => "Purchase booking - (Booking id: $booking_id dated: ".$parameters["booking_date"].')'
 						));
 
 						$whl_voucher_no = $this->save("account_transactions_tbl", array(
@@ -1824,7 +1831,8 @@ Class Search_Model extends CI_Model
 							"document_date" => $parameters["booking_date"], 
 							"document_type" => 1,
 							"transaction_type" => "SALES",
-							"credit" => $parameters["debit"],  
+							//"credit" => $parameters["debit"],  
+							"debit" => $parameters["debit"],  /*Sales made by Supplier towards wholesaler. When wholesaler paid money it was posted in Wholesaler's account as credit. Means amount needs to be paid back. Now ticket is being made so equal amount should be debited. */
 							"companyid" => $parameters["seller_companyid"],  
 							"credited_accountid" => $parameters["ticket_account"],  
 							"created_by"=>$parameters["created_by"],

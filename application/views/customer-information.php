@@ -213,6 +213,12 @@
                         
                         
                         <div class="col-xs-12 col-sm-12 col-md-7 col-lg-8 content-side">
+							<?php 
+							if(isset($prev_error)) { ?>
+								<div style="color: #ff0000; font-size: 1.5em;">ERROR : <?= $prev_error ?></div>
+							<?php 
+							}
+							?>
                         	<form class="lg-booking-form" action="<?php echo base_url(); ?>search/book/<?php echo $flight[0]["id"];?>" method="POST" onsubmit="return validate_customers()">
 							    <input type="hidden" name="markup" value="<?php echo $flight[0]["markup"]; ?>">
 							    <input type="hidden" name="source" value="<?php echo $flight[0]["source"]; ?>">
@@ -286,7 +292,7 @@
 												</div>
 											</div>
 										</div>
-										<div class="row" style="<?php echo $ctr>1?'display:none':''?>">
+										<div class="row" <?php echo $ctr>1?"style = 'display:none'":''?>>
 											<div class="col-xs-4 col-sm-4">
 												<div class="form-group">													
 													<input type="text" maxlength="10" name="mobile_no[]" class="form-control" placeholder="Mobile No." value="<?php echo $flight[0]["mobile_no"]; ?>" required/>

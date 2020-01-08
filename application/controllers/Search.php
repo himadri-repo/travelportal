@@ -118,6 +118,7 @@ class Search extends Mail_Controller
 			}
 		}
 
+		log_message('debug', "3pp api => ".json_encode($selected_3pp_api, TRUE));
 		return $selected_3pp_api;
 	}
 
@@ -1141,6 +1142,11 @@ class Search extends Mail_Controller
 	
 	public function beforebook($id)
 	{
+		$prev_error = $this->session->userdata('ERROR'); //,'Unable to process ticket at this moment (API timedout). Please try after some time.');
+		if(isset($prev_error)) {
+			$this->session->unset_userdata('ERROR');
+		}
+
 		$current_user = $this->session->userdata('current_user');
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{	
@@ -1238,6 +1244,7 @@ class Search extends Mail_Controller
 				$service_charge = floatval($this->input->post('service_charge'));
 				$result1["user"]=$this->User_Model->user_details();
 				$result["currentuser"] = $current_user;
+				$result["prev_error"] = $prev_error;
 				//$result["setting"]=$this->Search_Model->setting();
 				$result['setting']=$this->Search_Model->company_setting($companyid);
 
@@ -1345,7 +1352,7 @@ class Search extends Mail_Controller
 			if($returnValue) {
 				$payload['booking_details'] = $returnValue;
 				$booking_details = $this->$library->get_booking_details($payload);
-				log_message('debug', 'Booking Details from API => '.json_encode($returnValue));
+				log_message('debug', 'Booking Details from API => '.json_encode($booking_details));
 
 				if($returnValue && isset($returnValue['bookingid']) && intval($returnValue['bookingid'])>0) {
 					$bookingid = intval($returnValue['bookingid']);
@@ -1518,8 +1525,6 @@ class Search extends Mail_Controller
 		$service_charge = $this->input->post('service_charge');
 		$igst = $this->input->post('igst');
 		$rateplanid = $this->input->post('rateplanid');
-
-		$posteddata = array( "total_amount" => $amount, "costprice" => $costprice, "qty" => $qty, "date" => $date, "price" => $price, "service_charge" => $service_charge, "igst" => $igst, "rateplanid" => $rateplanid );
 		
 		$company = $this->get_companyinfo();
 		$current_user = $company['current_user'];
@@ -1537,11 +1542,14 @@ class Search extends Mail_Controller
 		$total_costprice = ($qty * $costprice);
 
 		if (isset($date) && isset($qty)) {
-
 			$ticket = $this->get_ticket(($ordering_ticket===null? $id : -1), $current_user, $company, $ordering_ticket);
 			$status = ($ticket['pnr']!="" && intval($ticket['user_id'])==intval($current_user["id"])) ? "CONFIRMED" : "PENDING";
 			$pnr = $ticket['pnr'];
 			$user_id = intval($ticket['user_id']);
+			$is_owned_ticket = intval($ticket['companyid'])===$companyid;
+			$ticket_source = (($posted_ticket['sale_type'] === 'api') ? 'API' : ($is_owned_ticket? 'OWN' : 'SOURCED'));
+			//$posteddata['isownticket'] = $is_owned_ticket;
+			$posteddata = array( "total_amount" => $amount, "costprice" => $costprice, "qty" => $qty, "date" => $date, "price" => $price, "service_charge" => $service_charge, "igst" => $igst, "rateplanid" => $rateplanid, "isownticket" => $is_owned_ticket, "ticket_source" => $ticket_source);
 
 			$is_booking_allowed = $this->is_booking_allowed($total_costprice, $current_user, $wallet);
 
@@ -1601,6 +1609,7 @@ class Search extends Mail_Controller
 						$result = $this->book_api_ticket(array('current_user' => $current_user,'ticket' => $ticket,'company' => $company,'posteddata' => $posteddata,'customers' => $customers));
 
 						if(!$result) {
+							$this->session->set_userdata('ERROR','Unable to process ticket at this moment (API timedout). Please try after some time.');
 							redirect("search/beforebook/$id");
 						}
 						else {
@@ -1625,8 +1634,6 @@ class Search extends Mail_Controller
 						$suplcompany = $suplcompany[0];
 					}
 
-					$is_owned_ticket = intval($ticket['companyid'])===$companyid;
-					$posteddata['isownticket'] = $is_owned_ticket;
 					$posteddata['isapi'] = $isapi;
 					$booking_info = $this->save_booking($current_user, $ticket, $status, $wallet, $company, $posteddata, $customers);
 
@@ -2323,7 +2330,8 @@ class Search extends Mail_Controller
 			"document_date" => $booking_date, 
 			"document_type" => 1,
 			"transaction_type" => "COLLECTION",
-			"debit" => $whl_totalcost,  
+			//"debit" => $whl_totalcost,  
+			"credit" => $whl_totalcost,  /*Since payment receive from wholealer to supplier but ticket not yet provided. So amount should be posted as credit in the name of Wholesaler. Which should be settled by ticket raised */
 			"companyid" => intval($suplcompany['id']),  
 			"credited_accountid" => 7,  //some dummy value
 			"created_by" => $suplcompany['primary_user_id'],
@@ -2372,7 +2380,8 @@ class Search extends Mail_Controller
 			"document_date" => $booking_date, 
 			"document_type" => 1,
 			"transaction_type" => "PAYMENT",
-			"credit" => $whl_totalcost,  
+			//"credit" => $whl_totalcost,  
+			"debit" => $whl_totalcost,  /*This payment made by wholesaler to supplier. So it should debit supplier account. Once the ticket is being provide same amount will be credited supplier account. */
 			"companyid" => intval($company['id']),  
 			"credited_accountid" => 7,  //some dummy value
 			"created_by" => intval($company['primary_user_id']),

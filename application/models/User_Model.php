@@ -1188,7 +1188,8 @@ Class User_Model extends CI_Model
 							"credit" => $trans_amount,
 							"companyid" => $companyid,
 							"debited_accountid" => (($setting==null || !isset($setting['accountid']))? -1: $setting['accountid']),
-							"created_by" => $userid
+							"created_by" => $userid,
+							"narration"=>"Amount deposited to wallet - ".$wallet_trans['trans_id']." | system id: ".$wallet_trans['id']
 						);
 						$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
 					}

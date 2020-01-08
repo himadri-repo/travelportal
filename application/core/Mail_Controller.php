@@ -55,7 +55,8 @@ class Mail_Controller  extends CI_Controller
 
 		curl_setopt_array($curl, array(
 			// CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
-			CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+			// CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+			CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=travelmergers&password=Sumit@12356&senderId=TRAMER&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_ENCODING => "",
 			CURLOPT_MAXREDIRS => 10,
@@ -347,7 +348,8 @@ class Mail_Controller  extends CI_Controller
 		  $curl = curl_init();
 		  curl_setopt_array($curl, array(
 		//   CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sumit@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
-		  CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+		  // CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=oxytra&password=Sneha@12356&senderId=OXYTRA&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
+		  CURLOPT_URL => "https://www.smsgateway.center/SMSApi/rest/send?userId=travelmergers&password=Sumit@12356&senderId=TRAMER&sendMethod=simpleMsg&msgType=text&mobile=".$no."&msg=".$msg."",
 		  CURLOPT_RETURNTRANSFER => true,
 		  CURLOPT_ENCODING => "",
 		  CURLOPT_MAXREDIRS => 10,

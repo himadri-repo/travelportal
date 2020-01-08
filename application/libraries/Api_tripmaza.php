@@ -33,7 +33,7 @@ class Api_tripmaza extends Api {
             $this->password = $this->config['password'];
             $this->apibaseurl = $this->config['url'];
 
-            log_message('info', "Config passed => ".json_encode($config));
+            log_message('debug', "Config passed => ".json_encode($config));
         }
         else {
             log_message('error', "Library - api_tripmaza - Wrong config passed - $config");
@@ -42,9 +42,9 @@ class Api_tripmaza extends Api {
     
     public function post($urlpart, $data, $content_type="application/json") {
 
-        log_message('info', "Posted Data : ".json_encode($data, JSON_UNESCAPED_SLASHES));
-        //log_message('info', "Posted Data : ".json_encode($data, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES));
-        //log_message('info', "Posted Data : ".array2json($data, JSON_UNESCAPED_SLASHES));
+        log_message('debug', "Posted Data : ".json_encode($data, JSON_UNESCAPED_SLASHES));
+        //log_message('debug', "Posted Data : ".json_encode($data, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES));
+        //log_message('debug', "Posted Data : ".array2json($data, JSON_UNESCAPED_SLASHES));
 
         $data = json_encode($data, JSON_UNESCAPED_SLASHES);
         //$data = json_encode($data, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES);
@@ -57,7 +57,7 @@ class Api_tripmaza extends Api {
             CURLINFO_HEADER_OUT => true,
 			//CURLOPT_ENCODING => "",
 			//CURLOPT_MAXREDIRS => 10,
-			CURLOPT_TIMEOUT => 30,
+			CURLOPT_TIMEOUT => 60,
 			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POST => true,
@@ -75,13 +75,13 @@ class Api_tripmaza extends Api {
 		$err = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        log_message('info', 'Info Collected from REST Call '.json_encode($info));
-        log_message('info', 'Response Collected from REST Call '.json_encode($response));
-        log_message('info', 'Error Collected from REST Call '.json_encode($err));
+        log_message('debug', 'Info Collected from REST Call '.json_encode($info));
+        log_message('debug', 'Response Collected from REST Call '.json_encode($response));
+        log_message('debug', 'Error Collected from REST Call '.json_encode($err));
 
         curl_close($curl);
 
-        return array('response' => $response, 'info' => $info, 'err' => $err);
+        return array('response' => $response, 'debug' => $info, 'err' => $err);
     }
 
     public function reauthenticate()
@@ -94,20 +94,20 @@ class Api_tripmaza extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = $result['response'];
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
 
 		if ($err) 
 		{
-			log_message("info", "ERROR : $err");
+			log_message("debug", "ERROR : $err");
 		  	return false;
 		} 
 		else 
 		{
             $this->token_generated_on = date('Y-m-d H:i:s');
 
-            log_message("info", "Response | $response");
+            log_message("debug", "Response | $response");
             if($response !== '') {
                 $response = json_decode($response, TRUE);
             }
@@ -117,7 +117,7 @@ class Api_tripmaza extends Api {
                 $this->clientid = $response['Result']['ClientID'];
                 $this->tokenid = $response['Result']['TokenID'];
 
-                log_message('info', "Token generated -> ".$this->tokenid." | Client Id -> ".$this->clientid." | Agency Type -> ".$this->agencytype);
+                log_message('debug', "Token generated -> ".$this->tokenid." | Client Id -> ".$this->clientid." | Agency Type -> ".$this->agencytype);
             }
             else {
                 log_message('error', "Some error -> ".json_encode($response));
@@ -168,13 +168,13 @@ class Api_tripmaza extends Api {
 
         if($result && is_array($result)) {
             $response = $result['response'];
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
 
 		if ($err) 
 		{
-			log_message("info", "ERROR : $err");
+			log_message("debug", "ERROR : $err");
 		  	return false;
 		} 
 		else 
@@ -185,95 +185,97 @@ class Api_tripmaza extends Api {
             if($response && is_array($response) && count($response)>0) {
                 $result = $response['Response']['Results'][0];
                 $lastairline = null;
-                for ($i=0; $i < count($result); $i++) { 
-                    $tmzticket = $result[$i];
-                    if($tmzticket) {
-                        try {
-                            $image = 'flight.png';
-                            if($lastairline && isset($lastairline['aircode']) && $lastairline['aircode'] === trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
-                                $image = $lastairline['image'];
-                            }
-                            else {
-                                for($air=0; $air<count($airlines); $air++) {
-                                    if($airlines[$air]['aircode']===trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
-                                        $image=$airlines[$air]['image'];
-                                        $lastairline = $airlines[$air];
-                                        break;
+                if($result && is_array($result) && count($result)>0) {
+                    for ($i=0; $i < count($result); $i++) { 
+                        $tmzticket = $result[$i];
+                        if($tmzticket) {
+                            try {
+                                $image = 'flight.png';
+                                if($lastairline && isset($lastairline['aircode']) && $lastairline['aircode'] === trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
+                                    $image = $lastairline['image'];
+                                }
+                                else {
+                                    for($air=0; $air<count($airlines); $air++) {
+                                        if($airlines[$air]['aircode']===trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
+                                            $image=$airlines[$air]['image'];
+                                            $lastairline = $airlines[$air];
+                                            break;
+                                        }
                                     }
                                 }
+
+                                $no_of_seats = intval($tmzticket['Segments'][0][0]['NoOfSeatAvailable']);
+                                $no_of_seats = $no_of_seats>0?$no_of_seats:$pax;
+                                $price = round(floatval($tmzticket['Fare']['OfferedFare'])/$no_of_seats, 0);
+                                $ticket = array(
+                                    'id' => (100100000 + intval($tmzticket['ResultIndex'])),
+                                    'uid' => intval($company['primary_user_id']),
+                                    'remarks' => 'Live inventory from API',
+                                    'source' => $source_city_id,
+                                    'destination' => $destination_city_id,
+                                    'source_code' => $tmzticket['Segments'][0][0]['Origin']['Airport']['AirportCode'],
+                                    'destination_code' => $tmzticket['Segments'][0][0]['Destination']['Airport']['AirportCode'],
+                                    'source_city' => $source_city, //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
+                                    'destination_city' => $destination_city, //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
+                                    'departure_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Origin']['DepTime'])),
+                                    'arrival_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Destination']['ArrTime'])),
+                                    'flight_no' => trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode']).' '.trim($tmzticket['Segments'][0][0]['Airline']['FlightNumber']),
+                                    'terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
+                                    'departure_terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
+                                    'arrival_terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
+                                    'no_of_person' => $no_of_seats,
+                                    'seatsavailable' => $no_of_seats,
+                                    'tag' => $tmzticket['FareRules'][0]['FareRuleDetail'],
+                                    'data_collected_from' => 'tmz_api',
+                                    'sale_type' => 'api', /*This will be live only but for now making it API //live */
+                                    'refundable' => $tmzticket['IsRefundable']?'Y':'N',
+                                    'total' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                    'airline' => $lastairline['id'],
+                                    'aircode' => $tmzticket['Segments'][0][0]['Airline']['AirlineCode'],
+                                    'ticket_no' => 'TMZ-TKT-'.intval($tmzticket['ResultIndex']),
+                                    'price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                    'cost_price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                    'approved' => 1,
+                                    'class' => 'ECONOMY',
+                                    'no_of_stops' => intval($tmzticket['Segments'][0][0]['SegmentIndicator']),
+                                    'companyid' => intval($supl_company['id']), //$company['id'], This has to be supplier company id. Means who own the ticket
+                                    'companyname' => $supl_company['display_name'],
+                                    'user_id' => intval($supl_company['primary_user_id']), // -1,
+                                    'admin_markup' => 0,
+                                    'rate_plan_id' => $supl_rateplan_id,
+                                    'supplierid' => $supl_companyid,
+                                    'sellerid' => $company['id'],
+                                    'seller_rateplan_id' => $default_rateplan_id,
+                                    'adult_total' => 0.00, //if we make it non-zero then search showing wrong date.
+                                    'image' => $image,
+                                    'ResultIndex' => intval($tmzticket['ResultIndex']),
+                                    'SearchIndex' => intval($tmzticket['SearchIndex']),
+                                    'SuppSource' => intval($tmzticket['SuppSource']),
+                                    'SuppTokenId' => $tmzticket['SuppTokenID'],
+                                    'SuppTraceId' => $tmzticket['SuppTraceId'],
+                                    'tokenid' => $tmzticket['AuthoTraceId'],
+                                    'clientid' => $this->clientid,
+                                    'agencytype' => $this->agencytype
+                                );
+                                $this->tokenid = $ticket['tokenid'];
+                                $this->clientid = $ticket['clientid'];
+                                $this->agencytype = $ticket['agencytype'];
+                        
+
+                                $ticket = array_merge($ticket_format, $ticket);
+
+                                array_push($tickets, $ticket);
                             }
-
-                            $no_of_seats = intval($tmzticket['Segments'][0][0]['NoOfSeatAvailable']);
-                            $no_of_seats = $no_of_seats>0?$no_of_seats:$pax;
-                            $price = round(floatval($tmzticket['Fare']['OfferedFare'])/$no_of_seats, 0);
-                            $ticket = array(
-                                'id' => (100100000 + intval($tmzticket['ResultIndex'])),
-                                'uid' => intval($company['primary_user_id']),
-                                'remarks' => 'Live inventory from API',
-                                'source' => $source_city_id,
-                                'destination' => $destination_city_id,
-                                'source_code' => $tmzticket['Segments'][0][0]['Origin']['Airport']['AirportCode'],
-                                'destination_code' => $tmzticket['Segments'][0][0]['Destination']['Airport']['AirportCode'],
-                                'source_city' => $source_city, //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
-                                'destination_city' => $destination_city, //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
-                                'departure_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Origin']['DepTime'])),
-                                'arrival_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Destination']['ArrTime'])),
-                                'flight_no' => trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode']).' '.trim($tmzticket['Segments'][0][0]['Airline']['FlightNumber']),
-                                'terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
-                                'departure_terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
-                                'arrival_terminal' => $tmzticket['Segments'][0][0]['Destination']['Airport']['Terminal'],
-                                'no_of_person' => $no_of_seats,
-                                'seatsavailable' => $no_of_seats,
-                                'tag' => $tmzticket['FareRules'][0]['FareRuleDetail'],
-                                'data_collected_from' => 'tmz_api',
-                                'sale_type' => 'api', /*This will be live only but for now making it API //live */
-                                'refundable' => $tmzticket['IsRefundable']?'Y':'N',
-                                'total' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                'airline' => $lastairline['id'],
-                                'aircode' => $tmzticket['Segments'][0][0]['Airline']['AirlineCode'],
-                                'ticket_no' => 'TMZ-TKT-'.intval($tmzticket['ResultIndex']),
-                                'price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                'cost_price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                'approved' => 1,
-                                'class' => 'ECONOMY',
-                                'no_of_stops' => intval($tmzticket['Segments'][0][0]['SegmentIndicator']),
-                                'companyid' => intval($supl_company['id']), //$company['id'], This has to be supplier company id. Means who own the ticket
-                                'companyname' => $supl_company['display_name'],
-                                'user_id' => intval($supl_company['primary_user_id']), // -1,
-                                'admin_markup' => 0,
-                                'rate_plan_id' => $supl_rateplan_id,
-                                'supplierid' => $supl_companyid,
-                                'sellerid' => $company['id'],
-                                'seller_rateplan_id' => $default_rateplan_id,
-                                'adult_total' => $price, //0.00,
-                                'image' => $image,
-                                'ResultIndex' => intval($tmzticket['ResultIndex']),
-                                'SearchIndex' => intval($tmzticket['SearchIndex']),
-                                'SuppSource' => intval($tmzticket['SuppSource']),
-                                'SuppTokenId' => $tmzticket['SuppTokenID'],
-                                'SuppTraceId' => $tmzticket['SuppTraceId'],
-                                'tokenid' => $tmzticket['AuthoTraceId'],
-                                'clientid' => $this->clientid,
-                                'agencytype' => $this->agencytype
-                            );
-                            $this->tokenid = $ticket['tokenid'];
-                            $this->clientid = $ticket['clientid'];
-                            $this->agencytype = $ticket['agencytype'];
-                    
-
-                            $ticket = array_merge($ticket_format, $ticket);
-
-                            array_push($tickets, $ticket);
-                        }
-                        catch(Exception $ex) {
-                            log_message('error', $ex);
+                            catch(Exception $ex) {
+                                log_message('error', $ex);
+                            }
                         }
                     }
                 }
             }
             
-            log_message("info", "Response (Ticket Search) : ".json_encode($response, JSON_UNESCAPED_SLASHES));
-            log_message("info", "Searched Tickets : ".json_encode($tickets, JSON_UNESCAPED_SLASHES));
+            log_message("debug", "Response (Ticket Search) : ".json_encode($response, JSON_UNESCAPED_SLASHES));
+            log_message("debug", "Searched Tickets : ".json_encode($tickets, JSON_UNESCAPED_SLASHES));
 
             return $tickets;
         }
@@ -288,13 +290,13 @@ class Api_tripmaza extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
         
 		if ($err) 
 		{
-			log_message("info", "ERROR : $err");
+			log_message("debug", "ERROR : $err");
 		  	return false;
 		} 
 		else 
@@ -320,7 +322,7 @@ class Api_tripmaza extends Api {
 
     public function getBooking($bookingid) {
 
-        if($bookingid && intval(BookingId)<=0) return null;
+        if($bookingid && intval($bookingid)<=0) return null;
 
         $data = array('TokenID' => $this->tokenid, 'BookingId' => $bookingid, 'TMagId' => $this->clientid);
 
@@ -331,13 +333,13 @@ class Api_tripmaza extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
         
 		if ($err) 
 		{
-			log_message("info", "ERROR : $err");
+			log_message("debug", "ERROR : $err");
 		  	return false;
 		} 
 		else 
@@ -377,7 +379,7 @@ class Api_tripmaza extends Api {
 
         $data = array('EndUserIp' => '121.101.14.10', 'TokenId' => $tokenid, 'ResultIndex' => $resultindex, 'SuppSource' => $suppsource, 'SuppTraceId' => $supptraceid, 'SuppTokenId' => $supptokenid, 'SearchIndex' => $searchindex);
 
-        log_message('info', 'Farequote => '.json_encode($data, JSON_UNESCAPED_SLASHES));
+        log_message('debug', 'Farequote => '.json_encode($data, JSON_UNESCAPED_SLASHES));
         $err = '';
         $response = '';
         $info = '';
@@ -385,13 +387,13 @@ class Api_tripmaza extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
         
 		if ($err) 
 		{
-			log_message("info", "ERROR : $err");
+			log_message("debug", "ERROR : $err");
 		  	return false;
 		} 
 		else 
@@ -435,6 +437,7 @@ class Api_tripmaza extends Api {
 
         $fare_quote = $this->fare_quote($ticket);
 
+
         //We need to check balance also
         if($balance && $fare_quote && $adminuser) {
             if(!boolval($fare_quote['isprice_changed'])) {
@@ -475,7 +478,7 @@ class Api_tripmaza extends Api {
 
                 $data = array('PageID' => $traceid, 'AuthoToken' => $this->tokenid, 'Ticketing' => array(array('Passengers' => $passengers,'GSTDetails' => null, 'FareQuoteIndexs' => $fqindex)), 'LastBalance' => 0.00, 'PmtType' => 'F-Credit');
 
-                log_message('info', 'Ticketing API POST => '.json_encode($data, JSON_UNESCAPED_SLASHES));
+                log_message('debug', 'Ticketing API POST => '.json_encode($data, JSON_UNESCAPED_SLASHES));
                 
                 $err = '';
                 $response = '';
@@ -484,13 +487,15 @@ class Api_tripmaza extends Api {
                 $result = $this->post($urlpart, $data, "application/json");
                 if($result && is_array($result)) {
                     $response = json_decode($result['response'], TRUE);
-                    $info = $result['info'];
+                    $info = isset($result['info']) ? $result['info'] : '';
                     $err = $result['err'];
+
+                    log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($result, JSON_UNESCAPED_SLASHES));
                 }
                 
                 if ($err) 
                 {
-                    log_message("info", "ERROR : $err");
+                    log_message("debug", "ERROR : $err");
                       return false;
                 } 
                 else 
@@ -539,7 +544,7 @@ class Api_tripmaza extends Api {
 
         $data = array('BookingId' => $bookingid, 'TokenId' => $this->tokenid, 'TMagId' => $this->clientid);
 
-        log_message('info', 'Get Booking Details API POST => '.json_encode($data, JSON_UNESCAPED_SLASHES));
+        log_message('debug', 'Get Booking Details API POST => '.json_encode($data, JSON_UNESCAPED_SLASHES));
         
         $err = '';
         $response = '';
@@ -548,13 +553,13 @@ class Api_tripmaza extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = $result['info'];
+            $info = isset($result['info']) ? $result['info'] : '';
             $err = $result['err'];
         }
         
         if ($err) 
         {
-            log_message("info", "ERROR : $err");
+            log_message("debug", "ERROR : $err");
               return false;
         } 
         else 
