@@ -162,6 +162,9 @@ class User_Controller extends Mail_Controller
 					$pnr = $arr["pnr"];
 				}
 
+				$arr['pageindex'] = $pageindex;
+				$arr['pagesize'] = $pagesize;
+
 				$result['page_size'] = $pagesize;
 				$result['page_index'] = $pageindex;
 				$result['total_tickets'] = $this->User_Model->total_ticket($arr);

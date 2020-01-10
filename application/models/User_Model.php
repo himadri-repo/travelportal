@@ -712,6 +712,9 @@ Class User_Model extends CI_Model
 	
 	public function search_ticket($data) 
 	{    
+		$pageindex = isset($data['pageindex'])?intval($data['pageindex']):0;
+		$pagesize = isset($data['pagesize'])?intval($data['pagesize']):0;
+
         $arr=array("t.user_id"=>$this->session->userdata('user_id'));  	
 		$this->db->select('t.id,t.trip_type,t.ticket_no,t.pnr,t.departure_date_time,t.arrival_date_time,t.departure_date_time1,t.arrival_date_time1,t.total,t.sale_type,t.refundable,t.created_date,c.city as source,ct.city as destination,c1.city as source1,ct1.city as destination1,t.class,t.no_of_person,t.max_no_of_person,a.image,t.approved,t.price,t.markup,t.available');
 		$this->db->from('tickets_tbl as t');
@@ -752,9 +755,12 @@ Class User_Model extends CI_Model
 		{
 			$arr=array("t.pnr"=>$data["pnr"]);
 			$this->db->where($arr);
-		}			
+		}
 						
 		$this->db->order_by("t.id","desc");
+		if($pageindex>0 && $pagesize>0) {
+			$this->db->limit($pagesize, $pagesize*($pageindex-1));
+		}
 		$query = $this->db->get();					
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
