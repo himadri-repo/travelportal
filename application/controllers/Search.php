@@ -501,7 +501,10 @@ class Search extends Mail_Controller
 						}
 
 						if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $defaultRPD!==NULL) {
-							$sellrpd = $defaultRPD;
+							if($companyid === intval($ticket['companyid'])) {
+								$sellrpd = $defaultRPD;
+							}
+
 							if($user['user_markup']!==NULL) {
 								if($user['user_markup']['field_value_type'] === '2') {
 									$adminmarkup = floatval($user['user_markup']['field_value']);
@@ -883,7 +886,7 @@ class Search extends Mail_Controller
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{			  
 			$company = $this->session->userdata('company');
-			$companyid = $company["id"];
+			$companyid = intval($company["id"]);
 			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 			$defaultRP = NULL;
 			$defaultRPD = NULL;
@@ -943,7 +946,10 @@ class Search extends Mail_Controller
 				$adminmarkup = 0;
 				$user['user_markup']= NULL;
 				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
-					$sellrpd = $defaultRPD;
+					if($companyid === intval($ticket['companyid'])) {
+						$sellrpd = $defaultRPD;
+					}
+					
 					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
 	
 					if($user['user_markup']!==NULL) {
@@ -1151,7 +1157,7 @@ class Search extends Mail_Controller
 		if ($this->session->userdata('user_id') && isset($id)) 
 		{	
 			$company = $this->session->userdata('company');
-			$companyid = $company["id"];
+			$companyid = intval($company["id"]);
 			$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
 			$defaultRP = NULL;
 			$defaultRPD = NULL;
@@ -1211,7 +1217,9 @@ class Search extends Mail_Controller
 				$adminmarkup = 0;
 				$user['user_markup']= NULL;
 				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
-					$sellrpd = $defaultRPD;
+					if($companyid === intval($ticket['companyid'])) {
+						$sellrpd = $defaultRPD;
+					}
 					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
 
 					if($user['user_markup']!==NULL) {

@@ -174,6 +174,7 @@
 																if($wallet_transaction && is_array($wallet_transaction) && count($wallet_transaction)>0)
 																{
 																	$ob = floatval($wallet_transaction[0]['OB']);
+																	$total = $ob;
 																	foreach($wallet_transaction as $key=>$value)
 																	{
 																		if($ctr === 1 && $ob!==0.00) { ?>

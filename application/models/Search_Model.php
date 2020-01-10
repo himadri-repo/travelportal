@@ -155,7 +155,7 @@ Class Search_Model extends CI_Model
     
 	public function search_round_trip($arr) 
 	{            		  
-		$this->db->select('t.user_id,t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.price,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.no_of_person,t.class,a.image,t.no_of_stops,t.no_of_stops1, t.tag');
+		$this->db->select('t.user_id,t.id,t.source,t.destination,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.price,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.no_of_person,t.class,a.image,t.no_of_stops,t.no_of_stops1, t.companyid, t.tag');
 		$this->db->from('tickets_tbl t');
 		$this->db->join('airline_tbl a', 'a.id = t.airline','left');
 		$this->db->join('city_tbl c', 'c.id = t.source');
@@ -179,7 +179,7 @@ Class Search_Model extends CI_Model
 	public function flight_details($id, $companyid=-1)
 	{
 		$arr=array("t.id"=>$id);
-		$this->db->select('u.id as user_id,t.user_id as uid,t.id,t.source,t.destination,t.source1,t.destination1,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.flight_no,t.flight_no1,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.departure_date_time1,t.arrival_date_time1,t.flight_no1,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.class,t.class1,t.no_of_person,a.image,t.airline,t.airline1,t.trip_type,t.price,t.baggage,t.meal,t.markup,t.discount,t.availibility,t.aircode,t.aircode1,t.no_of_stops,t.no_of_stops1,t.remarks,t.approved,t.remarks,t.stops_name,t.stops_name1,t.available, t.tag, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id', FALSE);
+		$this->db->select('u.id as user_id,t.user_id as uid,t.id,t.source,t.destination,t.source1,t.destination1,t.ticket_no,t.pnr,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.flight_no,t.flight_no1,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.departure_date_time1,t.arrival_date_time1,t.flight_no1,t.total,t.admin_markup,t.markup,t.sale_type,t.refundable,c.city as source_city,ct.city as destination_city,c1.city as source_city1,ct1.city as destination_city1,t.class,t.class1,t.no_of_person,a.image,t.airline,t.airline1,t.trip_type,t.price,t.baggage,t.meal,t.markup,t.discount,t.availibility,t.aircode,t.aircode1,t.no_of_stops,t.no_of_stops1,t.remarks,t.approved,t.remarks,t.stops_name,t.stops_name1,t.available, t.tag, t.companyid, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id', FALSE);
 		$this->db->from('tickets_tbl t');
 		$this->db->join("(
 				(select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id
@@ -1615,6 +1615,41 @@ Class Search_Model extends CI_Model
 
 							log_message('debug', "Search_Model::upsert_booking - Ticket count reduced by $qty as transaction is $sale_type | Result =>  $ticket_return | Ticket: ".intval($selected_ticket['id']));
 						}
+
+						//This is live booking between wholesaler and supplier and inventory also consumed. So lets perform account transaction
+						if($seller_companyid !== $customer_companyid) {
+							//Raise sale voucher
+							$return_value = $this->raiseVoucher(array(
+								'vch_type'=> 'SALE', 
+								'debit' => floatval($booking['total']), 
+								'customer_companyid' => $customer_companyid, 
+								'customer_userid' => 0, //$customer_userid, 
+								'source_companyid' => $seller_companyid, 
+								'source_userid' => $seller_userid, 
+								'document_id' => $bookingid,
+								'document_type' => 1,
+								"document_date" => $booking['booking_date'], 
+								"narration" => "Ticket sold (Booking id: $bookingid dated: ".date("Y-m-d H:i:s", strtotime($booking["booking_date"].'+00:00'))
+							));
+
+							log_message('debug', "Sale voucher raised ".json_encode($return_value, TRUE));
+
+							//Raise purchase voucher
+							$return_value = $this->raiseVoucher(array(
+								'vch_type'=> 'PURCHASE', 
+								'credit' => floatval($booking['total']), 
+								'customer_companyid' => $seller_companyid, 
+								'customer_userid' => 0, // $seller_userid, 
+								'source_companyid' => $customer_companyid, 
+								'source_userid' => $customer_userid, 
+								'document_id' => $bookingid,
+								'document_type' => 1,
+								"document_date" => $booking['booking_date'], 
+								"narration" => "Ticket purchased (Booking id: $bookingid dated: ".date("Y-m-d H:i:s", strtotime($booking["booking_date"].'+00:00'))
+							));
+
+							log_message('debug', "Purchase voucher raised ".json_encode($return_value, TRUE));
+						}
 					}
 
 					$this->db->trans_complete();
@@ -1635,6 +1670,61 @@ Class Search_Model extends CI_Model
 		else {
 			return array('status' => true, 'booking_id' => $returnedValue, 'sale_type' => $sale_type, 'message' => 'Successfully saved');
 		}
+	}
+
+	private function raiseVoucher($payload) {
+		$flag = true;
+		if(!$payload) return array('status' => 1, 'message' => 'Insufficient data passed to create voucher', 'vch_no' => '');
+		$voucher_no = '';
+
+		try
+		{
+			$vch_type = isset($payload['vch_type']) ? $payload['vch_type'] : '';
+			$credit = isset($payload['credit']) ? floatval($payload['credit']) : 0;
+			$debit = isset($payload['debit']) ? floatval($payload['debit']) : 0;
+			$customer_companyid = isset($payload['customer_companyid']) ? $payload['customer_companyid'] : 0;
+			$customer_userid = isset($payload['customer_userid']) ? $payload['customer_userid'] : 0;
+			$source_companyid = isset($payload['source_companyid']) ? $payload['source_companyid'] : 0;
+			$source_userid = isset($payload['source_userid']) ? $payload['source_userid'] : 0;
+			$document_id = isset($payload['document_id']) ? $payload['document_id'] : 0;
+			$document_type = isset($payload['document_type']) ? $payload['document_type'] : 0;
+			$document_date = isset($payload['document_date']) ? date("Y-m-d H:i:s", strtotime($payload['document_date'].'+00:00')) : date('Y-m-d H:i:s');
+			$narration = isset($payload['narration']) ? $payload['narration'] : '';
+
+			if($vch_type === '' || ($credit+$debit) === 0 || $customer_companyid === 0 || $source_companyid === 0) {
+				return array('status' => 1, 'message' => 'Invalid data passed for voucher creation', 'vch_no' => '');
+			}
+
+			$company = $this->get('company_tbl', array('id' => $source_companyid));
+			if($company!=NULL && is_array($company) && count($company)>0) {
+				$company = $company[0];
+			}
+
+			log_message('debug', "About to create voucher - $vch_type - ".json_encode($payload));
+
+			$voucher_no = $this->Search_Model->get_next_voucherno($company);
+			$this->save("account_transactions_tbl", array(
+				"voucher_no" => $voucher_no, 
+				"transacting_companyid" => $customer_companyid, 
+				"transacting_userid" => $customer_userid,
+				"documentid" => $document_id, 
+				"document_date" => $document_date, 
+				"document_type" => $document_type, 
+				"transaction_type" => $vch_type,
+				"credit" => $credit,
+				"debit" => $debit,
+				"companyid" => $source_companyid,  
+				"credited_accountid" => 7,  //some dummy value
+				"created_by" => $source_userid,
+				"narration" => $narration
+			));	
+		}
+		catch(Exception $ex) {
+			log_message('error', 'Search_Model::raiseVoucher - Error: '.$ex);
+			return array('status' => 1, 'message' => 'Invalid data passed for voucher creation', 'vch_no' => '');
+		}
+
+		return array('status' => 0, 'message' => "Voucher created successfully - $voucher_no", 'vch_no' => $voucher_no);
 	}
 
 	public function get_wallet($userid=-1, $companyid=-1) {
