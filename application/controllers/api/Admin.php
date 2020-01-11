@@ -319,6 +319,9 @@ class Admin extends REST_Controller {
 
         try
         {
+            log_message('debug', 'Admin:save_rateplan_post:: Rateplan => '.json_encode($rateplan, TRUE));
+            log_message('debug', 'Admin:save_rateplan_post:: RateplanDetails => '.json_encode($rateplanDetail, TRUE));
+
             $this->db->trans_start();
             $rateplan_info = $this->Admin_Model->save_rateplan($rateplan);
             $rateplan["id"] = $rateplan_info[0]["id"];

@@ -158,7 +158,8 @@ Class Admin_Model extends CI_Model
 		}
 
 		if($customer['rateplanid']=='-1') {
-			unset($customer['rateplanid']);
+			//unset($customer['rateplanid']);
+			$customer['rateplanid'] = NULL;
 		}
 
 		$this->db->where('id', $customer['companyid']);
@@ -850,16 +851,25 @@ Class Admin_Model extends CI_Model
 
 		try
 		{
+			log_message('debug', 'Admin_Model:save_rateplan:: posted value => '.json_encode($rateplan));
 			if(!empty($rateplan["id"])) {
 				//update
 				$this->db->update('rateplan_tbl', $rateplan, array("id" => intval($rateplan["id"], 10)));
 				$result = array("message" => "Rateplan updated successfully.", "id" => intval($rateplan["id"],10));
+				log_message('debug', 'Admin_Model:save_rateplan:: Rateplan updated => '.intval($rateplan["id"],10));
 			}
 			else {
 				$rateplan["id"] = NULL;
 				$this->db->insert('rateplan_tbl', $rateplan);
 				$rateplan["id"] = $this->db->insert_id();
 				$result = array("message" => "Rateplan updated successfully.", "id" => $this->db->insert_id());
+				log_message('debug', 'Admin_Model:save_rateplan:: New Rateplan created => '.intval($rateplan["id"],10));
+			}
+
+			if(intval($rateplan["default"]) === 1 && intval($rateplan["id"])>0) {
+				log_message('debug', 'Default rateplan changed for : Companyid: '.intval($rateplan["companyid"], 10).' new default rp id: '.intval($rateplan["id"], 10));
+				$this->db->update('rateplan_tbl', array('default' => 0), array("companyid" => intval($rateplan["companyid"], 10)));
+				$this->db->update('rateplan_tbl', array('default' => 1), array("id" => intval($rateplan["id"], 10)));
 			}
 		}
 		catch(Exception $ex) {
