@@ -153,3 +153,5 @@ $route['api/save/company/generalinfo'] = 'api/Company/save_generalinfo';
 $route['api/save/company/logo/(:num)'] = 'api/Company/save_logo/$1';
 $route['api/admin/accounts'] = 'api/Admin/accounts';
 $route['api/save/company/bankdetails'] = 'api/Company/save_bankdetails';
+$route['api/company/ticket/clone'] = 'api/Company/clone_ticket';
+$route['api/create/company'] = 'api/Company/create_company';

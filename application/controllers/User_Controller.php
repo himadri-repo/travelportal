@@ -423,6 +423,18 @@ class User_Controller extends Mail_Controller
 	
 	public function login()
 	{
+		$returnurl = $this->input->get('returnurl');
+		$qty = intval($this->input->get('qty'));
+
+		log_message('debug', "Return URL : $returnurl | Passed Qty : $qty");
+
+		if($returnurl) {
+			$this->session->set_userdata('returnurl', $returnurl);
+		}
+		if($qty>0) {
+			$this->session->set_userdata('no_of_person', $qty);
+		}
+
 		$companies = $this->Admin_Model->get_companies();
 		$company = null;
 		$siteUrl = siteURL();
@@ -710,6 +722,12 @@ class User_Controller extends Mail_Controller
 						$this->session->set_userdata('user_id',$result['user_id']);
 						$this->session->set_userdata('name',$result['name']);
 						$json["success"]="Login Successfully";
+						if($this->session->userdata('returnurl')) {
+							$json["returnurl"] = $this->session->userdata('returnurl');
+						}
+						if($this->session->userdata('no_of_person')) {
+							$json["no_of_person"] = $this->session->userdata('no_of_person');
+						}
 					}
 					else {
 						$json["error"]="Either wrong mobile number/email, password Or Your account is not yet approved";
@@ -1051,6 +1069,13 @@ class User_Controller extends Mail_Controller
 				$this->session->set_userdata('user_id',$result['user_id']);
 				$this->session->set_userdata('name',$result['name']);
 				$json["success"]="Login Successfully";
+				if($this->session->userdata('returnurl')) {
+					$json["returnurl"] = $this->session->userdata('returnurl');
+					$this->session->unset_userdata('returnurl');
+				}
+				if($this->session->userdata('no_of_person')) {
+					$json["no_of_person"] = $this->session->userdata('no_of_person');
+				}
 			}
 			else {
 				$json["error"]="Either wrong mobile number/email, password Or Your account is not yet approved";
@@ -1083,9 +1108,15 @@ class User_Controller extends Mail_Controller
 			$result1 = $this->User_Model->login($arr1);
 			if($result==true && $result1==true)
 			{	
-			$this->session->set_userdata('user_id',$result['user_id']);
-			$this->session->set_userdata('name',$result['name']);
-			$json["success"]="Login Successfully";
+				$this->session->set_userdata('user_id',$result['user_id']);
+				$this->session->set_userdata('name',$result['name']);
+				$json["success"]="Login Successfully";
+				if($this->session->userdata('returnurl')) {
+					$json["returnurl"] = $this->session->userdata('returnurl');
+				}
+				if($this->session->userdata('no_of_person')) {
+					$json["no_of_person"] = $this->session->userdata('no_of_person');
+				}
 			}
 			else if($result==true && $result1==false)
 				$json["error"]="Your Account is not Approved";

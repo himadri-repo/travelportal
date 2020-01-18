@@ -186,6 +186,9 @@
 											<td>
 												<?php echo number_format($grand_total,2,".",""); 
 												$allow_credit = $flight[0]["user"]["credit_ac"];
+												if($flight[0]["user"]["is_admin"] === 1) {
+													$allow_credit = 1;
+												}
 												$costprice = floatval($flight[0]["costprice"]);
 												$total_costprice = ($costprice * $qty);
 												$show_alarm = false;

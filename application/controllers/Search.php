@@ -353,7 +353,7 @@ class Search extends Mail_Controller
 					$defaultRP = $rateplans[0];
 					$rateplanid = $defaultRP['id'];
 
-					if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $currentuser["rateplanid"]!==null) {
+					if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && isset($currentuser["rateplanid"]) && intval($currentuser["rateplanid"])>0) {
 						$rateplanid = intval($currentuser["rateplanid"]);
 					}
 
@@ -503,6 +503,7 @@ class Search extends Mail_Controller
 						if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $defaultRPD!==NULL) {
 							if($companyid === intval($ticket['companyid'])) {
 								$sellrpd = $defaultRPD;
+								$suprpd = $defaultRPD;
 							}
 
 							if($user['user_markup']!==NULL) {
@@ -881,6 +882,11 @@ class Search extends Mail_Controller
 	
 	public function flightdetails($id)
 	{
+		$direct_qty = intval($this->input->get('qty'));
+		if($direct_qty>0) {
+			$this->session->set_userdata('no_of_person', $direct_qty);
+		}
+
 		$current_user = $this->session->userdata('current_user');
 		$posted_tickets = $this->session->userdata('tickets');
 		if ($this->session->userdata('user_id') && isset($id)) 
@@ -897,7 +903,8 @@ class Search extends Mail_Controller
 				$defaultRP = $rateplans[0];
 				$rateplanid = $defaultRP['id'];
 
-				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && isset($current_user["rateplanid"]) && intval($current_user["rateplanid"])>0) {
+				// if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
 					$rateplanid = intval($current_user["rateplanid"]);
 				}
 					
@@ -948,6 +955,7 @@ class Search extends Mail_Controller
 				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
 					if($companyid === intval($ticket['companyid'])) {
 						$sellrpd = $defaultRPD;
+						$suprpd = $defaultRPD;
 					}
 					
 					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
@@ -1167,7 +1175,8 @@ class Search extends Mail_Controller
 				$defaultRP = $rateplans[0];
 				$rateplanid = $defaultRP['id'];
 				
-				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
+				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && isset($current_user["rateplanid"]) && intval($current_user["rateplanid"])>0) {				
+				//if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $current_user["rateplanid"]!==null) {
 					$rateplanid = intval($current_user["rateplanid"]);
 				}
 	
@@ -1219,6 +1228,7 @@ class Search extends Mail_Controller
 				if($current_user["type"]==='B2B' && $current_user["is_admin"]!=='1' && $defaultRPD!==NULL) {
 					if($companyid === intval($ticket['companyid'])) {
 						$sellrpd = $defaultRPD;
+						$suprpd = $defaultRPD;
 					}
 					$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
 
@@ -1517,11 +1527,13 @@ class Search extends Mail_Controller
 		$current_ticket = $this->session->userdata('current_ticket');
 		$posted_tickets = $this->session->userdata('tickets');
 		$ordering_ticket = null;
-		foreach($posted_tickets as $posted_ticket) {
-			if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
-				$ordering_ticket = $posted_ticket;
-				$isapi = true;
-				break;
+		if($posted_tickets && is_array($posted_tickets) && count($posted_tickets)>0) {
+			foreach($posted_tickets as $posted_ticket) {
+				if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+					$ordering_ticket = $posted_ticket;
+					$isapi = true;
+					break;
+				}
 			}
 		}
 
@@ -1696,6 +1708,7 @@ class Search extends Mail_Controller
 						$this->prepare_send_sms("BOOKING_CUSTOMER_SMS", $booking_info, $company, $ticket, $customers, $posteddata, $flight, $newbookinginfo, $primary_admin_user['mobile']);
 					}
 
+					$transactionresult = null;
 					if($current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
 						$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
 					}
@@ -3788,73 +3801,178 @@ class Search extends Mail_Controller
 
 			echo json_encode($result, JSON_HEX_APOS);
 		} else if($mode==='clone') {
-			//This ticket will be cloned and create a new ticket under current companyid. But if the same ticket is present 
-			$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($ticket['id'])));
-			if($targetticket && count($targetticket)>0) {
-				$targetticket = &$targetticket[0];
-			}
-			log_message('debug', "Taking action ($mode) on Ticket - ".$ticket['id']." => ".json_encode($ticket)." | ".json_encode($targetticket));
-			if(intval($targetticket['companyid']) !== $companyid) {
-				unset($targetticket['id']);
-				unset($targetticket['pnr']);
-				unset($targetticket['created_date']);
-				unset($targetticket['created_on']);
-				unset($targetticket['data_collected_from']);
-				unset($targetticket['last_sync_key']);
-				unset($targetticket['updated_by']);
-				unset($targetticket['updated_on']);
+			// //This ticket will be cloned and create a new ticket under current companyid. But if the same ticket is present 
+			#region old clone code
+			// $targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($ticket['id'])));
+			// if($targetticket && count($targetticket)>0) {
+			// 	$targetticket = &$targetticket[0];
+			// }
+			// log_message('debug', "Taking action ($mode) on Ticket - ".$ticket['id']." => ".json_encode($ticket)." | ".json_encode($targetticket));
+			// if(intval($targetticket['companyid']) !== $companyid) {
+			// 	unset($targetticket['id']);
+			// 	unset($targetticket['pnr']);
+			// 	unset($targetticket['created_date']);
+			// 	unset($targetticket['created_on']);
+			// 	unset($targetticket['data_collected_from']);
+			// 	unset($targetticket['last_sync_key']);
+			// 	unset($targetticket['updated_by']);
+			// 	unset($targetticket['updated_on']);
 
-				try
-				{
-					$targetticket['companyid'] = $companyid;
-					$targetticket['cloned_from'] = intval($ticket['id']);
-					$targetticket['flight_no'] = $ticket['flight_no'];
-					$targetticket['no_of_person'] = $ticket['no_of_person'];
-					$targetticket['max_no_of_person'] = $ticket['no_of_person'];
-					$targetticket['availibility'] = $ticket['no_of_person'];
-					$targetticket['available'] = intval($ticket['no_of_person'])>0?'YES':'NO';
-					$targetticket['created_by'] = $current_user['id'];
-					$targetticket['price'] = $ticket['price'];
-					$targetticket['total'] = $ticket['price'];
-					$targetticket['tag'] = $ticket['tag'];
-					$targetticket['departure_date_time'] = $dept_date_time;
-					$targetticket['arrival_date_time'] = $arrv_date_time;
-					$targetticket['booking_freeze_by'] = $dept_date_time;
-					$targetticket['user_id'] = $current_user['id'];
-					$targetticket['ticket_no'] = "CLONED-".$targetticket['ticket_no'];
+			// 	try
+			// 	{
+			// 		$targetticket['companyid'] = $companyid;
+			// 		$targetticket['cloned_from'] = intval($ticket['id']);
+			// 		$targetticket['flight_no'] = $ticket['flight_no'];
+			// 		$targetticket['no_of_person'] = $ticket['no_of_person'];
+			// 		$targetticket['max_no_of_person'] = $ticket['no_of_person'];
+			// 		$targetticket['availibility'] = $ticket['no_of_person'];
+			// 		$targetticket['available'] = intval($ticket['no_of_person'])>0?'YES':'NO';
+			// 		$targetticket['created_by'] = $current_user['id'];
+			// 		$targetticket['price'] = $ticket['price'];
+			// 		$targetticket['total'] = $ticket['price'];
+			// 		$targetticket['tag'] = $ticket['tag'];
+			// 		$targetticket['departure_date_time'] = $dept_date_time;
+			// 		$targetticket['arrival_date_time'] = $arrv_date_time;
+			// 		$targetticket['booking_freeze_by'] = $dept_date_time;
+			// 		$targetticket['user_id'] = $current_user['id'];
+			// 		$targetticket['ticket_no'] = "CLONED-".$targetticket['ticket_no'];
 
-					$tktid = $this->Search_Model->save('tickets_tbl', $targetticket);
+			// 		$tktid = $this->Search_Model->save('tickets_tbl', $targetticket);
 
-					if($tktid>0) {
-						$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($tktid)));
-						if($targetticket && count($targetticket)>0) {
-							$targetticket = $targetticket[0];
-						}
-						$result['status'] ='Ticket successfully cloned';
-						$result['code'] =200;
-						$result['data'] =$targetticket;
+			// 		if($tktid>0) {
+			// 			$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($tktid)));
+			// 			if($targetticket && count($targetticket)>0) {
+			// 				$targetticket = $targetticket[0];
+			// 			}
+			// 			$result['status'] ='Ticket successfully cloned';
+			// 			$result['code'] =200;
+			// 			$result['data'] =$targetticket;
 	
-						log_message('debug', "Taking cloned - ".$tktid." => ".json_encode($targetticket));
-					}
-					else {
-						$result['status'] ='Ticket clonning failed. Check with admin.';
-						$result['code'] =501;
-						$result['data'] =[];
-					}
-				}
-				catch(Exception $ex) {
-					log_message('error', "Clone Error => $ex");
-				}
-			}
-			else {
-				$result['status'] ="This ticket belongs to you only, can't clone it. You can modify this ticket if needed.";
-				$result['code'] =501;
-				$result['data'] =[];
-			}
+			// 			log_message('debug', "Taking cloned - ".$tktid." => ".json_encode($targetticket));
+			// 		}
+			// 		else {
+			// 			$result['status'] ='Ticket clonning failed. Check with admin.';
+			// 			$result['code'] =501;
+			// 			$result['data'] =[];
+			// 		}
+			// 	}
+			// 	catch(Exception $ex) {
+			// 		log_message('error', "Clone Error => $ex");
+			// 	}
+			// }
+			// else {
+			// 	$result['status'] ="This ticket belongs to you only, can't clone it. You can modify this ticket if needed.";
+			// 	$result['code'] =501;
+			// 	$result['data'] =[];
+			// }
+			#endregion
 
+			$result = $this->Search_Model->clone_ticket(intval($ticket['id']), $companyid, array(
+				'current_userid' => intval($current_user['id']),
+				'flight_no' => $ticket['flight_no'],
+				'no_of_person' => $ticket['no_of_person'],
+				'price' => $ticket['price'],
+				'tag' => $ticket['tag'],
+				'departure_date_time' => $dept_date_time,
+				'arrival_date_time' => $arrv_date_time,
+				'booking_freeze_by' => $dept_date_time
+			));
 			echo json_encode($result, JSON_HEX_APOS);
 		}
 	}
+
+	public function mydeals($id) {
+		if($id) {
+			$user = $this->get_user($id);
+			$isauthenticated = $this->session->userdata('user_id') !== null;
+
+			if($user) {
+				$circle = ($this->input->post('circle') !== null) ? $this->input->post('circle') : '-1';
+	
+				$companyid = intval($user['companyid']);
+				$company = $this->get_company($companyid);
+				$circles = $this->Search_Model->get_inventory_circles($companyid);
+
+				$result = array();
+				$result['company'] = $this->get_company($companyid);
+				$result['circles'] = $circles;
+				$result['circle'] = $circle;
+				$result['setting']=$this->Search_Model->company_setting($companyid);
+				$result["currentuser"]=$user;
+				$result["footer"]=$this->Search_Model->get_post(5);
+				$result["isauthenticated"]=$isauthenticated;
+				$result["ticket_calender"]=$this->Search_Model->get_inventory_calender($companyid, 7);
+				if($isauthenticated) {
+					$result['mywallet']= $this->getMyWallet();
+				}
+				
+				$selected_circle = '';
+				if($circle !== '-1') {
+					$source = intval(explode('~^~', $circle)[0]);
+					$destination = intval(explode('~^~', $circle)[1]);
+
+					foreach ($circles as $circleitem) {
+						$circlekey = ($circleitem["source_id"].'~^~'.$circleitem["destination_id"]);
+						
+						if($circle === $circlekey) {
+							$selected_circle = $circleitem;
+							break;
+						}
+					}
+					if($selected_circle && is_array($selected_circle) && count($selected_circle)>0) {
+						$selected_circle = $selected_circle['source_city']." To ".$selected_circle['destination_city'];
+					}
+					else {
+						$selected_circle = '';
+					}
+
+					$result["tickets"] = $this->Search_Model->get_my_inventory($companyid, $source, $destination);
+				}
+				else {
+					$result["tickets"] = false;
+				}
+				$result["selected_circle"] = $selected_circle;
+
+				$this->load->view('header1', $result);
+				$this->load->view('mydeals', $result);
+				$this->load->view('footer1', $result);
+			}
+			else {
+				redirect("/login");	
+			}
+		}
+		else {
+			redirect("/login");
+		}
+	}
+
+	#region Helper methods
+	public function get_user($uid) {
+		if($uid) {
+			$user = $this->Search_Model->get('user_tbl', array('uid' => "'$uid'", 'active' => 1, 'is_admin' => 1));
+			if($user && is_array($user) && count($user)>0) {
+				$user = $user[0];
+			}
+		}
+		else {
+			$user = null;
+		}
+
+		return $user;
+	}
+	
+	public function get_company($companyid=-1) {
+		$company = [];
+		if($companyid>0) {
+			$company = $this->Search_Model->get('company_tbl', array('id' => $companyid, 'active' => 1));
+			if($company && is_array($company) && count($company)>0) {
+				$company = $company[0];
+			}
+		}
+
+		return $company;
+	}
+	#endregion
 
 	/*
 	private function getMyWallet() {

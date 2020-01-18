@@ -158,15 +158,35 @@
 					font-size:14px !important;
 				}
 				 @page {
-    size: letter portrait;
-    padding-left: 5in;
-    padding-right: 0.25in;
-    padding-top: 1in;
-  }
+					size: letter portrait;
+					padding-left: 5in;
+					padding-right: 0.25in;
+					padding-top: 1in;
+				}
 			}
 			.thank-you-note:before
 			{
 			  display:none;
+			}
+
+			.overlay-document {
+				top: 0%;
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				left: 0%;
+				background-color: #c1c1c1;
+			}
+
+			.overlay-rotated-text {
+				position: relative;
+				top: 25%;
+				left: 10%;
+				transform: rotate(-45deg);
+				color: #ff00008c;
+				z-index: 9;
+				font-size: 15em;
+				font-weight: 900;				
 			}
 		</style>
         <!--================= PAGE-COVER ================-->
@@ -183,8 +203,10 @@
                 </div><!-- end row -->
             </div><!-- end container -->
         </section><!-- end page-cover -->
-        
-        
+
+		<?php
+			$tkt_status = (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING");
+        ?>
         <!--==== INNERPAGE-WRAPPER =====-->
         <section class="innerpage-wrapper">
         	<div id="thank-you" class="innerpage-section-padding">
@@ -192,6 +214,11 @@
         			<div class="row">
 
                     	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-side">
+							<?php if($tkt_status === 'PENDING') { ?>
+							<div class="overlay-document">
+								<div class="overlay-rotated-text">PENDING</div>
+							</div>
+							<?php } ?>
                         	<div class="space-right">
 								<hr/>
 							    <div class="thank-you-note col-md-12 col-xs-12 col-sm-12 center">
@@ -639,11 +666,21 @@
 									<div class="row">
 										<div class="col-sm-4"></div>
 										<div class="col-sm-2">
-											<button type="button" class="btn btn-orange col-sm-12" onclick="window.print()">PRINT</button>
+											<?php if($tkt_status !== 'PENDING') { ?>
+												<button type="button" class="btn btn-orange col-sm-12" onclick="window.print()">PRINT</button>
+											<?php } 
+											else { ?>
+												<button type="button" class="btn btn-orange col-sm-12" onclick="javascript:alert('Your ticket is in PENDING state. Can`t print this ticket until it`s approved.');">PRINT</button>
+											<?php }?>
 										</div>
 										<div class="col-sm-2">
 											<!-- <a href="<?php echo base_url(); ?>search/pdf/<?php echo $details[0]["id"];?>" class="btn btn-orange col-sm-12" id="pdfview">DOWNLOAD</a> -->
-											<button type="submit" class="btn btn-orange col-sm-12" title="Download ticket in PDF format">DOWNLOAD</button>
+											<?php if($tkt_status !== 'PENDING') { ?>
+												<button type="submit" class="btn btn-orange col-sm-12" title="Download ticket in PDF format">DOWNLOAD</button>
+											<?php } 
+											else { ?>
+												<button type="button" class="btn btn-orange col-sm-12" title="Download ticket in PDF format" onclick="javascript:alert('Your ticket is in PENDING state. Can`t download this ticket until it`s approved.');">DOWNLOAD</button>
+											<?php }?>
 										</div>
 									</div>
 								</form>

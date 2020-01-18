@@ -123,7 +123,12 @@ $( document ).ready(function()
 						});
 						$("#status").html("<div class='alert alert-success'>"+value+"</div>");
 						//window.location.href=""+baseurl+"user";
-						window.location.href=""+baseurl+"search";
+						if(data['returnurl'] && data['returnurl']!=='') {
+							window.location.href = data['returnurl'];
+						}
+						else {
+							window.location.href=""+baseurl+"search";
+						}
 					}
 					else if(key=="error")
 					{

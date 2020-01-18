@@ -1090,6 +1090,650 @@ class Company extends REST_Controller {
 
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
+
+    public function clone_ticket_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $result = array();
+      
+        try
+        {
+            $companyid = isset($payload['companyid'])?$payload['companyid']:-1;
+            $company = $this->Admin_Model->get_company($companyid);
+            if($company && count($company)>0) {
+                $company = $company[0];
+            }
+            $current_userid = isset($payload['current_userid'])?$payload['current_userid']:-1;
+            $ticketid = isset($payload['ticketid'])?intval($payload['ticketid']):-1;
+            $flight_no = isset($payload['flight_no'])?$payload['flight_no']:'';
+            $no_of_person = isset($payload['no_of_person'])?intval($payload['no_of_person']):1;
+            $price = isset($payload['price'])?floatval($payload['price']):0.00;
+            $tag = isset($payload['tag'])?$payload['tag']:'';
+
+            if($companyid>0 && $current_userid>0 && $ticketid>0 && $price>0) {
+                $ticket = $this->Search_Model->get('tickets_tbl', array('id' => $ticketid));
+                if($ticket && count($ticket)>0) {
+                    $ticket = $ticket[0];
+                }
+
+                $dept_date_time = date('Y-m-d H:i:s', strtotime($ticket['departure_date_time'].' '.$ticket['departure_date_time'].':00'));
+                $arrv_date_time = date('Y-m-d H:i:s', strtotime($ticket['arrival_date_time'].' '.$ticket['arrival_date_time'].':00'));
+        
+                $result = $this->Search_Model->clone_ticket(intval($ticket['id']), $companyid, array(
+                    'current_userid' => intval($current_userid),
+                    'flight_no' => $flight_no,
+                    'no_of_person' => $no_of_person,
+                    'price' => $price,
+                    'tag' => $tag,
+                    'departure_date_time' => $ticket['departure_date_time'],
+                    'arrival_date_time' => $ticket['arrival_date_time'],
+                    'booking_freeze_by' => $ticket['departure_date_time']
+                ));    
+            }
+            else {
+                $result = array('code' => 501, 'message' => "Invalid company and user id passed or Other posted value is invalid", 'data' => []);
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+            $result = array();
+            $result['code'] = 501;
+            $result['message'] = $ex;
+            $result['data'] = [];
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function create_company_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($payload, true);
+        $result = array();
+
+        try
+        {
+            $this->Search_Model->db->trans_begin();
+
+            $company = $this->create_new_company($payload);
+            $primary_user = $this->create_user($company, $payload);
+            $result = $this->add_default_accounts($company, $primary_user, $payload);
+            $default_rate_plan = $this->add_rateplan($company, $primary_user, $payload);
+            $wallet = $this->add_wallet($company, $primary_user, $payload);
+            $attributes = $this->add_company_attributes($company, $primary_user, $payload);
+
+            $result = array();
+            $result['code'] = 200;
+            $result['message'] = 'Company created successfully';
+            $result['data'] = array('company' => $company, 'primary_user' => $primary_user, 'rateplan' => $default_rate_plan, 'wallet' => $wallet, 'company_attribute' => $attributes);
+            
+            $this->Search_Model->db->trans_complete();
+        }
+        catch(Exception $ex) {
+            $this->Search_Model->db->trans_rollback();
+            log_message('error', $ex);
+            $result = array();
+            $result['code'] = 501;
+            $result['message'] = $ex;
+            $result['data'] = [];
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    #region helper method    
+    private function create_new_company($payload) {
+        $company = array();
+        try {
+            $last_company_code = 'OXY0001';
+            $companyies = $this->Search_Model->get('company_tbl', array('active' => 1));
+            if($companyies && is_array($companyies) && count($companyies)>0) {
+                $last_company = $companyies[count($companyies)-1];
+                $last_company_code = intval(str_replace('OXY', '', $last_company['code']));
+                if($last_company_code>0) {
+                    $last_company_code = "OXY".str_pad($last_company_code+1,4,"0",STR_PAD_LEFT);
+                }
+            }
+
+            $company['code'] = $last_company_code;
+            $company['name'] = isset($payload['name'])?$payload['name']:'';
+            $company['display_name'] = isset($payload['name'])?$payload['name']:'';
+            $company['address'] = isset($payload['address'])?$payload['address']:'';
+            $company['state'] = isset($payload['state'])?$this->get_state_code($payload['state']):-1;
+            $company['country'] = isset($payload['country'])?$this->get_country_code($payload['country']):-1;
+            $company['tenent_code'] = $company['code'].'100';
+            $company['primary_user_id'] = -1;
+            $company['gst_no'] = isset($payload['gst_no'])?$payload['gst_no']:'';
+            $company['pan'] = isset($payload['pan'])?$payload['pan']:'';
+            $company['type'] = 6;
+            $company['created_by'] = 0;
+            $company['created_on'] = date("Y-m-d H:i:s");
+            $company['updated_by'] = 0;
+            $company['updated_on'] = date("Y-m-d H:i:s");
+            $company['active'] = 1;
+            $company['parent_companyid'] = -1;
+            $company['baseurl'] = isset($payload['baseurl'])?$payload['baseurl']:'';
+            $company['pin'] = isset($payload['pin'])?$payload['pin']:'';
+
+            //now lets save the company
+            log_message('debug', 'Company:create_company | Creating company => '.json_encode($company));
+
+            $companyid = $this->Search_Model->save('company_tbl', $company);
+            if($companyid>0) {
+                $company = $this->Search_Model->get('company_tbl', array('id' => $companyid));
+                if($company && is_array($company) && count($company)>0) {
+                    $company = $company[0];
+
+                    $result = $this->add_default_service($company);
+
+                    log_message('debug', 'Company created -> New Company => '.json_encode($company)." | Default service added ? $result");
+                }
+            }
+            else {
+                log_message('debug', 'Can`t create company => '.json_encode($company));
+            }
+        }   
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $company;
+    }
+
+    private function add_default_service($company) {
+        try
+        {
+            $result = $this->Search_Model->save('company_services_tbl', array('serviceid' => 1, 'companyid' => intval($company['id']), 'active' => 1));
+            log_message('debug', 'Default service has been provissioned to company : '.$company['name']);
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $result;
+    }
+
+    private function add_default_accounts($company, $user, $payload) {
+        try
+        {
+            $result = $this->Search_Model->save('accounts_tbl', array(
+                'account_head_code' => 'ACC0003', 
+                'account_head_name' => 'Ticket Sales', 
+                'account_groupid' => 7, 
+                'parent_accountid' => -1, 
+                'configuration_data' => '{}', 
+                'debit' => 0, 
+                'credit' => 0,
+                'companyid' => intval($company['id']), 
+                'active' => 1,
+                'created_by' => intval($user['id'])
+            ));
+            log_message('debug', 'Default accounts has been provissioned to company : '.$company['name']);
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $result;
+    }
+
+    private function add_rateplan($company, $user, $payload) {
+        $rateplan = array();
+        try
+        {
+            $rateplanid = $this->Search_Model->save('rateplan_tbl', array(
+                'name' => 'Default Rateplan', 
+                'display_name' => 'Default Rateplan', 
+                'assigned_to' => 14, 
+                'companyid' => intval($company['id']), 
+                'active' => 1,
+                'default' => 1,
+                'created_by' => intval($user['id'])
+            ));
+
+            if($rateplanid>0) {
+                log_message('debug', 'Default rateplan has been provissioned to company : '.$company['name']);
+                $rateplan = $this->Search_Model->get('rateplan_tbl', array('id' => $rateplanid));
+                if($rateplan && is_array($rateplan) && count($rateplan)>0) {
+                    $rateplan = $rateplan[0];
+                }
+
+                //insert rateplan details
+                $idx = 1;
+                //1. markup
+                $rateplandetail = $this->Search_Model->save('rateplan_detail_tbl', array(
+                    'rateplanid' => $rateplanid,
+                    'companyid' => intval($company['id']), 
+                    'serialno' => $idx++,
+                    'head_name' => 'Mark Up', 
+                    'head_code' => 'markup',
+                    'amount' => 200.00,
+                    'amount_type' => 1,
+                    'operation' => 1,
+                    'calculation' => '',
+                    'active' => 1,
+                    'created_by' => intval($user['id'])
+                ));
+
+                //2. srvchg
+                $rateplandetail = $this->Search_Model->save('rateplan_detail_tbl', array(
+                    'rateplanid' => $rateplanid,
+                    'companyid' => intval($company['id']), 
+                    'serialno' => $idx++,
+                    'head_name' => 'Service Charge', 
+                    'head_code' => 'srvchg',
+                    'amount' => 0.00,
+                    'amount_type' => 1,
+                    'operation' => 1,
+                    'calculation' => '',
+                    'active' => 1,
+                    'created_by' => intval($user['id'])
+                ));
+
+                //3. SGST
+                $rateplandetail = $this->Search_Model->save('rateplan_detail_tbl', array(
+                    'rateplanid' => $rateplanid,
+                    'companyid' => intval($company['id']), 
+                    'serialno' => $idx++,
+                    'head_name' => 'SGST', 
+                    'head_code' => 'sgst',
+                    'amount' => 0.00,
+                    'amount_type' => 2,
+                    'operation' => 1,
+                    'calculation' => '{srvchg}',
+                    'active' => 1,
+                    'created_by' => intval($user['id'])
+                ));
+
+                //4. CGST
+                $rateplandetail = $this->Search_Model->save('rateplan_detail_tbl', array(
+                    'rateplanid' => $rateplanid,
+                    'companyid' => intval($company['id']), 
+                    'serialno' => $idx++,
+                    'head_name' => 'CGST', 
+                    'head_code' => 'cgst',
+                    'amount' => 0.00,
+                    'amount_type' => 2,
+                    'operation' => 1,
+                    'calculation' => '{srvchg}',
+                    'active' => 1,
+                    'created_by' => intval($user['id'])
+                ));
+
+                //5. IGST
+                $rateplandetail = $this->Search_Model->save('rateplan_detail_tbl', array(
+                    'rateplanid' => $rateplanid,
+                    'companyid' => intval($company['id']), 
+                    'serialno' => $idx++,
+                    'head_name' => 'IGST', 
+                    'head_code' => 'igst',
+                    'amount' => 0.00,
+                    'amount_type' => 2,
+                    'operation' => 1,
+                    'calculation' => '{srvchg}',
+                    'active' => 1,
+                    'created_by' => intval($user['id'])
+                ));
+
+                $rateplandetail = $this->Search_Model->get('rateplan_detail_tbl', array('rateplanid' => $rateplanid));
+                if($rateplandetail && is_array($rateplandetail) && count($rateplandetail)>0) {
+                    $rateplan['details'] = $rateplandetail;
+                }                
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $rateplan;
+    }
+
+    private function create_user($company, $payload) {
+        $user = array();
+        try
+        {
+            $last_user_code = 'USR0001';
+            $users = $this->Search_Model->get('user_tbl', array('active' => 1));
+            if($users && is_array($users) && count($users)>0) {
+                $last_user = $users[count($users)-1];
+                $last_user_code = intval($last_user['id']);
+                if($last_user_code>0) {
+                    $last_user_code = "USR".str_pad($last_user_code+1,4,"0",STR_PAD_LEFT);
+                }
+            }
+
+            $user['user_id'] = $last_user_code;
+            $user['name'] = isset($payload['user_name'])?$payload['user_name']:'';
+            $user['profile_image'] = isset($payload['profile_image'])?$payload['profile_image']:'';
+            $user['email'] = isset($payload['email'])?$payload['email']:'';
+            $user['mobile'] = isset($payload['mobile'])?$payload['mobile']:'';
+            $user['address'] = isset($payload['address'])?$payload['address']:'';
+            $user['state'] = intval($company['state']);
+            $user['country'] = intval($company['country']);
+            $user['password'] = '123456';
+            $user['is_supplier'] = 1;
+            $user['is_customer'] = 1;
+            $user['active'] = 1;
+            $user['type'] = 'EMP';
+            $user['credit_ac'] = 1;
+            $user['uid'] = uniqid(time(),FALSE);
+            $user['doj'] = date("Y-m-d H:i:s");
+            $user['companyid'] = intval($company['id']);
+            $user['permission'] = 4294967295;
+            $user['is_admin'] = 1;
+            $user['pan'] = $company['pan'];
+            $user['gst'] = $company['gst_no'];
+            $user['created_by'] = 0;
+            $user['created_on'] = date("Y-m-d H:i:s");
+            $user['updated_by'] = 0;
+            $user['updated_on'] = date("Y-m-d H:i:s");
+
+            //now lets save the user
+            log_message('debug', 'Company:create_user | Creating user => '.json_encode($user));
+
+            $userid = $this->Search_Model->save('user_tbl', $user);
+            if($userid>0) {
+                $result = $this->Search_Model->update('company_tbl', array('primary_user_id' => $userid, 'created_by' => $userid), array('id' => intval($company['id'])));
+                $user = $this->Search_Model->get('user_tbl', array('id' => $userid));
+                if($user && is_array($user) && count($user)>0) {
+                    $user = $user[0];
+
+                    log_message('debug', 'User created -> New User => '.json_encode($company));
+                }
+            }
+            else {
+                log_message('debug', 'Can`t create user => '.json_encode($user));
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $user;
+    }
+
+    private function add_wallet($company, $user, $payload) {
+        $system_wallet = array();
+        try
+        {
+            $wallet_id= $this->Search_Model->save('system_wallets_tbl', array(
+                'name' => intval($company['code']).'_wallet_sys_'.intval($user['id']), 
+                'display_name' => 'Wallet by System', 
+                'companyid' => intval($company['id']), 
+                'userid' => 0,
+                'sponsoring_companyid' => -1,
+                'allowed_transactions' => "[{      trans_type: 'Bank Transfer',      trans _code: '0001',      },{      trans_type: 'On-line',      trans _code: '0002',            gateways: ['paytm', 'payu', 'atom', 'razorpay']}]", 
+                'wallet_account_code' => 'WL_'.intval($user['id']),
+                'balance' => 0,
+                'type' => 1,
+                'status' => 1,
+                'created_by' => intval($user['id'])
+            ));
+            log_message('debug', 'Default system wallet has been provissioned to company : '.$company['name']);
+
+            if($wallet_id>0) {
+                $system_wallet = $this->Search_Model->get('system_wallets_tbl', array('id' => $wallet_id));
+                if($system_wallet && is_array($system_wallet) && count($system_wallet)>0) {
+                    $system_wallet = $system_wallet[0];
+                }
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $system_wallet;
+    }
+
+    private function add_company_attributes($company, $user, $payload) {
+        $attributes = array();
+        try
+        {
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'site_title',
+                'name' => 'Site Title',
+                'display_name' => 'Site Title',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $company['name'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'phone_no',
+                'name' => 'Phone Number',
+                'display_name' => 'Phone Number',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $user['mobile'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'fax',
+                'name' => 'Fax',
+                'display_name' => 'Fax',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['fax'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //email
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'email',
+                'name' => 'Email',
+                'display_name' => 'Email',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $user['email'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+            
+            //logo
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'logo',
+                'name' => 'Logo',
+                'display_name' => 'Logo',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['logo'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //bank_name
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'bank_name',
+                'name' => 'Bank Name',
+                'display_name' => 'Bank Name',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['bank_name'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //bank_branch
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'bank_branch',
+                'name' => 'Branch',
+                'display_name' => 'Branch',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['bank_branch'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //acc_no
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'acc_no',
+                'name' => 'A/C. Number',
+                'display_name' => 'A/C. Number',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['acc_no'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //ifsc
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'ifsc',
+                'name' => 'IFSC',
+                'display_name' => 'IFSC',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['ifsc'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //acc_name
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'acc_name',
+                'name' => 'A/C. NAME',
+                'display_name' => 'A/C. NAME',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['acc_name'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //bank_accounts
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'bank_accounts',
+                'name' => 'Bank Accounts',
+                'display_name' => 'Bank Accounts',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['bank_accounts'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //payment_gateway
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'payment_gateway',
+                'name' => 'Payment Gateway',
+                'display_name' => 'Payment Gateway',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['payment_gateway'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //configuration
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'configuration',
+                'name' => 'Company Configurations',
+                'display_name' => 'Company Configurations',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['configuration'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            //api_integration
+            $attribute = $this->Search_Model->save('attributes_tbl', array(
+                'code' => 'api_integration',
+                'name' => 'API Integration',
+                'display_name' => 'API Integration',
+                'category' => 'General',
+                'datatype' => 'string',
+                'datavalue' => $payload['api_integration'],
+                'target_object_type' => 'company',
+                'target_object_id' => intval($company['id']),
+                'active' => 1,
+                'companyid' => intval($company['id']),
+                'created_by' => intval($user['id']) 
+            ));
+
+            if($attribute>0) {
+                log_message('debug', 'Default company attributes has been provissioned to company : '.$company['name']);
+
+                $attributes = $this->Search_Model->get('attributes_tbl', array('companyid' => intval($company['id'])));
+                if($attributes && is_array($attributes) && count($attributes)>0) {
+                    //$system_wallet = $system_wallet[0];
+                }
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        return $attributes;
+    }
+
+    private function get_state_code($statename) {
+        $statecode = -1;
+        $state = $this->Search_Model->get('metadata_tbl', array('datavalue' => "'$statename'", 'associated_object_type' => "'state'", 'active' => 1));
+        if($state && is_array($state) && count($state)>0) {
+            $state = $state[0];
+            $statecode = intval($state['id']);
+        }
+
+
+        return $statecode;
+    }
+
+    private function get_country_code($countryname) {
+        $countrycode = -1;
+        $country = $this->Search_Model->get('metadata_tbl', array('datavalue' => "'$countryname'", 'associated_object_type' => "'country'", 'active' => 1));
+        if($country && is_array($country) && count($country)>0) {
+            $country = $country[0];
+            $countrycode = intval($country['id']);
+        }
+
+        return $countrycode;
+    }    
+    #endregion
 }
 
 ?>

@@ -2345,5 +2345,338 @@ Class Search_Model extends CI_Model
 
 		return $result;
 	}
+
+	public function clone_ticket($ticketid, $companyid, $metadata) {
+		$result = [];
+
+		if(!$ticketid || intval($ticketid, 10)<=0) {
+			$result = array('status' => "This ticket belongs to you only, can't clone it. You can modify this ticket if needed.", 'code' => 501, 'data' => []);
+
+			return $result;
+		}
+
+		$ticketid = intval($ticketid, 10);
+
+		//This ticket will be cloned and create a new ticket under current companyid. But if the same ticket is present 
+		$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => $ticketid));
+		if($targetticket && count($targetticket)>0) {
+			$targetticket = &$targetticket[0];
+		}
+		log_message('debug', "Cloning Taking - ".$ticketid." => ".json_encode($targetticket));
+		if(intval($targetticket['companyid']) !== $companyid) {
+			unset($targetticket['id']);
+			unset($targetticket['pnr']);
+			unset($targetticket['created_date']);
+			unset($targetticket['created_on']);
+			unset($targetticket['data_collected_from']);
+			unset($targetticket['last_sync_key']);
+			unset($targetticket['updated_by']);
+			unset($targetticket['updated_on']);
+
+			try
+			{
+				$targetticket['companyid'] = $companyid;
+				$targetticket['cloned_from'] = $ticketid;
+				$targetticket['flight_no'] = isset($metadata['flight_no'])?$metadata['flight_no']:'';
+				$targetticket['no_of_person'] = isset($metadata['no_of_person'])?$metadata['no_of_person']:1;
+				$targetticket['max_no_of_person'] = isset($metadata['no_of_person'])?$metadata['no_of_person']:1;
+				$targetticket['availibility'] = isset($metadata['no_of_person'])?$metadata['no_of_person']:1;
+				$targetticket['available'] = (isset($metadata['no_of_person']) && intval($metadata['no_of_person'])) > 0 ? 'YES' : 'NO';
+				$targetticket['created_by'] = isset($metadata['current_userid'])?$metadata['current_userid']:0;
+				$targetticket['price'] = isset($metadata['price'])?floatval($metadata['price']):0;
+				$targetticket['total'] = isset($metadata['price'])?floatval($metadata['price']):0;
+				$targetticket['tag'] = isset($metadata['tag'])?$metadata['tag']:'';
+				$targetticket['departure_date_time'] = isset($metadata['departure_date_time']) ? $metadata['departure_date_time'] : '1970-01-01 00:00:00';
+				$targetticket['arrival_date_time'] = isset($metadata['arrival_date_time']) ? $metadata['arrival_date_time'] : '1970-01-01 00:00:00';
+				$targetticket['booking_freeze_by'] = isset($metadata['booking_freeze_by']) ? $metadata['booking_freeze_by'] : '1970-01-01 00:00:00';
+				$targetticket['user_id'] = isset($metadata['current_userid'])?$metadata['current_userid']:0;
+				$targetticket['ticket_no'] = "CLONED-".$targetticket['ticket_no'];
+
+				$tktid = $this->Search_Model->save('tickets_tbl', $targetticket);
+
+				if($tktid>0) {
+					$targetticket = $this->Search_Model->get('tickets_tbl', array('id' => intval($tktid)));
+					if($targetticket && count($targetticket)>0) {
+						$targetticket = $targetticket[0];
+					}
+					$result['status'] ='Ticket successfully cloned';
+					$result['code'] =200;
+					$result['data'] =$targetticket;
+
+					log_message('debug', "Taking cloned - ".$tktid." => ".json_encode($targetticket));
+				}
+				else {
+					$result['status'] ='Ticket clonning failed. Check with admin.';
+					$result['code'] =501;
+					$result['data'] =[];
+				}
+			}
+			catch(Exception $ex) {
+				log_message('error', "Clone Error => $ex");
+			}
+		}
+		else {
+			$result['status'] ="This ticket belongs to you only, can't clone it. You can modify this ticket if needed.";
+			$result['code'] =501;
+			$result['data'] =[];
+		}
+
+		return $result;
+	}
+
+	public function get_my_inventory($companyid=-1, $source=-1, $destination=-1, $days=30) {
+		if($companyid > 0) {
+			$sql = "select 	tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city as source_city, ct1.code as source_city_code, ct2.city as destination_city, ct2.code as destination_city_code, tkt.trip_type, 
+				tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, 
+				tkt.total, al.airline, al.image, al.aircode as aircode, tkt.ticket_no, tkt.price, cm.id as companyid, cm.display_name as companyname, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, 
+				tkt.updated_by, tkt.tag, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, rpv.markup as supl_markup, rpv.srvchg as supl_srvchg, 
+				rpv.cgst as supl_cgst, rpv.sgst as supl_sgst, rpv.igst as supl_igst, rpv.disc as supl_disc, ((tkt.price+rpv.markup+rpv.srvchg)+(rpv.srvchg*rpv.igst)) as ticket_price, 
+				max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airline, max(ltkt.adultbasefare) as adultbasefare, 
+				max(ltkt.adult_tax_fees) as adult_tax_fees, 
+				max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, 
+				max(ltkt.adultbasefare+ltkt.adult_tax_fees+200) as adult_total	
+			from tickets_tbl tkt 
+			inner join city_tbl ct1 on tkt.source=ct1.id 
+			inner join city_tbl ct2 on tkt.destination=ct2.id 
+			inner join airline_tbl al on al.id=tkt.airline 
+			inner join company_tbl cm on tkt.companyid=cm.id 
+			inner join 
+			(  
+				(select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id 
+				from wholesaler_tbl spl  
+				inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1 
+				inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services' 
+				inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
+				inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1 
+				where spl.salerid=$companyid) 
+				union all 
+				(select cm.id as supplierid, rp.id as rate_plan_id, 0 as sellerid, 0 as seller_rateplan_id 
+				from company_tbl cm 
+				inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1 
+				where cm.id=$companyid 
+				limit 1) 
+			) as rpt on tkt.companyid = rpt.supplierid 
+			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+			left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
+					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
+					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
+					and ltkt.airline is not null 
+			where tkt.source=$source and tkt.destination=$destination and tkt.trip_type='ONE' and tkt.available='YES' and tkt.approved=1 and tkt.no_of_person>=1 
+				and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')>=now() and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')<=DATE_ADD(now(), INTERVAL $days DAY)
+			group by tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person  
+					, tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id, cm.display_name, tkt.user_id ,tkt.data_collected_from,  
+					tkt.refundable, tkt.sale_type, tkt.updated_on, tkt.updated_by, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, 
+					rpv.markup, rpv.srvchg, rpv.cgst, rpv.sgst, rpv.igst, rpv.disc, ct1.city, ct2.city
+			order by tkt.source, tkt.destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time";
+			
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				//return $query->result_array();
+				$result = $query->result_array();
+				if($result && is_array($result) && count($result)>0) {
+					return $result;
+				}
+				else
+				{
+					return false;
+				}
+			}	
+		}
+
+		return false;
+	}
+
+	public function get_inventory_circles($companyid, $days=30) {
+		$circles = array();
+		$source_city = array();
+		$destination_city = array();
+
+		if($companyid > 0) {
+			$sql = "select distinct ct1.city as source_city, ct2.city as destination_city, ct1.code as source_city_code, ct1.id as src_id, ct2.code as destination_city_code, ct2.id as dst_id
+			from tickets_tbl tkt 
+			inner join city_tbl ct1 on tkt.source=ct1.id 
+			inner join city_tbl ct2 on tkt.destination=ct2.id 
+			inner join airline_tbl al on al.id=tkt.airline 
+			inner join company_tbl cm on tkt.companyid=cm.id 
+			inner join 
+			(  
+				(select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id 
+				from wholesaler_tbl spl  
+				inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1 
+				inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services' 
+				inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
+				inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1 
+				where spl.salerid=$companyid) 
+				union all 
+				(select cm.id as supplierid, rp.id as rate_plan_id, 0 as sellerid, 0 as seller_rateplan_id 
+				from company_tbl cm 
+				inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1 
+				where cm.id=$companyid 
+				limit 1) 
+			) as rpt on tkt.companyid = rpt.supplierid 
+			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+			left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
+					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
+					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
+					and ltkt.airline is not null 
+			where tkt.trip_type='ONE' and tkt.available='YES' and tkt.approved=1 and tkt.no_of_person>=1 
+				and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')>=now() and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')<=DATE_ADD(now(), INTERVAL $days DAY)
+			group by tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person  
+					, tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id, cm.display_name, tkt.user_id ,tkt.data_collected_from,  
+					tkt.refundable, tkt.sale_type, tkt.updated_on, tkt.updated_by, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, 
+					rpv.markup, rpv.srvchg, rpv.cgst, rpv.sgst, rpv.igst, rpv.disc, ct1.city, ct2.city
+			order by ct1.city, ct2.city";
+			
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				//return $query->result_array();
+				$result = $query->result_array();
+				if($result && is_array($result) && count($result)>0) {
+					$src_city = array();
+					$dst_city = array();
+					foreach ($result as $row) {
+						$circles[] = array(
+							'source_city' => $row['source_city'], 
+							'source_id' => $row['src_id'], 
+							'source_code' => $row['source_city_code'],
+							'destination_city' => $row['destination_city'], 
+							'destination_id' => $row['dst_id'], 
+							'destination_code' => $row['destination_city_code'],
+						);
+					}
+					
+					return $circles;
+				}
+				else {
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+
+		}
+
+		return $circles;
+	}
+
+	public function get_inventory_calender($companyid, $days = 7) {
+		$circles = array();
+		$source_city = array();
+		$destination_city = array();
+
+		if($companyid > 0) {
+			$sql = "select b.circle, sum(b.price_1) as price_1, sum(b.price_2) as price_2, sum(b.price_3) as price_3, sum(b.price_4) as price_4, sum(b.price_5) as price_5, sum(b.price_6) as price_6, sum(b.price_7) as price_7, sum(b.price_8) as price_8
+			from
+			(
+				select a.circle, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 0 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_1, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 1 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_2, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 2 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_3, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 3 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_4, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 4 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_5, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 5 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_6, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 6 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_7, 
+				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 7 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_8 
+				from
+				(
+					select concat(ct1.code, '-', ct2.code) as circle, DATE_FORMAT(tkt.departure_date_time,'%e-%b') as dow, ((tkt.price+rpv.markup+rpv.srvchg)+(rpv.srvchg*rpv.igst)) as ticket_price
+					from tickets_tbl tkt 
+					inner join city_tbl ct1 on tkt.source=ct1.id 
+					inner join city_tbl ct2 on tkt.destination=ct2.id 
+					inner join airline_tbl al on al.id=tkt.airline 
+					inner join company_tbl cm on tkt.companyid=cm.id 
+					inner join 
+					(  
+						(select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id 
+						from wholesaler_tbl spl  
+						inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1 
+						inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services' 
+						inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
+						inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1 
+						where spl.salerid=$companyid) 
+						union all 
+						(select cm.id as supplierid, rp.id as rate_plan_id, 0 as sellerid, 0 as seller_rateplan_id 
+						from company_tbl cm 
+						inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1 
+						where cm.id=$companyid 
+						limit 1) 
+					) as rpt on tkt.companyid = rpt.supplierid 
+					inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+					left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
+							and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
+							and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
+							and ltkt.airline is not null 
+					where -- tkt.source=4 and tkt.destination=5 and 
+					tkt.trip_type='ONE' and tkt.available='YES' and tkt.approved=1 and tkt.no_of_person>=1 
+					and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')>=now() and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')<=DATE_ADD(now(), INTERVAL 8 DAY)
+					group by tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person  
+							, tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id, cm.display_name, tkt.user_id ,tkt.data_collected_from,  
+							tkt.refundable, tkt.sale_type, tkt.updated_on, tkt.updated_by, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, 
+							rpv.markup, rpv.srvchg, rpv.cgst, rpv.sgst, rpv.igst, rpv.disc, ct1.city, ct2.city
+					order by tkt.source, tkt.destination, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time
+				) a
+				group by a.circle, a.dow
+			) b
+			group by b.circle";
+			
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				//return $query->result_array();
+				$result = $query->result_array();
+				if($result && is_array($result) && count($result)>0) {
+					$col_name_1 = $this->get_column_name('price_1', 0);
+					$col_name_2 = $this->get_column_name('price_2', 1);
+					$col_name_3 = $this->get_column_name('price_3', 2);
+					$col_name_4 = $this->get_column_name('price_4', 3);
+					$col_name_5 = $this->get_column_name('price_5', 4);
+					$col_name_6 = $this->get_column_name('price_6', 5);
+					$col_name_7 = $this->get_column_name('price_7', 6);
+					$col_name_8 = $this->get_column_name('price_8', 7);
+
+					foreach ($result as $row) {
+						
+						$circles[] = array(
+							'Circle' => $row['circle'],
+							"$col_name_1" => round(floatval($row['price_1']),0) > 0 ? '₹ '.round(floatval($row['price_1']),0) : '-', 
+							"$col_name_2" => round(floatval($row['price_2']),0) > 0 ? '₹ '.round(floatval($row['price_2']),0) : '-', 
+							"$col_name_3" => round(floatval($row['price_3']),0) > 0 ? '₹ '.round(floatval($row['price_3']),0) : '-', 
+							"$col_name_4" => round(floatval($row['price_4']),0) > 0 ? '₹ '.round(floatval($row['price_4']),0) : '-', 
+							"$col_name_5" => round(floatval($row['price_5']),0) > 0 ? '₹ '.round(floatval($row['price_5']),0) : '-', 
+							"$col_name_6" => round(floatval($row['price_6']),0) > 0 ? '₹ '.round(floatval($row['price_6']),0) : '-', 
+							"$col_name_7" => round(floatval($row['price_7']),0) > 0 ? '₹ '.round(floatval($row['price_7']),0) : '-', 
+							"$col_name_8" => round(floatval($row['price_8']),0) > 0 ? '₹ '.round(floatval($row['price_8']),0) : '-', 
+						);
+					}
+					
+					return $circles;
+				}
+				else {
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+
+		}
+
+		return $circles;
+	}
+
+	public function get_column_name($col_name, $day_index) {
+		$date=date_create(date("Y-m-d H:i:s"));
+		//echo date_format($date,"Y-m-d")."</br>";
+		date_add($date,date_interval_create_from_date_string("$day_index days"));
+		return date_format($date,"d-M");
+	}
 }
 ?>
