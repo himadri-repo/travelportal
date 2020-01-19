@@ -25,6 +25,10 @@
             var admin=parseInt("0<?php echo $this->session->userdata('current_user')['is_admin'] ?>");
             var permission = parseInt("0<?php echo $this->session->userdata('current_user')['permission'] ?>");
         </script>
+        <?php 
+            $company = $this->session->userdata("company");
+            $uid = $company['uid'];
+        ?>
         <style>
             .dropdown-item {
                 font-size: 15px;
@@ -134,6 +138,7 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li><a href="<?php echo base_url(); ?>"><span><i class="fa fa-home"></i></span>Home</a></li>
 						<li><a href="<?php echo base_url(); ?>search"><span><i class="fa fa-search"></i></span>Search Flight</a></li>
+						<li><a href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>"><span><i class="fa fa-search"></i></span>Hot Deals</a></li>
                         <?php if(!$this->session->userdata('user_id')){ ?>
                             <li><a href="<?php echo base_url(); ?>login"><span><i class="fa fa-lock"></i></span>Login</a></li>
                             <li><a href="<?php echo base_url(); ?>register"><span><i class="fa fa-plus"></i></span>Sign Up</a></li>
@@ -175,6 +180,7 @@
                     
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search"><i class="fa fa-plane link-icon"></i><span></span>Search Flight</a>
+                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>"><i class="fa fa-plane link-icon"></i><span></span>Hot Deals</a>
 						<!--<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>-->
 						<!--<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>-->
                         <?php if(!$this->session->userdata('user_id')){ ?>

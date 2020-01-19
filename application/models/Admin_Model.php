@@ -117,8 +117,9 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_company($companyid) {
-		$this->db->select("cm.* ");
+		$this->db->select("cm.*, usr.uid ");
 		$this->db->from('company_tbl cm');
+		$this->db->join('user_tbl usr', 'cm.primary_user_id=usr.id', 'inner', FALSE);
 		$this->db->where('cm.id='.$companyid);
 
 		$query = $this->db->get();
@@ -134,8 +135,9 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_companies() {
-		$this->db->select("cm.* ");
-		$this->db->from('company_tbl cm');
+		$this->db->select("cm.*, usr.uid ");
+		$this->db->from('company_tbl cm ');
+		$this->db->join('user_tbl usr', 'cm.primary_user_id=usr.id', 'inner', FALSE);
 		$this->db->where('cm.active=1');
 
 		$query = $this->db->get();
@@ -364,17 +366,42 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function search_suppliers() {
-		$this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
-		$this->db->from('company_tbl c');
-		$this->db->join('company_services_tbl csrv', 'csrv.companyid=c.id and csrv.active=1 and c.active=1', 'inner');
-		$this->db->join('metadata_tbl md', 'md.associated_object_type=\'services\' and csrv.serviceid=md.id and md.active=1', 'inner');
-		$this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
-		$this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
-		$this->db->where('(c.type & 2)=2');
-		$this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue');
-		$this->db->order_by('c.display_name');
+		// $this->db->select("c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration ");
+		// $this->db->from('company_tbl c');
+		// $this->db->join('company_services_tbl csrv', 'csrv.companyid=c.id and csrv.active=1 and c.active=1', 'inner');
+		// $this->db->join('metadata_tbl md', 'md.associated_object_type=\'services\' and csrv.serviceid=md.id and md.active=1', 'inner');
+		// $this->db->join('user_tbl usr', 'usr.id=c.primary_user_id', 'inner');
+		// $this->db->join('attributes_tbl att', 'att.companyid=c.id and att.target_object_type=\'company\' and att.code=\'configuration\'', 'left');
+		// $this->db->where('(c.type & 2)=2');
+		// $this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue');
+		// $this->db->order_by('c.display_name');
 
-		$query = $this->db->get();
+		$sql = "SELECT c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration, ifnull(stat.Circle, 0) as Circle, ifnull(stat.Ticket_Count, 0) as Ticket_Count
+				FROM company_tbl c
+				INNER JOIN company_services_tbl csrv ON csrv.companyid=c.id and csrv.active=1 and c.active=1
+				INNER JOIN metadata_tbl md ON md.associated_object_type='services' and csrv.serviceid=md.id and md.active=1
+				INNER JOIN user_tbl usr ON usr.id=c.primary_user_id
+				left join 
+				(
+					select a.companyid, count(a.circle) as Circle, sum(a.cnt) as Ticket_Count
+					from 
+					(
+						select tkt.companyid, (concat(ct1.code, '-', ct2.code)) as circle, count(tkt.id) as cnt
+						from tickets_tbl tkt
+						inner join city_tbl ct1 on ct1.id=tkt.source
+						inner join city_tbl ct2 on ct2.id=tkt.destination
+						where tkt.available='YES' and tkt.availibility>0 and tkt.departure_date_time>now() 
+						group by tkt.companyid, concat(ct1.code, '-', ct2.code)
+					) as a
+					group by a.companyid
+				) as stat on stat.companyid=c.id
+				LEFT JOIN attributes_tbl att ON att.companyid=c.id and att.target_object_type='company' and att.code='configuration'
+				WHERE (c.type & 2) = 2
+				GROUP BY c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue";
+
+		//$query = $this->db->get();
+		$query = $this->db->query($sql);
+
 		//echo $this->db->last_query();die();
 		if ($query->num_rows() > 0) 
 		{					
