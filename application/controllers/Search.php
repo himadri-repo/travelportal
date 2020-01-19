@@ -3778,6 +3778,7 @@ class Search extends Mail_Controller
 					'availibility' => $ticket['no_of_person'], 
 					'available' => intval($ticket['no_of_person'])>0?'YES':'NO', 
 					'price' => $ticket['price'], 
+					'total' => $ticket['price'], 
 					'departure_date_time' => $dept_date_time,
 					'arrival_date_time' => $arrv_date_time,
 					'tag' => $ticket['tag'],

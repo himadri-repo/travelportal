@@ -695,7 +695,7 @@ class Company extends REST_Controller {
         try
         {
             foreach ($bookings as $booking) {
-                log_message('info', "Booking to be settled => ".json_encode($booking));
+                log_message('debug', "Booking to be settled => ".json_encode($booking));
                 $feedbacks[] = array('idx' => $idx++, 'feedback' => $this->Search_Model->upsert_booking($booking, $selectedTicket, $originalbooking, $pricediffaction));
             }
         }
@@ -741,7 +741,7 @@ class Company extends REST_Controller {
                 }
 
                 // $price = floatval($ordered_booking['price']);
-                log_message('info', "Company::delete_booking_customer - Before Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Bookings Details: ".json_encode($ordered_booking));
+                log_message('debug', "Company::delete_booking_customer - Before Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Bookings Details: ".json_encode($ordered_booking));
                 $price = floatval($ordered_booking['costprice']);
                 $srvchg = floatval($ordered_booking['srvchg']);
                 $cgst = floatval($ordered_booking['cgst']);
@@ -749,9 +749,9 @@ class Company extends REST_Controller {
                 $igst = floatval($ordered_booking['igst']);
 
                 $refundprice = $price + $srvchg + $cgst + $sgst;
-                log_message('info', "Company::delete_booking_customer - Wallet Trans Info: Booking Id : $bookingid | Customer Id : $customerid | Price : $price value will be credit or debited from wallet");
+                log_message('debug', "Company::delete_booking_customer - Wallet Trans Info: Booking Id : $bookingid | Customer Id : $customerid | Price : $price value will be credit or debited from wallet");
 
-                log_message('info', "Company::delete_booking_customer - Wallet Trans Info(Changed): Booking Id : $bookingid | Customer Id : $customerid | Price : $refundprice | srvchg : $srvchg | cgst : $cgst | sgst : $sgst");
+                log_message('debug', "Company::delete_booking_customer - Wallet Trans Info(Changed): Booking Id : $bookingid | Customer Id : $customerid | Price : $refundprice | srvchg : $srvchg | cgst : $cgst | sgst : $sgst");
 
                 if(intval($user_info['is_admin'])!==1 && $process_db_interaction) {
                     $transactionid = $this->User_Model->perform_wallet_transaction($ordered_booking['customer_userid'], array(
@@ -759,16 +759,44 @@ class Company extends REST_Controller {
                         'trans_type'=>$price>0?'DR':'CR',
                         'trans_ref_id'=>$bookingid,
                         'trans_ref_date'=>date("Y-m-d H:i:s"),
-                        'trans_ref_type'=>$price>0 ?'DEBIT NOTE':'CREDIT NOTE',
+                        'trans_ref_type'=>$price>0 ?'CREDIT NOTE':'DEBIT NOTE',
                         "trans_documentid" => $bookingid
                     ));
                     
-                    log_message('info', "Company::delete_booking_customer - After Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Wallet Trans Id: $transactionid");
+                    log_message('debug', "Company::delete_booking_customer - After Wallet Trans: Booking Id : $bookingid | Customer Id : $customerid | Wallet Trans Id: $transactionid");
+
+                    $customer_companyid = intval($ordered_booking['customer_companyid']);
+                    $cust_company = $this->Search_Model->get('company_tbl', array('id' => $customer_companyid));
+                    if($cust_company && is_array($cust_company) && count($cust_company)>0) {
+                        $cust_company = $cust_company[0];
+                    }
+
+                    log_message('debug', "[Search:delete_booking_customer] Transacting Accounts | Customer Companyid: $customer_companyid");
+				
+                    if($process_db_interaction) {
+                            $voucher_no = $this->Search_Model->save("account_transactions_tbl", array(
+                            "voucher_no" => $this->Search_Model->get_next_voucherno($cust_company), 
+                            "transacting_companyid" => $customer_companyid, 
+                            "transacting_userid" => intval($ordered_booking['customer_userid']), 
+                            "documentid" => $bookingid, 
+                            "document_date" => date("Y-m-d H:i:s"), 
+                            "document_type" => 1,
+                            "transaction_type" => "CREDIT NOTE", /* It was COLLECTION. Changing it to PURCHASE as it is PURCHASE for B2B & B2C */
+                            //"debit" => $parameters["debit"],  /*Payment made by B2B/B2C towards wholesaler company. But ticket is not being issued. So amount is being posed towards B2B/B2C's accounts */
+                            "credit" => $price,  
+                            "companyid" => $customer_companyid, 
+                            "credited_accountid" => 7,  
+                            "created_by"=>$ordered_booking['customer_userid'],
+                            "narration"=>"Amount ($price) returned as traveller deleted (Booking.Id : $bookingid | Customer Id : $customerid)"
+                        ));
+
+                        log_message('debug', "[Search:delete_booking_customer] Amount returned | Voucher No: $voucher_no");
+                    }
                 }
 
                 //update booking details as one person deleted
                 if($ordered_booking) {
-                    log_message('info', "Company::delete_booking_customer - Deleting customer: Booking Id : $bookingid | Customer Id : $customerid");
+                    log_message('debug', "Company::delete_booking_customer - Deleting customer: Booking Id : $bookingid | Customer Id : $customerid");
                     $qty = intval($ordered_booking['qty']);
                     $newqty = $qty-1;
                     $admin_markup = floatval($ordered_booking['admin_markup']);
@@ -780,7 +808,7 @@ class Company extends REST_Controller {
                     $total = round(($oldtotal/$qty)*$newqty);
                     $costprice = floatval($ordered_booking['costprice']);
                     
-                    log_message('info', "Company::delete_booking_customer - Updating booking: Qty: $qty | NewQty: $newqty | Price: $price | Admin.Markup: $admin_markup | Total: $total");
+                    log_message('debug', "Company::delete_booking_customer - Updating booking: Qty: $qty | NewQty: $newqty | Price: $price | Admin.Markup: $admin_markup | Total: $total");
 
                     if($process_db_interaction) {
                         $result = $this->Search_Model->update('bookings_tbl', array(
@@ -788,7 +816,7 @@ class Company extends REST_Controller {
                             'qty' => $newqty,
                             'adult' => $newqty
                         ), array('id' => $bookingid));
-                        log_message('info', "Company::delete_booking_customer - Updating booking: Booking Id: $bookingid | Booking update result: $result");
+                        log_message('debug', "Company::delete_booking_customer - Updating booking: Booking Id: $bookingid | Booking update result: $result");
                     }
                 }
             }
@@ -899,14 +927,14 @@ class Company extends REST_Controller {
         if(isset($_FILES['logo']) && $_FILES['logo']['error'] == 0) {
             $file = $_FILES['logo'];
             $path = realpath('./upload').DIRECTORY_SEPARATOR;
-            log_message('info', "Logo upload to real path $path");
+            log_message('debug', "Logo upload to real path $path");
             $path_parts = pathinfo($file['tmp_name']);
             $newfilepath = '';
             $filename = '';
 
             if(strpos($file['type'], 'image')>=0) {
                 if(!file_exists($path.$file['name'])) {
-                    log_message('info', "New logo file moved from ".$file['tmp_name']." to ".$path.$file['name']);
+                    log_message('debug', "New logo file moved from ".$file['tmp_name']." to ".$path.$file['name']);
                     move_uploaded_file($file['tmp_name'], $path.$file['name']);
                     $newfilepath = $path.$file['name'];
                     $filename = $file['name'];
