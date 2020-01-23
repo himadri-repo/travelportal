@@ -112,10 +112,16 @@
                             <thead>
                                 <?php if($ticket_calender) { ?>
                                 <tr>
-                                    <?php foreach($ticket_calender[0] as $key=>$value) {
+                                    <?php 
+                                        $idx = 0;
+                                        foreach($ticket_calender[0] as $key=>$value) {
+                                            if($idx !== 1) {
                                     ?>
                                             <th scope="col" style="background-color:#de8e07; color: #ffffff; font-weight: 700;"><?= $key ?></th>
-                                    <?php } ?>
+                                    <?php 
+                                            }
+                                            $idx++;
+                                        } ?>
                                 </tr>
                                 <?php } ?>
                             </thead>
@@ -130,7 +136,7 @@
                                                     <th scope="row" style="color:#de8e07; font-weight: 600;"><?= $ticket_calender[$i][$key] ?></th>
                                             <?php 
                                                 }
-                                                else { ?>
+                                                else if($idx>1) { ?>
                                                     <td style="font-weight: 600;"><?= str_pad($ticket_calender[$i][$key], 10, ' ', STR_PAD_LEFT) ?></td>
                                                 <?php }
                                                 $idx++;

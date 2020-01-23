@@ -2,6 +2,8 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 include_once(APPPATH.'core/Mail_Controller.php');
 include(APPPATH.'entities/company.php');
+include_once(APPPATH.'core/Common.php');
+
 class Search extends Mail_Controller 
 {
     public function __construct()

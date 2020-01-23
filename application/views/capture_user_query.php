@@ -140,7 +140,7 @@
                                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 error" id="msg"></div>
                             </div>
                             <div class="row">
-                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 action-section" style="">
+                                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 action-section">
                                     <button type="submit" class="btn btn-orange" id="btn_query" style="float: right;">Submit Query</button>
                                 </div>
                             </div>

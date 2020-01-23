@@ -8,8 +8,9 @@ defined('ADMIN_TICKETS') OR define('ADMIN_TICKETS', 8);
 defined('ADMIN_SUPPLIERS') OR define('ADMIN_SUPPLIERS', 16);
 defined('ADMIN_WHOLESALERS') OR define('ADMIN_WHOLESALERS', 64);
 defined('ADMIN_CUSTOMER') OR define('ADMIN_CUSTOMER', 4096);
+include_once(APPPATH.'core/Common.php');
 
-class Admin_Controller extends CI_Controller 
+class Admin_Controller extends Mail_Controller 
 {
 	 public function __construct()
 	 {

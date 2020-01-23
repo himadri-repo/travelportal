@@ -1,8 +1,9 @@
 <?php
 if (!defined('BASEPATH'))
-    exit('No direct script access allowed');
-class Contact_Controller extends CI_Controller 
-
+	exit('No direct script access allowed');
+include_once(APPPATH.'core/Common.php');
+	
+class Contact_Controller extends Mail_Controller 
 {
 
 	 public function __construct()

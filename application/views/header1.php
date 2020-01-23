@@ -32,7 +32,25 @@
         </script>
         <?php 
             $company = $this->session->userdata("company");
-            $uid = $company['uid'];
+
+            if($company && isset($company['uid']) && false)
+                $uid = $company['uid'];
+            else {
+                $companies = $this->Admin_Model->get_companies();
+                $company = null;
+                $siteUrl = siteURL();
+        
+                for($idx=0; $idx<count($companies); $idx++) {
+                    if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+                        $company = &$companies[$idx];
+                        break;
+                    }
+                }
+
+                if($company && isset($company['uid'])) {
+                    $uid = $company['uid'];
+                }
+            }
         ?>
         <style>
             .ui-datepicker .weekend .ui-state-default {

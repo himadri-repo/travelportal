@@ -22,8 +22,26 @@
 		 <link rel="stylesheet" href="<?php echo base_url(); ?>css/custom.css">
         <script>var baseurl="<?php echo base_url(); ?>";</script>		
         <?php 
-        $company = $this->session->userdata("company");
-        $uid = $company['uid'];
+            $company = $this->session->userdata("company");
+
+            if($company && isset($company['uid']) && false)
+                $uid = $company['uid'];
+            else {
+                $companies = $this->Admin_Model->get_companies();
+                $company = null;
+                $siteUrl = siteURL();
+        
+                for($idx=0; $idx<count($companies); $idx++) {
+                    if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+                        $company = &$companies[$idx];
+                        break;
+                    }
+                }
+
+                if($company && isset($company['uid'])) {
+                    $uid = $company['uid'];
+                }
+            }
         ?>
     </head>
     
