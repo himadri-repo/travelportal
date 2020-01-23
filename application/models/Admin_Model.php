@@ -135,7 +135,7 @@ Class Admin_Model extends CI_Model
 	}
 
 	public function get_companies() {
-		$this->db->select("cm.*, usr.uid ");
+		$this->db->select("cm.*, usr.uid, usr.mobile, usr.email ");
 		$this->db->from('company_tbl cm ');
 		$this->db->join('user_tbl usr', 'cm.primary_user_id=usr.id', 'inner', FALSE);
 		$this->db->where('cm.active=1');
@@ -376,7 +376,7 @@ Class Admin_Model extends CI_Model
 		// $this->db->group_by('c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue');
 		// $this->db->order_by('c.display_name');
 
-		$sql = "SELECT c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration, ifnull(stat.Circle, 0) as Circle, ifnull(stat.Ticket_Count, 0) as Ticket_Count
+		$sql = "SELECT c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.mobile, usr.email, group_concat(md.datavalue) as services, ifnull(att.datatype, '') as configtype, ifnull(att.datavalue, '') as configuration, ifnull(stat.Circle, 0) as Circle, ifnull(stat.Ticket_Count, 0) as Ticket_Count
 				FROM company_tbl c
 				INNER JOIN company_services_tbl csrv ON csrv.companyid=c.id and csrv.active=1 and c.active=1
 				INNER JOIN metadata_tbl md ON md.associated_object_type='services' and csrv.serviceid=md.id and md.active=1
@@ -397,7 +397,7 @@ Class Admin_Model extends CI_Model
 				) as stat on stat.companyid=c.id
 				LEFT JOIN attributes_tbl att ON att.companyid=c.id and att.target_object_type='company' and att.code='configuration'
 				WHERE (c.type & 2) = 2
-				GROUP BY c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.email, att.datatype, att.datavalue";
+				GROUP BY c.id, c.code, c.name, c.address, c.display_name, c.tenent_code, c.primary_user_id, c.gst_no, c.pan, c.type, c.baseurl, c.state, c.country, c.pin, usr.mobile, usr.email, att.datatype, att.datavalue";
 
 		//$query = $this->db->get();
 		$query = $this->db->query($sql);

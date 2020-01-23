@@ -168,6 +168,7 @@ class Mail_Controller  extends CI_Controller
          $this->email->set_newline("\r\n");
 		
 		 $name =$data["name"];
+		 $logo =$data["logo"];
 		 $sender_email = $data["email"];		 
 		 $msg = $data["msg"];	
 		 $msg1 = $data["msg1"];
@@ -188,7 +189,7 @@ class Mail_Controller  extends CI_Controller
 						
 						<tr> 
 							<td align="center">
-							<a href="#m_-4915400257058116905_"><img src="https://yourwebsite.co.in/oxytra/upload/logo.png" alt="OXTRA" width="180" height="auto" border="0" style="margin:0;display:block;font-family:Arial,Helvetica,sans-serif;color:#007ebe;font-size:20px;text-align:center;font-weight:bold" class="CToWUd"></a> 
+							<a href="#m_-4915400257058116905_"><img src="'.$logo.'" alt="" width="180" height="auto" border="0" style="margin:0;display:block;font-family:Arial,Helvetica,sans-serif;color:#007ebe;font-size:20px;text-align:center;font-weight:bold" class="CToWUd"></a> 
 							</td>
 						</tr>
 						
@@ -278,7 +279,7 @@ class Mail_Controller  extends CI_Controller
 
 				<tr> <td height="15"></td></tr><tr> <td><strong style="color:#333333">'.$msg2.'</strong></td></tr>
 
-				<tr> <td height="25"></td></tr><tr> <td>Best Regards, <br><strong style="color:#333333">The <span class="il">OXYTRA</span> Team</strong></td></tr></tbody> 
+				<tr> <td height="25"></td></tr><tr> <td>Best Regards, <br><strong style="color:#333333">The <span class="il">'.$name.'</span> Team</strong></td></tr></tbody> 
 				</table> </td><td width="25">
 				<img src="https://ci4.googleusercontent.com/proxy/ajI0iQ9AZlyADL8_9plu76lTu25FC1OpTY_tROnUtT6zLU8QdKG38VIPRyOdlIov1e6pgWZ2fFC565d84W9hl9M=s0-d-e1-ft#http://teja1.dazzlr.in/d1/images/spacer.gif" width="8" height="1" vspace="0" align="left" class="CToWUd">
 				</td>			
@@ -291,8 +292,8 @@ class Mail_Controller  extends CI_Controller
 					</tbody>
 					</table></body></html>';	
 			 
-		 $this->email->from("noreply@oxytra.com",$name); 
-		 $this->email->reply_to("noreply@oxytra.com",$name);
+		 $this->email->from("info@travelmergers.com",$name); 
+		 $this->email->reply_to("info@travelmergers.com",$name);
 		 $this->email->to($sender_email);		 
 		 $this->email->subject($subject);	
 		 $this->email->message($message);

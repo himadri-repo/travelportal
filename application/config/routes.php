@@ -155,3 +155,4 @@ $route['api/admin/accounts'] = 'api/Admin/accounts';
 $route['api/save/company/bankdetails'] = 'api/Company/save_bankdetails';
 $route['api/company/ticket/clone'] = 'api/Company/clone_ticket';
 $route['api/create/company'] = 'api/Company/create_company';
+$route['api/admin/capture/user_query'] = 'api/Admin/capture_user_query';

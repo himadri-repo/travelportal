@@ -107,12 +107,20 @@
                                                         <select class="form-control" name="source" id="source">
 													      <option value="">Source</option>
 														  <?php
-														  foreach($city as $key=>$value)
+														  foreach($sources as $sector)
 														  {
 														  ?>
-															<option value="<?php echo $city[$key]["id"];?>"><?php echo $city[$key]["city"];?></option>
+															<option value="<?php echo $sector['id'];?>"><?php echo $sector["sector"];?></option>
 														  <?php
 														  }
+														   ?>										  
+														  <?php
+														//   foreach($city as $key=>$value)
+														//   {
+														  ?>
+															<!-- <option value="<?php //echo $city[$key]["id"];?>"><?php //echo $city[$key]["city"];?></option> -->
+														  <?php
+//														  }
 														   ?>										  
 														</select>
                                                     </div>

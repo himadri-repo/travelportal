@@ -298,18 +298,22 @@ Class Search_Model extends CI_Model
 	}	
 	
     public function save($tbl,$data) 
-	{                      
-		if($this->db->insert($tbl,$data))
-		{
-			 
-            return $this->db->insert_id();
+	{    
+		try {
+			if($this->db->insert($tbl,$data))
+			{
+				
+				return $this->db->insert_id();
+			}
+			else
+			{
+				echo $this->db->last_query();die();
+				return false;
+			}
+		}	
+		catch(Exception $ex) {
+			log_message('error', $ex);
 		}
-		else
-		{
-			 echo $this->db->last_query();die();
-			return false;
-		}
-         	
 	}
 	
 	// public function update($tbl, $data, $filter) {
@@ -638,7 +642,9 @@ Class Search_Model extends CI_Model
 		// $arr=array("id"=>$id); 
 		$this->db->select("*");
 		$this->db->from($table);
-		$this->db->where($arr, null, false);
+		if($arr && is_array($arr) && count($arr)>0) {
+			$this->db->where($arr, null, false);
+		}
 		
 		$query = $this->db->get();							
 		if ($query->num_rows() > 0) 
@@ -2488,7 +2494,7 @@ Class Search_Model extends CI_Model
 		return false;
 	}
 
-	public function get_inventory_circles($companyid, $days=30) {
+	public function get_inventory_circles($companyid, $days=30, $triptype='ONE') {
 		$circles = array();
 		$source_city = array();
 		$destination_city = array();
@@ -2521,7 +2527,7 @@ Class Search_Model extends CI_Model
 					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
 					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
 					and ltkt.airline is not null 
-			where tkt.trip_type='ONE' and tkt.available='YES' and tkt.approved=1 and tkt.no_of_person>=1 
+			where tkt.trip_type='$triptype' and tkt.available='YES' and tkt.approved=1 and tkt.no_of_person>=1 
 				and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')>=now() and DATE_FORMAT(tkt.departure_date_time,'%Y-%m-%d')<=DATE_ADD(now(), INTERVAL $days DAY)
 			group by tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person  
 					, tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id, cm.display_name, tkt.user_id ,tkt.data_collected_from,  

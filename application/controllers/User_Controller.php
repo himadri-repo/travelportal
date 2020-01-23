@@ -596,6 +596,8 @@ class User_Controller extends Mail_Controller
 		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
 		{
 			$company=$this->session->userdata('company');
+			$base_url = isset($company['baseurl'])?$company['baseurl']:'';
+			$company_settings=$this->Search_Model->company_setting($company["id"]);
 			$otp=$this->input->post('otp');
 			if ($otp==$this->session->userdata('otp')) 
 			{
@@ -637,6 +639,7 @@ class User_Controller extends Mail_Controller
 					$data = array(				            
 								'name' => $company['display_name'], // "OXYTRA",
 								'email'=>$this->session->userdata('email'),
+								'logo'=>isset($company_settings['logo'])?($base_url.'/upload/'.$company_settings['logo']):'',
 								'msg'=>"Your Registration Completed Successfully",
 								'msg1'=>'After Admin Approval of <span class="il">'.$company['display_name'].'</span> you can login to this site',
 								'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
@@ -647,6 +650,7 @@ class User_Controller extends Mail_Controller
 								'name' => $this->session->userdata('name'),
 								'email'=>$this->session->userdata('email'),
 								'mobile'=>$this->session->userdata('mobile'),
+								'logo'=>isset($company_settings['logo'])?($base_url.'/upload/'.$company_settings['logo']):'',
 								'msg'=>"A New User Registered",
 								'user_id'=> $this->session->userdata('reg_user_id'),
 								'msg1'=>'',

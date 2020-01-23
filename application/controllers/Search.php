@@ -36,7 +36,12 @@ class Search extends Mail_Controller
 				$cname = NULL;
 				$result['cname']='';
 			}
-			
+
+			$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+			$sources = $this->get_filtered_sources($circles);
+
+			$result['sources']=$sources;
+			$result['circles']=json_encode($circles);
 			$result['city']=$this->User_Model->filter_city("ONE");	
 			$result['city1']=$this->User_Model->filter_city("ROUND");
 			$result["flight"]="";
@@ -284,7 +289,7 @@ class Search extends Mail_Controller
 				curl_close($curl);
 
 				$live_ticket_data = json_decode($response, true);
-				if($live_ticket_data && count($live_ticket_data)>0) {
+				if($live_ticket_data && count($live_ticket_data)>0 && isset($live_ticket_data['data']['onwardflights'])) {
 					$live_ticket_data = $live_ticket_data['data']['onwardflights'];
 				}
 				else {
@@ -525,6 +530,18 @@ class Search extends Mail_Controller
 				
 				$this->session->set_userdata('tickets',$tickets);
 
+				$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				$sources = $this->get_filtered_sources($circles);
+					
+				$result['sources']=$sources;
+				$result['circles']=json_encode($circles);
+
+				$state = [];
+				$state['contact_number'] = isset($company['mobile'])?$company['mobile']:null;
+				$state['sectors'] = $this->Search_Model->get('city_tbl', null);
+				$state['current_user'] = $current_user;
+				
+				$result["state"] = $state;
 				$result["flight"]=$tickets;
 				$result["flight_attributes"]=$modifiable_attributes;
 				$result["rateplan"]=$rateplans; // $default_rp;
@@ -3464,9 +3481,19 @@ class Search extends Mail_Controller
 	
 	public function filter_city()
 	{
-		
-         $response["success"]=$this->Search_Model->filter_city($this->input->post('source'),$this->input->post('trip_type'));        
-		 echo json_encode($response);	
+		$company = $this->session->userdata('company');
+		$current_user = $this->session->userdata('current_user');
+		$companyid = intval($company['id']);
+		$source = $this->input->post('source');
+		$triptype = $this->input->post('trip_type');
+
+		$circles = $this->Search_Model->get_inventory_circles($companyid, 365, $triptype);
+		$sectors = $this->get_filtered_destination($circles, $source);
+	
+		//$response["success"]=$this->Search_Model->filter_city($this->input->post('source'),$this->input->post('trip_type'));        
+
+		$response["success"] = $sectors;
+		echo json_encode($response);
 	}
 	
 	public function search_available_date()
@@ -3973,6 +4000,35 @@ class Search extends Mail_Controller
 
 		return $company;
 	}
+
+	public function get_filtered_sources($circles) {
+		$sources = [];
+		if($circles) {
+			foreach($circles as $circle) {
+				$filtered_sector = array('sector' => $circle['source_city'], 'id' => intval($circle['source_id']));
+				if(!in_array($filtered_sector , $sources)) {
+					$sources[] = $filtered_sector;
+				}
+			}
+		}
+
+		return $sources;
+	}
+
+	public function get_filtered_destination($circles, $source) {
+		$sectors = [];
+		if($circles) {
+			foreach($circles as $circle) {
+				$filtered_sector = array('sector' => $circle['destination_city'], 'id' => intval($circle['destination_id']));
+				if(!in_array($filtered_sector , $sectors) && intval($circle['source_id']) === intval($source)) {
+					$sectors[] = $filtered_sector;
+				}
+			}
+		}
+
+		return $sectors;
+	}
+
 	#endregion
 
 	/*

@@ -121,11 +121,18 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+		<script type="text/javascript" src="<?php echo base_url(); ?>js/tinymce/tinymce.min.js"></script>
+
+        <!-- <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script> -->
+        <!-- <script>tinymce.init({selector:'textarea'});</script>         -->
+
 		<script>
             $(document).ready(function()
             {
                 try
                 {
+                    tinymce.init({ selector:'.editor'});
+
                     $('html, body').animate({
                         scrollTop: $('#top_div').offset()? $('#top_div').offset().top-200 : 0
                     }, 'slow');
@@ -163,6 +170,8 @@
         
         <script>
             var tickets = [];
+            var dynamicCSSRules = [];
+
             function getTickets(mth, yr) {
                 //var cellContents = {1: '20', 15: '60', 28: '$99.99'};
 
@@ -211,6 +220,68 @@
             function setTickets(searchedTickets) {
                 //console.log(JSON.stringify(searchedTickets));
                 tickets = searchedTickets;
+                updateDatePickerCells({'drawMonth': 0, 'drawYear': 0});
+            }
+
+            function updateDatePickerCells(dp) {
+                /* Wait until current callstack is finished so the datepicker
+                is fully rendered before attempting to modify contents */
+                //getAvailableTickets($("#source").val(), $("#destination").val());
+                dynamicCSSRules = [];
+
+                //console.log(JSON.stringify(dp));
+                let mth = dp.drawMonth; //dp.selectedMonth;
+                let yr = dp.drawYear; //dp.selectedMonth;
+
+                if(yr===0) {
+                    mth = new Date().getMonth();
+                    yr = new Date().getFullYear();
+                }
+                
+                // console.log('selected item');
+                // console.log($('#departure_date').val());
+                // console.log($('#departure_date').val()==='');
+                // console.log(dp.selectedMonth);
+                // console.log(dp.selectedYear);
+                if($('#departure_date').val() && $('#departure_date').val()!=='' && mth===0 && yr>=0) {
+                    datePart = $('#departure_date').val().split('/');
+                    mth = parseInt(datePart[0])-1;
+                    yr = parseInt(datePart[2]);
+                }
+
+                setTimeout(function (mth1, yr1) {
+                    //Fill this with the data you want to insert (I use and AJAX request).  Key is day of month
+                    //NOTE* watch out for CSS special characters in the value
+                    var cellContents = getTickets(mth1, yr1);
+                    //alert('hi');
+                    //Select disabled days (span) for proper indexing but // apply the rule only to enabled days(a)
+                    $('.ui-datepicker td > *').each(function (idx, elem) {
+                        var value = cellContents[idx + 1] || 0;
+
+                        // dynamically create a css rule to add the contents //with the :after                         
+                        // selector so we don't break the datepicker //functionality 
+                        var className = 'datepicker-content-' + CryptoJS.MD5(value).toString();
+
+                        if(value == 0) {
+                            //addCSSRule('.ui-datepicker td a.' + className + ':after {content: "\\a0";}'); //&nbsp;
+                            className = "on-req";
+                            addCSSRule('.ui-datepicker td a.' + className + ':after {content: "On.Req";}'); //&nbsp;
+                        }
+                        else {
+                            //console.log(value);
+                            addCSSRule('.ui-datepicker td a.' + className + ':after {content: "' + "\\20b9 " + value + '";}');
+                        }
+
+                        $(this).addClass(className);
+                    });
+                }, 0, mth, yr);
+            }
+
+            function addCSSRule(rule) {
+                if ($.inArray(rule, dynamicCSSRules) == -1) {
+                    $('head').append('<style>' + rule + '</style>');
+                    dynamicCSSRules.push(rule);
+                }
             }
 
             $(function() {
@@ -220,17 +291,6 @@
                         getAvailableTickets($("#source").val(), $("#destination").val());
 
                         $('.datepicker').datepicker("show");
-                        //alert('hi');
-                        // setTimeout(function() {
-                        //     try
-                        //     {
-                        //         $('.datepicker').datepicker("show");
-                        //     }
-                        //     catch(e) {
-                        //         console.log(e);
-                        //         //alert(e);
-                        //     }
-                        // }, 0);
                     }
                     catch(e) {
                         console.log(e);
@@ -261,64 +321,6 @@
                     }
                 });
                 //updateDatePickerCells();
-
-                function updateDatePickerCells(dp) {
-                    /* Wait until current callstack is finished so the datepicker
-                    is fully rendered before attempting to modify contents */
-                    //getAvailableTickets($("#source").val(), $("#destination").val());
-
-                    //console.log(JSON.stringify(dp));
-                    let mth = dp.drawMonth; //dp.selectedMonth;
-                    let yr = dp.drawYear; //dp.selectedMonth;
-
-                    if(yr===0) {
-                        mth = new Date().getMonth();
-                        yr = new Date().getFullYear();
-                    }
-                    
-                    // console.log('selected item');
-                    // console.log($('#departure_date').val());
-                    // console.log($('#departure_date').val()==='');
-                    // console.log(dp.selectedMonth);
-                    // console.log(dp.selectedYear);
-                    if($('#departure_date').val() && $('#departure_date').val()!=='' && mth===0 && yr===0) {
-                        datePart = $('#departure_date').val().split('/');
-                        mth = parseInt(datePart[0])-1;
-                        yr = parseInt(datePart[2]);
-                    }
-
-                    setTimeout(function (mth1, yr1) {
-                        //Fill this with the data you want to insert (I use and AJAX request).  Key is day of month
-                        //NOTE* watch out for CSS special characters in the value
-                        var cellContents = getTickets(mth1, yr1);
-                        //alert('hi');
-                        //Select disabled days (span) for proper indexing but // apply the rule only to enabled days(a)
-                        $('.ui-datepicker td > *').each(function (idx, elem) {
-                            var value = cellContents[idx + 1] || 0;
-
-                            // dynamically create a css rule to add the contents //with the :after                         
-                            // selector so we don't break the datepicker //functionality 
-                            var className = 'datepicker-content-' + CryptoJS.MD5(value).toString();
-
-                            if(value == 0)
-                                addCSSRule('.ui-datepicker td a.' + className + ':after {content: "\\a0";}'); //&nbsp;
-                            else {
-                                //console.log(value);
-                                addCSSRule('.ui-datepicker td a.' + className + ':after {content: "' + "\\20b9 " + value + '";}');
-                            }
-
-                            $(this).addClass(className);
-                        });
-                    }, 0, mth, yr);
-                }
-
-                var dynamicCSSRules = [];
-                function addCSSRule(rule) {
-                    if ($.inArray(rule, dynamicCSSRules) == -1) {
-                        $('head').append('<style>' + rule + '</style>');
-                        dynamicCSSRules.push(rule);
-                    }
-                }
             });
         </script>
     </body>

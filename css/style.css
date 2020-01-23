@@ -6268,3 +6268,18 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	font-size: 16px !important;
 	color: #ffffff;
 }
+
+a.on-req:after {
+	font-size: 12px !important;
+	color: #05a059 !important;
+}
+.error {
+	font-size: 22px !important;
+	color: #cc0707 !important;
+	margin: 10px 0px 0px 10px;
+}
+.success {
+	font-size: 22px !important;
+	color: #05a059 !important;
+	margin: 10px 0px 0px 10px;
+}

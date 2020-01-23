@@ -104,6 +104,7 @@
                                         </form>
                                     </div>
                                     
+									<!-- ONE WAY SECTION -->
                                     <div id="tab-one-way" class="tab-pane fade in active">
                                         <form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation()">
 										   <input type="hidden" name="trip_type" value="ONE"> 
@@ -114,12 +115,21 @@
                                                         <select class="form-control" name="source" id="source">
 													      <option value="">Source</option>
 														  <?php
-														  foreach($city as $key=>$value)
+														  foreach($sources as $sector)
 														  {
 														  ?>
-															<option value="<?php echo $city[$key]["id"];?>" <?php if($post[0]["source"]==$city[$key]["id"]) echo "selected"; ?>><?php echo $city[$key]["city"];?></option>
+															<option value="<?php echo $sector['id'];?>" <?php if($post[0]["source"]==$sector["id"]) echo "selected"; ?>><?php echo $sector["sector"];?></option>
 														  <?php
 														  }
+														   ?>										  
+
+														  <?php
+														//   foreach($city as $key=>$value)
+														//   {
+														  ?>
+															<!-- <option value="<?php //echo $city[$key]["id"];?>" <?php //if($post[0]["source"]==$city[$key]["id"]) echo "selected"; ?>><?php //echo $city[$key]["city"];?></option> -->
+														  <?php
+														//   }
 														   ?>										  
 														</select>
                                                     </div>
@@ -131,12 +141,12 @@
                                                          <select class="form-control" name="destination" id="destination">
 													      <option value="">Destination</option>
 														  <?php
-														  foreach($city1 as $key=>$value)
-														  {
+														//   foreach($city1 as $key=>$value)
+														//   {
 														  ?>
-														  <option value="<?php echo $city1[$key]["id"];?>" <?php if($post[0]["destination"]==$city1[$key]["id"]) echo "selected"; ?>><?php echo $city1[$key]["city"];?></option>
+														  <!-- <option value="<?php //echo $city1[$key]["id"];?>" <?php //if($post[0]["destination"]==$city1[$key]["id"]) echo "selected"; ?>><?php //echo $city1[$key]["city"];?></option> -->
 														  <?php
-														  }
+														//   }
 														   ?>										  
 														</select>
                                                     </div>
@@ -200,7 +210,7 @@
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-8 content-side" id="top_div">
 							<?php 
-								$currentuserstyle = (($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') ? 'block': 'none');
+								$currentuserstyle = ((($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') && !empty($flight) && count($flight)>0) ? 'block': 'none');
 							?>
 							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="z-index: 99; background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo $currentuserstyle;?> ">
 								<input type="checkbox" id="showcostprice" name="showcostprice" checked style="display: inline-block; width: 12pt; height: 12pt; cursor: pointer;"/>
@@ -459,8 +469,17 @@
 									?>
 									   <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
 										<div class="page-heading mg-bot-55">
-											<h2>No Result Found !!!</h2>
-											<hr class="heading-line">
+											<?php 
+											if($currentuser['is_admin']=='1') {
+											?>
+												<h2>No Result Found !!!</h2>
+												<hr class="heading-line">
+											<?php 
+											}
+											else {
+											?>
+												<?= $this->load->view('capture_user_query',$state, TRUE);?>
+											<?php } ?>
 										</div>
 									  </div>	
 									<?php
@@ -584,6 +603,8 @@
 
 		<script language="javascript">
 			$( document ).ready(function() {
+				fetch_destination(<?= intval($post[0]["destination"])?>);
+
 				$("#showcostprice").change(function() {
 					if(this.checked) {
 						$('.costprice').show();

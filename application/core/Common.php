@@ -1,5 +1,13 @@
 <?php
 
+$DEFAULT_EMAIL_SETTINGS = array(
+    "protocol" => "",
+    "host" => "",
+    "port" => "",
+    "user" => "",
+    "password" => "",
+);
+
 function siteURL() {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     //$domainName = $_SERVER['HTTP_HOST'] . '/';
@@ -88,4 +96,5 @@ function endsWith($string, $endString)
     } 
     return (substr($string, -$len) === $endString); 
 } 
+
 ?>

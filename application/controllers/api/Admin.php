@@ -7,6 +7,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 //To Solve File REST_Controller not found
 require APPPATH . 'libraries/REST_Controller.php';
 require APPPATH . 'libraries/Format.php';
+require APPPATH . 'core/Common.php';
 
 /**
  * This is an example of a few basic user interaction methods you could use
@@ -445,5 +446,57 @@ class Admin extends REST_Controller {
         }
 
         $this->set_response($accounts, REST_Controller::HTTP_OK);
-   }
+    }
+
+   public function capture_user_query_post() {
+        $payload = $this->security->xss_clean($this->input->raw_input_stream);
+        //$payload = $this->input->raw_input_stream;
+        $payload = json_decode($payload, true);
+        $reqid = uniqid();
+        //$payload['payload']['reqid'] = $reqid;
+        //$result = array('code' => 200, 'status' => 'success', 'message' => "Your request has been successfully posted [Id: $reqid]");
+        $result = array('code' => 500, 'status' => 'error', 'message' => 'Can`t process your request at this moment.');
+        $company = $this->Search_Model->get('company_tbl', array('id' => intval($payload['payload']['companyid'])));
+        if($company && is_array($company) && count($company)>0) {
+            $company = $company[0];
+
+            $settings = $this->Search_Model->company_setting($company["id"]);
+            $company = array_merge($company, $settings);
+        }
+
+        log_message('debug', "Posted message for capturing user query [$reqid]=> ".json_encode($payload));
+        try {
+            $result = $this->Search_Model->save('user_query_tbl', array(
+                'reqid' => $reqid,
+                'source_city' => $payload['payload']['source_sector'],
+                'destination_city' => $payload['payload']['destination_sector'],
+                'departure_date' => date('Y-m-d', strtotime($payload['payload']['departure_date'])),
+                'no_of_person' => $payload['payload']['no_of_person'],
+                'start_price' => $payload['payload']['start_price'],
+                'end_price' => $payload['payload']['end_price'],
+                'time_range' => $payload['payload']['time_range'],
+                'mobile' => $payload['payload']['mobile'],
+                'email' => $payload['payload']['email'],
+                'is_flexible' => $payload['payload']['is_flexible'],
+                'remarks' => $payload['payload']['remarks'],
+                'userid' => $payload['payload']['userid'],
+                'companyid' => $payload['payload']['companyid'],
+                'created_by' => $payload['payload']['userid']
+            ));
+
+            log_message('debug', 'user query saved successfully => '.json_encode($result));
+            $result = array('code' => 200, 'status' => 'success', 'message' => "Your request has been successfully posted [Id: $reqid]");
+
+            // $flag = send_email('CUSTOMER_QUERY', "Customer Query Raised : $reqid", $company, array_merge($payload['payload'], array(
+            //     'company_name' => $company['name']
+            //     )
+            // ));
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+            $result = array('code' => 500, 'status' => 'error', 'message' => "Can`t process your request at this moment [$ex].");
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
 }

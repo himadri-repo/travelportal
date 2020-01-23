@@ -17,35 +17,7 @@ $( document ).ready(function()
 	
 	$("#source").change(function()
 	{
-	   	 $.ajax({
-            type: "POST",
-            url: ""+baseurl+"search/filter_city", 
-            data: {source:$("#source").val(),trip_type:"ONE"},
-            dataType: "json",  
-            success: function(data)
-			{
-				
-                $.each(data, function(key, value) 
-				{  
-                    $("#destination").html("");				
-					$("#destination").append("<option value=''>Destination</option>");
-					
-                    if(key=="success")
-					{	
-                        for(var i=0;i<50;i++) {
-							if(value[i]) {
-								$("#destination").append("<option value='"+value[i]["id"]+"'>"+value[i]["city"]+"</option>");
-							}
-						}
-					}
-					else
-					{
-						alert("Error")
-					}
-					
-                });
-            }
-        });
+		fetch_destination(-1);
 	});
 	
 	$("#source1").change(function()
@@ -124,6 +96,47 @@ $( document ).ready(function()
 		
 	
 });
+
+function fetch_destination(selected_circle=-1) {
+	$.ajax({
+		type: "POST",
+		url: ""+baseurl+"search/filter_city", 
+		data: {source:$("#source").val(),trip_type:"ONE"},
+		dataType: "json",  
+		success: function(data)
+		{
+			
+			$.each(data, function(key, value) 
+			{  
+				$("#destination").html("");				
+				$("#destination").append("<option value=''>Destination</option>");
+				
+				if(key=="success")
+				{	
+					for(var i=0;i<50;i++) {
+						if(value[i]) {
+							//$("#destination").append("<option value='"+value[i]["id"]+"'>"+value[i]["city"]+"</option>");
+							if(selected_circle === parseInt(value[i]['id'], 10)) {
+								$("#destination").append("<option value='"+value[i]["id"]+"' selected>"+value[i]["sector"]+"</option>");
+							}
+							else {
+								$("#destination").append("<option value='"+value[i]["id"]+"'>"+value[i]["sector"]+"</option>");
+							}
+						}
+					}
+
+					//alert($("#source").val() + " | " + $("#destination").val());
+					getAvailableTickets($("#source").val(), $("#destination").val());
+				}
+				else
+				{
+					alert("Error")
+				}
+				
+			});
+		}
+	});
+}
 
 function validation()
 {
