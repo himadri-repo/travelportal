@@ -2692,5 +2692,26 @@ Class Search_Model extends CI_Model
 		date_add($date,date_interval_create_from_date_string("$day_index days"));
 		return date_format($date,"d-M");
 	}
+
+	public function getUserQuery($companyid = -1) {
+		$sql = "select usr.name, c1.city as source, c2.city as destination, qry.id, qry.reqid, qry.source_city, qry.destination_city, qry.departure_date, qry.no_of_person, qry.start_price, qry.end_price, qry.time_range, qry.mobile, qry.email, qry.remarks, qry.userid, qry.companyid, qry.created_by, qry.created_on, qry.is_flexible, qry.status      
+			from user_query_tbl qry 
+			inner join city_tbl c1 on qry.source_city=c1.id 
+			inner join city_tbl c2 on qry.destination_city=c2.id 
+			left outer join user_tbl usr on usr.id=qry.userid 
+			where qry.companyid = $companyid and qry.status=1 
+			order by created_on desc";
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else {
+			return false;
+		}
+
+		log_message('debug', "getUserQuery => Companyid : $companyid");
+	}
 }
 ?>

@@ -293,4 +293,30 @@ class Users extends REST_Controller {
 
         $this->set_response($activities, REST_Controller::HTTP_OK); // NO_CONTENT (204) being the HTTP response code
     }
+
+    public function user_query_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $posted_value = json_decode($stream_clean, true);
+        $queries = [];
+
+        try
+        {
+            log_message('debug', "Api.UsersController::user_query_get => ".json_encode($posted_value));
+            $companyid = isset($posted_value['companyid'])?intval($posted_value['companyid']):-1;
+            if($companyid>-1) {
+                $queries = $this->Search_Model->getUserQuery($companyid);
+                if(!$queries) {
+                    $queries = [];
+                }
+            }
+            else {
+                log_message('debug', "Api.UsersController:: Invalid companyid passed");
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($queries, REST_Controller::HTTP_OK); // NO_CONTENT (204) being the HTTP response code
+   }
 }
