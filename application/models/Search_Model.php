@@ -657,17 +657,22 @@ Class Search_Model extends CI_Model
 		}         	
 	 }
 
-     public function terms()
+     public function terms($companyid = 1, $mode = 'GENERAL')
 	 {
 		 
 		$this->db->select("*");
 		$this->db->from('term_tbl');					
-		
+		if($companyid && intval($companyid)>0) {
+			$this->db->where(array('companyid' => $companyid), null, false);
+		}
+		if($mode && $mode !== '') {
+			$this->db->where(array('mode' => "'$mode'"), null, false);
+		}
 		
 		$query = $this->db->get();							
 		if ($query->num_rows() > 0) 
 		{					
-            return $query->result_array();		
+            return $query->result_array();
 		}
 		else
 		{
@@ -2436,7 +2441,7 @@ Class Search_Model extends CI_Model
 				tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, 
 				tkt.total, al.airline, al.image, al.aircode as aircode, tkt.ticket_no, tkt.price, cm.id as companyid, cm.display_name as companyname, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, 
 				tkt.updated_by, tkt.tag, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, rpv.markup as supl_markup, rpv.srvchg as supl_srvchg, 
-				rpv.cgst as supl_cgst, rpv.sgst as supl_sgst, rpv.igst as supl_igst, rpv.disc as supl_disc, ((tkt.price+rpv.markup+rpv.srvchg)+(rpv.srvchg*rpv.igst)) as ticket_price, 
+				rpv.cgst as supl_cgst, rpv.sgst as supl_sgst, rpv.igst as supl_igst, rpv.disc as supl_disc, ((tkt.price+rpv.markup+ifnull(rpv_whl.markup, 0)+rpv.srvchg+ifnull(rpv_whl.srvchg,0))+((rpv.srvchg+ifnull(rpv_whl.srvchg,0))*rpv.igst)) as ticket_price, 
 				max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airline, max(ltkt.adultbasefare) as adultbasefare, 
 				max(ltkt.adult_tax_fees) as adult_tax_fees, 
 				max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, 
@@ -2462,7 +2467,8 @@ Class Search_Model extends CI_Model
 				where cm.id=$companyid 
 				limit 1) 
 			) as rpt on tkt.companyid = rpt.supplierid 
-			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id   
+			left outer join rateplans_vw rpv_whl on rpv_whl.rateplanid=rpt.seller_rateplan_id			
 			left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
 					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
 					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
@@ -2522,7 +2528,8 @@ Class Search_Model extends CI_Model
 				where cm.id=$companyid 
 				limit 1) 
 			) as rpt on tkt.companyid = rpt.supplierid 
-			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+			inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id     
+			left outer join rateplans_vw rpv_whl on rpv_whl.rateplanid=rpt.seller_rateplan_id			
 			left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
 					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
 					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
@@ -2591,7 +2598,7 @@ Class Search_Model extends CI_Model
 				if(DATE_FORMAT(DATE_ADD(now(), INTERVAL 7 DAY),'%e-%b')=a.dow, min(a.ticket_price), 0) as price_8 
 				from
 				(
-					select concat(ct1.code, '-', ct2.code) as circle, DATE_FORMAT(tkt.departure_date_time,'%e-%b') as dow, ((tkt.price+rpv.markup+rpv.srvchg)+(rpv.srvchg*rpv.igst)) as ticket_price
+					select concat(ct1.code, '-', ct2.code) as circle, DATE_FORMAT(tkt.departure_date_time,'%e-%b') as dow, ((tkt.price+rpv.markup+ifnull(rpv_whl.markup, 0)+rpv.srvchg+ifnull(rpv_whl.srvchg,0))+((rpv.srvchg+ifnull(rpv_whl.srvchg,0))*rpv.igst)) as ticket_price  
 					from tickets_tbl tkt 
 					inner join city_tbl ct1 on tkt.source=ct1.id 
 					inner join city_tbl ct2 on tkt.destination=ct2.id 
@@ -2613,7 +2620,8 @@ Class Search_Model extends CI_Model
 						where cm.id=$companyid 
 						limit 1) 
 					) as rpt on tkt.companyid = rpt.supplierid 
-					inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id
+					inner join rateplans_vw rpv on rpv.rateplanid=rpt.rate_plan_id      
+					left outer join rateplans_vw rpv_whl on rpv_whl.rateplanid=rpt.seller_rateplan_id					 
 					left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
 							and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
 							and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 

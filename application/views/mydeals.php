@@ -22,7 +22,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-side">
-                    <h2 style=""><span style="font-weight: 200;">Flight <i class="fa fa-plane"></i></span> <span style="color: #faa61a; font-weight: 800;">Deals</span></h2>
+                    <h2><span style="font-weight: 200;">Flight <i class="fa fa-plane"></i></span> <span style="color: #faa61a; font-weight: 800;">Deals</span></h2>
                     <div class="search-area">
                     <form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/mydeals/<?= $currentuser['uid']?>" method="post" onsubmit="return deal_validation()">
                         <input type="hidden" name="userid" value="<?= $currentuser['uid']?>"> 
@@ -58,7 +58,7 @@
             <hr/>
             <?php if($selected_circle != '-1' && $tickets) {?>
                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-data">
-                    <h2 style=""><?= $selected_circle?></h2>
+                    <h2><?= $selected_circle?></h2>
                     <div class="table-responsive-sm">
                         <table class="table table-sm table-hover table-striped">
                             <thead>
@@ -106,7 +106,7 @@
             <?php }
             else { ?>
                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-data">
-                    <h2 style=""><?= $selected_circle?></h2>
+                    <h2><?= $selected_circle?></h2>
                     <div class="table-responsive-sm">
                         <table class="table table-sm table-hover table-striped">
                             <thead>

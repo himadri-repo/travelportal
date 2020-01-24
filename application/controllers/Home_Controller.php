@@ -98,8 +98,12 @@ class Home_Controller extends Mail_Controller
 	}
 	public function terms()
 	{
-	   	$result["setting"]=$this->Search_Model->setting();
-	   	$result["term"]=$this->Search_Model->terms();
+		$company = $this->get_current_company();
+		$companyid = intval($company["id"]);
+		$result["setting"]=$this->Search_Model->company_setting($companyid);
+
+	   	//$result["setting"]=$this->Search_Model->setting();
+	   	$result["term"]=$this->Search_Model->terms($companyid, 'GENERAL');
 	   	$result["footer"]=$this->Search_Model->get_post(5);
 	   	$result["need_help"]=$this->Search_Model->get_post(6);
 		$this->load->view('header',$result);
@@ -143,5 +147,20 @@ class Home_Controller extends Mail_Controller
 		
 		$this->load->view('error');
 		
+	}
+
+	public function get_current_company() {
+		$companies = $this->Admin_Model->get_companies();
+		$company = null;
+		$siteUrl = siteURL();
+
+		for($idx=0; $idx<count($companies); $idx++) {
+			if(strtolower($companies[$idx]["baseurl"]) === strtolower($siteUrl)) {
+				$company = &$companies[$idx];
+				break;
+			}
+		}
+
+		return $company;
 	}
 }
