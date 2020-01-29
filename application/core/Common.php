@@ -97,4 +97,16 @@ function endsWith($string, $endString)
     return (substr($string, -$len) === $endString); 
 } 
 
+function search_array_item($array, $column_name, $value) {
+    $obj = null;
+
+    if($array && is_array($array) && count($array)>0) {
+        for ($i=0; $i < count($array); $i++) { 
+            $obj = (isset($array[$i][$column_name]) && $array[$i][$column_name] == $value) ? $array[$i] : null;
+            if($obj) break;
+        }
+    }
+    return $obj;
+}
+
 ?>

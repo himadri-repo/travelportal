@@ -7,6 +7,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 //To Solve File REST_Controller not found
 require APPPATH . 'libraries/REST_Controller.php';
 require APPPATH . 'libraries/Format.php';
+require APPPATH . 'core/Common.php';
 
 /**
  * This is an example of a few basic user interaction methods you could use
@@ -1208,7 +1209,181 @@ class Company extends REST_Controller {
         $this->set_response($result, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
+    public function upsert_tickets_post() {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $tickets = json_decode($stream_clean, true);
+
+        $idx = 1;
+        $feedbacks = array();
+
+        try
+        {
+            $cities = $this->Search_Model->get('city_tbl', null);
+            $airlines = $this->Search_Model->get('airline_tbl', null);
+            $companies = $this->Search_Model->get('company_tbl', array('active' => 1));
+
+            log_message('debug', 'No of Ticket Posted => '.(count($tickets)));
+
+            foreach ($tickets as $ticket) {
+                if($this->is_ticket_valid($ticket)) {
+                    try
+                    {
+                        log_message('debug', 'Saving Ticket => '.json_encode($ticket));
+                        $current_ticket = $this->Search_Model->get('tickets_tbl', array('ticket_no' => "'".$ticket['ticket_no']."'"));
+                        if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+                            $current_ticket = $current_ticket[0];
+
+                            // $current_ticket['departure_date_time'] = date("Y-m-d H:i:s", strtotime($ticket['departure_date_time']));
+                            // $current_ticket['arrival_date_time'] = date("Y-m-d H:i:s", strtotime($ticket['arrival_date_time']));
+                            // $current_ticket['booking_freeze_by'] = date("Y-m-d H:i:s", strtotime($ticket['departure_date_time']));
+
+                            $current_ticket['no_of_person'] = intval($ticket['no_of_person']);
+                            $current_ticket['max_no_of_person'] = intval($ticket['no_of_person']);
+                            $current_ticket['availibility'] = intval($ticket['no_of_person']);
+                            $current_ticket['adult_count'] = intval($ticket['no_of_person']);
+                            $current_ticket['available'] = intval($ticket['no_of_person'])>0 ? 'YES' : 'NO';
+                            $current_ticket['last_sync_key'] = $ticket['runid'];
+                            $current_ticket['flight_no'] = $ticket['flight_code'];
+                            if(isset($current_ticket['pnr']) && $current_ticket['pnr'] === '') {
+                                $current_ticket['pnr'] = $ticket['pnr'];
+                            }
+                            $current_ticket['price'] = floatval($ticket['price']);
+                            $company = search_array_item($companies, 'id', $ticket['companyid']);
+                            if($company && is_array($company) && count($company)>0 && isset($company['id'])) {
+                                $current_ticket['updated_by'] =  intval($company['primary_user_id']);
+                            }
+                            
+                            log_message('debug', 'Updating existing Ticket => '.json_encode($current_ticket));
+                        }
+                        else {
+                            //new ticket
+                            $current_ticket = [];
+                            $company = search_array_item($companies, 'id', $ticket['companyid']);
+                            if($company && is_array($company) && count($company)>0 && isset($company['id'])) {
+                                $current_ticket['companyid'] =  intval($company['id']);
+                                $current_ticket['created_by'] =  intval($company['primary_user_id']);
+                                $current_ticket['user_id'] =  intval($company['primary_user_id']);
+                            }
+                            $city = search_array_item($cities, 'code', $ticket['source_city']);
+                            if($city && is_array($city) && count($city)>0 && isset($city['id'])) {
+                                $current_ticket['source'] =  intval($city['id']);
+                            }
+                            $city = search_array_item($cities, 'code', $ticket['destination_city']);
+                            if($city && is_array($city) && count($city)>0 && isset($city['id'])) {
+                                $current_ticket['destination'] =  intval($city['id']);
+                            }
+                            $airline = search_array_item($airlines, 'aircode', $ticket['airline']);
+                            if($airline && is_array($airline) && count($airline)>0 && isset($airline['id'])) {
+                                $current_ticket['airline'] =  intval($airline['id']);
+                            }
+
+                            $current_ticket['ticket_no'] = $ticket['ticket_no'];
+                            $current_ticket['departure_date_time'] = date("Y-m-d H:i:s", strtotime($ticket['departure_date_time']));
+                            $current_ticket['arrival_date_time'] = date("Y-m-d H:i:s", strtotime($ticket['arrival_date_time']));
+                            $current_ticket['booking_freeze_by'] = date("Y-m-d H:i:s", strtotime($ticket['departure_date_time']));
+                            $current_ticket['terminal'] = 'NA';
+                            $current_ticket['terminal1'] = 'NA';
+                            $current_ticket['sale_type'] = 'request';
+                            $current_ticket['refundable'] = 'N';
+                            $current_ticket['approved'] = 1;
+                            $current_ticket['admin_markup'] = 300.00;
+                            $current_ticket['no_of_stops'] = 0;
+                            $current_ticket['stops_name'] = 'NA';
+                            $current_ticket['trip_type'] = $ticket['trip_type'];
+                            $current_ticket['tag'] = 'Synced via Google Sheet';
+                            $current_ticket['no_of_person'] = intval($ticket['no_of_person']);
+                            $current_ticket['max_no_of_person'] = intval($ticket['no_of_person']);
+                            $current_ticket['availibility'] = intval($ticket['no_of_person']);
+                            $current_ticket['adult_count'] = intval($ticket['no_of_person']);
+                            $current_ticket['available'] = intval($ticket['no_of_person'])>0 ? 'YES' : 'NO';
+                            $current_ticket['last_sync_key'] = $ticket['runid'];
+                            $current_ticket['flight_no'] = $ticket['flight_code'];
+                            $current_ticket['aircode'] = $ticket['aircode'];
+                            $current_ticket['data_collected_from'] = $ticket['data_collected_from'];
+                            $current_ticket['class'] = $ticket['class'];
+                            $current_ticket['pnr'] = $ticket['pnr'];
+                            $current_ticket['price'] = floatval($ticket['price']);
+                            $current_ticket['total'] = floatval($ticket['price']);
+
+                            log_message('debug', 'Assing new Ticket => '.json_encode($current_ticket));
+                        }
+
+                        if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+                            if(isset($current_ticket['id']) && intval($current_ticket['id'])>0) {
+                                $return_value = $this->Search_Model->update('tickets_tbl', $current_ticket, array('id' => intval($current_ticket['id'])));
+                                log_message('debug', "Ticket Updated => $return_value");
+                                $feedbacks[] = array('mode' => 'update', 'id' => $return_value, 'ticket' => $current_ticket);
+                            }
+                            else {
+                                $return_value = $this->Search_Model->save('tickets_tbl', $current_ticket);
+                                log_message('debug', "Ticket Inserted => $return_value");
+                                $feedbacks[] = array('mode' => 'insert', 'id' => $return_value, 'ticket' => $current_ticket);
+                            }
+                        }
+                    }
+                    catch(Exception $ex) {
+                        log_message('error', "upsert tickets Error => $ex");
+                    }
+                }
+                else {
+                    log_message('debug', 'Ignoring Ticket => '.json_encode($ticket));
+                }
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function get_linked_gsheets_get($companyid=-1) {
+        $sheets = [];
+
+        try
+        {
+            // [
+            //     {"id": 1, "name": "gsheet of bookmyfly", "sheetid": "1B0RfMO6cuT_MAuCj9m6nuqugl09VNLYmFxdbbfOU9qs", "status": 1, "sourcecode": "bmf", "target_companyid": 1},
+            //     {"id": 2, "name": "gsheet of radharani holidays", "sheetid": "1QY_t4LkLuZMO_DlLjVaeThHvXW8B9IAjs47FNGTpeY8", "status": 1, "sourcecode": "rrh", "target_companyid": 1}
+            // ]            
+            $companyid = intval($companyid);
+            if($companyid>0) {
+                $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => 1, 'target_companyid' => $companyid));
+            }
+            else {
+                $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => 1));
+            }
+            log_message('debug', "Collecting inventory linked gSheets of $companyid => ".json_encode($sheets));
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+        }
+
+        $this->set_response($sheets, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
     #region helper method    
+    private function is_ticket_valid($ticket) {
+        $flag = false;
+
+        if($ticket && is_array($ticket) && count($ticket)>0) {
+            $departure_date_time = '';
+            $arrival_date_time = '';
+            if(isset($ticket['departure_date_time'])) {
+                $departure_date_time = strtotime($ticket['departure_date_time']);
+            }
+            if(isset($ticket['arrival_date_time'])) {
+                $arrival_date_time = strtotime($ticket['arrival_date_time']);
+            }
+
+            if($ticket['flight_code'] != '' && $ticket['source_city'] != '' && $ticket['destination_city'] != '' && $departure_date_time>=strtotime('now') && $arrival_date_time>=strtotime('now')) {
+                $flag = true;
+            }
+        }
+
+        return $flag;
+    }
+
     private function create_new_company($payload) {
         $company = array();
         try {

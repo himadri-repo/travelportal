@@ -157,3 +157,5 @@ $route['api/company/ticket/clone'] = 'api/Company/clone_ticket';
 $route['api/create/company'] = 'api/Company/create_company';
 $route['api/admin/capture/user_query'] = 'api/Admin/capture_user_query';
 $route['api/users/queries'] = 'api/Users/user_query';
+$route['api/company/tickets/import'] = 'api/Company/upsert_tickets';
+$route['api/company/links/gsheet/?(:num)?'] = 'api/Company/get_linked_gsheets/$1';
