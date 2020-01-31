@@ -126,7 +126,10 @@ class Home_Controller extends Mail_Controller
 	}
 	public function faq()
 	{
-	   	$result["setting"]=$this->Search_Model->setting();
+	   	//$result["setting"]=$this->Search_Model->setting();
+		$company = $this->get_current_company();
+		$companyid = intval($company["id"]);
+		$result["setting"]=$this->Search_Model->company_setting($companyid);
 	   	$result["faq"]=$this->Search_Model->faq();
 	   	$result["footer"]=$this->Search_Model->get_post(5);
 	   	$result["need_help"]=$this->Search_Model->get_post(6);
@@ -136,7 +139,10 @@ class Home_Controller extends Mail_Controller
 	}
 	public function contact()
 	{
-	   	$result["setting"]=$this->Search_Model->setting();
+		//$result["setting"]=$this->Search_Model->setting();
+		$company = $this->get_current_company();
+		$companyid = intval($company["id"]);
+		$result["setting"]=$this->Search_Model->company_setting($companyid);
 	   	$result["footer"]=$this->Search_Model->get_post(5);
 		$this->load->view('header',$result);
 		$this->load->view('contact');

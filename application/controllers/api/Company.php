@@ -1308,7 +1308,8 @@ class Company extends REST_Controller {
                             log_message('debug', 'Assing new Ticket => '.json_encode($current_ticket));
                         }
 
-                        if($current_ticket && is_array($current_ticket) && count($current_ticket)>0) {
+                        if($current_ticket && is_array($current_ticket) && count($current_ticket)>0 && intval($current_ticket['source'])>0 
+                            && intval($current_ticket['destination'])>0 && intval($current_ticket['airline'])>0) {
                             if(isset($current_ticket['id']) && intval($current_ticket['id'])>0) {
                                 $return_value = $this->Search_Model->update('tickets_tbl', $current_ticket, array('id' => intval($current_ticket['id'])));
                                 log_message('debug', "Ticket Updated => $return_value");
