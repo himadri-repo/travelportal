@@ -50,6 +50,49 @@
 .title1 {
 	color: #ff0000;
 }
+
+.stopstyle {
+    display: -webkit-flex; 
+    display: -moz-flex; 
+    display: -ms-flexbox; 
+    display: -o-flex; 
+    display: flex; 
+    justify-content: center; 
+    z-index: 1; 
+    transform: translateX(-50%); 
+    bottom: -13px; 
+    position: relative;
+}
+
+.stopper-icon {
+    width: 10px; 
+    height: 10px; 
+    display: inline-block; 
+    border: 3px solid #ff0d0d; 
+    border-radius: 50%; 
+    background: #fff; 
+    margin: 0 4px; 
+    cursor: pointer; 
+    position: relative;
+}
+
+.stopper-icon .msg {
+    display: none;
+}
+
+.stopper-icon:hover .msg {
+    display: block;
+}
+
+.airline-logo {
+    max-width: 50px;
+    flex: 1 0 20%;
+    max-height: 50px;
+    margin: -5px 7px;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;    
+}
 </style>         
 <section class="innerpage-wrapper" style="top:0;margin-top:20px">
 	<div id="flight-listings" class="innerpage-section-padding" style="padding-top:0;">
@@ -88,7 +131,7 @@
 											</div>
 										</div><!-- end columns -->
 										
-										<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
+											<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
 											<div class="form-group">
 												<label><span><i class="fa fa-map-marker"></i></span>To</label>
 													<select class="form-control" name="destination1" id="destination1">
@@ -105,7 +148,7 @@
 											</div>
 										</div><!-- end columns -->
 										
-										<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
+											<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
 											<div class="form-group">
 												<label><span><i class="fa fa-calendar"></i></span>Available Date</label>
 												<!--<input class="form-control dpd3" placeholder="Date" name="departure_date_time1" id="departure_date_time1"/>-->
@@ -116,7 +159,7 @@
 
 										</div><!-- end columns -->
 										
-										<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
+											<div class="col-xs-12 col-sm-12 col-md-6 col-md-6">
 											<div class="form-group">
 												<label><span><i class="fa fa-users"></i></span>Passengers</label>                                                        
 												<select class="form-control" name="no_of_person1" id="no_of_person1">														 
@@ -145,7 +188,7 @@
 								<form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation()">
 									<input type="hidden" name="trip_type" value="ONE"> 
 									<div class="row">
-										<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2">
+										<div class="col-xs-12 col-sm-12 col-lg-3 col-md-3">
 											<div class="form-group">
 												<label><span><i class="fa fa-map-marker"></i></span>From</label>
 												<select class="form-control" name="source" id="source">
@@ -171,7 +214,7 @@
 											</div>
 										</div><!-- end columns -->
 										
-										<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2">
+										<div class="col-xs-12 col-sm-12 col-lg-3 col-md-3">
 											<div class="form-group">
 												<label><span><i class="fa fa-map-marker"></i></span>To</label>
 													<select class="form-control" name="destination" id="destination">
@@ -247,107 +290,31 @@
 			<div class="row">
 				<div class="col-xs-12 col-sm-12 col-lg-12 col-md-12 content-side" id="top_div">
 					<?php 
-						$currentuserstyle = ((($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') && !empty($flight) && count($flight)>0) ? 'block': 'none');
+                        $currentuserstyle = ((($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') && !empty($flight) && count($flight)>0) ? 'block': 'none');
+                        $direction = '→';
+                        if($flight[0]['trip_type'] === 'ROUND') {
+                            $direction = '⇄';
+                        }
 					?>
 					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="background-color: #faa61a; color: #ffffff; font-size: 15pt; text-align: right; display: <?php echo $currentuserstyle;?> ">
+                        <?php if(!empty($flight) && is_array($flight) && count($flight)>0) { ?>
+    						<span class="title" style="float:left; color: #ffffff;"> <?= date('d-M-Y', strtotime($flight[0]['departure_date_time'])).' | '.$flight[0]['source_city']." $direction ".$flight[0]['destination_city'] ?></span>
+                            <!-- ⇄ -->
+                        <?php } ?>
 						<input type="checkbox" id="showcostprice" name="showcostprice" checked style="display: inline-block; width: 12pt; height: 12pt; cursor: pointer;"/>
 						<span>Show cost price</span>
 					</div>
-					<!-- <div class="list-block main-block f-list-block">
-						<div class="row">
-							<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
-								<div style="display: flex; border-right: 1px solid #e0dcdc;">
-									<img src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive" style="max-width: 40px; flex: 1 0 20%; max-height: 40px; margin: 2px 7px;" alt="flight-img" />
-									<div>
-										<div class="title">SpiceJet</div>
-										<div style="color: #aba3a3; font-size: 0.85em;">SG-8911</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-xs-12 col-sm-12 col-lg-4 col-md-4" style="padding: 10px;">
-								<div style="display: flex; border-right: 1px solid #e0dcdc;">
-									<div style="flex: 1 0 20%; margin: 2px 7px;">
-										<div style="text-align: center;">
-											<span class="title">10:35</span>
-											<div style="color: #aba3a3; font-size: 0.85em;">New Delhi</div>
-										</div>
-									</div>
-									<div style="flex: 1 0 15%;">
-										<div style="margin: 0 11%; padding-bottom: 0.55em; border-bottom: 2px solid #cacaca; display: flex;">
-											<span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -14px; position: relative; width: 33%;">
-												<i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
-													<div style="display: none; transform-origin: 0% 100%;" class="msg">
-														This is testing
-													</div>
-												</i>
-											</span>
-											<span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -14px; position: relative; width: 33%;">
-												<i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
-													<div style="display: none; transform-origin: 0% 100%;" class="msg">
-														This is testing
-													</div>
-												</i>
-											</span>
-											<span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -14px; position: relative; width: 33%;">
-												<i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
-													<div style="display: none; transform-origin: 0% 100%;" class="msg">
-														This is testing
-													</div>
-												</i>
-											</span>
-										</div>
-										<div style="margin: 3px 0px 1px 5px; color: #aba3a3; font-size: 0.80em; text-align: center;"><span class="title1">2h 00m</span> |  Non Stop</div>
-									</div>
-									<div style="flex: 1 0 20%;">
-										<div style="text-align: center;">
-											<span class="title">12:35</span>
-											<div style="color: #aba3a3; font-size: 0.85em;">Kolkata</div>
-										</div>										
-									</div>
-								</div>
-							</div>
-							<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
-								<div style="border-right: 1px solid #e0dcdc; padding: 5px 0px;">
-									<div style="text-align: center;">
-										<div class="title">7 seats(s) left</div>
-										<div style="color: #aba3a3; font-size: 0.75em;">Economy | Non Refundable</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
-								<div style="border-right: 1px solid #e0dcdc; padding: 5px 5px;">
-									<div style="text-align: center;">
-										<div class="title"><i class='fa fa-inr'></i> 5701.00</div>
-										<div style="color: #aba3a3; font-size: 0.75em;">Cost : <i class='fa fa-inr'></i>5501.00</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
-								<div style="padding: 5px 0px;">
-									<button type="button" class="btn btn-orange" id="btn_one_way" style="float: right; margin: 0px 10px;">Book Now</button>
-								</div>
-							</div>
-						</div>
-						<div class="row">
-							<div style="border-top: 2px solid #b1b1b17d; margin: 1px 20px;">
-								<div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
-									<div style="color: #1433a5; font-size: 0.80em; display: inline-block;">System fare : 6553.00 | 2 seat(s) left</div>
-								</div>
-								<div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
-									<div style="color: #ff0000; font-size: 0.80em; display: inline-block;">Seats & rates subject to availability. Confirm before booking.</div>
-								</div>
-							</div>
-						</div>
-					</div> -->
 
 					<?php
 						if(!empty($flight))
 						{
 							foreach($flight as $key=>$value)
-							{?>
-								<?php 
+							{
+                                $flightitem = $flight[$key];
 								$class = "";
-								//echo $flight[$key]["user_id"] . " - " . $this->session->userdata('user_id');
+                                //echo $flight[$key]["user_id"] . " - " . $this->session->userdata('user_id');
+                                log_message('debug', 'Flight Data => '.json_encode($value));
+
 								if($flight[$key]["user_id"]==$this->session->userdata('user_id')) {
 									//echo "supplier_ticket";
 									$class = "supplier_ticket";
@@ -359,201 +326,180 @@
 								}
 								else {
 									$class = "";
-								}
-								?>
-								<div class="list-block main-block f-list-block <?php echo $class?>">
-									<div class="list-content">
-									
-										<div class="main-img list-img f-list-img">
-											<div class="row">
-												<div class="col-xs-3 col-sm-3 col-md-3">
-													<a href="#">
-														<div class="f-img" style="padding:2px 0 0px 2px">
-															<?php if($flight[$key]["sale_type"]=="quote"){ ?>
-																<img src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive" style="max-width:70px;" alt="flight-img" />
-															<?php } else { ?>
-																<img src="<?php echo base_url(); ?>upload/thumb/<?php echo $flight[$key]["image"];?>" class="img-responsive" style="max-width:70px;" alt="flight-img" />
-															<?php } ?>
-														</div><!-- end f-list-img -->
-													</a>
-												</div> <!-- end of left column -->
-												<div class="col-xs-9 col-sm-9 col-md-9">
-													<ul class="list-unstyled flight-timing <?php echo $class?>">
-														<?php
-														$auto_corrected = $flight[$key]["live_corrected"];
-														?>
-														<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<?php if($flight[$key]["adult_total"]>0) {?>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["dept_date_time"])); ?>)</li>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrv_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrv_date_time"])); ?>)</li>
-														<?php }
-														else {?>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>) <span style="color: red;"><?= ($auto_corrected?'*':'') ?></span></li>
-															<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>) <span style="color: red;"><?= ($auto_corrected?'*':'') ?></span></li>
-														<?php }
-														} ?>
-													</ul>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
-											<div class="row">
-												<div class="col-xs-12 col-sm-12 col-md-12">
-													<div class="f-fl-title">
-														<?php
-															$splcode = 'special fare';
-															if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
-																if($flight[$key]["data_collected_from"]=='airiq') {
-																	$splcode = 'oxytra-spl-1';
-																}
-																else if($flight[$key]["data_collected_from"]=='e2f') {
-																	$splcode = 'oxytra-spl-2';
-																}
-																else if($flight[$key]["data_collected_from"]=='moh') {
-																	$splcode = 'oxytra-spl-3';
-																}
-																else if($flight[$key]["data_collected_from"]=='mair') {
-																	$splcode = 'oxytra-spl-4';
-																}
-																else if($flight[$key]["data_collected_from"]=='doshi') {
-																	$splcode = 'oxytra-spl-5';
-																}
-																else if($flight[$key]["data_collected_from"]=='mpt') {
-																	$splcode = 'oxytra-spl-6';
-																}
-																else if($flight[$key]["data_collected_from"]=='tmz') {
-																	$splcode = 'oxytra-spl-7';
-																}
-																else if($flight[$key]["data_collected_from"]=='indr') {
-																	$splcode = 'oxytra-spl-8';
-																}
-															}
-															else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
-																$splcode = $flight[$key]["companyname"];
-															}
-														?>
-														<span><?= '('.$flight[$key]["aircode"] . ') ' . $flight[$key]["flight_no"]?></span>
-														<span style="display:block; float: right; font-size:9px; padding: 0px 5px">(<?php echo $splcode?>)</span>
-													</div>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
+                                }
+                                
+                                //if($flight[$key]["adult_total"]>0) {
+                                $splcode = 'special fare';
+                                if(isset($flight[$key]["sale_type"]) && $flight[$key]["sale_type"] !== 'api') {
+                                    $source_city = $flightitem['source_city_code'];
+                                    $destination_city = $flightitem['destination_city_code'];
+                                    $airline_name = $flight[$key]["airline"];
+                                    $dept_date = strtotime($flight[$key]["departure_date_time"]);
+                                    $arrv_date = strtotime($flight[$key]["arrival_date_time"]);
+                                    $dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+                                }
+                                else {
+                                    $splcode = 'system/live fare';
+                                    $source_city = $flightitem['source_code'];
+                                    $destination_city = $flightitem['destination_code'];
+                                    $airline_name = $flight[$key]["airline_name"];
+                                    $dept_date = strtotime($flight[$key]["departure_date_time"]);
+                                    $arrv_date = strtotime($flight[$key]["arrival_date_time"]);
+                                    $dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+                                }
+                                
 
-											<?php
-											
-											//$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
-											if($flight[$key]["adult_total"]>0) {
-												$dateDiff = intval((strtotime($flight[$key]["arrv_date_time"])-strtotime($flight[$key]["dept_date_time"]))/60);
-											}
-											else {
-												$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
-											}
-											
-											?>
-											<ul class="list-unstyled list-inline offer-price-1">
-												<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-													<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo intval($dateDiff/60)." Hours ".($dateDiff%60)." Minutes"; ?></span></li>
-												<?php } else {?>
-												<!-- <li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?></span></li> -->
-													<li class="duration"><i class="fa fa-clock-o"></i><span><?php echo date("jS M y",strtotime($flight[$key]["dept_date_time"])); ?></span></li>
-												<?php } ?>
-												
-												<?php  if($flight[$key]["user_id"]==$this->session->userdata('user_id')){?>
-													<?php if($flight[$key]["live_fare"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").'</br>(system fare - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
-													<?php } else {?>
-														<li class="live-price">&nbsp;</li>
-													<?php } ?>
-														<?php
-														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
-														$final_total = $flight[$key]["price"];
-														?>
-														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
-												<?php } else {?>
-													<?php if($flight[$key]["live_fare"]>0) {?>
-														<li class="live-price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($flight[$key]["live_fare"],2,".",",").'</br>(system fare - '.($flight[$key]["seatsavailable"]>10?'10+':$flight[$key]["seatsavailable"]).' left)'; ?></li>
-													<?php } else {?>
-														<li class="live-price">&nbsp;</li>
-													<?php } ?>
-														<?php
-														// $final_total = $flight[$key]["total"] + $flight[$key]["splr_markup"] + $flight[$key]["splr_srvchg"] + $flight[$key]["wsl_markup"] + $flight[$key]["wsl_srvchg"] + $flight[$key]["cgst"] + $flight[$key]["sgst"];
-														$final_total = $flight[$key]["price"];
+                                if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+                                    $splcode = $flight[$key]["data_collected_from"];
+                                }
+
+                                $auto_corrected = $flight[$key]["live_corrected"];
+                                $stops = intval($flight[$key]["no_of_stops"]);
+
+                                if($stops === 0) {
+                                    $stop_text = "Non Stop";
+                                }
+                                else {
+                                    $stop_text = "$stops Stop(s)";
+                                }
+
+								?>
+
+                                <div class="list-block main-block f-list-block <?php echo $class?>">
+                                    <div class="row">
+                                        <div class="col-xs-12 col-sm-12 col-lg-3 col-md-3" style="padding: 10px;">
+                                            <div style="display: flex; border-right: 1px solid #e0dcdc;">
+                                                <?php if(isset($flightitem['image']) && $flightitem['image']!=='') { ?>
+                                                    <img src="<?php echo base_url(); ?>upload/thumb/<?= $flightitem['image'] ?>" class="img-responsive airline-logo" alt="flight-img" />
+                                                <?php } else { ?>
+                                                    <img src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive airline-logo" alt="flight-img" />
+                                                <?php } ?>
+                                                <div>
+                                                    <div class="title"><?= $airline_name?></div>
+                                                    <div style="color: #aba3a3; font-size: 0.85em;"><?= $flightitem['flight_no'] ?> (<?= $splcode ?>)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-lg-3 col-md-3" style="padding: 10px;">
+                                            <div style="display: flex; border-right: 1px solid #e0dcdc;">
+                                                <div style="flex: 1 0 10%; margin: 2px 7px;">
+                                                    <div style="text-align: center;">
+                                                        <span class="title"><?= date('H:i', $dept_date) ?></span>
+                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $source_city ?></div>
+                                                    </div>
+                                                </div>
+                                                <div style="flex: 1 0 25%;">
+                                                    <div style="margin: 0 11%; padding-bottom: 0.55em; border-bottom: 2px solid #cacaca; display: flex;">
+                                                        <?php 
+                                                        if($stops>0) {
+                                                            $wth = 100/$stops;
+                                                        }
+                                                        else {
+                                                            $wth = 100;
+                                                        }
+                                                        for ($i=0; $i < $stops ; $i++) { ?>
+                                                            <span class="stopstyle" <?= "style = 'width: ".$wth."%; left: ".($wth/2)."%; '"?>>
+                                                                <i class="stopper-icon">
+                                                                    <div style="transform-origin: 0% 100%;" class="msg">
+                                                                        This is testing
+                                                                    </div>
+                                                                </i>
+                                                            </span>
+                                                        <?php } ?>
+                                                        <!-- <span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -13px; position: relative; width: 33%;">
+                                                            <i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
+                                                                <div style="display: none; transform-origin: 0% 100%;" class="msg">
+                                                                    This is testing
+                                                                </div>
+                                                            </i>
+                                                        </span>
+                                                        <span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -13px; position: relative; width: 33%;">
+                                                            <i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
+                                                                <div style="display: none; transform-origin: 0% 100%;" class="msg">
+                                                                    This is testing
+                                                                </div>
+                                                            </i>
+                                                        </span>
+                                                        <span style="display: -webkit-flex; display: -moz-flex; display: -ms-flexbox; display: -o-flex; display: flex; justify-content: center; left: 20%; z-index: 1; transform: translateX(-50%); bottom: -13px; position: relative; width: 33%;">
+                                                            <i style="width: 9px; height: 9px; display: inline-block; border: 2px solid #cacaca; border-radius: 50%; background: #fff; margin: 0 4px; cursor: pointer; position: relative;">
+                                                                <div style="display: none; transform-origin: 0% 100%;" class="msg">
+                                                                    This is testing
+                                                                </div>
+                                                            </i>
+                                                        </span> -->
+                                                    </div>
+                                                    <div style="margin: 3px 0px 1px 5px; color: #aba3a3; font-size: 0.80em; text-align: center;"><span class="title1"><?= intval($dateDiff/60)."h ".($dateDiff%60)."m"; ?></span> | <?= $stop_text ?></div>
+                                                </div>
+                                                <div style="flex: 1 0 10%;">
+                                                    <div style="text-align: center;">
+                                                        <span class="title"><?= date('H:i', $arrv_date) ?></span>
+                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $destination_city ?></div>
+                                                    </div>										
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
+                                            <div style="border-right: 1px solid #e0dcdc; padding: 5px 0px;">
+                                                <div style="text-align: center;">
+                                                    <div class="title"><?= $flightitem['no_of_person'] ?> seats(s) left</div>
+                                                    <div style="color: #aba3a3; font-size: 0.75em;"><?= $flightitem['class'] ?> | <?= $flightitem['refundable']==='Y' ? 'Refundable' : 'Non Refundable' ?></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
+                                            <div style="border-right: 1px solid #e0dcdc; padding: 5px 5px;">
+                                                <div style="text-align: center;">
+                                                    <div class="title">
+                                                        <?php 
+                                                        $final_total = $flight[$key]["price"];
 														if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
 															$final_total += $flight[$key]["admin_markup"];
-														}
-														?>
-														<li class="price"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-inr'></i> ".number_format($final_total,2,".",","); ?></li>
-												<?php } ?>
-												
-												<?php if($currentuser['is_admin']=='1') { ?>
-													<?php 
-													//$costprice = $flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
-													$costprice = floatval($flight[$key]['cost_price']);
-													//$costprice = $flight[$key]["total"] + $flight[$key]["spl_markup"] + $flight[$key]["spl_srvchg"] + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_cgst'] / 100) + ($flight[$key]['spl_srvchg'] * $flight[$key]['spl_sgst'] / 100);
-													?>
-													<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
-												<?php } else {
-													if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-														$costprice = $flight[$key]["price"]; ?>
-														<li class="costprice"><?php if($flight[$key]["sale_type"]!="quote") echo "<i class='fa fa-info'></i><span> Your cost price</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-inr'></i> ".number_format($costprice,2,".",","); ?></li>
-													<?php }?>
-												<?php } ?>
-											</ul>
-											<!--<ul class="list-unstyled flight-timing <?php echo $class?>">
-												<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-												<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["departure_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["departure_date_time"])); ?>)</li>
-												<li><span><i class="fa fa-plane"></i></span><span class="date"><?php echo date("jS M y",strtotime($flight[$key]["arrival_date_time"])); ?> </span>(<?php echo date("H:i",strtotime($flight[$key]["arrival_date_time"])); ?>)</li>
-												<?php } ?>
-											</ul>-->
-										</div><!-- end f-list-img -->
-										
+                                                        } 
+                                                        if($currentuser['is_admin']=='1') {
+                                                            $costprice = floatval($flight[$key]['cost_price']);
+                                                        }
+                                                        else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+                                                            $costprice = $flight[$key]["price"];
+                                                        }
+                                                        else {
+                                                            $costprice = 0;
+                                                        }
+                                                        ?>
+                                                        <?php if($final_total>0 && $controller->show_price(intval($flightitem['user_id']))) { ?>
+                                                            <i class='fa fa-inr'></i> <?= number_format($final_total,2,".",","); ?>
+                                                        <?php } else { ?>
+                                                            <span class="total">Available</span>
+                                                        <?php } ?>
+                                                    </div>
+                                                    <?php if($costprice>0 && $controller->show_price(intval($flightitem['user_id']))) { ?>
+                                                        <div class="costprice" style="color: #aba3a3; font-size: 0.75em;">Cost : <i class='fa fa-inr'></i><?= number_format($costprice,2,".",","); ?></div>
+                                                    <?php } ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
+                                            <div style="padding: 5px 0px;">
+                                                <button type="button" class="btn btn-orange" id="btn_one_way" style="float: right; margin: 0px 10px;">Book Now</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div style="border-top: 2px solid #b1b1b17d; margin: 1px 20px;">
+                                            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                                                <?php if($flightitem["live_fare"]>0 && $flightitem["sale_type"]!=='api') {?>
+                                                    <div style="color: #1433a5; font-size: 0.80em; display: inline-block;">Current System fare : <i class='fa fa-inr'></i> <?= number_format($flightitem["live_fare"],2,".",","); ?> | <?= ($flightitem["seatsavailable"]>10?'10+':$flightitem["seatsavailable"]) ?> seat(s) left</div>
+                                                <?php } ?>
+                                            </div>
+                                            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
+                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
+                                                    <div style="color: #ff0000; font-size: 0.80em; display: inline-block;">Seats & rates subject to availability. Confirm before booking.</div>
+                                                <?php } ?>
+                                            </div>
+                                        </div>
+                                    </div>
+
+									<div class="list-content">
 										<div class="list-info f-list-info <?php echo $class?>" style="padding:5px 5px 0 5px;">
-											<!--<h3 class="block-title" style="font-size:12px !important"><a href="#"  style="font-size:12px"><?php echo $flight[$key]["source_city"]; ?> To <?php echo $flight[$key]["destination_city"]; ?></a>&nbsp;&nbsp; ( Oneway Flight )</h3> -->
-											<ul class="list-unstyled flight-timing <?php echo $class?>">
-												<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["source_city"]; ?></li>
-												<li><span><i class="fa fa-plane"></i></span><span class="circle_city"><?php echo $flight[$key]["destination_city"]; ?></li>
-											</ul>
-											<div class="row">
-												<div class="col-xs-6 col-sm-6 col-md-6" style="border-right: 1px solid #dedfe0;">
-													<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<div class="block-minor" style="font-size:12px">
-															<span>
-																<i class="fa fa-users"></i>
-																<div class="seats-title"><?php echo $flight[$key]["no_of_person"];?>&nbsp;&nbsp; seat(s) left,</div>
-																<div class="stop-title"><i class="fa fa-plane"></i>&nbsp;<?php echo ($flight[$key]["no_of_stops"]>0?$flight[$key]["no_of_stops"].'Stop':'Direct')?></div>
-															</span>
-														</div>
-													<?php } else {?>
-														<p class="block-minor">&nbsp;</p>
-													<?php } ?>
-												</div> <!-- end of column -->
-												<div class="col-xs-6 col-sm-6 col-md-6">
-													<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-														<p class="block-minor" style="float:right"><span><i class="fa fa-hotel"></i>&nbsp;&nbsp;<?php echo $flight[$key]["class"]." Class";?></span></p>
-													<?php } else {?>
-														<p class="block-minor" style="float:right">&nbsp;</p>
-													
-													<?php } ?>
-												</div> <!-- end of column -->
-											</div> <!-- end of row -->
-											<p class="block-minor" style="margin: 25px 0px 0px 0px;">
-												<?php if($flight[$key]["sale_type"]!="quote"){ ?>
-												<span><?php if($flight[$key]["refundable"]=="Y") echo "Refundable";else echo "Non Refundable";?></span> 
-												<?php } ?>
-												<?php if($flight[$key]["sale_type"]=="request"){ ?>
-													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">REQUEST NOW</a>
-												<?php } ?>
-											
-												<?php if($flight[$key]["sale_type"]=="live" || $flight[$key]["sale_type"]=="api"){ ?>
-													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">BOOK NOW</a>
-												<?php } ?>
-												
-												<?php if($flight[$key]["sale_type"]=="quote"){ ?>
-												<!--<a style="margin-top:0" href="<?php echo base_url(); ?>search/sendquote/<?php echo $flight[$key]["id"];?>" class="btn btn-orange">GET QUOTE</a>-->
-												<a style="cursor:pointer" class="btn btn-orange btn_send_quote_request" data-toggle="modal" data-target="#getquote" color="<?php echo $flight[$key]["id"];?>">GET QUOTE</a>
-												
-												<?php } ?>
-											</p>
-											<div class="disclaimer">
-												** Seats & rates are subject to availability. Before issuance, please confirm with our support team.
-											</div>
 											<?php if($currentuser['is_admin']=='1' && $flight[$key]["sale_type"]!=="api") { ?>
 												<div class="action_icons">
 													<ul>

@@ -115,7 +115,9 @@ class Search extends Mail_Controller
 								'userid' => ((isset($api_integration['tenant_config']['UserID']) && $api_integration['tenant_config']['UserID'] !== '') ? 
 												$api_integration['tenant_config']['UserID'] : $api_integration['sponsor_config']['UserID']),
 								'password' => ((isset($api_integration['tenant_config']['UserPassword']) && $api_integration['tenant_config']['UserPassword'] !== '') ? 
-												$api_integration['tenant_config']['UserPassword'] : $api_integration['sponsor_config']['UserPassword'])
+												$api_integration['tenant_config']['UserPassword'] : $api_integration['sponsor_config']['UserPassword']),
+								'sponsoring_config' => isset($api_integration['sponsor_config'])?$api_integration['sponsor_config']:false,
+								'tenant_config' => isset($api_integration['tenant_config'])?$api_integration['tenant_config']:false
 							);
 
 							array_push($selected_3pp_api, $thirdparty_api);
@@ -246,7 +248,7 @@ class Search extends Mail_Controller
 								'destination_city' => $destination_city,
 								'source_city_code' => trim($source_city['code']),
 								'destination_city_code' => trim($destination_city['code']),
-								'direct' => 1,
+								'direct' => 0,
 								'one_stop' => 0,
 								'company' => $company,
 								'current_user' => $current_user,
@@ -398,7 +400,7 @@ class Search extends Mail_Controller
 						'tag' => $ticket['tag']
 					);
 					$live_ticket = NULL;
-					if($live_ticket_data && count($live_ticket_data)>0) {
+					if($live_ticket_data && count($live_ticket_data)>0 && $ticket['sale_type']!=='api') {
 						for ($tk=0; $tk < count($live_ticket_data); $tk++) {
 							$live_ticket = $live_ticket_data[$tk];
 							$depttime = (isset($live_ticket['deptime']) ? $live_ticket['deptime']: '');
@@ -565,9 +567,11 @@ class Search extends Mail_Controller
 				$current_user = $this->session->userdata("current_user");
 
 				$result['mywallet']= $this->getMyWallet();
+				$result['controller']= $this;
 							
 				$this->load->view('header1',$result);
-				$this->load->view('search_one_way',$result);
+				//$this->load->view('search_one_way',$result);
+				$this->load->view('search_one_wayv2',$result);
 				$this->load->view('footer1');
 			}
 			else
@@ -4029,6 +4033,10 @@ class Search extends Mail_Controller
 		}
 
 		return $sectors;
+	}
+
+	public function show_price($userid) {
+		return true;
 	}
 
 	#endregion

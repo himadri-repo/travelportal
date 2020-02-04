@@ -109,4 +109,13 @@ function search_array_item($array, $column_name, $value) {
     return $obj;
 }
 
+function remove_subdoamin($url) {
+    if($url && $url!=='') {
+        return str_replace('apps.', '', $url);
+    }
+    else {
+        return $url;
+    }
+}
+
 ?>

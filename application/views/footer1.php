@@ -111,7 +111,7 @@
         <script src="<?php echo base_url(); ?>js/custom-owl.js"></script>
         <script src="<?php echo base_url(); ?>js/custom-video.js"></script>
         <!-- DHTMLX inports-->
-        <script src="<?php echo base_url(); ?>js/dhtmlx/dhtmlx.js"></script>
+        <!-- <script src="<?php echo base_url(); ?>js/dhtmlx/dhtmlx.js"></script> -->
 
         <script type="text/javascript" src="<?php echo base_url(); ?>js/html2canvas.js"></script>
 		<script type="text/javascript" src="<?php echo base_url(); ?>js/jspdf.min.js"></script>        

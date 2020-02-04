@@ -116,12 +116,12 @@
                 
                 <div class="collapse navbar-collapse" id="myNavbar1">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="<?php echo base_url(); ?>">Home</a></li>
+                        <li><a href="<?php echo remove_subdoamin(base_url()); ?>">Home</a></li>
 						<li><a href="<?php echo base_url(); ?>search">Search Flight</a></li>
 						<li><a href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>">Hot Deals</a></li>
 					    <li><a href="<?php echo base_url(); ?>terms-and-conditions">Term & Conditions</a></li>
-					    <li><a href="<?php echo base_url(); ?>faq">FAQ</a></li>
-                        <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li>     	                                                                     
+					    <!-- <li><a href="<?php echo base_url(); ?>faq">FAQ</a></li> -->
+                        <!-- <li><a href="<?php echo base_url(); ?>contact">Contact Us</a></li> -->
                         <!--<li><a href="javascript:void(0)" class="search-button"><span><i class="fa fa-search"></i></span></a></li>-->
                     </ul>
                 </div><!-- end navbar collapse -->
@@ -139,12 +139,12 @@
                     
                     <div class="list-group panel">
                     
-                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
+                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo remove_subdoamin(base_url()); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search"><i class="fa fa-plane link-icon"></i><span></span>Search Flight</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>"><i class="fa fa-plane link-icon"></i><span></span>Hot Deals</a>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
+						<!-- <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>faq"><span><i class="fa fa-question-circle link-icon"></i></span>FAQ</a>
+						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a> -->
                     </div><!-- end list-group -->
                 </div><!-- end main-menu -->
             </div><!-- end mySidenav -->

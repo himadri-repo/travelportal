@@ -154,7 +154,7 @@
                 
                 <div class="collapse navbar-collapse" id="myNavbar1">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="<?php echo base_url(); ?>"><span><i class="fa fa-home"></i></span>Home</a></li>
+                        <li><a href="<?php echo remove_subdoamin(base_url()); ?>"><span><i class="fa fa-home"></i></span>Home</a></li>
 						<li><a href="<?php echo base_url(); ?>search"><span><i class="fa fa-search"></i></span>Search Flight</a></li>
 						<li><a href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>"><span><i class="fa fa-search"></i></span>Hot Deals</a></li>
 					    <li><a href="<?php echo base_url(); ?>terms-and-conditions">Term & Conditions</a></li>
@@ -197,7 +197,7 @@
                     
                     <div class="list-group panel">
                     
-                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
+                        <a class="list-group-item" data-parent="#main-menu" href="<?php echo remove_subdoamin(base_url()); ?>"><span><i class="fa fa-home link-icon"></i></span>Home</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search"><i class="fa fa-plane link-icon"></i><span></span>Search Flight</a>
                         <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>search/mydeals/<?= $uid ?>"><i class="fa fa-plane link-icon"></i><span></span>Hot Deals</a>
 						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>terms-and-conditions"><span><i class="fa fa-book link-icon"></i></span>Term & Conditions</a>
@@ -217,7 +217,7 @@
                             <?php } ?>
                             <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>user/logout"><span><i class="fa fa-power-off link-icon"></i></span>Log Out</a></li>
                         <?php } ?>
-						<a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a>
+						<!-- <a class="list-group-item" data-parent="#main-menu" href="<?php echo base_url(); ?>contact"><span><i class="fa fa-phone link-icon"></i></span>Contact Us</a> -->
                     </div><!-- end list-group -->
                 </div><!-- end main-menu -->
             </div><!-- end mySidenav -->
