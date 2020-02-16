@@ -29,7 +29,8 @@
 	border-left-color: transparent;
     border-right-color: transparent;
     border-bottom-color: transparent;
-	border-top: 10px solid rgba(146, 22, 22, 0.77);	
+	/*border-top: 10px solid rgba(146, 22, 22, 0.77);	*/
+	border-top: 10px solid rgb(25, 23, 23);
 	left: 50%;
 }
 
@@ -74,6 +75,10 @@
     margin: 0 4px; 
     cursor: pointer; 
     position: relative;
+}
+
+.stopper-icon-gr {
+    border: 3px solid #0fda1a; 
 }
 
 .stopper-icon .msg {
@@ -292,7 +297,7 @@
 					<?php 
                         $currentuserstyle = ((($currentuser['is_admin']=='1' || $currentuser['type']=='B2B') && !empty($flight) && count($flight)>0) ? 'block': 'none');
                         $direction = '→';
-                        if($flight[0]['trip_type'] === 'ROUND') {
+                        if($flight && is_array($flight) && count($flight)>0 && $flight[0]['trip_type'] === 'ROUND') {
                             $direction = '⇄';
                         }
 					?>
@@ -310,7 +315,32 @@
 						{
 							foreach($flight as $key=>$value)
 							{
-                                $flightitem = $flight[$key];
+								$flightitem = $flight[$key];
+								$segments = isset($flightitem['segments'])?$flightitem['segments']:false;
+
+								$stops_details = [];
+								if($segments) {
+									$firstairline = $flightitem['flight_no'];
+									for ($si=0; $si < count($segments)-1; $si++) { 
+										$stop_name = $segments[$si]['arrival_city'];
+										$arrival_datetime = $segments[$si]['arrival_datetime'];
+
+										$next_departure_datetime = $segments[$si+1]['departure_datetime'];
+										$next_aircide = $segments[$si+1]['aircide'];
+										$next_flight_number = $segments[$si+1]['flight_number'];
+										$next_dept_terminal = "T-".$segments[$si]['departure_terminal'];
+
+										$layover = intval((strtotime($next_departure_datetime)-strtotime($arrival_datetime))/60);
+										$layover = intval($layover/60).'h '.intval($layover%60).'m';
+
+										$sameairline = ($firstairline === "$next_aircide $next_flight_number");
+
+										$stops_details[] = array('stop_name' => $stop_name, 'layover' => $layover, 'sameairline' => $sameairline, 'next_airline' => "$next_aircide $next_flight_number", 'terminal' => $next_dept_terminal);
+
+										$firstairline = "$next_aircide $next_flight_number";
+									}
+								}
+
 								$class = "";
                                 //echo $flight[$key]["user_id"] . " - " . $this->session->userdata('user_id');
                                 log_message('debug', 'Flight Data => '.json_encode($value));
@@ -337,6 +367,8 @@
                                     $dept_date = strtotime($flight[$key]["departure_date_time"]);
                                     $arrv_date = strtotime($flight[$key]["arrival_date_time"]);
                                     $dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+									$dept_terminal = $flightitem['departure_terminal'];
+									$arrv_terminal = $flightitem['arrival_terminal'];
                                 }
                                 else {
                                     $splcode = 'system/live fare';
@@ -345,13 +377,21 @@
                                     $airline_name = $flight[$key]["airline_name"];
                                     $dept_date = strtotime($flight[$key]["departure_date_time"]);
                                     $arrv_date = strtotime($flight[$key]["arrival_date_time"]);
-                                    $dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+									$dateDiff = intval((strtotime($flight[$key]["arrival_date_time"])-strtotime($flight[$key]["departure_date_time"]))/60);
+									
+									$dept_terminal = "T-".$flightitem['departure_terminal'];
+									$arrv_terminal = "T-".$flightitem['arrival_terminal'];
                                 }
                                 
 
                                 if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
                                     $splcode = $flight[$key]["data_collected_from"];
-                                }
+								}
+								else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
+									$splcode = $flight[$key]["companyname"];
+								}
+								
+								$sale_type = $flight[$key]["sale_type"];
 
                                 $auto_corrected = $flight[$key]["live_corrected"];
                                 $stops = intval($flight[$key]["no_of_stops"]);
@@ -385,7 +425,7 @@
                                                 <div style="flex: 1 0 10%; margin: 2px 7px;">
                                                     <div style="text-align: center;">
                                                         <span class="title"><?= date('H:i', $dept_date) ?></span>
-                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $source_city ?></div>
+                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $source_city ?>(<?= $dept_terminal ?>)</div>
                                                     </div>
                                                 </div>
                                                 <div style="flex: 1 0 25%;">
@@ -397,11 +437,29 @@
                                                         else {
                                                             $wth = 100;
                                                         }
-                                                        for ($i=0; $i < $stops ; $i++) { ?>
+                                                        for ($i=0; $i < $stops ; $i++) { 
+															$stop_detail = $stops_details[$i];
+															$sameairline = boolval($stop_detail['sameairline']);
+															$sameair_class = "stopper-icon";
+															if($sameairline) {
+																$sameair_class = $sameair_class." stopper-icon-gr";
+															}
+															?>
                                                             <span class="stopstyle" <?= "style = 'width: ".$wth."%; left: ".($wth/2)."%; '"?>>
-                                                                <i class="stopper-icon">
+                                                                <i class="<?= $sameair_class ?>">
                                                                     <div style="transform-origin: 0% 100%;" class="msg">
-                                                                        This is testing
+																		<table style="width: 200px;">
+																			<tr style="opacity: 0.75;">
+																				<td style="padding-right: 5px; text-align: left;">Stop</td>
+																				<td style="padding-right: 5px; text-align: left;">Airline</td>
+																				<td style="text-align: right;">Layover Time</td>
+																			</tr>
+																			<tr>
+																				<td style="padding-right: 5px; text-align: left;"><?= $stop_detail['stop_name'] ?> <?= (isset($stop_detail['terminal']) && $stop_detail['terminal']!=='') ? (' ('.$stop_detail['terminal'].')') : '' ?></td>
+																				<td style="padding-right: 5px; text-align: left;"><?= $stop_detail['next_airline'] ?></td>
+																				<td style="text-align: right;"><?= $stop_detail['layover'] ?></td>
+																			</tr>
+																		</table>
                                                                     </div>
                                                                 </i>
                                                             </span>
@@ -433,7 +491,7 @@
                                                 <div style="flex: 1 0 10%;">
                                                     <div style="text-align: center;">
                                                         <span class="title"><?= date('H:i', $arrv_date) ?></span>
-                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $destination_city ?></div>
+                                                        <div style="color: #aba3a3; font-size: 0.85em;"><?= $destination_city ?>(<?= $arrv_terminal ?>)</div>
                                                     </div>										
                                                 </div>
                                             </div>
@@ -479,7 +537,14 @@
                                         </div>
                                         <div class="col-xs-12 col-sm-12 col-lg-2 col-md-2" style="padding: 10px;">
                                             <div style="padding: 5px 0px;">
-                                                <button type="button" class="btn btn-orange" id="btn_one_way" style="float: right; margin: 0px 10px;">Book Now</button>
+												<?php if($sale_type === 'request') { ?>
+													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange" style="float: right; margin: 0px 10px;">REQUEST NOW</a>
+												<?php } else if($sale_type==="live" || $sale_type==="api") { ?>
+													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange" style="float: right; margin: 0px 10px;">BOOK NOW</a>												
+												<?php } else { ?>
+													<a href="<?php echo base_url(); ?>search/flightdetails/<?php echo $flight[$key]["id"];?>" class="btn btn-orange" style="float: right; margin: 0px 10px;">REQUEST NOW</a>
+												<?php } ?>
+                                                <!-- <button type="button" class="btn btn-orange" id="btn_one_way" style="float: right; margin: 0px 10px;">Book Now</button> -->
                                             </div>
                                         </div>
                                     </div>

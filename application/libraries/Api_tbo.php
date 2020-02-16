@@ -24,6 +24,12 @@ class Api_tbo extends Api {
     private $cash_balance = 0.00;
     private $ticketing_balance = 0.00;
 
+    private $fare = NULL;
+    private $fare_breakdown = NULL;
+    private $segments = NULL;
+    private $fare_rules = NULL;
+    private $book_result = NULL;
+
     private $enabled = true;
 
 	public function __construct($config)
@@ -291,15 +297,15 @@ class Api_tbo extends Api {
                                     'seller_rateplan_id' => $default_rateplan_id,
                                     'adult_total' => 0.00, //if we make it non-zero then search showing wrong date.
                                     'image' => $image,
-                                    'ResultIndex' => intval($tmzticket['ResultIndex']),
+                                    'ResultIndex' => $tmzticket['ResultIndex'],
                                     // 'SearchIndex' => intval($tmzticket['SearchIndex']),
                                     // 'SuppSource' => intval($tmzticket['SuppSource']),
                                     'IsLCC' => isset($tmzticket['IsLCC'])?boolval($tmzticket['IsLCC']):false,
                                     'SuppTokenId' => $this->tokenid,
                                     'SuppTraceId' => $traceid,
                                     'tokenid' => $this->tokenid,
-                                    'clientid' => $this->clientid,
-                                    'agencytype' => $this->agencytype,
+                                    'clientid' => $this->member['MemberId'],
+                                    'agencytype' => $this->member['AgencyId'],
                                     'segments' => $segments
                                 );
                                 $this->tokenid = $ticket['tokenid'];
@@ -327,15 +333,16 @@ class Api_tbo extends Api {
     }
 
     public function check_balance() {
-        $data = array('ClientID' => $this->clientid, 'TokenID' => $this->tokenid);
+        $data = array('EndUserIp' => '192.168.1.1', 'ClientId' => 'ApiIntegrationNew', 'TokenAgencyId' => "$this->agencytype", 'TokenMemberId' => "$this->clientid", 'TokenId' => $this->tokenid);
         $err = '';
         $response = '';
         $info = '';
-        $urlpart = "Rest.svc/v2/checkbalance";
+        $urlpart = "SharedServices/SharedData.svc/rest/GetAgencyBalance";
         $result = $this->post($urlpart, $data, "application/json");
+
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = isset($result['info']) ? $result['info'] : '';
+            $info = isset($result['debug']) ? $result['debug'] : '';
             $err = $result['err'];
         }
         
@@ -346,13 +353,20 @@ class Api_tbo extends Api {
 		} 
 		else 
 		{
+            log_message("debug", "Response | ".json_encode($response));
+            // if($response !== '') {
+            //     $response = json_decode($response, TRUE);
+            // }
+
             if($response) {
                 if(isset($response['Error']) && intval($response['Error']['ErrorCode'])>0) {
                     log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
                 }
                 else {
+                    //CashBalance | CreditBalance
+
                     $this->cash_balance = isset($response['CashBalance']) ? floatval($response['CashBalance']) : 0.00;
-                    $this->ticketing_balance = isset($response['TicketingBalance']) ? floatval($response['TicketingBalance']) : 0.00;
+                    $this->ticketing_balance = isset($response['CreditBalance']) ? floatval($response['CreditBalance']) : 0.00;
 
                     return array('cash_balance' => $this->cash_balance, 'ticketing_balance' => $this->ticketing_balance);
                 }
@@ -415,24 +429,25 @@ class Api_tbo extends Api {
     }
 
     public function fare_quote($ticket) {
-        $resultindex = intval($ticket['ResultIndex']);
-        $suppsource = intval($ticket['SuppSource']);
+        $resultindex = $ticket['ResultIndex'];
+        $suppsource = 0;
         $supptraceid = $ticket['SuppTraceId'];
         $supptokenid = $ticket['SuppTokenId'];
-        $searchindex = intval($ticket['SearchIndex']);
+        $searchindex = $ticket['ResultIndex'];
         $tokenid = $ticket['tokenid'];
 
-        $data = array('EndUserIp' => '121.101.14.10', 'TokenId' => $tokenid, 'ResultIndex' => $resultindex, 'SuppSource' => $suppsource, 'SuppTraceId' => $supptraceid, 'SuppTokenId' => $supptokenid, 'SearchIndex' => $searchindex);
+        //$data = array('EndUserIp' => '121.101.14.10', 'TokenId' => $tokenid, 'ResultIndex' => $resultindex, 'SuppSource' => $suppsource, 'SuppTraceId' => $supptraceid, 'SuppTokenId' => $supptokenid, 'SearchIndex' => $searchindex);
+        $data = array('EndUserIp' => '192.168.1.1', 'TokenId' => $tokenid, 'ResultIndex' => $resultindex, 'TraceId' => $supptraceid);
 
         log_message('debug', 'Farequote => '.json_encode($data, JSON_UNESCAPED_SLASHES));
         $err = '';
         $response = '';
         $info = '';
-        $urlpart = "Rest.svc/v2/Farequote";
+        $urlpart = "BookingEngineService_Air/AirService.svc/rest/FareQuote/";
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
-            $info = isset($result['info']) ? $result['info'] : '';
+            $info = isset($result['debug']) ? $result['debug'] : '';
             $err = $result['err'];
         }
         
@@ -449,11 +464,64 @@ class Api_tbo extends Api {
                     log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
                 }
                 else {
+                    // Published Fare : BaseFare + Tax + OtherCharges + ServiceFee + AdditionalTxnFeepub + AirlineTransFee (i.e. : 7054 = 3596+2966+492+0+0+0)
+                    // Offered Fare : (Published Fare-CommissionEarned-PLBEarned) (i.e. : 6822.12 = 7054 - 85 -88)
+                    // Net Payable (Invoice Amount) : Published Fare – (CommissionEarned+ IncentiveEarned+ PLBEarned + AdditionalTxnFee) + (TdsOnCommission + TdsOnIncentive + TdsOnPLB) + GST(IGSTAmount+CGSTAmount+SGSTAmount+CessAmount)
+                    // (6,914.02 = 7054 - (85+59.7+88.03+0) + (33.66 +23.88+35.21) + ( GST not applicable in this case))
+
+                    $result = $response['Results'];
                     $isprice_changed = boolval($response['IsPriceChanged']) ? boolval($response['IsPriceChanged']) : false;
                     $traceid = isset($response['TraceId']) ? $response['TraceId'] : '';
-                    $fqindex = isset($response['FQIndex']) ? intval($response['FQIndex']) : 0;
+                    $result_index = isset($result['ResultIndex']) ? $result['ResultIndex'] : '';
+                    //$fqindex = isset($response['FQIndex']) ? intval($response['FQIndex']) : 0;
+                    $islcc = isset($result['IsLCC']) ? boolval($result['IsLCC']) : false;
+                    $isrefundable = isset($result['IsRefundable']) ? boolval($result['IsRefundable']) : false;
+                    $gstallowed = isset($result['GSTAllowed']) ? boolval($result['GSTAllowed']) : false;
+                    $airlineremark = isset($result['AirlineRemark']) ? $result['AirlineRemark'] : '';
+                    $offeredfare = isset($result['Fare']['OfferedFare']) ? floatval($result['Fare']['OfferedFare']) : 0;
+                    $this->fare = isset($result['Fare']) ? $result['Fare'] : NULL;
+                    $this->fare_breakdown = isset($result['FareBreakdown']) ? $result['FareBreakdown'] : NULL;
+                    $this->segments = isset($result['Segments']) ? $result['Segments'] : NULL;
+                    $this->fare_rules = isset($result['FareRules']) ? $result['FareRules'] : NULL;
 
-                    return array('isprice_changed' => $isprice_changed, 'offeredfare' => floatval($response['Results']['Fare']['OfferedFare']), 'traceid' => $traceid, 'fqindex' => $fqindex);
+                    if($this->fare) {
+                        $fare = array(
+                            'currency' => isset($this->fare['Currency']) ? $this->fare['Currency'] : '',
+                            'basefare' => isset($this->fare['BaseFare']) ? floatval($this->fare['BaseFare']) : 0,
+                            'tax' => isset($this->fare['Tax']) ? floatval($this->fare['Tax']) : 0,
+                            'yqtax' => isset($this->fare['YQTax']) ? floatval($this->fare['YQTax']) : 0,
+                            'othercharges' => isset($this->fare['OtherCharges']) ? floatval($this->fare['OtherCharges']) : 0,
+                            'additionaltxnfeepub' => isset($this->fare['AdditionalTxnFeePub']) ? floatval($this->fare['AdditionalTxnFeePub']) : 0,
+                            'additionaltxnfeeofrd' => isset($this->fare['AdditionalTxnFeeOfrd']) ? floatval($this->fare['AdditionalTxnFeeOfrd']) : 0,
+                            'discount' => isset($this->fare['Discount']) ? floatval($this->fare['Discount']) : 0,
+                            'publishedfare' => isset($this->fare['PublishedFare']) ? floatval($this->fare['PublishedFare']) : 0,
+                            'offeredfare' => $offeredfare,
+                            'commissionearned' => isset($this->fare['CommissionEarned']) ? floatval($this->fare['CommissionEarned']) : 0,
+                            'plbearned' => isset($this->fare['PLBEarned']) ? floatval($this->fare['PLBEarned']) : 0,
+                            'incentiveearned' => isset($this->fare['IncentiveEarned']) ? floatval($this->fare['IncentiveEarned']) : 0,
+                            'tdsoncommission' => isset($this->fare['TdsOnCommission']) ? floatval($this->fare['TdsOnCommission']) : 0,
+                            'tdsonplb' => isset($this->fare['TdsOnPLB']) ? floatval($this->fare['TdsOnPLB']) : 0,
+                            'tdsonincentive' => isset($this->fare['TdsOnIncentive']) ? floatval($this->fare['TdsOnIncentive']) : 0,
+                            'total_tds' => 0,
+                            'servicefee' => isset($this->fare['ServiceFee']) ? floatval($this->fare['ServiceFee']) : 0,
+                            'totalbaggagecharges' => isset($this->fare['TotalBaggageCharges']) ? floatval($this->fare['TotalBaggageCharges']) : 0,
+                            'totalmealcharges' => isset($this->fare['TotalMealCharges']) ? floatval($this->fare['TotalMealCharges']) : 0,
+                            'totalseatcharges' => isset($this->fare['TotalSeatCharges']) ? floatval($this->fare['TotalSeatCharges']) : 0,
+                            'totalspecialservicecharges' => isset($this->fare['TotalSpecialServiceCharges']) ? floatval($this->fare['TotalSpecialServiceCharges']) : 0,
+                            'airlineremark' => $airlineremark,
+                            'gstallowed' => $gstallowed,
+                            'isrefundable' => $isrefundable,
+                            'islcc' => $islcc,
+                            'isprice_changed' => $isprice_changed,
+                            'traceid' => $traceid,
+                        );
+                        $fare['total_tds'] = $fare['tdsoncommission'] + $fare['tdsonplb'] + $fare['tdsonincentive'];
+                    }
+
+                    $fare_quote = array('isprice_changed' => $isprice_changed, 'offeredfare' => $offeredfare, 'traceid' => $traceid, 'fqindex' => $result_index, 'fare' => $fare);
+
+                    log_message('debug', 'Fare Quote : '.json_encode($fare_quote));
+                    return $fare_quote;
                 }
             }
             else {
@@ -466,7 +534,6 @@ class Api_tbo extends Api {
 
     public function book($payload) {
         if(!$payload || !is_array($payload)) return NULL;
-
         $company = $payload['company'];
         $current_user = $payload['current_user'];
         $ticket = $payload['ticket'];
@@ -479,10 +546,12 @@ class Api_tbo extends Api {
         $this->agencytype = $ticket['agencytype'];
 
         $balance = $this->check_balance();
+        log_message('debug', 'Balance Check : '.json_encode($balance));
 
         $fare_quote = $this->fare_quote($ticket);
-
-
+        log_message('debug', 'Fare Quote : '.json_encode($fare_quote));
+        
+        log_message('debug', "Posted value => ".json_encode($payload));
         //We need to check balance also
         if($balance && $fare_quote && $adminuser) {
             if(!boolval($fare_quote['isprice_changed'])) {
@@ -492,9 +561,10 @@ class Api_tbo extends Api {
 
                 for ($i=0; $i < count($customers); $i++) { 
                     $customer = $customers[$i];
+                    //Please enter valid title for passenger 1. Title Can be from the following values : Mr ,Mstr ,Mrs ,Ms ,Miss ,Master ,DR ,CHD ,MST ,PROF ,Inf
                     $passender = array(
                         'PaxId' => "$i",
-                        'Title' => $customer['prefix'],
+                        'Title' => $this->get_customer_title($i, $customer['prefix']),
                         'FirstName' => $customer['first_name'],
                         'LastName' => $customer['last_name'],
                         'PaxType' => 1,
@@ -507,68 +577,210 @@ class Api_tbo extends Api {
                         'City' => '',
                         'CountryCode' => 'IN',
                         'CountryName' => 'India',
+                        'Nationality' => 'IN',
                         'Email' => $adminuser['email'],
                         'ContactNo' => $adminuser['mobile'],
                         'IsLeadPax' => true,
-                        'FFAirline' => null,
-                        'FFNumber' => null,
-                        'Fare' => array('BaseFare' => 0, 'Tax' => 0, 'TransactionFee' => 0, 'YQTax' => 0, 'AdditionalTxnFeeOfrd' => 0, 'AdditionalTxnFeePub' => 0, 'AirTransFee' => 0),
-                        'Baggage' => null,
-                        'MealDynamic' => null,
-                        'Ticket' => null
+                        'FFAirlineCode' => null,
+                        'FFNumber' => '',
+                        'Fare' => array('BaseFare' => 0, 'Tax' => 0, 'TransactionFee' => 0, 'YQTax' => 0, 'AdditionalTxnFeeOfrd' => 0, 'AdditionalTxnFeePub' => 0, 'ServiceFee' => 0),
+                        'Baggage' => [],
+                        'MealDynamic' => [],
+                        'SeatDynamic' => [],
+                        'GSTCompanyAddress' => '',
+                        'GSTCompanyContactNumber' => '',
+                        'GSTCompanyName' => '',
+                        'GSTNumber' => '',
+                        'GSTCompanyEmail' => ''
                     );
 
                     array_push($passengers, $passender);
                 }
 
-                $data = array('PageID' => $traceid, 'AuthoToken' => $this->tokenid, 'Ticketing' => array(array('Passengers' => $passengers,'GSTDetails' => null, 'FareQuoteIndexs' => $fqindex)), 'LastBalance' => 0.00, 'PmtType' => 'F-Credit');
-
+                $data = array('EndUserIp' => '192.168.11.58', 'TraceId' => $traceid, 'ResultIndex' => $fqindex, 'TokenId' => $this->tokenid, 'Passengers' => $passengers, 'AgentReferenceNo' => 'customer_tracking_no', 'PreferredCurrency' => null);
                 log_message('debug', 'Ticketing API POST => '.json_encode($data, JSON_UNESCAPED_SLASHES));
-                
-                $err = '';
-                $response = '';
-                $info = '';
-                $urlpart = "Rest.svc/V2/ticketing";
-                $result = $this->post($urlpart, $data, "application/json");
-                if($result && is_array($result)) {
-                    $response = json_decode($result['response'], TRUE);
-                    $info = isset($result['info']) ? $result['info'] : '';
-                    $err = $result['err'];
 
-                    log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($result, JSON_UNESCAPED_SLASHES));
+                $lcc = isset($fare_quote['fare']['islcc']) ? boolval($fare_quote['fare']['islcc']) : false;
+                if(isset($fare_quote['fare']) && isset($fare_quote['fare']['islcc']) && boolval($fare_quote['fare']['islcc'])) {
+                    $booking_response = $this->book_lcc($data);
                 }
-                
-                if ($err) 
-                {
-                    log_message("debug", "ERROR : $err");
-                      return false;
-                } 
-                else 
-                {
-                    if($response) {
-                        if(isset($response['Error']) && intval($response['Error']['ErrorCode'])>0) {
-                            log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
-                        }
-                        else {
-                            $bookingid = intval($response['BookingIndex']);
-                            $pnrlist = $response['PNRList'];
-                            $pageid = $response['PageID'];
-        
-                            return array('bookingid' => $bookingid, 'pnrlist' => $pnrlist, 'pageid' => $pageid);
-                        }
-                    }
-                    else {
-                        log_message('error', "NO API Response");
-                    }
+                else {
+                    $booking_response = $this->book_nonlcc($data);
                 }
+
+                log_message('debug', "LCC => ".($lcc?'true':'false')." | Final Booking : ".json_encode($booking_response));
+
+                return $booking_response;
             }
             else {
                 log_message('error', 'Ticket price changed at final stage. I think its already more than 20 mins waiting.');
             }
         }
+
+        return false;
+    }
+
+    private function get_customer_title($idx=0 , $customer_prefix='Mr.') {
+        $title = 'Mr';
+        switch ($customer_prefix) {
+            case 'Mr.':
+                $title = 'Mr';
+                break;
+            case 'Mrs.':
+                $title = 'Mrs';
+                break;
+            case 'Miss':
+                $title = 'Miss';
+                break;
+            case 'Mr.':
+                $title = 'Mr';
+                break;
+            default:
+                $title = 'Mr';
+                break;
+        }
+
+        return $title;
+    }
+
+    private function book_lcc($data) {
+        $err = NULL;
+        $err_code = 0;
+        $book_result = [];
+        $response = '';
+        $info = '';
+        $urlpart = "BookingEngineService_Air/AirService.svc/rest/Ticket/";
+        $result = $this->post($urlpart, $data, "application/json");
+        if($result && is_array($result)) {
+            $response = json_decode($result['response'], TRUE);
+            $response = $response['Response'];
+            $info = isset($result['debug']) ? $result['debug'] : '';
+            if(isset($result['err']) && $result['err']!=='') {
+                $err = array('ErrorCode' => 999, 'ErrorMessage' => $result['err']);
+            }
+
+            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($result, JSON_UNESCAPED_SLASHES));
+        }
+        
+        if ($err) 
+        {
+            log_message("debug", "ERROR : ".json_encode($err));
+            $book_result=array('Error' => $err, 'Status' => false);
+        } 
+        else 
+        {
+            if($response) {
+                if(isset($response['Error']) && intval($response['Error']['ErrorCode'])>0) {
+                    log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
+                    $err = $response['Error']['ErrorMessage'];
+                    $err = array('ErrorCode' => intval($response['Error']['ErrorCode']), 'ErrorMessage' => $err);
+
+                    $book_result=array('Error' => $err, 'Status' => false);
+                }
+                else {
+                    $response = $response['Response'];
+                    $bookingid = intval($response['BookingId']);
+                    $pnrlist = $response['PNR'];
+                    $ssrdenied = isset($response['SSRDenied']) ? boolval($response['SSRDenied']) : false;
+                    $ssrmessage = isset($response['SSRMessage']) ? boolval($response['SSRMessage']) : false;
+                    $status = (isset($response['Status']) && intval($response['Status']) === 1);
+                    $ispricechanged = isset($response['IsPriceChanged']) ? boolval($response['IsPriceChanged']) : false;
+                    $istimechanged = isset($response['IsTimeChanged']) ? boolval($response['IsTimeChanged']) : false;
+                    $ticletstatus = (isset($response['TicketStatus']) && intval($response['TicketStatus']) === 1);
+                    $flight_itinerary = isset($response['FlightItinerary']) ? $response['FlightItinerary'] : [];
+                    if($flight_itinerary && is_array($flight_itinerary) && count($flight_itinerary)>0) {
+                        $flight_itinerary['pnr'] = $flight_itinerary['PNR'];
+                    }                    
+
+                    $result = array('bookingid' => $bookingid, 'pnrlist' => $pnrlist, 'pageid' => '', 'itinerary' => $flight_itinerary, 'ssrdenied' => $ssrdenied, 'ssrmessage' => $ssrmessage, 
+                                    'status' => $status, 'ispricechanged' => $ispricechanged, 'istimechanged' => $istimechanged, 'ticletstatus' => $ticletstatus);
+                    $book_result=array('Error' => array('Error' => 0, 'ErrorMessage' => ''), 'Status' => true, 'Result' => $result);
+                    $this->book_result = $result;
+                }
+            }
+            else {
+                log_message('error', "NO API Response");
+                $book_result=array('Error' => array('ErrorCode' => 999, 'ErrorMessage' => 'NO API Response'), 'Status' => false);
+            }
+        }
+
+        return $book_result;
+    }
+
+    private function book_nonlcc($data) {
+        $err = '';
+        $err_code = 0;
+        $book_result = [];
+        $response = '';
+        $info = '';
+        $urlpart = "BookingEngineService_Air/AirService.svc/rest/Book/";
+        $result = $this->post($urlpart, $data, "application/json");
+        if($result && is_array($result)) {
+            $response = json_decode($result['response'], TRUE);
+            $response = $response['Response'];
+            $info = isset($result['debug']) ? $result['debug'] : '';
+            if(isset($result['err']) && $result['err']!=='') {
+                $err = array('ErrorCode' => 999, 'ErrorMessage' => $result['err']);
+            }
+
+            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($result, JSON_UNESCAPED_SLASHES));
+        }
+        
+        if ($err) 
+        {
+            log_message("debug", "ERROR : ".json_encode($err));
+            $book_result=array('Error' => $err, 'Status' => false);
+        } 
+        else 
+        {
+            if($response) {
+                if(isset($response['Error']) && intval($response['Error']['ErrorCode'])>0) {
+                    log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
+                    $err = $response['Error']['ErrorMessage'];
+                    $err = array('ErrorCode' => intval($response['Error']['ErrorCode']), 'ErrorMessage' => $err);
+
+                    $book_result=array('Error' => $err, 'Status' => false);
+                }
+                else {
+                    $response = $response['Response'];
+                    $bookingid = intval($response['BookingId']);
+                    $pnrlist = $response['PNR'];
+                    $ssrdenied = isset($response['SSRDenied']) ? boolval($response['SSRDenied']) : false;
+                    $ssrmessage = isset($response['SSRMessage']) ? boolval($response['SSRMessage']) : false;
+                    $status = (isset($response['Status']) && intval($response['Status']) === 1);
+                    $ispricechanged = isset($response['IsPriceChanged']) ? boolval($response['IsPriceChanged']) : false;
+                    $istimechanged = isset($response['IsTimeChanged']) ? boolval($response['IsTimeChanged']) : false;
+                    $ticletstatus = (isset($response['TicketStatus']) && intval($response['TicketStatus']) === 1);
+                    $flight_itinerary = isset($response['FlightItinerary']) ? $response['FlightItinerary'] : [];
+                    
+                    if($flight_itinerary && is_array($flight_itinerary) && count($flight_itinerary)>0) {
+                        $flight_itinerary['pnr'] = $flight_itinerary['PNR'];
+                    }
+
+                    $result = array('bookingid' => $bookingid, 'pnrlist' => $pnrlist, 'pageid' => '', 'itinerary' => $flight_itinerary, 'ssrdenied' => $ssrdenied, 'ssrmessage' => $ssrmessage, 
+                                    'status' => $status, 'ispricechanged' => $ispricechanged, 'istimechanged' => $istimechanged, 'ticletstatus' => $ticletstatus);
+                    $book_result=array('Error' => array('Error' => 0, 'ErrorMessage' => ''), 'Status' => true, 'Result' => $result);
+                    $this->book_result = $result;
+                }
+            }
+            else {
+                log_message('error', "NO API Response");
+                $book_result=array('Error' => array('ErrorCode' => 999, 'ErrorMessage' => 'NO API Response'), 'Status' => false);
+            }
+        }
+
+        return $book_result;
     }
 
     public function get_booking_details($payload) {
+        $booking_details = $payload['booking_details'];
+
+        $booking_details = (isset($booking_details['Result']) && isset($booking_details['Result']['itinerary'])) ? $booking_details['Result']['itinerary'] : NULL;
+
+        return $booking_details;
+    }
+
+    public function get_booking_details_old($payload) {
         if(!$payload || !is_array($payload)) return NULL;
 
         $company = $payload['company'];

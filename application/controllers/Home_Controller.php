@@ -150,9 +150,10 @@ class Home_Controller extends Mail_Controller
 	}
 	public function error()
 	{
-		
-		$this->load->view('error');
-		
+		$company = $this->get_current_company();
+		$companyid = intval($company["id"]);
+		$result["setting"]=$this->Search_Model->company_setting($companyid);
+		$this->load->view('error', $result);
 	}
 
 	public function get_current_company() {

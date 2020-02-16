@@ -28,7 +28,7 @@
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="full-page-title visible-xs visible-sm">
-                                    <h3 class="company-name"><span><i class="fa fa-plane"></i>OXY</span>TRA</h3>
+                                    <h3 class="company-name"><span><i class="fa fa-plane"></i> <?php echo $setting[0]["site_title"]; ?></span></h3>
                                 </div><!-- end full-page-title -->
                                         
                                 <div class="row">
@@ -39,7 +39,7 @@
                                     
                                     <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 error-page-2-text">
                                         <div class="full-page-title visible-md visible-lg">
-                                            <h3 class="company-name text-left"><span><i class="fa fa-plane"></i>OXY</span>TRA</h3>
+                                            <h3 class="company-name text-left"><span><i class="fa fa-plane"></i> <?php echo $setting[0]["site_title"]; ?></span></h3>
                                         </div><!-- end full-page-title -->
                                         
                                         <h2>Something went wrong !</h2>

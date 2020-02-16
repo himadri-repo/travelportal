@@ -270,7 +270,7 @@ class Search extends Mail_Controller
 
 				//Live ticket checks
 				$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
-				$url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=012f84558a572cb4ccc4b4c84a15d523&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
+				$url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=5239f6f98b93cbe7b61a9f47a7ba1634&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
 	
 				$curl = curl_init();
 
@@ -571,7 +571,12 @@ class Search extends Mail_Controller
 							
 				$this->load->view('header1',$result);
 				//$this->load->view('search_one_way',$result);
+				// if($companyid === 7) {
 				$this->load->view('search_one_wayv2',$result);
+				// }
+				// else {
+				// 	$this->load->view('search_one_wayv2',$result);
+				// }
 				$this->load->view('footer1');
 			}
 			else
@@ -1390,11 +1395,11 @@ class Search extends Mail_Controller
 	
 			log_message('debug', 'Booking API Result '.json_encode($returnValue));
 
-			if($returnValue) {
+			if($returnValue && isset($returnValue['Status']) && boolval($returnValue['Status'])) {
 				$payload['booking_details'] = $returnValue;
 				$booking_details = $this->$library->get_booking_details($payload);
 				log_message('debug', 'Booking Details from API => '.json_encode($booking_details));
-
+				$returnValue = isset($returnValue['Result']) ? $returnValue['Result'] : NULL;
 				if($returnValue && isset($returnValue['bookingid']) && intval($returnValue['bookingid'])>0) {
 					$bookingid = intval($returnValue['bookingid']);
 
@@ -1414,6 +1419,10 @@ class Search extends Mail_Controller
 				}
 
 				log_message('debug', 'Api call paylod => '.json_encode($result));
+			}
+			else {
+				log_message('debug', 'Api call failed => '.json_encode($returnValue));
+				$result = $returnValue;
 			}
 		}
 		
@@ -1516,9 +1525,9 @@ class Search extends Mail_Controller
 					"library_name" => $ticket['library'],
 					"api_extra_data" => json_encode(array(
 						'itinerary' => $itinerary, 
-						'ResultIndex' => intval($ticket['ResultIndex']),
-						'SearchIndex' => intval($ticket['SearchIndex']),
-						'SuppSource' => intval($ticket['SuppSource']),
+						'ResultIndex' => isset($ticket['ResultIndex']) ? $ticket['ResultIndex'] : '-1',
+						'SearchIndex' => isset($ticket['SearchIndex']) ? $ticket['SearchIndex'] : '-1',
+						'SuppSource' => isset($ticket['SuppSource']) ? $ticket['SuppSource'] : '-1',
 						'SuppTokenId' => $ticket['SuppTokenId'],
 						'SuppTraceId' => $ticket['SuppTraceId'],
 						'tokenid' => $ticket['tokenid'],
@@ -1651,8 +1660,15 @@ class Search extends Mail_Controller
 						//Call API to book ticket
 						$result = $this->book_api_ticket(array('current_user' => $current_user,'ticket' => $ticket,'company' => $company,'posteddata' => $posteddata,'customers' => $customers));
 
-						if(!$result) {
-							$this->session->set_userdata('ERROR','Unable to process ticket at this moment (API timedout). Please try after some time.');
+						if(!$result || (isset($result['Error']) && intval($result['Error']['ErrorCode'])>0)) {
+							$error_code = $result['Error']['ErrorCode'];
+							$error_message = $result['Error']['ErrorMessage'];
+							if($error_message==='') {
+								$this->session->set_userdata('ERROR','Unable to process ticket at this moment (API timedout). Please try after some time.');
+							}
+							else {
+								$this->session->set_userdata('ERROR',"$error_message (Code: $error_code)");
+							}
 							redirect("search/beforebook/$id");
 						}
 						else {
