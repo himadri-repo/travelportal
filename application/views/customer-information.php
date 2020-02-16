@@ -1,14 +1,17 @@
         <style>
-		.lg-booking-form .form-group .fa 
-		{
-			position: absolute;
-			top: 9px;
-			right: 10px;
-			pointer-events: none;
-			color: #FAA61A;
-			font-size: 20px;
-		}
+			.lg-booking-form .form-group .fa 
+			{
+				position: absolute;
+				top: 9px;
+				right: 10px;
+				pointer-events: none;
+				color: #FAA61A;
+				font-size: 20px;
+			}
 		</style>
+		<div id="progressbar" class="search_overlay" style="display:none">
+			<img src="<?php echo base_url(); ?>images/progress.gif" style="width: 100%; height: 100%;" title="Booking your ticket ...">
+		</div>
         <!--=============== PAGE-COVER =============-->
         <section class="page-cover" id="cover-flight-booking">
             <div class="container">
@@ -331,6 +334,7 @@
         <script language="javascript">
 		var issubmitted = false;
 		function validate_customers() {
+			$("#progressbar").hide();
 
 			var prefix = $("select[name='prefix[]'");
 			var first_name = $("input[name='first_name[]'");
@@ -373,8 +377,10 @@
 
 			if(!proceed) {
 				alert(msg);
+				$("#progressbar").hide();
 			} else {
 				issubmitted = true;
+				$("#progressbar").show();
 				$('#btnbook').hide();
 			}
 

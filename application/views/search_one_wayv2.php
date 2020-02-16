@@ -98,7 +98,28 @@
     width: 50px;
     height: 50px;    
 }
+
+.search_overlay {
+	position: fixed; /* Sit on top of the page content */
+	display: none; /* Hidden by default */
+	width: 100%; /* Full width (cover the whole page) */
+	height: 100%; /* Full height (cover the whole page) */
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+	z-index: 999; /* Specify a stack order in case you're using a different order for other elements */
+	cursor: pointer; /* Add a pointer on hover */
+}
+.search_overlay img {
+    opacity: 0.3;
+}
 </style>         
+<div id="progressbar" class="search_overlay" style="display:none">
+	<img src="<?php echo base_url(); ?>images/progress.gif" style="width: 100%; height: 100%;" title="Search is progressing ...">
+</div>
+
 <section class="innerpage-wrapper" style="top:0;margin-top:20px">
 	<div id="flight-listings" class="innerpage-section-padding" style="padding-top:0;">
 		<div class="container">
@@ -190,7 +211,7 @@
 							
 							<!-- ONE WAY SECTION -->
 							<div id="tab-one-way" class="tab-pane fade in active" style="padding-top: 10px;">
-								<form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation()">
+								<form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation_ticket_search('oneway')">
 									<input type="hidden" name="trip_type" value="ONE"> 
 									<div class="row">
 										<div class="col-xs-12 col-sm-12 col-lg-3 col-md-3">
@@ -844,4 +865,36 @@
 	function clone_ticket(id) {
 		alert(`Clone : Ticket Id ${id}`);
 	}
+
+	function validation_ticket_search(mode='oneway')
+	{
+		$("#progressbar").hide();
+	    if($("#trip_type").val()=="")
+		{
+			$("#trip_type").addClass('is-invalid');
+			$("#trip_type").parent().find(".error").remove();
+			$("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+			return false;
+		}
+		else if($("#dt_from").val()=="")
+		{
+			$("#dt_from").addClass('is-invalid');
+			$("#dt_from").parent().find(".error").remove();
+			$("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+			return false;
+		}
+		else if($("#dt_to").val()=="")
+		{
+			$("#dt_to").addClass('is-invalid');
+			$("#dt_to").parent().find(".error").remove();
+			$("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+			return false;
+		}
+		else
+		{
+			$("#btn_one_way").hide();
+			$("#progressbar").show();
+			return true;
+		}
+	}	
 </script>

@@ -606,6 +606,13 @@ class Api_tbo extends Api {
                 }
                 else {
                     $booking_response = $this->book_nonlcc($data);
+                    $data['BookingId'] = $booking_response['Result']['bookingid'];
+                    $data['PNR'] = $booking_response['Result']['pnrlist'];
+                    log_message('debug', "LCC => ".($lcc?'true':'false')." | Book NON LCC Ticket : ".json_encode($booking_response));
+                    if(isset($data['BookingId']) && intval($data['BookingId'])>0) {
+                        log_message('debug', "LCC => ".($lcc?'true':'false')." | Calling final booking for NON LCC");
+                        $booking_response = $this->book_lcc($data);
+                    }
                 }
 
                 log_message('debug', "LCC => ".($lcc?'true':'false')." | Final Booking : ".json_encode($booking_response));
