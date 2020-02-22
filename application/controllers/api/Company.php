@@ -1248,6 +1248,7 @@ class Company extends REST_Controller {
                                 $current_ticket['pnr'] = $ticket['pnr'];
                             }
                             $current_ticket['price'] = floatval($ticket['price']);
+                            $current_ticket['total'] = floatval($ticket['price']);
                             $company = search_array_item($companies, 'id', $ticket['companyid']);
                             if($company && is_array($company) && count($company)>0 && isset($company['id'])) {
                                 $current_ticket['updated_by'] =  intval($company['primary_user_id']);
