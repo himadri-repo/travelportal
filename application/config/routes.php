@@ -78,6 +78,7 @@ $route['user/addtowallet'] = 'User_Controller/addtowallet';
 $route['user/update_profile'] = 'User_Controller/update_profile';
 $route['user/change_password'] = 'User_Controller/change_password';
 $route['paymentgateway/response'] = 'User_Controller/pg_response';
+$route['paymentgateway/response_atom'] = 'User_Controller/pg_response_atom';
 /*********** TestNG ***********************************/
 
 /*********** End of TestNG ***********************************/

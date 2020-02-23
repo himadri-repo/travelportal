@@ -94,6 +94,34 @@
 				width: 15px;
 				height: 15px;
 			} */
+
+			.pg_response {
+				font-size: 10pt;
+				font-family: 'Segoe UI,Frutiger,Frutiger Linotype,Dejavu Sans,Helvetica Neue,Arial,sans-serif'; 
+				padding: 5px 15px;
+			}
+			.pg_response .failed {
+				color: #ff0000;
+			}
+			.pg_response .success {
+				color: #24a00f;
+				padding: 5px 15px;
+			}
+			.pg_amount {
+				font-weight: 700;
+			}
+			.pg_transid {
+				font-weight: 700;
+			}
+			.payment_confirmation {
+				border: solid 1px #c1c1c1;
+				margin: 10px 0px;
+			}
+			.pg_title {
+				font-size: 20pt;
+				border-bottom: solid 1px #d1d1d1;
+				padding: 5px 15px;				
+			}
 		</style>
         <section class="page-cover dashboard">
             <div class="container">
@@ -122,7 +150,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-xs-12 col-sm-12 col-md-12">
-                        	<div class="dashboard-heading" style="display:none">
+                        	<!-- <div class="dashboard-heading" style="display:none">
 							    <?php
 								if($this->session->flashdata('msg'))
 								{
@@ -133,9 +161,29 @@
 								?>
                                 <h2>OXY <span>TRA</span></h2>								
 								<div class="welcome_title">Hi <?php echo $user_details[0]["name"];?>, Welcome to OXY TRA</div>
-                            </div><!-- end dashboard-heading -->
-                        	
-                            
+                            </div> -->
+
+							<!-- end dashboard-heading -->
+							<?php 
+							if($payload) { ?>
+								<div class="row">
+                        			<div class="col-xs-12 col-sm-12 col-md-12">
+										<div class="payment_confirmation">
+											<div class="pg_title">Payment confirmation</div>
+											<?php if($payload['status'] === 'success') { ?>
+												<div class="pg_response success">
+													Your transaction of <?= number_format(floatval($payload['transacting_amount']), 2) ?></span> successfully completed. Please note your transaction id <span class="pg_transid"><?= $payload['mihpayid'] ?> dated <?= date('d-m-Y H:i:s', strtotime($payload['trans_date'])) ?></span>
+												</div>
+												<div class="success" style="">Amount has been credited to your wallet (Wallet Trans Id: <?= $payload['wallet_trans_id'] ?>). Please contact us on any discripencies.</div>
+											<?php } else { ?>
+												<div class="pg_response">
+													Your transaction of <?= number_format(floatval($payload['transacting_amount']), 2) ?></span> failed. Please try after sometime <span class="failed">(Error: <?= $payload['error'] ?>). Transaction id: <?= $payload['txnid'] ?></span>
+												</div>
+											<?php } ?>
+										</div>
+									</div>
+								</div>
+							<?php } ?>
                             <div id="dashboard-tabs">
                             	<ul class="nav nav-tabs nav-justified">
                                     <li class="active"><a href="#dsh-dashboard" data-toggle="tab"><span><i class="fa fa-cogs"></i></span>Dashboard</a></li>
