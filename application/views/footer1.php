@@ -304,6 +304,7 @@
                     changeMonth: true,
                     changeYear: true,
                     minDate: 0,
+                    //dateFormat: "dd-mm-yy",
                     /*showAnim: "fold",*/
                     //The calendar is recreated OnSelect for inline calendar
                     onSelect: function (date, dp) {

@@ -219,6 +219,7 @@
                     changeYear: true,
                     minDate: 0,
                     showAnim: "fold",
+                    //dateFormat: "dd-mm-yyyy",
                     //The calendar is recreated OnSelect for inline calendar
                     onSelect: function (date, dp) {
                         updateDatePickerCells(dp);

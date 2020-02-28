@@ -140,6 +140,8 @@ class Search extends Mail_Controller
 			$companyid = intval($company["id"]);
 			$source = intval($this->input->post('source'));
 			$destination = intval($this->input->post('destination'));
+			$no_of_person = intval($this->input->post('no_of_person'));
+			$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
 
 			if($_SERVER['REQUEST_METHOD'] == 'POST' && $source>0 && $destination>0) 
 			{			  
@@ -242,7 +244,7 @@ class Search extends Mail_Controller
 							}
 	
 							$tkts_3pp = $this->search_inventory($api['library_name'], array(
-								'no_of_person' => intval($this->input->post('no_of_person')),
+								'no_of_person' => $no_of_person,
 								'departure_date' => $this->input->post('departure_date'),
 								'source_city' => $source_city,
 								'destination_city' => $destination_city,
@@ -534,7 +536,13 @@ class Search extends Mail_Controller
 				
 				$this->session->set_userdata('tickets',$tickets);
 
-				$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				if($companyid==1 || $companyid==7) {
+					//Please enable this if system fare is integrated in this account
+					$circles = $this->Search_Model->get_cities();
+				}
+				else {
+					$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				}
 				$sources = $this->get_filtered_sources($circles);
 					
 				$result['sources']=$sources;
@@ -544,6 +552,8 @@ class Search extends Mail_Controller
 				$state['contact_number'] = isset($company['mobile'])?$company['mobile']:null;
 				$state['sectors'] = $this->Search_Model->get('city_tbl', null);
 				$state['current_user'] = $current_user;
+				$state['sources'] = $sources;
+				$state['circles'] = json_encode($circles);
 				
 				$result["state"] = $state;
 				$result["flight"]=$tickets;
@@ -1443,7 +1453,17 @@ class Search extends Mail_Controller
 		$tktid = -1;
 
 		if ($ticket && is_array($ticket)) {
-			$duplicate_ticket = $this->isDuplicateTicketPresent(array('companyid' => $ticket['companyid'], 'aid' => $ticket['id'], 'data_collected_from' => "'".$ticket['data_collected_from']."'"));
+			$pnr = isset($booking_confirmation['pnrlist']) ? $booking_confirmation['pnrlist'] : '';
+			$flight_no = isset($ticket['flight_no']) ? $ticket['flight_no'] : '';
+
+			$query = array('companyid' => $ticket['companyid'], 'aid' => $ticket['id'], 'data_collected_from' => "'".$ticket['data_collected_from']."'");
+			if($pnr !== '') {
+				$query['pnr'] = "'$pnr'";
+			}
+			if($flight_no !== '') {
+				$query['flight_no'] = "'$flight_no'";
+			}
+			$duplicate_ticket = $this->isDuplicateTicketPresent($query);
 			if($duplicate_ticket && is_array($duplicate_ticket) && count($duplicate_ticket)>0) {
 				$duplicate_ticket = $duplicate_ticket[0];
 				$tktid = $duplicate_ticket['id'];
@@ -4027,7 +4047,7 @@ class Search extends Mail_Controller
 		$sources = [];
 		if($circles) {
 			foreach($circles as $circle) {
-				$filtered_sector = array('sector' => $circle['source_city'], 'id' => intval($circle['source_id']));
+				$filtered_sector = array('sector' => trim($circle['source_city']), 'id' => intval($circle['source_id']), 'code' => trim($circle['source_code']));
 				if(!in_array($filtered_sector , $sources)) {
 					$sources[] = $filtered_sector;
 				}

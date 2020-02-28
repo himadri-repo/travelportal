@@ -2713,5 +2713,21 @@ Class Search_Model extends CI_Model
 
 		log_message('debug', "getUserQuery => Companyid : $companyid");
 	}
+
+	public function get_cities() {
+		$sql = "select c.city as source_city, c.id as source_id, c.code as source_code   
+				from city_tbl c
+				where c.city<>''
+				order by c.city";
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+			return $query->result_array();
+		}
+		else {
+			return false;
+		}
+	}
 }
 ?>
