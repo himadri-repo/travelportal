@@ -14,7 +14,7 @@
 
     .container_bg input {
         border: 0px;
-        width: 100%;
+        /*width: 100%;*/
         padding: 2px;
         outline: none;
     }
@@ -182,21 +182,11 @@
     .sc-input {
         height: 60px;
     }
-    @media only screen and (max-width: 768px) {
-        .auto-height {
-            padding: 5px;
-            margin-left: -15px;
-            margin-right: -15px;
-        }
-        .sc-input {
-            padding: 5px !important;
-        }
-    }
     #sc_btnsearch {
         border: solid 0px #cdcdcd;
         background-color: #faa61a;
-        /* width: 100%;
-        height: 100%;
+        width: 104%;
+        /*height: 100%;
         display: flex; */
         padding: 17px 22px;
         margin: 0px;
@@ -234,6 +224,21 @@
     .ui-autocomplete-input, .datepicker {
         color: #0b3dca;
     }
+
+    @media only screen and (max-width: 991px) {
+        .auto-height {
+            padding: 5px;
+            margin-left: -15px;
+            margin-right: -15px;
+        }
+        .sc-input {
+            padding: 5px !important;
+        }
+        #sc_btnsearch {
+            width: 100%;
+        }
+    }
+
     @media only screen and (min-width: 1200px) {
         .sc-col-12 {
             width: 12%;
@@ -434,7 +439,7 @@
         cursor: pointer;
     }    
     .cont_flt input:checked ~ .chk_flt {
-        background-color: #fff;
+        background-color: #0b3dca;
     }
     .chk_flt {
         position: absolute;
@@ -449,6 +454,16 @@
 
     a:link, a:hover, a:visited {
         text-decoration: none;
+    }
+
+    .transit-point {
+        text-transform: uppercase; 
+        font-size: 15px; 
+        width: 100%;
+    }
+
+    .selected ~ .chk_flt {
+        background-color: #0b3dca;
     }
 </style>
 <div class="container_bg">
@@ -470,43 +485,44 @@
         <div class="search_bg">
             <!-- <div class="h-100"> -->
                 <form class="h-100" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation_ticket_search('oneway')">
-                    <input type="hidden" id="trip_type" name="trip_type" value="<?= $this->input->post('trip_type') ?>"> 
-                    <input type="hidden" id="source" name="source" value="<?= intval($this->input->post('source')) ?>"> 
-                    <input type="hidden" id="destination" name="destination" value="<?= intval($this->input->post('destination')) ?>"> 
+                    <input type="hidden" id="trip_type" name="trip_type" value="<?= $trip_type ?>"> 
+                    <input type="hidden" id="source" name="source" value="<?= intval($source) ?>"> 
+                    <input type="hidden" id="destination" name="destination" value="<?= intval($destination) ?>"> 
                     <!-- <input type="hidden" name="departure_date" value="03/05/2020">  -->
-                    <input type="hidden" id="no_of_person" name="no_of_person" value="<?= (intval($this->input->post('no_of_person'))>0 ? intval($this->input->post('no_of_person')) : 1) ?>"> 
-                    <input type="hidden" id="adult" name="adult" value="<?= (intval($this->input->post('adult'))>0 ? intval($this->input->post('adult')) : 1) ?>"> 
-                    <input type="hidden" id="child" name="child" value="<?= (intval($this->input->post('child'))>0 ? intval($this->input->post('child')) : 0) ?>"> 
-                    <input type="hidden" id="infant" name="infant" value="<?= (intval($this->input->post('infant'))>0 ? intval($this->input->post('infant')) : 0) ?>"> 
+                    <input type="hidden" id="no_of_person" name="no_of_person" value="<?= (intval($no_of_person)>0 ? intval($no_of_person) : 1) ?>"> 
+                    <input type="hidden" id="adult" name="adult" value="<?= (intval($adult)>0 ? intval($adult) : 1) ?>"> 
+                    <input type="hidden" id="child" name="child" value="<?= (intval($child)>0 ? intval($child) : 0) ?>"> 
+                    <input type="hidden" id="infant" name="infant" value="<?= (intval($infant)>0 ? intval($infant) : 0) ?>"> 
+                    <input type="hidden" id="class_type" name="class_type" value="<?= $class ?>"> 
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>From</span> -->
                         <div class="group-item auto-height">
-                            <input type="text" id="sc_source" name="sc_source" title="Departing airport" placeholder="From" class="sc-input" autocomplete="off" field="source" style="text-transform: uppercase;" value="<?= $this->input->post('sc_source') ?>">
+                            <input type="text" id="sc_source" name="sc_source" title="Departing airport" placeholder="From" class="sc-input transit-point" autocomplete="off" field="source" style="text-transform: uppercase; font-size: 15px; width: 100%;" value="<?= $source_city_name ?>">
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>To</span> -->
                         <div class="group-item auto-height">
-                            <input type="text" id="sc_destination" name="sc_destination" title="Arriving airport" placeholder="To" class="sc-input" autocomplete="off" field="destination" style="text-transform: uppercase;" value="<?= $this->input->post('sc_destination') ?>">
+                            <input type="text" id="sc_destination" name="sc_destination" title="Arriving airport" placeholder="To" class="sc-input transit-point" autocomplete="off" field="destination" value="<?= $destination_city_name ?>">
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>Dept Date</span> -->
                         <div class="group-item auto-height">
-                            <input id="departure_date" name="departure_date" type="text" class="datepicker sc-input" placeholder="Journey Date" autocomplete="off" value="<?= $this->input->post('departure_date') ?>">
+                            <input id="departure_date" name="departure_date" type="text" class="datepicker sc-input" placeholder="Journey Date" autocomplete="off" value="<?= $departure_date ?>">
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>Rtn Date</span> -->
                         <div class="group-item auto-height">
-                            <input id="return_date" name="return_date" type="text" class="datepicker sc-input" placeholder="Return Date" autocomplete="off" disabled value="<?= $this->input->post('return_date') ?>">
+                            <input id="return_date" name="return_date" type="text" class="datepicker sc-input" placeholder="Return Date" autocomplete="off" disabled value="<?= $return_date ?>">
                         </div>
                     </div>
                     <div class="col-xs-12 col-sm-12 seperator sc-col-12">
                         <div class="group-item auto-height">
                             <!-- <span class="sc-input">Travellers</span> -->
                             <a onclick="myFunction4($('#myDropdown_n'))" class="dropbtn_n9">
-                                <span id="travellers_count" class="drpNoTrv"><?= (intval($this->input->post('no_of_person'))>0 ? intval($this->input->post('no_of_person')) : 1) ?> Traveller(s)</span>
+                                <span id="travellers_count" class="drpNoTrv"><?= (intval($no_of_person)>0 ? intval($no_of_person) : 1) ?> Traveller(s)</span>
                             </a>
                             <div id="myDropdown_n" class="dropdown-content-n">
                                 <div class="innr_pnl">
@@ -518,7 +534,7 @@
                                                     <input type="button" value="-" class="minus_boxADt" field="quantity">
                                                 </div>
                                                 <div class="tx">
-                                                    <input type="text" name="quantity" value="<?= (intval($this->input->post('quantity'))>0 ? intval($this->input->post('quantity')) : 1) ?>" class="numbe_box2" id="optAdult" readonly="">
+                                                    <input type="text" name="quantity" value="<?= (intval($adult)>0 ? intval($adult) : 1) ?>" class="numbe_box2" id="optAdult" readonly="">
                                                 </div>
                                                 <div class="pl">
                                                     <input type="button" value="+" class="plus_box1" field="quantity">
@@ -535,7 +551,7 @@
                                                     <input type="button" value="-" class="minus_box1" field="quantity1">
                                                 </div>
                                                 <div class="tx">
-                                                    <input type="text" name="quantity1" value="<?= (intval($this->input->post('quantity1'))>0 ? intval($this->input->post('quantity1')) : 0) ?>" class="numbe_box2" id="optChild" readonly="">
+                                                    <input type="text" name="quantity1" value="<?= (intval($child)>0 ? intval($child) : 0) ?>" class="numbe_box2" id="optChild" readonly="">
                                                 </div>
                                                 <div class="pl">
                                                     <input type="button" value="+" class="plus_boxChd" field="quantity1">
@@ -552,7 +568,7 @@
                                                     <input type="button" value="-" class="minus_box1" field="quantity2">
                                                 </div>
                                                 <div class="tx">
-                                                    <input type="text" name="quantity2" value="<?= (intval($this->input->post('quantity2'))>0 ? intval($this->input->post('quantity2')) : 0) ?>" class="numbe_box2" id="optInfant" readonly="">
+                                                    <input type="text" name="quantity2" value="<?= (intval($infant)>0 ? intval($infant) : 0) ?>" class="numbe_box2" id="optInfant" readonly="">
                                                 </div>
                                                 <div class="pl">
                                                     <input type="button" value="+" class="plus_box1Inf" field="quantity2">
@@ -573,27 +589,27 @@
                         <div class="group-item auto-height">
                             <!-- <span class="sc-input">Economy</span> -->
                             <a onclick="myFunction4($('#myDropdown_n9'))" class="dropbtn_n9">
-                                <span class="drpNoTrv">Economy</span>
+                                <span id="travel_class" class="drpNoTrv">Economy</span>
                             </a>                        
                             <div id="myDropdown_n9" class="dropdown-content-n">
                                 <div class="innr_pnl">
                                     <label class="cont_flt">Economy
-                                        <input type="radio" value="0" name="optClass" checked="checked" onclick="fillOptClassName('Economy')">
+                                        <input type="radio" value="0" name="optClass" class="tr_class" checked="checked" onclick="fillOptClassName('Economy', this)">
                                         <span class="chk_flt"></span>
                                     </label>
                                     <label class="cont_flt">
                                         Prem.Economy
-                                        <input type="radio" value="4" name="optClass" onclick="fillOptClassName('Prem.Economy')">
+                                        <input type="radio" value="4" name="optClass" class="tr_class" onclick="fillOptClassName('Prem.Economy', this)">
                                         <span class="chk_flt"></span>
                                     </label>
                                     <label class="cont_flt">
                                         Business
-                                        <input type="radio" value="2" name="optClass" onclick="fillOptClassName('Business')">
+                                        <input type="radio" value="2" name="optClass" class="tr_class" onclick="fillOptClassName('Business', this)">
                                         <span class="chk_flt"></span>
                                     </label>
                                     <label class="cont_flt optFrst" style="display: none;">
                                         First
-                                        <input type="radio" value="1" name="optClass" onclick="fillOptClassName('First')">
+                                        <input type="radio" value="1" name="optClass" class="tr_class" onclick="fillOptClassName('First', this)">
                                         <span class="chk_flt"></span>
                                     </label>
                                     <div class="clr"></div>     
@@ -743,7 +759,7 @@
         var infant_qty = parseInt($('#optInfant').val(), 10);
 
         travellers_count = adult_qty+child_qty+infant_qty;
-        $('input[name="no_of_person"]').val(adult_qty+child_qty);
+        $('input[name="no_of_person"]').val(adult_qty+child_qty+infant_qty); //Yes Infant count also should be plus. But rate of infant will be different.
         $('input[name="adult"]').val(adult_qty);
         $('input[name="child"]').val(child_qty);
         $('input[name="infant"]').val(infant_qty);
@@ -786,5 +802,18 @@
             }
         }
         response(city_list);
+    }
+
+    function fillOptClassName(className, ctrl) {
+        $('#travel_class').html(className);
+        $('#class').val(className);
+
+        // for (let index = 0; index < $('.tr_class').length; index++) {
+        //     const element = $('.tr_class')[index];
+        //     if($(element).hasClass('selected'))
+        //         $(element).removeClass('selected');
+        // }
+
+        // $(ctrl).addClass('selected');
     }
 </script>

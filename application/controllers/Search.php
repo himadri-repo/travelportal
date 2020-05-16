@@ -3,6 +3,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 include_once(APPPATH.'core/Mail_Controller.php');
 include(APPPATH.'entities/company.php');
 include_once(APPPATH.'core/Common.php');
+include_once(APPPATH.'core/TransactionResponse.php');
+define('PAGE_SIZE', 25);
 
 class Search extends Mail_Controller 
 {
@@ -28,6 +30,8 @@ class Search extends Mail_Controller
 	{  
 		if ($this->session->userdata('user_id')) 
 		{ 
+			$current_user = $this->session->userdata('current_user');
+			$company = $this->session->userdata('company');
 			if(NEW_FLOW) {
 				$companyid = $this->session->userdata("current_user")["companyid"];
 				$cname = $this->session->userdata("current_user")["cname"];
@@ -58,6 +62,29 @@ class Search extends Mail_Controller
 			$result['setting']=$this->Search_Model->company_setting($companyid);
 
 			$result['mywallet']= $this->getMyWallet();
+
+			$state = [];
+			$state['contact_number'] = isset($company['mobile'])?$company['mobile']:null;
+			$state['sectors'] = $this->Search_Model->get('city_tbl', null);
+			$state['current_user'] = $current_user;
+			$state['sources'] = $sources;
+			//$state['circles'] = json_encode($circles);
+			$state['circles'] = $circles;
+			
+			$state['no_of_person'] = 1;
+			$state['adult'] = 1;
+			$state['child'] = 0;
+			$state['infant'] = 0;
+			$state['class'] = 0;
+			$state['trip_type'] = 'ONE';
+			$state['source'] = -1;
+			$state['destination'] = -1;
+			$state['departure_date'] = date("d-m-Y");
+			$state['return_date'] = '';
+			$state['source_city_name']='';
+			$state['destination_city_name']='';
+			
+			$result["state"] = $state;			
 				
 			$this->load->view('header1',$result);
 			$this->load->view('search',$result);
@@ -141,17 +168,34 @@ class Search extends Mail_Controller
 			$source = intval($this->input->post('source'));
 			$destination = intval($this->input->post('destination'));
 			$no_of_person = intval($this->input->post('no_of_person'));
+
+			$source_city_name = $this->input->post('sc_source');
+			$destination_city_name = $this->input->post('sc_destination');
+
+			$adult = intval($this->input->post('adult')) > 0 ? intval($this->input->post('adult')) : $no_of_person;
+			$child = intval($this->input->post('child')) > 0 ? intval($this->input->post('child')) : 0;
+			$infant = intval($this->input->post('infant')) > 0 ? intval($this->input->post('infant')) : 0;
+
+			$no_of_person = $adult + $child + $infant;
+
+			$class_type = $this->input->post('class_type');
+			$class = intval($this->input->post('optClass'))>0 ? intval($this->input->post('optClass')) : 0; //0 means economy
+
 			$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
+
+			log_message('debug', 'Search posted payload: '.json_encode($_POST));
 
 			if($_SERVER['REQUEST_METHOD'] == 'POST' && $source>0 && $destination>0) 
 			{			  
 				$source_city = $this->User_Model->get('city_tbl', array('id' => $source));
 				if($source_city && count($source_city)>0) {
 					$source_city = $source_city[0];
+					$source_city_name = $source_city['city'];
 				}
 				$destination_city = $this->User_Model->get('city_tbl', array('id' => $destination));
 				if($destination_city && count($destination_city)>0) {
 					$destination_city = $destination_city[0];
+					$destination_city_name = $destination_city['city'];
 				}
 
 				// Load 3rd party inventory
@@ -245,6 +289,9 @@ class Search extends Mail_Controller
 	
 							$tkts_3pp = $this->search_inventory($api['library_name'], array(
 								'no_of_person' => $no_of_person,
+								'adult' => $adult,
+								'child' => $child,
+								'infant' => $infant,
 								'departure_date' => $this->input->post('departure_date'),
 								'source_city' => $source_city,
 								'destination_city' => $destination_city,
@@ -387,6 +434,10 @@ class Search extends Mail_Controller
 
 				for ($i=0; $tickets && $i < count($tickets); $i++) { 
 					$ticket = &$tickets[$i];
+
+					if(!isset($ticket['library'])) {
+						$ticket = $this->map_ticket_fields($ticket);
+					}
 
 					$modifiable_attributes[] = array('id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no'], 'source_city' => $ticket['source_city'], 
 						'destination_city' => $ticket['destination_city'], 
@@ -553,7 +604,21 @@ class Search extends Mail_Controller
 				$state['sectors'] = $this->Search_Model->get('city_tbl', null);
 				$state['current_user'] = $current_user;
 				$state['sources'] = $sources;
-				$state['circles'] = json_encode($circles);
+				//$state['circles'] = json_encode($circles);
+				$state['circles'] = $circles;
+				
+				$state['no_of_person'] = $no_of_person;
+				$state['adult'] = $adult;
+				$state['child'] = $child;
+				$state['infant'] = $infant;
+				$state['class'] = $class;
+				$state['trip_type'] = 'ONE';
+				$state['source'] = $this->input->post('source');
+				$state['destination'] = $this->input->post('destination');
+				$state['departure_date'] = $this->input->post('departure_date');
+				$state['return_date'] = $this->input->post('return_date');
+				$state['source_city_name']=$source_city_name;
+				$state['destination_city_name']=$destination_city_name;
 				
 				$result["state"] = $state;
 				$result["flight"]=$tickets;
@@ -561,18 +626,40 @@ class Search extends Mail_Controller
 				$result["rateplan"]=$rateplans; // $default_rp;
 				$result["currentuser"]=$currentuser;
 				
-				$this->session->set_userdata('no_of_person',$this->input->post('no_of_person'));
+				$this->session->set_userdata('no_of_person', $no_of_person);
+				$this->session->set_userdata('state', $state);
 				
 				$result["post"][0]["source"]=$this->input->post('source');
 				$result["post"][0]["destination"]=$this->input->post('destination');
 				$result["post"][0]["departure_date_time"]=$this->input->post('departure_date_time');
 				$result["post"][0]["departure_date"]=$this->input->post('departure_date');
-				$result["post"][0]["no_of_person"]=$this->input->post('no_of_person');
+				$result["post"][0]["no_of_person"]=$adult + $child;
 				$result["post"][0]["hid_trip_type"]="ONE";
 				//echo $this->db->last_query();die(); 
-				$result["post"][0]["qty"]=$this->input->post('no_of_person');
+				$result["post"][0]["qty"]=$no_of_person;
+
+				$result["post"][0]["adult"]=$adult;
+				$result["post"][0]["child"]=$child;
+				$result["post"][0]["infant"]=$infant;
+				$result["post"][0]["class"]=$class;
+				$result["post"][0]["source_city_name"]=$source_city_name;
+				$result["post"][0]["destination_city_name"]=$destination_city_name;
+
 				//$result["setting"]=$this->Search_Model->setting();
 				$result['setting']=$this->Search_Model->company_setting($companyid);
+				if(isset($result['setting']) && isset($result['setting'][0]['payment_gateway'])) {
+					$result['setting'][0]['payment_gateway'] = json_decode($result['setting'][0]['payment_gateway'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['bank_accounts'])) {
+					$result['setting'][0]['bank_accounts'] = json_decode($result['setting'][0]['bank_accounts'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['configuration'])) {
+					$result['setting'][0]['configuration'] = json_decode($result['setting'][0]['configuration'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['api_integration'])) {
+					$result['setting'][0]['api_integration'] = json_decode($result['setting'][0]['api_integration'], true);
+				}
+
 				$result["footer"]=$this->Search_Model->get_post(5);
 				$current_user = $this->session->userdata("current_user");
 
@@ -594,6 +681,76 @@ class Search extends Mail_Controller
 		}
 		else
 			redirect("/login");  
+	}
+
+	private function map_ticket_fields(&$ticket) {
+		$company_settings = $this->Search_Model->company_setting(intval($ticket['companyid']));
+		$infant_price = floatval($ticket['infant_price']);
+		if($infant_price<=0 && $company_settings && is_array($company_settings) && count($company_settings) > 0 && isset($company_settings[0]['infant_price'])) {
+			$company_settings = $company_settings[0];
+			$infant_price = floatval($company_settings['infant_price']);
+		}
+
+		$diff = intval((strtotime($ticket['arrival_date_time'])-strtotime($ticket['departure_date_time']))/60);
+
+		$myticket = array_merge($ticket, array(
+			'library' => '',
+			'source1' => 0,
+			'destination' => 0,
+			'uid' => intval($ticket['user_id']),
+			'remarks' => 'FD ticket',
+			'departure_date_time1' => '',
+			'arrival_date_time1' => '',
+			'flight_no1' => '',
+			'terminal1' => '',
+			'terminal2' => '',
+			'terminal3' => '',
+			'adult' => 0,
+			'child' => 0,
+			'infant' => 0,
+			'source_code' => $ticket['source_city_code'],
+			'destination_code' => $ticket['destination_city_code'],
+			'library_name' => '',
+			'config' => [],
+			'airline_name' => $ticket['airline'],
+			'infant_price' => $infant_price,
+			'ResultIndex' => '',
+			'IsLCC' => false,
+			'GSTAllowed' => false,
+			'IsHoldAllowedWithSSR' => false,
+			'IsPanRequiredAtTicket' => false,
+			'IsPassportRequiredAtBook' => false,
+			'IsPassportRequiredAtTicket' => false,
+			'IsCouponAppilcable' => false,
+			'IsGSTMandatory' => false,
+			'SuppTokenId' => '',
+			'SuppTraceId' => '',
+			'tokenid' => '',
+			'clientid' => '',
+			'agencytype' => '',
+			'segments' => array(
+				array(
+					'segmentindicator' => 1,
+					'aircode' => $ticket['aircode'],
+					'airname' => $ticket['airline'],
+					'flight_number' => $ticket['flight_no'],
+					'fare_class' => $ticket['class'],
+					'operating_carrier' => '',
+					'duration' => $diff,
+					'departure_city' => $ticket['source_city_code'],
+					'departure_terminal' => $ticket['terminal'],
+					'departure_datetime' => $ticket['departure_date_time'],
+					'arrival_city' => $ticket['destination_city_code'],
+					'arrival_terminal' => $ticket['arrival_terminal'],
+					'arrival_datetime' => $ticket['arrival_date_time'],
+					'aircraft' => '',
+					'flight_status' => 'Confirmed',
+					'iseticketeligible' => true
+				)
+			),
+			'live_corrected' => false,
+		));
+		return $myticket;
 	}
 
 	private function append_thiredparty_tickets(&$tickets, $thirdpartyinventory) {
@@ -657,6 +814,9 @@ class Search extends Mail_Controller
 			"terminal2" => "",
 			"terminal3" => "",
 			"no_of_person" => 0,
+			"adult" => 0,
+			"child" => 0,
+			"infant" => 0,
 			"class" => "ECONOMY",
 			"no_of_stops" => 0,
 			"data_collected_from" => "",
@@ -925,6 +1085,14 @@ class Search extends Mail_Controller
 			$this->session->set_userdata('no_of_person', $direct_qty);
 		}
 
+		$api_fare_quote = [];
+		$state = $this->session->userdata('state');
+		$error = $this->session->userdata('ERROR');
+
+		if(isset($error)) {
+			$this->session->unset_userdata('ERROR');
+		}
+
 		$current_user = $this->session->userdata('current_user');
 		$posted_tickets = $this->session->userdata('tickets');
 		if ($this->session->userdata('user_id') && isset($id)) 
@@ -951,13 +1119,17 @@ class Search extends Mail_Controller
 	
 			$rateplan_details = $this->Admin_Model->rateplandetails(-1);
 	
-			$tickets = $this->Search_Model->flight_details($id, $companyid);
+			$tickets = [];
+			//Lets not reading the table once again. Read it from the session and proceed next. If we see issue in reading session then we can create a temp table with intrasient ticket and go from there.
+			// $tickets = $this->Search_Model->flight_details($id, $companyid);
 			if(!($tickets && is_array($tickets) && count($tickets)>0)) {
 				//This ticket is an API ticket. Not available in local table
 				$tickets = [];
 
 				foreach($posted_tickets as $posted_ticket) {
-					if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+					// Lets not use it only for API, even for FD also read it from session stored tickets
+					// if(intval($posted_ticket['id']) === intval($id) && $posted_ticket['sale_type'] === 'api') {
+					if(intval($posted_ticket['id']) === intval($id)) {
 						array_push($tickets, $posted_ticket);
 						break;
 					}
@@ -967,7 +1139,18 @@ class Search extends Mail_Controller
 			if($tickets && count($tickets)>0) {
 				$ticket = $tickets[0];
 
+				$ticket['adult'] = $state['adult'];
+				$ticket['child'] = $state['child'];
+				$ticket['infant'] = $state['infant'];
+				$ticket['class'] = $state['class'];
+
+				$adult = intval($state['adult']);
+				$child = intval($state['child']);
+				$infant = intval($state['infant']);
+				$pax = $adult + $child;
+
 				log_message('debug', "Selected Ticket => ".json_encode($ticket));
+				log_message('debug', "State => ".json_encode($state));
 
 				$suprpid = intval($ticket["rate_plan_id"]);
 				$sellrpid = intval($ticket["seller_rateplan_id"]);
@@ -1023,27 +1206,57 @@ class Search extends Mail_Controller
 				//$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup);
 				if($ticket['sale_type'] !== 'api') {
 					$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+					$api_fare_quote = $this->getFareQuote($ticket, $ticketupdated, $current_user, $company, $state);
+				}
+				else {
+					$library_name = $ticket['library_name'];
+					$lib_config = $ticket['config'];
+					$traceid = $ticket['SuppTraceId'];
+					$tokenid = $ticket['SuppTokenId'];
+					$result_index = $ticket['ResultIndex'];
+
+					if(isset($library_name)) {
+						$this->load->library($library_name, $lib_config);
+						$api_fare_quote = $this->$library_name->fare_quote($ticket);
+
+						if($api_fare_quote && is_array($api_fare_quote) && count($api_fare_quote) > 0) {
+							$isprice_changed = isset($api_fare_quote['isprice_changed']) ? boolval($api_fare_quote['isprice_changed']) : false;
+							if($isprice_changed) {
+								$ticket['price'] = round($api_fare_quote['price'], 0);
+								$ticket['total'] = round($api_fare_quote['base_price'], 0);
+							}
+						}
+					}
 				}
 
+				if($error && $error !== null && $error !== '') {
+					$result["error"]=$error; 
+				}
+				else {
+					$result["error"]=false; 
+				}
 				$result["flight"]=array($ticket); 
 				$result["currentuser"]=$current_user;
 				//$result["setting"]=$this->Search_Model->setting();
-				$result['setting']=$this->Search_Model->company_setting($companyid);
+				$setting = $this->Search_Model->company_setting($companyid);
+				$result['setting'] = $setting;
+				if(isset($result['setting']) && isset($result['setting'][0]['payment_gateway'])) {
+					$result['setting'][0]['payment_gateway'] = json_decode($result['setting'][0]['payment_gateway'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['bank_accounts'])) {
+					$result['setting'][0]['bank_accounts'] = json_decode($result['setting'][0]['bank_accounts'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['configuration'])) {
+					$result['setting'][0]['configuration'] = json_decode($result['setting'][0]['configuration'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['api_integration'])) {
+					$result['setting'][0]['api_integration'] = json_decode($result['setting'][0]['api_integration'], true);
+				}
 
 				$result["user_type"]=strtoupper($current_user["type"]);
 				
 				$result['user_details']=$this->User_Model->user_details();
-				if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1)
-				{
-					if(isset($_REQUEST["back_end_qty"]))
-					{					  
-						$this->session->set_userdata('no_of_person',$_REQUEST["back_end_qty"]);
-					}
-					else
-					{						
-						
-					}
-					
+				if($result["flight"][0]["no_of_person"]>0 && $result["flight"][0]["approved"]==1 && $api_fare_quote) {
 					$result["flight"][0]["ticket_type"]= $result['user_details'][0]["type"];
 					if($result["flight"][0]["user_id"]==$this->session->userdata('user_id'))
 					{					  					 
@@ -1061,10 +1274,57 @@ class Search extends Mail_Controller
 					$result["footer"]=$this->Search_Model->get_post(5);
 					$current_user = $this->session->userdata("current_user");
 
+					if($api_fare_quote && $api_fare_quote['passengers_fare'] && is_array($api_fare_quote['passengers_fare']) && count($api_fare_quote['passengers_fare']) > 0) { 
+						$passengers_fare = $api_fare_quote['passengers_fare'];
+						$tds = floatval($api_fare_quote['fare']['total_tds']);
+						$commision = floatval($api_fare_quote['fare']['total_commission']);
+						$discount = floatval($api_fare_quote['fare']['discount']);
+						$total_spl_margin = floatval($api_fare_quote['fare']['total_spl_margin']);
+						$total_whl_margin = floatval($api_fare_quote['fare']['total_whl_margin']);
+						$tax = round(floatval($api_fare_quote['fare']['tax']) + floatval($api_fare_quote['fare']['othercharges']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+
+						$infant_price = floatval($api_fare_quote['fare']['infant_price']);
+						$offeredfare = floatval($api_fare_quote['fare']['offeredfare']);
+						$price = ($offeredfare + $tds - ($infant_price * $infant)) / ($adult + $child);
+						$total = 0;
+						foreach ($passengers_fare as $passenger_fare) { 
+							$value = floatval($passenger_fare['BaseFare']);
+							$total += $value;
+						}
+
+						$financial = array(
+							'offeredfare' => $offeredfare,
+							'total_tds' => $tds,
+							'commision' => $commision,
+							'discount' => $discount,
+							'total_spl_maargin' => $total_spl_margin,
+							'total_whl_margin' => $total_whl_margin,
+							'taxandcharges' => $tax,
+							'total_basefare' => $total,
+							'grand_total' => ($total + $tax),
+							'price' => $price,
+							'adult' => $adult,
+							'child' => $child,
+							'infant' => $infant,
+							'infant_price' => $infant_price
+						);
+
+						$state['financial'] = $financial;
+					}
+
+					$state['sale_type'] = $ticket['sale_type'];
+
 					$result['mywallet']= $this->getMyWallet();
-											
+					$result['state']= $state;
+					$result['fare_quote'] = $api_fare_quote;
+
+					log_message('debug', json_encode($result));
+
+					$this->session->set_userdata('selected_ticket',$result);
+					
 					$this->load->view('header1',$result);
-					$this->load->view('flight-detail',$result);
+					//$this->load->view('flight-detail',$result);
+					$this->load->view('flight-detailv2',$result);
 					$this->load->view('footer1');
 				}
 				else
@@ -1075,10 +1335,172 @@ class Search extends Mail_Controller
 		}
 	}
 
+	private function getFareQuote($ticket, $ticketupdated, $current_user, $company, $state) {
+
+		$adult = intval($state['adult']);
+		$child = intval($state['child']);
+		$infant = intval($state['infant']);
+		$pax = $adult + $child;
+
+		$published_fare = (floatval($ticket['total']) * $pax) + floatval($ticket['infant_price']);
+		$offered_fare = (floatval($ticket['total']) * $pax) + floatval($ticket['infant_price']);
+
+		$whl = floatval($ticket['whl_markup']) + floatval($ticket['whl_srvchg']) + floatval($ticket['whl_cgst']) + floatval($ticket['whl_sgst']) - floatval($ticket['whl_disc']);
+		$spl = floatval($ticket['spl_markup']) + floatval($ticket['spl_srvchg']) + floatval($ticket['spl_cgst']) + floatval($ticket['spl_sgst']) - floatval($ticket['spl_disc']);
+		$traceid = gen_uuid();
+
+		$segment = false;
+		if($ticket && isset($ticket['segments']) && count($ticket['segments']) > 0) {
+			$segment = $ticket['segments'][0];
+		}
+
+		$fare_quote = array(
+			'isprice_changed' => false,
+			'offeredfare' => floatval($ticket['total']) * $pax,
+			'traceid' => $traceid,
+			'fqindex' => intval($ticket['id']),
+			'price' => floatval($ticket['price']),
+			'base_price' => floatval($ticket['total']),
+		);
+
+		$diff = intval((strtotime($ticket['arrival_date_time'])-strtotime($ticket['departure_date_time']))/60);
+
+		$fare_quote['ob_flight_segments'] = [];
+		
+		$flight_segment = array(
+			'Baggage' => '15 KG',
+			'CabinBaggage' => ' 7 KG',
+			'CabinClass' => 2,
+			'Craft' => "",
+			'SegmentIndicator' => (($ticket['trip_type'] === 'ONE') ? 1 : 2),
+			'Duration' => $diff,
+			'IsETicketEligible' => $segment ? $segment['iseticketeligible'] : true,
+			'FlightStatus' => $segment ? $segment['flight_status'] : 'Confirmed',
+			'AirlineCode' => $segment ? $segment['aircode'] : '',
+			'AirlineName' => $segment ? $segment['airname'] : '',
+			'FareClass' => '',
+			'FlightNumber' => $segment ? $segment['flight_number'] : '',
+			'OperatingCarrier' => '',
+			'DepTime' => $ticket['departure_date_time'],
+			'ArrTime' => $ticket['arrival_date_time'],
+			'Dep_AirportCode' => $ticket['source_city_code'],
+			'Dep_AirportName' => $ticket['source_city'],
+			'Dep_Terminal' => $segment ? $segment['departure_terminal'] : '',
+			'Dep_CityCode' => $ticket['source_city_code'],
+			'Dep_CityName' => $ticket['source_city'],
+			'Dep_CountryCode' => 'IN',
+			'Dep_CountryName' => 'India',
+			'Arr_AirportCode' => $ticket['destination_city_code'],
+			'Arr_AirportName' => $ticket['destination_city'],
+			'Arr_Terminal' => $segment ? $segment['arrival_terminal'] : '',
+			'Arr_CityCode' => $ticket['destination_city_code'],
+			'Arr_CityName' => $ticket['destination_city'],
+			'Arr_CountryCode' => 'IN',
+			'Arr_CountryName' => 'India',
+		);
+
+		array_push($fare_quote['ob_flight_segments'], $flight_segment);
+
+		$fare_quote['fare'] = array(
+			'currency' => 'INR',
+			'basefare' => floatval($ticket['total']),
+			'tax' => 0,
+			'yqtax' => 0,
+			'othercharges' => 0,
+			'additionaltxnfeepub' => 0,
+			'additionaltxnfeeofrd' => 0,
+			'discount' => 0,
+			'publishedfare' => $published_fare,
+			'offeredfare' => $offered_fare,
+			'commissionearned' => 0,
+			'plbearned' => 0,
+			'incentiveearned' => 0,
+			'total_commission' => 0,
+			'tdsoncommission' => 0,
+			'tdsonplb' => 0,
+			'tdsonincentive' => 0,
+			'total_tds' => 0,
+			'total_spl_margin' => $spl,
+			'total_whl_margin' => $whl,
+			'servicefee' => 0,
+			'totalbaggagecharges' => 0,
+			'totalmealcharges' => 0,
+			'totalseatcharges' => 0,
+			'totalspecialservicecharges' => 0,
+			'airlineremark' => 'Fixed Departure Ticket',
+			'gstallowed' => isset($ticket['GSTAllowed']) ? boolval($ticket['GSTAllowed']) : false,
+			'isrefundable' => 0,
+			'islcc' => boolval($ticket['IsLCC']),
+			'isholdallowedwithssr' => boolval($ticket['IsHoldAllowedWithSSR']),
+			'ispanrequiredatticket' => boolval($ticket['IsPanRequiredAtTicket']),
+			'ispassportrequiredatbook' => boolval($ticket['IsPassportRequiredAtBook']),
+			'ispassportrequiredatticket' => boolval($ticket['IsPassportRequiredAtTicket']),
+			'iscouponappilcable' => boolval($ticket['IsCouponAppilcable']),
+			'isgstmandatory' => boolval($ticket['IsGSTMandatory']),
+			'isprice_changed' => false,
+			'traceid' => $traceid,
+			'infant_price' => floatval($ticket['infant_price'])
+		);
+
+		$fare_quote['passengers_fare'] = [];
+
+		if($adult > 0) {
+			$adult_passenger = array(
+				'Currency' => 'INR',
+				'PassengerType' => 1,
+				'PassengerCount' => $adult,
+				'BaseFare' => floatval($ticket['total']),
+				'Tax' => 0.00,
+				'YQTax' => 0.00,
+				'AdditionalTxnFeeOfrd' => 0.00,
+				'AdditionalTxnFeePub' => 0.00,
+				'PGCharge' => 0.00
+			);
+
+			array_push($fare_quote['passengers_fare'], $adult_passenger);
+		}
+		
+		if($child > 0) {
+			$adult_passenger = array(
+				'Currency' => 'INR',
+				'PassengerType' => 2,
+				'PassengerCount' => $child,
+				'BaseFare' => floatval($ticket['total']),
+				'Tax' => 0.00,
+				'YQTax' => 0.00,
+				'AdditionalTxnFeeOfrd' => 0.00,
+				'AdditionalTxnFeePub' => 0.00,
+				'PGCharge' => 0.00
+			);
+
+			array_push($fare_quote['passengers_fare'], $adult_passenger);
+		}
+
+		if($infant > 0) {
+			$adult_passenger = array(
+				'Currency' => 'INR',
+				'PassengerType' => 3,
+				'PassengerCount' => $infant,
+				'BaseFare' => floatval($ticket['infant_price']),
+				'Tax' => 0.00,
+				'YQTax' => 0.00,
+				'AdditionalTxnFeeOfrd' => 0.00,
+				'AdditionalTxnFeePub' => 0.00,
+				'PGCharge' => 0.00
+			);
+
+			array_push($fare_quote['passengers_fare'], $adult_passenger);
+		}
+
+
+		return $fare_quote;
+	}
+
 	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup=0, $usertype='') {
 		$rateplanid = $ticket['rate_plan_id'];
 		$seller_rateplanid = $ticket['seller_rateplan_id'];
 		$price = $ticket['price'];
+		$price_infant = isset($ticket['infant_price']) ? $ticket['infant_price'] : 0;
 		
 		$ticket['whl_markup'] = 0;
 		$ticket['whl_srvchg'] = 0;
@@ -1192,12 +1614,349 @@ class Search extends Mail_Controller
 		return $ticket;
 	}
 	
+	public function review_booking($id) {
+		$prev_error = $this->session->userdata('ERROR'); //,'Unable to process ticket at this moment (API timedout). Please try after some time.');
+		if(isset($prev_error)) {
+			$this->session->unset_userdata('ERROR');
+		}
+
+		$selected_ticket = $this->session->userdata('selected_ticket');
+		log_message('debug', "Selected Ticket Data => ".json_encode($selected_ticket));
+		$passengers = $this->get_passengerslist($_POST, $selected_ticket['state']);
+		$payment_mode = $_POST['payment-gw'];
+
+		$state = &$selected_ticket['state'];
+		$state['passengers'] = $passengers;
+		$state['payment_gateway'] = $payment_mode;
+
+		$current_user = $this->session->userdata('current_user');
+		$wallet=$this->get_walletbalance($current_user);
+		$wallet_balance = $wallet['balance'];
+		//$total_costprice = ($qty * $costprice);
+
+		if ($this->session->userdata('user_id') && isset($id)) 
+		{	
+			$company = $this->session->userdata('company');
+			$companyid = intval($company["id"]);
+
+			$this->session->set_userdata('selected_ticket', $selected_ticket);
+			log_message('debug', "Updated State => ".json_encode($selected_ticket));
+
+			// log_message('debug', json_encode($selected_ticket));
+
+			$this->load->view('header1',$selected_ticket);
+			//$this->load->view('flight-detail',$result);
+			$this->load->view('review-booking',$selected_ticket);
+			$this->load->view('footer1');
+		}
+		else
+		{
+			redirect("/search");
+		}
+	}
+
+	public function pre_booking($id) {
+		$prev_error = $this->session->userdata('ERROR'); //,'Unable to process ticket at this moment (API timedout). Please try after some time.');
+		if(isset($prev_error)) {
+			$this->session->unset_userdata('ERROR');
+		}
+
+		$selected_ticket = $this->session->userdata('selected_ticket');
+		log_message('debug', "Selected Ticket Data => ".json_encode($selected_ticket));
+
+		$setting = $selected_ticket['setting'];
+		$setting = $setting[0];
+		$state = $selected_ticket['state'];
+		$wallet = $selected_ticket['mywallet'];
+		$current_user = $this->session->userdata('current_user');
+		$user_id = intval($current_user['id']);
+
+		$company = $this->session->userdata('company');
+		$companyid = $company['id'];
+		$financial = $state['financial'];
+		$amount = floatval($financial['grand_total']);
+		$isonlinepayment = false;
+		if($state && isset($state['payment_gateway'])) {
+			$isonlinepayment = ($state['payment_gateway'] !== 'Wallet');
+		}
+
+		if($isonlinepayment) {
+			// take payment from payment gateway
+			$pg = $state['payment_gateway'];
+			$pg_configs = $setting['payment_gateway'];
+			
+			$selected_pg_config = false;
+
+			if($pg_configs && is_array($pg_configs) && count($pg_configs) > 0) {
+				foreach($pg_configs as $pg_config) {
+					if($pg_config && isset($pg_config['pw_name']) && $pg_config['pw_name'] === $pg) {
+						$selected_pg_config = $pg_config;
+						break;
+					}
+				}
+			}
+
+			// Save transaction into DB and pass the transaction for processing
+			$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+			//Get the gateway specific feed so that data can be posted into 
+			$gateway_feed = $this->processPayment(array(
+				"pg_config" => $selected_pg_config,
+				"total_amount" => $amount,
+				"current_user" => $state['current_user'],
+				"payment_gateway" => $state['payment_gateway'],
+				"company" => $company
+			));
+
+			$view_name = $this->getPGViewName($state['payment_gateway']);
+			//Place to same transaction id into pg_transactions_tbl and same will be updated once the response received.
+			$wallet_trans_id = $this->User_Model->save("pg_transactions_tbl", 
+				array(
+					'trans_tracking_id' => $gateway_feed['txnid'], 
+					'amount' => $amount,
+					'final_amount' => $gateway_feed['final_amount'],
+					'companyid' => $companyid,
+					'userid' => $user_id,
+					'sponsoring_companyid' => $sponsoring_companyid,
+					'payment_gateway' => $state['payment_gateway'],
+					'pg_config' => json_encode($selected_pg_config, JSON_HEX_QUOT),
+					'payment_mode' => -1,
+					'request_data' => json_encode($gateway_feed, JSON_HEX_QUOT),
+					'created_by' => $user_id
+				)
+			);
+
+			$result['payment_gateway'] = $state['payment_gateway'];
+			$result['company_setting'] = $this->Search_Model->company_setting($companyid);
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['payment_gateway'])) {
+				$result['company_setting'][0]['payment_gateway'] = json_decode($result['company_setting'][0]['payment_gateway'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['bank_accounts'])) {
+				$result['company_setting'][0]['bank_accounts'] = json_decode($result['company_setting'][0]['bank_accounts'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['configuration'])) {
+				$result['company_setting'][0]['configuration'] = json_decode($result['company_setting'][0]['configuration'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['api_integration'])) {
+				$result['company_setting'][0]['api_integration'] = json_decode($result['company_setting'][0]['api_integration'], true);
+			}
+
+			$result['pg'] = $gateway_feed;
+
+			$this->load->view($view_name, $result);
+		}
+		else if($wallet) {
+
+			$mywallet = $this->Search_Model->get_wallet_balance($companyid, $user_id);
+
+
+			$current_wallet_balance = isset($wallet['balance']) ? floatval($wallet['balance']) : 0.00;
+			if($mywallet && isset($mywallet['balance'])) {
+				$current_wallet_balance = floatval($mywallet['balance']);
+			}
+			// $walletid = intval($wallet['walletid']);
+			// $wallet_balance = isset($wallet['balance']) ? floatval($wallet['balance']) : 0.00;
+			if($current_wallet_balance >= $amount) {
+				// yes enough balance present now proceed with booking.
+				$payload = false;
+				$this->process_booking($payload);
+			}
+			else {
+				$id = -1;
+				$flight = $selected_ticket['flight'];
+				if($flight && is_array($flight) && count($flight) > 0) {
+					$flight = $flight[0];
+					$id = $flight['id'];
+				}
+				$this->session->set_userdata('ERROR','Insufficient wallet balance. Can`t proceed further.');
+				redirect("search/flightdetails/$id");
+			}
+		}
+	}
+
+	private function processPayment($payload) {
+		$payment_gateway_data = false;
+		if($payload && isset($payload['pg_config'])) {
+			$amount = $payload['total_amount'];
+			$company = $payload['company'];
+			$current_user = $payload['current_user'];
+			$selected_pg = $payload['pg_config'];
+			
+			if($payload['payment_gateway'] === 'PayU') {
+				$return_url = base_url().'paymentgateway/booking_payu_response';
+				$payment_gateway_data = $this->getPG_payload_payu(array('payment_type' => -1, 'amount' => $amount, 'selected_pg' => $selected_pg, 'company' => $company, 'current_user' => $current_user, 'return_url' => $return_url));
+			}
+			else if($payload['payment_gateway'] === 'Atom') {
+				$return_url = base_url().'paymentgateway/booking_atom_response';
+				$payment_gateway_data = $this->getPG_payload_atom(array('payment_type' => -1, 'amount' => $amount, 'selected_pg' => $selected_pg, 'company' => $company, 'current_user' => $current_user, 'return_url' => $return_url));
+			}
+		}
+
+		return $payment_gateway_data;
+	}
+
+	public function pre_booking_pg_response($pg_name) {
+		// After payment receive it will land here. Now we need to process the booking.
+		$payload = false;
+		if($pg_name === 'atom') {
+			$payload = $this->processAtom_payment_response();
+		}
+		else if($pg_name === 'payu') {
+			$payload = $this->processPayU_payment_response();
+		}
+		else {
+			// nothing yet
+		}
+		$this->process_booking($payload);
+	}
+
+	private function process_booking($payload) {
+		// now processing booking
+		$selected_ticket = $this->session->userdata('selected_ticket');
+		$selected_ticket['mywallet']= $this->getMyWallet();
+		
+		$this->session->set_userdata('selected_ticket', $selected_ticket);
+		
+		log_message('debug', "Selected Ticket Data => ".json_encode($selected_ticket));
+		log_message('debug', "After PG response [Payload] => ".json_encode($payload));
+
+		$this->book_new(array('payload' => $selected_ticket, 'pg_confirmation' => $payload));
+	}
+
+	private function processAtom_payment_response() {
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
+			$transactionResponse = new TransactionResponse();
+			$transactionResponse->setRespHashKey("KEYRESP123657234");
+			
+			$message = '';
+			$error = '';
+			$status = 'failure';
+			if($transactionResponse->validateResponse($_POST)){
+				// echo "Transaction Processed <br/>";
+				// print_r($_POST);
+				$message = 'Transaction successfully made';
+				$status = 'success';
+			} else {
+				// echo "Invalid Signature";
+				$message = 'Transaction failed';
+				$error = $this->input->post('desc');
+			}
+
+			$pg_transid = $this->input->post('mmp_txn');
+			$mode = 'test';
+			//$status = $this->input->post('f_code');
+			$txnid = $this->input->post('mer_txn');
+			$amount = floatval($this->input->post('amt'));
+			$card_category = $this->input->post('discriminator');
+			$trans_date = date('Y-m-d H:i:s', strtotime($this->input->post('date')));
+			$response_json = json_encode($_REQUEST, JSON_HEX_QUOT);		
+			
+			$payload = $this->process_pg_response(array(
+				'mihpayid' => $pg_transid, 
+				'mode' => $mode, 
+				'status' => $status, 
+				'txnid' => $txnid, 
+				'amount' => $amount, 
+				'card_category' => $card_category, 
+				'trans_date' => $trans_date, 
+				'error' => $error, 
+				'message' => $message, 
+				'response_json' => $response_json
+			));
+
+			log_message('debug', 'Response from payment gateway => '.json_encode($payload));
+
+			// $this->session->set_flashdata('payment_response', $payload);
+			// redirect('/search');
+
+			return $payload;
+		}
+		else {
+			redirect('/search');
+		}
+	}
+
+	private function processPayU_payment_response() {
+		$payload = false;
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{
+			$pg_transid = $this->input->post('mihpayid');
+			$mode = $this->input->post('mode');
+			$status = $this->input->post('status');
+			$txnid = $this->input->post('txnid');
+			$amount = $this->input->post('net_amount_debit');
+			$card_category = $this->input->post('cardCategory');
+			$trans_date = date('Y-m-d H:i:s', strtotime($this->input->post('addedon')));
+			$error = $this->input->post('error');
+			$message = $this->input->post('field9');
+			$response_json = json_encode($_REQUEST, JSON_HEX_QUOT);
+
+			$payload = $this->process_pg_response(array(
+				'mihpayid' => $pg_transid, 
+				'mode' => $mode, 
+				'status' => $status, 
+				'txnid' => $txnid, 
+				'amount' => $amount, 
+				'card_category' => $card_category, 
+				'trans_date' => $trans_date, 
+				'error' => $error, 
+				'message' => $message, 
+				'response_json' => $response_json
+			));
+		}
+
+		return $payload;
+	}
+
+	private function get_passengerslist($postedvalue, $state) {
+		$passengers = [];
+		$no_of_passengers = 0;
+		if($postedvalue && $state && is_array($state) && intval($state['no_of_person'])>0) {
+			$no_of_passengers = intval($state['no_of_person']);
+
+			for ($i=0; $i < $no_of_passengers; $i++) { 
+				$enable = (($postedvalue["chkPassenger_$i"] === 'on') ? true : false);
+				$pass_type_code = 1;
+				if($postedvalue["passenger_type_$i"] === 'Child') {
+					$pass_type_code = 2;
+				}
+				else if($postedvalue["passenger_type_$i"] === 'Infant') {
+					$pass_type_code = 3;
+				}
+
+				if($enable) {
+					$passenger = array(
+						'passenger_type' => $postedvalue["passenger_type_$i"],
+						'passenger_type_code' => $pass_type_code,
+						'enable' => $enable,
+						'passenger_title' => $postedvalue["slPassenger_$i"],
+						'passenger_first_name' => $postedvalue["txtPassenger_FN_$i"],
+						'passenger_last_name' => $postedvalue["txtPassenger_LN_$i"],
+						'passenger_email' => isset($postedvalue["txtPassenger_EML_$i"]) ? $postedvalue["txtPassenger_EML_$i"] : '',
+						'passenger_mobile' => isset($postedvalue["txtPassenger_MBL_$i"]) ? $postedvalue["txtPassenger_MBL_$i"] : '',
+						'passenger_dob_day' => isset($postedvalue["slDOBDay_Passenger_$i"]) ? intval($postedvalue["slDOBDay_Passenger_$i"]) : -1,
+						'passenger_dob_month' => isset($postedvalue["slDOBMonth_Passenger_$i"]) ? intval($postedvalue["slDOBMonth_Passenger_$i"]) : -1,
+						'passenger_dob_year' => isset($postedvalue["slDOBYear_Passenger_$i"]) ? intval($postedvalue["slDOBYear_Passenger_$i"]) : -1,
+						'passenger_age' => isset($postedvalue["slDOBYear_Passenger_$i"]) ? (intval(date("Y")) - intval($postedvalue["slDOBYear_Passenger_$i"])) : -1
+					);
+				}
+
+				array_push($passengers, $passenger);
+			}
+		}
+		return $passengers;
+	}
+
 	public function beforebook($id)
 	{
 		$prev_error = $this->session->userdata('ERROR'); //,'Unable to process ticket at this moment (API timedout). Please try after some time.');
 		if(isset($prev_error)) {
 			$this->session->unset_userdata('ERROR');
 		}
+
+		$selected_ticket = $this->session->userdata('selected_ticket');
+		log_message('debug', "Selected Ticket Data => ".json_encode($selected_ticket));
 
 		$current_user = $this->session->userdata('current_user');
 		if ($this->session->userdata('user_id') && isset($id)) 
@@ -1301,7 +2060,6 @@ class Search extends Mail_Controller
 				$result1["user"]=$this->User_Model->user_details();
 				$result["currentuser"] = $current_user;
 				$result["prev_error"] = $prev_error;
-				//$result["setting"]=$this->Search_Model->setting();
 				$result['setting']=$this->Search_Model->company_setting($companyid);
 
 				$baserate = ($ticket["total"]) + $ticket["whl_markup"] + $ticket["spl_markup"];
@@ -1311,9 +2069,6 @@ class Search extends Mail_Controller
 				$costprice = 0;
 				if($current_user["is_admin"]==='1' || $current_user["type"]==='EMP')
 				{
-					//this is company admin or employee
-					//$flight[$key]["total"] + $flight[$key]["whl_markup"] + $flight[$key]["whl_srvchg"] + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_cgst'] / 100) + ($flight[$key]['whl_srvchg'] * $flight[$key]['whl_sgst'] / 100);
-					//$costprice = $ticket["total"] + $ticket["whl_markup"] + $ticket["whl_srvchg"] + ($ticket["whl_srvchg"] * $ticket["whl_cgst"]/100) + ($ticket["whl_srvchg"] * $ticket["whl_sgst"]/100);
 					$costprice = $ticket["total"] + $ticket["spl_markup"] + $ticket["spl_srvchg"] + $ticket["spl_cgst"] + $ticket["spl_sgst"];
 				}
 				else if($current_user["type"]==='B2B' || $current_user["type"]==='B2C') {
@@ -1523,7 +2278,7 @@ class Search extends Mail_Controller
 					// "baggage" => $ticket['baggage'],
 					// "meal" => $ticket['meal'],
 					// "markup" => $ticket['markup'],
-					"admin_markup" => $ticket['adminmarkup'],
+					"admin_markup" => isset($ticket['adminmarkup']) ? $ticket['adminmarkup'] : 0,
 					// "discount" => $ticket['discount'],
 					"total" => $ticket['total'],
 					"sale_type" => 'live',
@@ -1571,6 +2326,336 @@ class Search extends Mail_Controller
 		if(!$condition || !is_array($condition)) return NULL;
 
 		return $this->Search_Model->getTableData('tickets_tbl', $condition);
+	}
+
+	private function book_new($booking_payload) {
+		if(!$booking_payload) return;
+
+		$payload = $booking_payload['payload'];
+		$pg_confirmation = $booking_payload['pg_confirmation'];
+		$current_user = $payload['currentuser'];
+		$company = $this->session->userdata('company');
+		$companyid = intval($company['id']);
+		$state = $payload['state'];
+		$booking_info = false;
+		$isapi = false;
+		$ticket = $payload['flight'][0];
+		$id = intval($ticket['id']);
+		log_message('debug', "Book New -> Payload => : ".json_encode($booking_payload));
+
+		try
+		{
+			if($state && isset($state['sale_type']) && $this->is_booking_validv2($booking_payload)) {
+				if($state['sale_type'] === 'api') {
+					//Take API flow
+					$booking_result = $this->do_api_booking($booking_payload);
+					$payload = $booking_result['payload'];
+					$state = $payload['state'];
+					$isapi = true;
+				}
+				else {
+					//Take FD flow
+					$id = intval($ticket['id']);
+
+					if(isset($ticket['sale_type']) && $ticket['sale_type'] === 'request') {
+						$status = 'PENDING';
+					}
+					else {
+						$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
+					}
+					
+					$requesting_by = isset($ticket['requesting_by']) ? $ticket['requesting_by'] : 1; //TODO
+					$requesting_to = isset($ticket['requesting_to']) ? $ticket['requesting_to'] : 1; //TODO
+					$seller_userid = isset($ticket['seller_userid']) ? intval($ticket['seller_userid']) : intval($ticket['uid']);
+					$seller_companyid = isset($ticket['seller_companyid']) ? intval($ticket['seller_companyid']) : intval($ticket['companyid']);
+					$adminmarkup = isset($ticket['adminmarkup']) ? floatval($ticket['adminmarkup']) : floatval($ticket['admin_markup']);
+	
+					$pnr = $ticket['pnr'];
+					$user_id = intval($ticket['user_id']);
+					$state['booked_ticket'] = $ticket;
+					$state['id'] = $id;
+					$state['booking_status'] = $status;
+					$state['pnr'] = $pnr;
+
+					$ticket['requesting_by'] = $requesting_by;
+					$ticket['requesting_to'] = $requesting_to;
+					$ticket['seller_userid'] = $seller_userid;
+					$ticket['seller_companyid'] = $seller_companyid;
+					$ticket['adminmarkup'] = $adminmarkup;
+
+					$state['booked_ticket'] = $ticket;
+				}
+
+				// Save booking
+				$ticket = isset($state['booked_ticket']) ? $state['booked_ticket'] : false;
+				log_message('debug', 'Booked Ticket -> '.json_encode($ticket));
+
+				$sale_type = 'request';
+				$requesting_by = isset($ticket['requesting_by']) ? $ticket['requesting_by'] : 1; //TODO
+				$requesting_to = isset($ticket['requesting_to']) ? $ticket['requesting_to'] : 1; //TODO
+				$seller_userid = isset($ticket['seller_userid']) ? intval($ticket['seller_userid']) : intval($ticket['uid']);
+				$seller_companyid = isset($ticket['seller_companyid']) ? intval($ticket['seller_companyid']) : intval($ticket['companyid']);
+				$adminmarkup = isset($ticket['adminmarkup']) ? floatval($ticket['adminmarkup']) : floatval($ticket['admin_markup']);
+				$financial = isset($state['financial']) ? $state['financial'] : false;
+
+				if($ticket) {
+					$suplcompany = $this->Admin_Model->get_company(intval($ticket['companyid']));
+					if($suplcompany && is_array($suplcompany) && count($suplcompany)>0) {
+						$suplcompany = $suplcompany[0];
+					}
+					$ticket = $state['booked_ticket'];
+					$wallet = $payload['mywallet'];
+					$passengers = $state['passengers'];
+					$costprice = (floatval($ticket['cost_price']));
+					$price = (floatval($ticket['cost_price']));
+					// $total = (floatval($ticket['total']));
+					$total = $financial ? floatval($financial['grand_total']) : (floatval($ticket['total']));
+
+					$is_owned_ticket = intval($ticket['companyid'])===$companyid;
+					$posteddata = array(
+						"isownticket" => $is_owned_ticket,
+						"isapi" => $isapi,
+						"costprice" => $costprice,
+						"price" => $price,
+						"service_charge" => (floatval($ticket['whl_srvchg'])),
+						"igst" => (floatval($ticket['whl_igst'])),
+						"total_amount" => $total,
+						"rateplanid" => intval($ticket['rate_plan_id']),
+						"qty" => intval($state['adult']) + intval($state['child']),
+						"adult" => intval($state['adult']),
+						"child" => intval($state['child']),
+						"infant" => intval($state['infant'])
+					);
+					$booking_payload['posteddata'] = $posteddata;
+					log_message('debug', "POSTDATA => ".json_encode($posteddata));
+
+					$booking_info = $this->save_booking($current_user, $ticket, $status, $wallet, $company, $booking_payload, $passengers);
+
+					$booking_id = intval($booking_info['booking_id']);
+					$booking_date = $booking_info['booking_date'];
+					$booking_activity_id = intval($booking_info['booking_activity_id']);
+					$voucher_no = intval($booking_info['voucher_no']);
+					$sale_type = isset($booking_info['sale_type'])?$booking_info['sale_type']:'request';
+					$book_status = isset($booking_info['book_status'])?$booking_info['book_status']:'PENDING';
+					log_message('debug', "After Save_Book call => Sale Type : $sale_type | Book Status : $book_status");
+
+					if($book_status == 'PENDING' && !$isapi && !$is_owned_ticket) {
+						$sale_type = "request";
+					}
+					log_message('debug', "After validation => Sale Type : $sale_type | Book Status : $book_status");
+					$newbookinginfo=$this->Search_Model->booking_details($booking_id);
+					if($newbookinginfo && count($newbookinginfo)>0) {
+						$newbookinginfo = $newbookinginfo[0];
+					}
+
+					//
+					$state['booking_info'] = $booking_info;
+					$sale_type = isset($booking_info['sale_type'])?$booking_info['sale_type']:'request';
+				}
+
+				//perform wallet transactions
+				$transactionresult = null;
+				if($booking_info && $current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
+					$booking_id = intval($booking_info['booking_id']);
+					$booking_date = $booking_info['booking_date'];
+					$total_costprice = floatval($state['financial']['grand_total']);
+					$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
+				}
+
+				if(($sale_type === 'live' || $isapi) && !$is_owned_ticket) {
+					//This ticket is not own ticket and status became confirmed. So money has to be moved to wholsaler to supplier account
+					$posteddata['status'] = $status;
+					$posteddata['current_user'] = $current_user;
+					$posteddata['mode'] = 'DR';
+					$posteddata['transtype'] = 20;
+					$posteddata['transreftype'] = 'PURCHASE';
+					$posteddata['narration'] = "Buying supplier ticket (id: $booking_id)";
+			
+					$transactionresult = $this->do_system_wallet_transaction($company, $suplcompany, $ticket, $newbookinginfo, $posteddata);
+					log_message('debug', "System Wallet Transaction => ".json_encode($transactionresult));
+				}
+
+				$wallettransid = 0;
+				if($transactionresult && is_array($transactionresult) && isset($transactionresult['trans_id'])) {
+					$wallettransid = intval($transactionresult['trans_id']);
+				}
+
+
+				//Update user accounts as purchased ticket as collection was received before
+				$ordered_booking = $this->Search_Model->get('bookings_tbl', array('id' => $booking_id));
+				if($ordered_booking && is_array($ordered_booking) && count($ordered_booking)>0) {
+					$ordered_booking = $ordered_booking[0];
+				}
+
+				$customer_user = $this->Search_Model->get('user_tbl', array('id' => intval($ordered_booking['customer_userid'])));
+				if($customer_user && is_array($customer_user) && count($customer_user)>0) {
+					$customer_user = $customer_user[0];
+				}
+
+				if($customer_user && $status==='CONFIRMED' && intval($ordered_booking['pbooking_id'])===0 && isset($customer_user['is_admin']) && intval($customer_user['is_admin']) === 0) {
+					$customer_companyid = $company['id'];
+					log_message('debug', "Ticket fullfilled so lets give customer user`s accounts entry");
+					log_message('debug', "Booking Id: $booking_id | Booking Status: $status | Amount: ".$ordered_booking['total']);
+
+					log_message('debug', "[SAVED] Booking Id: $booking_id | Booking Status: $status | Amount: ".$ordered_booking['total']);
+				}
+
+				if($is_owned_ticket) {
+					$sale_type = $ticket['sale_type'];
+					$parent_booking_status = 'PENDING';
+					$posteddata['isapi'] = $isapi;
+					if($sale_type=='live' && $status=='CONFIRMED') {
+						$parent_booking_status = 'APPROVED';
+					}
+					log_message('debug', "1. This is own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
+				}
+				else {
+					//$sale_type = $ticket['sale_type'];
+					log_message('debug', "2. This is not own ticket. Wholeslaer id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type");
+					$suplbookinginfo = null;
+					$parent_booking_status = 'PENDING';
+					if($isapi || $sale_type==='live') {
+						//get the booking info of supplier.
+						//Assuming since its API means ticket is in live booking
+						$posteddata['isapi'] = $isapi;
+						$suplbookinginfo = $this->do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany, $booking_payload);
+						$parent_booking_status = isset($suplbookinginfo['book_status']) ? $suplbookinginfo['book_status'] : 'PENDING';
+						if($sale_type=='live' && $parent_booking_status=='CONFIRMED') {
+							$parent_booking_status = 'APPROVED';
+						}
+
+						log_message('debug', "parent booking status : Wholesaler id : $companyid | Supplier id : $seller_companyid |  Sale.Type: $sale_type | parent_booking_status => ".json_encode($suplbookinginfo, TRUE));
+					}
+				}
+
+				log_message('debug', "Before ticket reducing : Wholesaler id : $companyid | Supplier id : $seller_companyid | API: $isapi | Sale.Type: $sale_type | parent_booking_status: $parent_booking_status");
+				
+				if(!$isapi && $sale_type==='live' && $parent_booking_status==="APPROVED") {
+					//lets reduce ticket count
+					$posteddata['qty'] = isset($newbookinginfo['qty'])?intval($newbookinginfo['qty']):0;
+					$posteddata['ticketid'] = isset($newbookinginfo['ticket_id'])?intval($newbookinginfo['ticket_id']):0;
+					$updated_ticket = $this->do_reducee_inventory($posteddata);
+				}
+
+
+				if((isset($ticket['pnr']) && $ticket['pnr']=='')) {
+					$sale_type = 'request';
+					log_message('debug', "Original sale type: $sale_type | PNR: ".$ticket['pnr']." | Changed to $sale_type sale type");
+				}
+
+				if($booking_id>0 && $wallettransid>=0) {
+					$this->session->unset_userdata('state');
+					$this->session->unset_userdata('no_of_person');
+					log_message('debug', "Booking processed in $sale_type mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
+					redirect("/search/thankyou/".$booking_id."");
+				}
+				else {
+					log_message('debug', "Can't process booking some error | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
+					redirect("search/beforebook/$id");
+				}
+			}
+		}
+		catch(Exception $ex) {
+			log_message('error', $ex);
+		}
+	}
+
+	private function do_api_booking($booking_payload) {
+		if(!$booking_payload) return;
+
+		$payload = $booking_payload['payload'];
+		$pg_confirmation = $booking_payload['pg_confirmation'];
+		$state = &$payload['state'];
+
+		$is_booking_valid = $this->is_booking_validv2($booking_payload);
+
+		$state['is_booking_valid'] = $is_booking_valid;
+
+		if($is_booking_valid) {
+			$state['status'] = "CONFIRM";
+			$wallet = $payload['mywallet'];
+			$current_user = $payload['currentuser'];
+			$financial = $state['financial'];
+			$passengers = $state['passengers'];
+			$ticket = $payload['flight'][0]; //We need to change here for round trip flight
+			$company = $this->get_companyinfo();
+			$id = intval($ticket['id']);
+			//Call API to book ticket
+			$result = $this->book_api_ticket(array('current_user' => $current_user,'ticket' => $ticket,'company' => $company,'posteddata' => $booking_payload,'customers' => $passengers));
+
+			log_message('debug', 'live booking result => '.json_encode($result));
+			if(!$result || (isset($result['Error']) && intval($result['Error']['ErrorCode'])>0)) {
+				$error_code = $result['Error']['ErrorCode'];
+				$error_message = $result['Error']['ErrorMessage'];
+				if($error_message==='') {
+					$this->session->set_userdata('ERROR','Unable to process ticket at this moment (API timedout). Please try after some time.');
+				}
+				else {
+					$this->session->set_userdata('ERROR',"$error_message (Code: $error_code)");
+				}
+				redirect("search/flightdetails/$id");
+			}
+			else {
+				//for the time being insert a new ticket against API billing company. If present no need to create duplicate.
+				if($result && isset($result['synthetic_ticket']) && $ticket && is_array($ticket)) {
+					$ticket = array_merge($ticket, $result['synthetic_ticket']);
+					$id = intval($ticket['id']);
+					$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
+					$pnr = $ticket['pnr'];
+					$user_id = intval($ticket['user_id']);
+					$state['booked_ticket'] = $ticket;
+					$state['id'] = $id;
+					$state['booking_status'] = $status;
+					$state['pnr'] = $pnr;
+				}	
+			}
+		}
+		else {
+			//redirect to search page with reason of error
+		}
+
+		$booking_payload['payload'] = $payload;
+		log_message('debug', "Online booking => ".json_encode($booking_payload));
+
+		return $booking_payload;
+	}
+
+	private function is_booking_validv2($booking_payload) {
+		// check on
+		// $flag = (floatval($wallet["balance"])>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && $totalcostprice<=$credit_limit);
+		$payload = $booking_payload['payload'];
+		$wallet = $payload['mywallet'];
+		$current_user = $payload['currentuser'];
+		$financial = $payload['state']['financial'];
+		$passengers = $payload['state']['passengers'];
+		$credit_limit = 999999999; /* This should be actual credit limit */
+
+		$totalcostprice = floatval($financial['grand_total']);
+
+		$bflag = (floatval($wallet["balance"])>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && $totalcostprice<=$credit_limit);
+
+		//check duplicate passengers
+		$hasduplicatecustomers = false;
+		$customers = [];
+		if($passengers && is_array($passengers) && count($passengers) > 0) {
+			foreach($passengers as $passenger) {
+				$uniquekey = $passenger['passenger_title'].'-'.$passenger['passenger_first_name'].'-'.$passenger['passenger_last_name'];
+
+				if($passenger['passenger_title'] === '' || $passenger['passenger_first_name'] === '' || $passenger['passenger_last_name'] === '') {
+					$hasduplicatecustomers = true;
+				}
+
+				if(isset($customers[$uniquekey])) {
+					$hasduplicatecustomers = true;
+				}
+
+				array_push($customers, $uniquekey);
+			}
+
+			$bflag = $bflag && !$hasduplicatecustomers;
+		}
+
+		return $bflag;
 	}
 
 	public function book($id)
@@ -1878,6 +2963,8 @@ class Search extends Mail_Controller
 					}
 
 					if($booking_id>0 && $wallettransid>=0) {
+						$this->session->unset_userdata('state');
+						$this->session->unset_userdata('no_of_person');
 						log_message('debug', "Booking processed in $sale_type mode | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
 						redirect("/search/thankyou/".$booking_id."");
 					}
@@ -2033,14 +3120,26 @@ class Search extends Mail_Controller
 		return $data;
 	}
 
-	protected function save_booking($current_user, $ticket, &$status, $wallet, $company, $posteddata, $customers) {
+	protected function save_booking($current_user, $ticket, &$status, $wallet, $company, $posteddata_payload, $customers) {
 		$booking_date = date("Y-m-d H:i:s");
 		$companyid = intval($company['id']);
+		$posteddata = $posteddata_payload['posteddata'];
 		$isownticket = boolval($posteddata['isownticket']);
 		$system_wallet_balance = 0;
 		$sale_type = $ticket['sale_type']; //"request";
 		$isapi = isset($posteddata['isapi']) ? boolval($posteddata['isapi']) : false;
 		$pnr = isset($ticket['pnr'])?$ticket['pnr']:'';
+		$state = isset($posteddata_payload['payload']) ? $posteddata_payload['payload']['state'] : false;
+		$financial = false;
+		if($state) {
+			$financial = isset($state['financial']) ? $state['financial'] : false;
+		}
+		$price = floatval($posteddata['price']);
+		$costprice = floatval($posteddata['costprice']);
+		if($financial) {
+			$price = isset($financial['price']) ? (floatval($financial['price']) + ($financial['total_spl_maargin'] + $financial['total_whl_margin'])) : $price;
+			$costprice = isset($financial['price']) ? (floatval($financial['price']) + ($financial['total_spl_maargin'])) : $price;
+		}
 
 		if($companyid !== intval($ticket['companyid'])) {
 			$supplier_contract = $this->Search_Model->get_suppliers_contract($companyid, intval($ticket['companyid']));
@@ -2087,7 +3186,6 @@ class Search extends Mail_Controller
 		if($sale_type === "live" && $status!=='CONFIRMED') {
 			$status_code = 4;
 		}
-		
 
 		$arr = array(
 			"booking_date"=>$booking_date,
@@ -2098,7 +3196,7 @@ class Search extends Mail_Controller
 			"seller_userid"=>$ticket['seller_userid'],
 			"seller_companyid"=>$ticket['seller_companyid'],
 			"status"=>$status_code,
-			"price"=>floatval($posteddata['price']),
+			"price"=>$price,
 			"admin_markup"=>floatval($ticket['adminmarkup']),
 			"markup"=>0,
 			"srvchg"=>floatval($posteddata['service_charge']),
@@ -2106,21 +3204,26 @@ class Search extends Mail_Controller
 			"sgst"=>floatval($posteddata['igst'])/2, /* This is wrong should be directly taken from sgst value */
 			"igst"=>floatval($posteddata['igst']),
 			"total"=>floatval($posteddata['total_amount']),
-			"costprice"=>floatval($posteddata['costprice']),
+			"costprice"=>$costprice,
 			"rateplanid"=>intval($posteddata['rateplanid']),
 			"qty"=>intval($posteddata['qty']),
-			"adult"=>intval($posteddata['qty']),
+			"adult"=>intval($ticket['adult']),
+			"child"=>intval($ticket['child']),
+			"infant"=>intval($ticket['infant']),
+			"infant_price"=>floatval($ticket['infant_price']),
 			"created_by"=>$current_user["id"],
 			"requesting_by"=>intval($ticket['requesting_by']),
 			"target_userid"=>intval($ticket['seller_userid']),
 			"target_companyid"=>intval($ticket['seller_companyid']),
 			"requesting_to"=>intval($ticket['requesting_to']),
 			"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? floatval($posteddata['costprice'] * intval($posteddata['qty'])) : floatval($posteddata['total_amount'])),
-			"ticket_account" => $company['ticket_sale_account']==null? -1 : $company['ticket_sale_account']['accountid'],
+			"ticket_account" => (!isset($company['ticket_sale_account']) || $company['ticket_sale_account']==null)? -1 : $company['ticket_sale_account']['accountid'],
 			"isownticket" => boolval($posteddata['isownticket']),
 			"sale_type" => $sale_type,
 			"wallet_balance" => $system_wallet_balance
 		);
+
+		log_message('debug', "Save Booking => ".json_encode($arr));
 
 		if(floatval($posteddata['total_amount'])>0) {
 			//insert data into booking_activity_tbl
@@ -2133,7 +3236,7 @@ class Search extends Mail_Controller
 		}
 	}
 
-	protected function do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany) {
+	protected function do_supplier_booking($newbookinginfo, $ticket, $posteddata, $company, $suplcompany, $posteddata_payload = false) {
 		$booking_date = date("Y-m-d H:i:s");
 		$companyid = intval($company['id']);
 		$seller_userid = intval($company['primary_user_id']);
@@ -2145,10 +3248,31 @@ class Search extends Mail_Controller
 		$seller_user = $this->User_Model->get_userbyid($seller_userid);
 
 		$parent_bookingid = intval($newbookinginfo['id']);
-		
+
+		$state = ($posteddata_payload && isset($posteddata_payload['payload'])) ? $posteddata_payload['payload']['state'] : false;
+		$adult = isset($state['adult']) ? intval($state['adult']) : 0;
+		$child = isset($state['child']) ? intval($state['child']) : 0;
+		$infant = isset($state['infant']) ? intval($state['infant']) : 0;
+
+		$financial = false;
+		if($state) {
+			$financial = isset($state['financial']) ? $state['financial'] : false;
+		}
+		$price = floatval($posteddata['price']);
+		$costprice = floatval($posteddata['costprice']);
+		$infant_price = 0;
+		if($financial) {
+			$price = round(isset($financial['price']) ? (floatval($financial['price']) + ($financial['total_spl_maargin'])) : $price, 0);
+			$costprice = isset($financial['price']) ? (floatval($financial['price'])) : $price;
+			$infant_price = isset($financial['infant_price']) ? (floatval($financial['infant_price'])) : $infant_price;
+		}
+
+		// $baseprice = floatval($ticket['total']);
 		$baseprice = floatval($ticket['total']);
-		$spl_markup = floatval($ticket['spl_markup']);
-		$price = ($baseprice+$spl_markup);
+		// $spl_markup = floatval($ticket['spl_markup']);
+		$spl_markup = $financial['total_spl_maargin'];
+		
+		// $price = ($baseprice+$spl_markup);
 		$spl_srvchg = floatval($ticket['spl_srvchg']);
 		// $spl_cgst = round(($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100), 0);
 		// $spl_sgst = round(($ticket['spl_srvchg'] * $ticket['spl_sgst'] / 100), 0);
@@ -2156,9 +3280,11 @@ class Search extends Mail_Controller
 		$spl_sgst = floatval($ticket['spl_sgst']);
 		$spl_igst = ($spl_cgst + $spl_sgst);
 
-		$whl_costrate = floatval($ticket['cost_price']); //($baseprice + $spl_markup + $spl_srvchg) + ($spl_cgst + $spl_sgst);
+		//$whl_costrate = floatval($ticket['cost_price']); //($baseprice + $spl_markup + $spl_srvchg) + ($spl_cgst + $spl_sgst);
+		$whl_costrate = $costprice;
 
-		$whl_costprice = $whl_costrate * intval($posteddata['qty']);
+		// $whl_costprice = $whl_costrate * intval($posteddata['qty']);
+		$whl_costprice = ($price * intval($posteddata['qty'])) + ($infant_price * $infant);
 
 		log_message('debug', "Ticket for supplier booking => ".json_encode($ticket));
 		log_message('debug', "Booking commercials => $price - $spl_markup - $spl_srvchg - $spl_cgst - $spl_sgst - $spl_igst - $whl_costprice - $whl_costrate");
@@ -2231,7 +3357,10 @@ class Search extends Mail_Controller
 			"costprice" => $baseprice,
 			"rateplanid" => intval($posteddata['rateplanid']),
 			"qty" => intval($posteddata['qty']),
-			"adult" => intval($posteddata['qty']),
+			"adult" => intval($posteddata['adult']),
+			"child" => intval($posteddata['child']),
+			"infant" => intval($posteddata['infant']),
+			"infant_price"=>floatval($ticket['infant_price']),
 			"created_by" => $seller_userid,
 			"requesting_by" => 4,  //always 4 because requesting by is wholesaler
 			"target_userid" => intval($ticket['seller_userid']),
@@ -2264,7 +3393,7 @@ class Search extends Mail_Controller
 		$companyid = intval($company['id']);
 		$walletid = intval($current_user['wallet_id']);
 		$userid = intval($current_user['id']);
-		$ticket_account = $company['ticket_sale_account'];
+		$ticket_account = isset($company['ticket_sale_account']) ? $company['ticket_sale_account'] : -1;
 		$wallet_transid = 0;
 		$voucher_no = 0;
 		
@@ -2562,31 +3691,6 @@ class Search extends Mail_Controller
 		return $flag;
 	}
 
-	// protected function get_companyinfo()
-	// {
-	// 	$company = $this->session->userdata('company');
-	// 	$companyinfo = &$company;
-	// 	$companyinfo['configuration'] = json_decode($company['setting']['configuration'], true);
-	// 	$companyinfo['account_settings'] = isset($companyinfo['configuration']['account_settings'])?$companyinfo['configuration']['account_settings']:array();
-	// 	$company_account_settings = $companyinfo['account_settings'];
-		
-	// 	$ticket_account = null;
-	// 	if(count($company_account_settings)>0) {
-	// 		for($idx=0; $idx<count($company_account_settings); $idx++) {
-	// 			if($company_account_settings[$idx]['module']=='ticket_sale') {
-	// 				$ticket_account = $company_account_settings[$idx];
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	$companyinfo['ticket_sale_account'] = $ticket_account;
-	// 	$companyinfo['current_user'] = $this->session->userdata('current_user');
-
-	// 	log_message("debug", "Company Info : ".json_encode($companyinfo));
-
-	// 	return $companyinfo;
-	// }
-
 	protected function is_booking_valid($companyid) {
 		$hasduplicatecustomers = false;
 		$customers = array();
@@ -2662,479 +3766,6 @@ class Search extends Mail_Controller
 		}
 		return $result;
 	}
-	
-	#region old booking code
-	// public function book_old($id)
-	// {
-	// 	$company = $this->session->userdata('company');
-	// 	$company_configuration = json_decode($company['setting']['configuration'], true);
-	// 	$company_account_settings = isset($company_configuration['account_settings'])?$company_configuration['account_settings']:array();
-	// 	$ticket_account = null;
-
-	// 	if(count($company_account_settings)>0) {
-	// 		for($idx=0; $idx<count($company_account_settings); $idx++) {
-	// 			if($company_account_settings[$idx]['module']=='ticket_sale') {
-	// 				$ticket_account = $company_account_settings[$idx];
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	$companyid = $company["id"];
-	// 	$companyname = $company["display_name"];
-	// 	$current_user = $this->session->userdata('current_user');
-
-	// 	$result["footer"]=$this->Search_Model->get_post(5);
-	// 	$wallet_amount=0;
-	// 	$customers = array();
-	// 	$hasduplicatecustomers = false;
-
-	// 	if(isset($_REQUEST["prefix"])) {
-	// 		foreach($_REQUEST["prefix"] as $key=>$value)
-	// 		{
-	// 			$prefix = $_REQUEST["prefix"][$key];
-	// 			$first_name = $_REQUEST["first_name"][$key];
-	// 			$last_name = $_REQUEST["last_name"][$key];
-
-	// 			$key = $prefix.'_'.$first_name.'_'.$last_name;
-
-	// 			if($prefix=='' || $first_name=='' || $last_name=='') {
-	// 				$hasduplicatecustomers = true;
-	// 				break;
-	// 			}
-
-	// 			if(!isset($customers[$key])) {
-	// 				$customers[$key] = true;
-	// 			}
-	// 			else {
-	// 				$hasduplicatecustomers = true;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	else {
-	// 		redirect("/search");
-	// 	}
-
-	// 	if($hasduplicatecustomers) {
-	// 		redirect("search/beforebook/$id");
-	// 	}
-
-	// 	if ($this->input->post('date') && $this->input->post('qty')) 
-	// 	{
-	// 		$CI =   &get_instance();
-			
-	// 		$userid = $current_user['id'];
-	// 		if(($current_user['type']=='B2B' || $current_user['type']=='B2C') && $current_user['is_admin']!=1) {
-	// 			$check = $CI->db->get_where('system_wallets_tbl', array('userid' => $userid, 'type' => 2));
-	// 		} else {
-	// 			$check = $CI->db->get_where('system_wallets_tbl', array('companyid' => $companyid, 'type' => 1, 'sponsoring_companyid' => -1));
-	// 		}
-
-	// 		$result=$check->result_array();
-			
-	// 		$ticket = $CI->db->get_where('tickets_tbl', array('id' => $id));				
-	// 		$result1=$ticket->result_array();
-	// 		$no_of_person=$result1[0]["no_of_person"];
-	// 		$user_id=$result1[0]["user_id"];
-	// 		$pnr=$result1[0]["pnr"];
-	// 		$amount=floatval($this->input->post('total'));
-	// 		$costprice=floatval($this->input->post('costprice'));
-	// 		$qty=intval($this->input->post('qty'));
-	// 		$user['user_details']=$this->User_Model->user_details();
-	// 		if($current_user['type'] === 'B2B' && $current_user['is_admin']!='1') {
-	// 			$user['user_markup']=$this->User_Model->user_settings($current_user['id'], array('markup'));
-	// 		}
-	// 		else {
-	// 			$user['user_markup']= 0;
-	// 		}
-
-	// 		$users = $this->User_Model->get_users($result1[0]["companyid"]);
-	// 		if($users!==null && count($users)>0) {
-	// 			for ($i=0; $i < count($users); $i++) { 
-	// 				if($users[$i]["active"]==='1' && $users[$i]["is_admin"]==='1') {
-	// 					$user['supplier_user_details'] = $users[$i];
-	// 					break;
-	// 				}
-	// 			}
-	// 		}
-			
-	// 		$supplier_mobile = $user['supplier_user_details']['mobile'];
-	// 		$wallet_amount = 0;
-	// 		if($result && count($result)>0) {
-	// 			$wallet_amount = floatval($result[0]['balance']);
-	// 		}
-
-	// 		$total_costprice = ($qty * $costprice);
-
-	// 		//if($amount>$wallet_amount && $this->session->userdata('user_id')!=$user_id && $user['user_details'][0]["credit_ac"]==0)
-	// 		if($total_costprice>$wallet_amount && $current_user['is_admin']!='1' && $user['user_details'][0]["credit_ac"]==0)
-	// 		{
-	// 			$result["footer"]=$this->Search_Model->get_post(5);
-	// 			$result["setting"]=$this->Search_Model->setting();
-	// 			$current_user = $this->session->userdata("current_user");
-
-	// 			$result['mywallet']= $this->getMyWallet();
-			
-	// 			$this->load->view('header1',$result);
-	// 			$this->load->view('insufficient_amount',$result);
-	// 			$this->load->view('footer1');
-	// 		}
-	// 		else
-	// 		{
-	// 			$result=$this->User_Model->user_details();
-	// 			if($pnr!="" && $this->session->userdata('user_id')==$user_id)
-	// 				$status="CONFIRM";
-	// 			else
-	// 				$status="PENDING";	
-	// 			$booking_id = -1;
-
-	// 			$requesting_by = 1;
-	// 			$requesting_to = 4;
-	// 			$seller_userid = $user['supplier_user_details']['id'];
-	// 			$seller_companyid = $user['supplier_user_details']['companyid'];
-	// 			$adminmarkup = 0;
-	// 			if($current_user["is_admin"]!=='1' && $current_user["type"]!=='EMP' && ($current_user["type"]==='B2B' || $current_user["type"]==='B2C'))
-	// 			{
-	// 				if($current_user["type"]==='B2B') {
-	// 					// $adminmarkup = $result1[0]["admin_markup"];
-	// 					if($user['user_markup']!==NULL) {
-	// 						if($user['user_markup']['field_value_type'] === '2') {
-	// 							$adminmarkup = floatval($user['user_markup']['field_value']);
-	// 						}
-	// 					}
-	// 					$requesting_by = 2;
-	// 					$seller_userid = $company['primary_user_id'];
-	// 					$seller_companyid = $company['id'];
-	// 				}
-	// 				else {
-	// 					$adminmarkup = 0;
-	// 					$requesting_by = 1;
-	// 					$seller_userid = $company['primary_user_id'];
-	// 					$seller_companyid = $company['id'];
-	// 				}
-	// 			}
-	// 			if($current_user["is_admin"]==='1' || $current_user["type"]==='EMP') {
-	// 				$requesting_by = 4;
-	// 				// $requesting_to = 4;
-	// 				$seller_userid = $company['primary_user_id'];
-	// 				$seller_companyid = $company['id'];
-	// 			}
-
-	// 			//insert data into bookings_tbl
-	// 			$booking_date = date("Y-m-d H:i:s");
-	// 			$arr=array(
-	// 				"booking_date"=>$booking_date,
-	// 				"ticket_id"=>$id,
-	// 				"pnr"=>$result1[0]["pnr"],
-	// 				"customer_userid"=>$this->session->userdata('user_id'),
-	// 				"customer_companyid"=>$companyid,
-	// 				"seller_userid"=>$seller_userid,
-	// 				"seller_companyid"=>$seller_companyid,
-	// 				"status"=>0,
-	// 				//"price"=>$this->input->post('price')*$this->input->post('qty'),
-	// 				"price"=>$this->input->post('price'),
-	// 				"admin_markup"=>$adminmarkup,
-	// 				"markup"=>$adminmarkup,
-	// 				"srvchg"=>$this->input->post('service_charge'),
-	// 				"cgst"=>$this->input->post('igst')/2,
-	// 				"sgst"=>$this->input->post('igst')/2,
-	// 				"igst"=>$this->input->post('igst'),
-	// 				"total"=>$amount,
-	// 				"costprice"=>$costprice,
-	// 				"rateplanid"=>$this->input->post('rateplanid'),
-	// 				"qty"=>$this->input->post('qty'),
-	// 				"adult"=>$this->input->post('qty'),
-	// 				"created_by"=>$this->session->userdata('user_id'),
-	// 				"created_on"=>date("Y-m-d H:i:s"),
-	// 			);
-	// 			$booking_id_new = $this->Search_Model->save("bookings_tbl",$arr);
-
-	// 			//insert data into booking_activity_tbl
-	// 			$arr=array(
-	// 				"booking_id"=>$booking_id_new,
-	// 				"activity_date"=>$booking_date,  //date("Y-m-d H:i:s"),
-	// 				"source_userid"=>$this->session->userdata('user_id'),
-	// 				"source_companyid"=>$companyid,
-	// 				"requesting_by"=>$requesting_by,
-	// 				"target_userid"=>$seller_userid,
-	// 				"target_companyid"=>$seller_companyid,
-	// 				"requesting_to"=>$requesting_to,
-	// 				"status"=>0,
-	// 				"notes"=>'',
-	// 				"created_by"=>$this->session->userdata('user_id'),
-	// 				"created_on"=>date("Y-m-d H:i:s"),
-	// 			);
-	// 			$booking_activity_id = $this->Search_Model->save("booking_activity_tbl",$arr);
-
-	// 			//insert into accounts account_transactions_tbl
-	// 			//$this->Search_Model->get_next_voucherno($companyid);
-	// 			$arr=array(
-	// 				"voucher_no" => $this->Search_Model->get_next_voucherno($company),
-	// 				"transacting_companyid" => $companyid,
-	// 				"transacting_userid" => $this->session->userdata('user_id'),
-	// 				"documentid" => $booking_id_new,
-	// 				"document_date" => $booking_date,
-	// 				"document_type" => 1,
-	// 				"debit" => (($current_user["type"]=='B2B' && $current_user["is_admin"]!='1')? $costprice : $total_costprice),
-	// 				"companyid" => $companyid,
-	// 				"credited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
-	// 				"created_by" => $this->session->userdata('user_id')
-	// 			);
-	// 			$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
-
-	// 			$result["flight"]=$this->Search_Model->flight_details($id, $companyid); 
-	// 			if($result["flight"][0]["trip_type"]=="ONE")
-	// 				$trip="ONE WAY";
-	// 			else
-	// 				$trip="RETURN";
-	// 			if($booking_id_new)	
-	// 			{
-	// 				if($result["flight"][0]["sale_type"]=="live")
-	// 				{
-	// 					// FOR LIVE BOOKING
-	// 					// $arr=array(
-	// 					// "date"=>date("Y-m-d h:i:s"),
-	// 					// "ticket_id"=>$id,
-	// 					// "seller_id"=>$result1[0]["user_id"],
-	// 					// "pnr"=>$result1[0]["pnr"],
-	// 					// "customer_id"=>$this->session->userdata('user_id'),
-	// 					// "qty"=>$this->input->post('qty'),
-						
-	// 					// "rate"=>$this->input->post('price'),
-	// 					// "amount"=>$this->input->post('price')*$this->input->post('qty'),
-	// 					// "service_charge"=>$this->input->post('service_charge'),						
-	// 					// "igst"=>$this->input->post('igst'),
-	// 					// "total"=>$amount,
-	// 					// "costprice"=>$costprice,
-	// 					// "type"=>$user['user_details'][0]["type"],
-	// 					// "status"=>$status,
-	// 					// "booking_id"=>$booking_id_new
-	// 					// );
-	// 					$refrence_id = -1;
-	// 					//$refrence_id=$this->Search_Model->save("refrence_booking_tbl",$arr);
-	// 					// FOR LIVE BOOKING
-	// 				}
-					
-	// 				if($this->session->userdata('user_id')==$user_id)
-	// 				{
-	// 					$amount=$this->input->post('total');
-	// 					// $arr=array(
-	// 					// 'date'=>date("Y-m-d H:i:s"),
-	// 					// 'user_id'=>$this->session->userdata('user_id'),
-	// 					// //'amount'=>(0-($result["flight"][0]["price"]*$this->input->post('qty'))),
-	// 					// 'amount'=>(0-$costprice),
-	// 					// 'booking_id'=>$booking_id_new,
-	// 					// 'type'=>'DR'
-	// 					// );					 
-	// 					// $this->Search_Model->save("wallet_tbl",$arr);
-						
-						
-	// 					// $amount=$this->input->post('total');
-	// 					// $arr=array(
-	// 					// 'date'=>date("Y-m-d H:i:s"),
-	// 					// 'user_id'=>$result1[0]["user_id"],
-	// 					// 'amount'=>($amount),
-	// 					// 'booking_id'=>$booking_id_new,
-	// 					// 'type'=>'CR'
-	// 					// );	
-						
-	// 					// $this->Search_Model->save("wallet_tbl",$arr);
-
-	// 					// Don't reduce the ticket count on self booking. That also has to be reviewed.
-	// 					// $where=array("id"=>$id);
-	// 					// $current_no_of_person=$no_of_person-$this->input->post('qty');
-	// 					// $data=array("no_of_person"=>$current_no_of_person);
-	// 					// $this->Search_Model->update("tickets_tbl",$data,$where);
-						
-	// 					$user['user_details']=$this->User_Model->user_details();	          							
-	// 					$data = array(				            
-	// 						'name' => $companyname,
-	// 						'email'=>$user['user_details'][0]["email"],
-	// 						'msg'=>"You have Booked  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id_new.")",
-	// 						'msg1'=>' You booking is confirm',
-	// 						'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-	// 						);
-	// 					$this->send("Booking",$data);
-				
-				
-	// 					$data1 = array(				            
-	// 						'name' => $user['user_details'][0]["name"],
-	// 						'email'=>$user['user_details'][0]["email"],
-	// 						'mobile'=>$user['user_details'][0]["mobile"],
-	// 						'msg'=>"A New Booking done by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id_new.")",
-	// 						'user_id'=> $user['user_details'][0]["user_id"],
-	// 						'msg1'=>'',
-	// 						'msg2'=>""							 
-	// 						);									 
-	// 					$this->adminsend("Booking",$data1);
-	// 					$no=$user['user_details'][0]["mobile"];
-	// 					$msg="You have Booked a trip Booking No. ".$booking_id_new." Thanks, $companyname";
-	// 					$this->send_message($no,$msg);
-						
-					
-	// 					//$no="9800412356";
-	// 					$no = $supplier_mobile;
-	// 					$msg="A New Booking done by User ID : ".$user['user_details'][0]["user_id"]." Booking No. ".$booking_id_new."";
-	// 					$this->send_message($no,$msg);
-	// 				}							 
-	// 				else
-	// 				{		
-	// 					$amount=$total_costprice; //floatval($this->input->post('costprice'));
-						
-	// 					if ($current_user['is_admin']=='0') {
-	// 						$wallet_trans_date = date("Y-m-d H:i:s");
-	// 						$arr=array(
-	// 						'wallet_id'=>$current_user['wallet_id'],
-	// 						'date'=>$wallet_trans_date,
-	// 						'trans_id'=>uniqid(),
-	// 						'companyid'=>$companyid,
-	// 						'userid'=>$this->session->userdata('user_id'),
-	// 						//'amount'=>(0-$amount),
-	// 						'amount'=>($total_costprice),
-	// 						'dr_cr_type'=>'DR',
-	// 						'trans_type'=>20, /*20 is for Ticket Booking */
-	// 						'trans_ref_id'=>$booking_id_new,
-	// 						'trans_ref_date'=>$booking_date,
-	// 						'trans_ref_type'=>'PURCHASE',
-	// 						'trans_documentid'=>$booking_id_new,
-	// 						'narration'=>"New ticket booking raised (id: $booking_id_new)",
-	// 						'sponsoring_companyid'=>$current_user['sponsoring_companyid'],
-	// 						'created_by'=>$this->session->userdata('user_id'),
-	// 						'status'=>1,
-	// 						'approved_by'=>$company['primary_user_id'],
-	// 						'approved_on'=>date("Y-m-d H:i:s"),
-	// 						'target_companyid'=>$companyid
-	// 						);					 
-	// 						$wallet_transid = $this->Search_Model->save("wallet_transaction_tbl",$arr);
-
-	// 						$mywallet = $this->Search_Model->get('system_wallets_tbl', array('id' => $current_user['wallet_id']));
-	// 						$wl_balance = 0;
-	// 						if($mywallet && count($mywallet)>0) {
-	// 							$mywallet = $mywallet[0];
-
-	// 							$wl_balance = floatval($mywallet['balance']);
-	// 						}
-
-	// 						$wl_balance -= $total_costprice;
-
-	// 						$return = $this->Search_Model->update('system_wallets_tbl', array('balance' => $wl_balance), array('id' => $current_user['wallet_id']));
-	// 						//save data to account_transactions_tbl;
-	// 						//If wallet balance is there and amount realized from wallet then add that to accounts
-	// 						if($total_costprice<=$wallet_amount) {
-	// 							$arr=array(
-	// 								"voucher_no" => $this->Search_Model->get_next_voucherno($company),
-	// 								"transacting_companyid" => $companyid,
-	// 								"transacting_userid" => $this->session->userdata('user_id'),
-	// 								"documentid" => $wallet_transid,
-	// 								"document_date" => $wallet_trans_date,
-	// 								"document_type" => 2, /* Payment receive */
-	// 								"credit" => $total_costprice,
-	// 								"companyid" => $companyid,
-	// 								"debited_accountid" => ($ticket_account==null? -1: $ticket_account['accountid']),
-	// 								"created_by" => $this->session->userdata('user_id')
-	// 							);
-	// 							$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
-	// 						}
-	// 					}
-
-	// 					$user['user_details']=$this->User_Model->user_details();	          							
-	// 					$data = array(				            
-	// 						'name' => $companyname,
-	// 						'email'=>$user['user_details'][0]["email"],
-	// 						'msg'=>"You have requested for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person. (Booking No. : ".$booking_id_new.")",
-	// 						'msg1'=>"After Admin Approval of <span class='il'>$companyname</span> You booking will be confirm",
-	// 						'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
-	// 						);
-	// 					$this->send("Booking",$data);
-				
-				
-	// 					$data1 = array(				            
-	// 						'name' => $user['user_details'][0]["name"],
-	// 						'email'=>$user['user_details'][0]["email"],
-	// 						'mobile'=>$user['user_details'][0]["mobile"],
-	// 						'msg'=>"A New Booking Request by ".$user['user_details'][0]["user_id"]." for  (".$trip.") ticket from  ".$result["flight"][0]["source_city"]." to ".$result["flight"][0]["destination_city"]." of ".$amount." INR for ".$this->input->post('qty')." person (Booking No. : ".$booking_id_new.")",
-	// 						'user_id'=> $user['user_details'][0]["user_id"],
-	// 						'msg1'=>'',
-	// 						'msg2'=>""							 
-	// 						);									 
-	// 					$this->adminsend("Booking",$data1);
-
-	// 					$no=$user['user_details'][0]["mobile"];
-	// 					// $msg="You have Requested for a trip Request No. ".$booking_id." Thanks, OXYTRA";
-	// 					$msg="You have Requested for a trip Request No. ".$booking_id_new." Thanks, $companyname";
-						
-	// 					//hiden for local testing only
-	// 					if(SEND_EMAIL)
-	// 						$this->send_message($no,$msg);
-						
-					
-	// 					//$no="9800412356";
-	// 					$no = $supplier_mobile;
-	// 					$msg="A New Booking Requested done by User ID : ".$user['user_details'][0]["user_id"]." Request No. ".$booking_id_new."";
-						
-					
-	// 				}
-																																
-	// 				$where=array("id"=>$id);
-					
-	// 				if($result["flight"][0]["sale_type"]=="live")
-	// 				{
-	// 					foreach($_REQUEST["prefix"] as $key=>$value)
-	// 					{
-	// 						$arr=array("prefix"=>$_REQUEST["prefix"][$key],
-	// 									"first_name"=>$_REQUEST["first_name"][$key],
-	// 									"last_name"=>$_REQUEST["last_name"][$key],
-	// 									"mobile_no"=>$_REQUEST["mobile_no"][$key],
-	// 									"age"=>$_REQUEST["age"][$key],
-	// 									"email"=>$_REQUEST["email"][$key],
-	// 									//"booking_id"=>$booking_id,
-	// 									"companyid"=> $companyid,
-	// 									"booking_id"=>$booking_id_new,
-	// 									"refrence_id"=>$refrence_id,
-	// 									"ticket_fare"=>($amount),
-	// 									"costprice"=>($costprice),
-	// 									"pnr"=>$result1[0]["pnr"],
-	// 									"created_by"=>$this->session->userdata('user_id'),
-	// 									"created_on"=>date("Y-m-d H:i:s")
-	// 									);
-	// 						$this->Search_Model->save("customer_information_tbl",$arr);
-	// 					}
-						
-	// 					$current_no_of_person=$no_of_person-$this->input->post('qty');
-	// 					$data=array("no_of_person"=>$current_no_of_person);
-	// 					$this->Search_Model->update("tickets_tbl",$data,$where);
-	// 				}
-	// 				else
-	// 				{
-	// 					foreach($_REQUEST["prefix"] as $key=>$value)
-	// 					{
-	// 						$arr=array("prefix"=>$_REQUEST["prefix"][$key],
-	// 									"first_name"=>$_REQUEST["first_name"][$key],
-	// 									"last_name"=>$_REQUEST["last_name"][$key],
-	// 									"mobile_no"=>$_REQUEST["mobile_no"][0], /* was $key */
-	// 									"age"=>$_REQUEST["age"][$key], 
-	// 									"ticket_fare"=>round($amount/$this->input->post('qty'), 0),
-	// 									"costprice"=>round($costprice, 0),
-	// 									"email"=>$_REQUEST["email"][0],  /* was $key */
-	// 									"companyid"=> $companyid,
-	// 									"booking_id"=>$booking_id_new,
-	// 									"pnr"=>$result1[0]["pnr"],
-	// 									"created_by"=>$this->session->userdata('user_id'),
-	// 									"created_on"=>date("Y-m-d H:i:s")
-	// 								);
-	// 						$this->Search_Model->save("customer_information_tbl",$arr);
-	// 					}
-	// 				}
-					
-	// 				redirect("/search/thankyou/".$booking_id_new."");
-	// 			}
-	// 			else
-	// 				echo $this->db->last_query();die();
-	// 		}					
-				
-	// 	}
-	// }
-	#endregion
 
 	private function get_wallet_balance($current_user) {
 		$userid = intval($current_user['id']);
@@ -3267,14 +3898,39 @@ class Search extends Mail_Controller
 		}
 
 		$companyid = $company["id"];
+		$details = $this->Search_Model->booking_details($id);
 		$result["options"] = array('pdf' => false);  
-		$result["details"] = $this->Search_Model->booking_details($id);  
+		$result["details"] = $details;
+
+		$adult = 0;
+		$child = 0;
+		$infant = 0;
+		foreach($details as $passenger) {
+			if(intval($passenger['passenger_type']) === 1) { //Adult
+				$adult++;
+			}
+			else if(intval($passenger['passenger_type']) === 2) { //Child
+				$child++;
+			}
+			else if(intval($passenger['passenger_type']) === 3) { //Infant
+				$infant++;
+			}
+		}
+
+
 		//$result["setting"] = $this->Search_Model->setting($id); 
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 
 		$result["footer"]=$this->Search_Model->get_post(5);
 
 		$result['mywallet']= $this->getMyWallet();
+		$result['state'] = array(
+			"passengers" => array(
+				"adult" => $adult,
+				"child" => $child,
+				"infant" => $infant
+			)
+		);
 
 		if($result["details"])
 		{		 
@@ -3339,48 +3995,46 @@ class Search extends Mail_Controller
 	}
 	public function update_booking()
 	{
-	     	$result["footer"]=$this->Search_Model->get_post(5);
-		 if(($_SERVER['REQUEST_METHOD'] == 'POST'))
-		 {	
-	             $booking_id=$this->input->post('booking_id');
-	             $booking["details"] = $this->Search_Model->booking_details($booking_id);  
-	             if($this->session->userdata('user_id')==$booking["details"][0]["customer_id"])
-				 {
-					 
-					 /*$arr = array('status' => $this->input->post('status'),							 
-								 'pnr'=>$this->input->post('pnr')							 							
-								 );
-					 $result = $this->User_Model->update_table("booking_tbl",$arr,"id",$booking_id);*/
-				 }
-				 else
-				 {
-					  redirect("/user/booking-orders");
-				 }
-  	             				
-				 
-				 foreach($_REQUEST["prefix"] as $key=>$value)
-				 {
-					    $arr=array("prefix"=>$_REQUEST["prefix"][$key],
-								 "first_name"=>$_REQUEST["first_name"][$key],
-								 "last_name"=>$_REQUEST["last_name"][$key],
-								 "mobile_no"=>$_REQUEST["mobile_no"][$key],
-								 "age"=>$_REQUEST["age"][$key],
-								 "email"=>$_REQUEST["email"][$key]
-								
-								 );
-				        //$result=$this->Search_Model->save("customer_information_tbl",$arr);
-						$result = $this->User_Model->update_table("customer_information_tbl",$arr,"booking_id",$booking_id);
-				 }
-				 //echo $this->db->last_query();die();
-				 if($result==true)
-				 {
-					         $this->session->set_flashdata('msg', 'Booking Updated Successfully');							
-							 redirect("/user/edit-booking/".$booking_id."");							
-							 $this->session->flashdata('msg');
-				 }
-		 }
+		$result["footer"]=$this->Search_Model->get_post(5);
+		if(($_SERVER['REQUEST_METHOD'] == 'POST'))
+		{	
+			$booking_id=$this->input->post('booking_id');
+			$booking["details"] = $this->Search_Model->booking_details($booking_id);  
+			if($this->session->userdata('user_id')==$booking["details"][0]["customer_id"])
+			{
+				
+				/*$arr = array('status' => $this->input->post('status'),							 
+							'pnr'=>$this->input->post('pnr')							 							
+							);
+				$result = $this->User_Model->update_table("booking_tbl",$arr,"id",$booking_id);*/
+			}
+			else
+			{
+				redirect("/user/booking-orders");
+			}
+						
 			
-		 		 
+			foreach($_REQUEST["prefix"] as $key=>$value)
+			{
+				$arr=array("prefix"=>$_REQUEST["prefix"][$key],
+							"first_name"=>$_REQUEST["first_name"][$key],
+							"last_name"=>$_REQUEST["last_name"][$key],
+							"mobile_no"=>$_REQUEST["mobile_no"][$key],
+							"age"=>$_REQUEST["age"][$key],
+							"email"=>$_REQUEST["email"][$key]
+						
+							);
+				//$result=$this->Search_Model->save("customer_information_tbl",$arr);
+				$result = $this->User_Model->update_table("customer_information_tbl",$arr,"booking_id",$booking_id);
+			}
+			//echo $this->db->last_query();die();
+			if($result==true)
+			{
+				$this->session->set_flashdata('msg', 'Booking Updated Successfully');							
+				redirect("/user/edit-booking/".$booking_id."");							
+				$this->session->flashdata('msg');
+			}
+		}
 	}
 	
 	public function customer_cancel_request($id)
@@ -3753,9 +4407,34 @@ class Search extends Mail_Controller
 		$extra_markup = 0.0;
 		$company = $this->session->userdata('company');
 		$companyid = $company["id"];
-		$result["details"] = $this->Search_Model->booking_details($id);  
+		$details = $this->Search_Model->booking_details($id);
+		
+		$result["details"] = $details;
 		$result['setting']=$this->Search_Model->company_setting($companyid);
 		$result["footer"]=$this->Search_Model->get_post(5);
+
+		$adult = 0;
+		$child = 0;
+		$infant = 0;
+		foreach($details as $passenger) {
+			if(intval($passenger['passenger_type']) === 1) { //Adult
+				$adult++;
+			}
+			else if(intval($passenger['passenger_type']) === 2) { //Child
+				$child++;
+			}
+			else if(intval($passenger['passenger_type']) === 3) { //Infant
+				$infant++;
+			}
+		}
+
+		$result['state'] = array(
+			"passengers" => array(
+				"adult" => $adult,
+				"child" => $child,
+				"infant" => $infant
+			)
+		);
 
 		$current_user = $this->session->userdata("current_user");
 		if(!$company || !$current_user) {
@@ -3799,16 +4478,6 @@ class Search extends Mail_Controller
 			$this->pdf->set_option('isJavascriptEnabled', true);
 			$this->pdf->set_option('isHtml5ParserEnabled', true);
 			$this->pdf->setPaper('A4', 'portrait');
-
-			// if($result['details'][0]["type"]=="B2B" || $result['details'][0]["type"]=="EMP")
-			// {			  
-			// 	$this->load->view('myticket',$result);
-			// }
-
-			// if($result['details'][0]["type"]=="B2C")
-			// {			  
-			// 	$this->load->view('myticket',$result);
-			// }
 
 			$this->pdf->load_view('myticket', $result);
 			$this->pdf->render();

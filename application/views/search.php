@@ -13,7 +13,7 @@
 	cursor: pointer; /* Add a pointer on hover */
 }
 .search_overlay img {
-    opacity: 0.3;
+    opacity: 0.7;
 }
 </style>         
         <div id="progressbar" class="search_overlay" style="display:none">
@@ -39,20 +39,26 @@
         <!--===== INNERPAGE-WRAPPER ====-->
         <section class="innerpage-wrapper">
         	<div id="search-result-page" class="innerpage-section-padding">
-        		<div class="container">
+        		<div class="container-base">
         			<div class="row">
                     	<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 content-side">
                         	<div class="page-search-form">
-                            	<h2>Search the <span>Flight <i class="fa fa-plane"></i></span></h2>
+                                <?php 
+                                    $companyid = intval($this->session->userdata("current_user")["companyid"]);
+                                    if($companyid === 7) { ?>
+                                        <?= $this->load->view('search_panel',$state, TRUE);?>
+                                <?php } ?>
+
+                            	<h2 <?= ($companyid === 7 ? 'style="font-size:18px; float: right; display: inline; padding: 10px; display:none"' : 'style="font-size:18px; float: right; display: inline; padding: 10px;"') ?>>Search the <span>Flight <i class="fa fa-plane"></i></span></h2>
                                 
-                                <ul class="nav nav-tabs">
+                                <ul class="nav nav-tabs" <?= ($companyid === 7 ? 'style="display:inline-block; display:none;"' : 'style="display:inline-block;"') ?>>
 								    <li class="active"><a href="#tab-one-way" data-toggle="tab">One Way</a></li>
                                 	<li ><a href="#tab-round-trip" data-toggle="tab">Round Trip</a></li>
                                 	
                                 </ul>
                                 
-                                <div class="tab-content">
-                                	<div id="tab-round-trip" class="tab-pane fade in ">
+                                <div class="tab-content" <?= ($companyid === 7 ? 'style="border-top: 1px solid #a1a1a1; display:none"' : 'style="border-top: 1px solid #a1a1a1;"') ?>>
+                                	<div id="tab-round-trip" class="tab-pane fade in " style="display:none;">
                                         <form class="pg-search-form" id="frm_round_way" action="<?php echo base_url(); ?>search/search_round_trip" method="post" onsubmit="return validation1()" autocomplete="off">
 										   <input type="hidden" name="trip_type" value="ROUND"> 
                                             <div class="row">
@@ -120,7 +126,7 @@
                                     
                                     <div id="tab-one-way" class="tab-pane fade in active">
                                         <form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validate_searchform()" autocomplete="off">
-										   <input type="hidden" name="trip_type" value="ONE"> 
+										    <input type="hidden" name="trip_type" value="ONE"> 
                                             <div class="row">
                                                 <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
                                                     <div class="form-group">
@@ -247,5 +253,37 @@
                     return true;
                 }
             }
+
+            function validation_ticket_search(mode='oneway')
+            {
+                $("#progressbar").hide();
+                if($("#trip_type").val()=="")
+                {
+                    $("#trip_type").addClass('is-invalid');
+                    $("#trip_type").parent().find(".error").remove();
+                    $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+                    return false;
+                }
+                else if($("#dt_from").val()=="")
+                {
+                    $("#dt_from").addClass('is-invalid');
+                    $("#dt_from").parent().find(".error").remove();
+                    $("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+                    return false;
+                }
+                else if($("#dt_to").val()=="")
+                {
+                    $("#dt_to").addClass('is-invalid');
+                    $("#dt_to").parent().find(".error").remove();
+                    $("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+                    return false;
+                }
+                else
+                {
+                    $("#btn_one_way").hide();
+                    $("#progressbar").show();
+                    return true;
+                }
+            }            
         </script>
         

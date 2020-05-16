@@ -32,12 +32,12 @@ class GeneralHooks {
            //$config['base_url'] = $protocol.$host;
            $CI->config->set_item('base_url', $protocol.$host);
 
-           log_message("debug", '1. Final URL => '.$protocol.$host);
+           log_message("info", '1. Final URL => '.$protocol.$host);
         }
         else {
             //$allowed_hosts = ['oxytra.pankh.com', 'airiq.pankh.com','wholesaler.example.com', 'supplier.example.com', 'example.com', 'www.example.com', 'www.oxytra.com', 'wholesaler.oxytra.com', 'supplier.oxytra.com', 'oxytra.com', 'www.oxytra.in', 'oxytra.in'];
             //$config['base_url'] = in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com";
-            log_message("debug", '2. Final URL => '.in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com");
+            log_message("info", '2. Final URL => '.in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com");
             $CI->config->set_item('base_url', in_array($servername, $allowed_hosts) ? $protocol.$host."/" : "we-do-not-recognise-this-host.com");
         }
     }
@@ -56,13 +56,13 @@ class GeneralHooks {
             $servername = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : "";
             $servername = str_replace('www.', '', $servername);
 
-            log_message("debug", "Hooks:Post_Controller - Current_User => ".json_encode($current_user));
-            log_message("debug", "Hooks:Post_Controller - Company => ".json_encode($company));
+            log_message("info", "Hooks:Post_Controller - Current_User => ".json_encode($current_user));
+            log_message("info", "Hooks:Post_Controller - Company => ".json_encode($company));
 
-            log_message("debug", "Hooks:Post_Controller - SERVER => ".json_encode($_SERVER));
-            log_message("debug", "Hooks:Post_Controller - POST => ".json_encode($_POST));
+            log_message("info", "Hooks:Post_Controller - SERVER => ".json_encode($_SERVER));
+            log_message("info", "Hooks:Post_Controller - POST => ".json_encode($_POST));
             if($current_user!=null && intval($current_user['id'])>0) {
-                log_message("debug", "Hooks:Post_Controller - USER => ".json_encode($current_user));
+                log_message("info", "Hooks:Post_Controller - USER => ".json_encode($current_user));
                 
                 $this->save_user_activity($_SERVER, $_POST, $current_user, $company);
             }
@@ -105,12 +105,12 @@ class GeneralHooks {
             'server_data' => json_encode($serverdata)
         );
 
-        log_message("debug", "Hooks:Post_Controller - Logging User Activity => ".json_encode($data));
+        log_message("info", "Hooks:Post_Controller - Logging User Activity => ".json_encode($data));
         
         if($proceed_to_save) {
             $result = $CI->db->insert('user_activities_tbl', $data);
 
-            log_message("debug", "Hooks:Post_Controller - User Activity Logged => Result = $result");
+            log_message("info", "Hooks:Post_Controller - User Activity Logged => Result = $result");
         }
     }
 }

@@ -3965,7 +3965,8 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .page-search-form{
 	margin-bottom:20px;
-	padding:30px 40px 45px;
+	/*padding:30px 40px 45px;*/
+	padding:30px 10px 45px;
 }
 
 .page-search-form h2{
@@ -6232,11 +6233,11 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 
 .action_icons {
 	display: inline-block;
-    padding: 0px 15px;
-    width: 103%;
+    padding: 0px 0px;
+    width: 101%;
     background-color: #faa61a;
     margin-left: -6px;
-    margin-right: -5px;
+    /*margin-right: -5px;*/
     margin-bottom: -5px;
 	overflow-x: hidden;
 }
@@ -6270,8 +6271,9 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 }
 
 a.on-req:after {
-	font-size: 12px !important;
-	color: #05a059 !important;
+    font-size: 9px !important;
+    color: #1f9a11 !important;
+	font-weight: 800 !important;
 }
 .error {
 	font-size: 22px !important;
@@ -6298,4 +6300,26 @@ a.on-req:after {
 }
 .search_overlay img {
 	opacity: 0.3;
+}
+
+@media(min-width:991px){
+	.container-base {
+		width: 90%;
+		margin: 0 auto;
+	}
+}
+
+@media(max-width:990px) {
+	.container-base {
+		padding-right: 15px;
+		padding-left: 15px;
+		margin-right: auto;
+		margin-left: auto;
+	}
+}
+
+@media(max-width:990px) {
+	.banner-padding {
+		padding: 1px;
+	}	
 }

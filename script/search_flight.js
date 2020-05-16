@@ -55,7 +55,11 @@ $( document ).ready(function()
 	{
 		getAvailableTickets($("#source").val(), $("#destination").val());
 	});
-	
+
+	$("#sc_source, #sc_destination").change(function()
+	{
+		getAvailableTickets($("#source").val(), $("#destination").val());
+	});
 	
 	$("#destination1").change(function()
 	{
@@ -93,8 +97,6 @@ $( document ).ready(function()
             }
         });
 	});
-		
-	
 });
 
 function fetch_destination(selected_circle=-1) {

@@ -113,7 +113,12 @@
 	cursor: pointer; /* Add a pointer on hover */
 }
 .search_overlay img {
-    opacity: 0.3;
+    opacity: 0.7;
+}
+.date_diff {
+    font-size: 12px;
+    color: rgba(17, 50, 210, 0.77);
+    font-weight: 600;
 }
 </style>         
 <div id="progressbar" class="search_overlay" style="display:none">
@@ -122,7 +127,7 @@
 
 <section class="innerpage-wrapper" style="top:0;margin-top:20px">
 	<div id="flight-listings" class="innerpage-section-padding" style="padding-top:0;">
-		<div class="container">
+		<div class="container-base">
 			<div class="row">        	
 					<div class="col-xs-12 col-sm-12 col-lg-12 col-md-12 right-side-bar">
 								
@@ -279,11 +284,13 @@
 												<input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly value="<?php echo $dt; ?>"/>
 												<select class="form-control" style="display:none" name="departure_date_time" id="departure_date_time">
 												<?php
-													foreach($availalble as $key=>$value)
-													{
-													?>
-													<option value="<?php echo $availalble[$key]["departure_date_time"];?>" <?php if($post[0]["departure_date_time"]==$availalble[$key]["departure_date_time"]) echo "selected"; ?>><?php echo $availalble[$key]["departure_date_time"];?></option>
-													<?php
+													if($available) {
+														foreach($availalble as $key=>$value)
+														{
+														?>
+														<option value="<?php echo $availalble[$key]["departure_date_time"];?>" <?php if($post[0]["departure_date_time"]==$availalble[$key]["departure_date_time"]) echo "selected"; ?>><?php echo $availalble[$key]["departure_date_time"];?></option>
+														<?php
+														}
 													}
 													?>		
 												</select> 
@@ -353,18 +360,18 @@
 										$arrival_datetime = $segments[$si]['arrival_datetime'];
 
 										$next_departure_datetime = $segments[$si+1]['departure_datetime'];
-										$next_aircide = $segments[$si+1]['aircide'];
+										$next_aircode = $segments[$si+1]['aircode']; //it was aircide changing it to aircode
 										$next_flight_number = $segments[$si+1]['flight_number'];
 										$next_dept_terminal = "T-".$segments[$si]['departure_terminal'];
 
 										$layover = intval((strtotime($next_departure_datetime)-strtotime($arrival_datetime))/60);
 										$layover = intval($layover/60).'h '.intval($layover%60).'m';
 
-										$sameairline = ($firstairline === "$next_aircide $next_flight_number");
+										$sameairline = ($firstairline === "$next_aircode $next_flight_number");
 
-										$stops_details[] = array('stop_name' => $stop_name, 'layover' => $layover, 'sameairline' => $sameairline, 'next_airline' => "$next_aircide $next_flight_number", 'terminal' => $next_dept_terminal);
+										$stops_details[] = array('stop_name' => $stop_name, 'layover' => $layover, 'sameairline' => $sameairline, 'next_airline' => "$next_aircode $next_flight_number", 'terminal' => $next_dept_terminal);
 
-										$firstairline = "$next_aircide $next_flight_number";
+										$firstairline = "$next_aircode $next_flight_number";
 									}
 								}
 
@@ -448,14 +455,20 @@
                                             </div>
                                         </div>
                                         <div class="col-xs-12 col-sm-12 col-lg-3 col-md-3" style="padding: 10px;">
-                                            <div style="display: flex; border-right: 1px solid #e0dcdc;">
+											<div style="display: flex; border-right: 1px solid #e0dcdc;">
+												<?php 
+													$dt1 = date_create(date('Y-m-d 00:00:00', $dept_date));
+													$dt2 = date_create(date('Y-m-d 23:59:59', $arrv_date));
+													$date_diff = date_diff($dt1,$dt2);
+													$days = intval(date_diff($dt1,$dt2)->d);
+												?>
                                                 <div style="flex: 1 0 10%; margin: 2px 7px;">
                                                     <div style="text-align: center;">
                                                         <span class="title"><?= date('H:i', $dept_date) ?></span>
                                                         <div style="color: #aba3a3; font-size: 0.85em;"><?= $source_city ?>(<?= $dept_terminal ?>)</div>
                                                     </div>
                                                 </div>
-                                                <div style="flex: 1 0 25%;">
+                                                <div style="flex: 1 0 25%; margin: auto 0px;">
                                                     <div style="margin: 0 11%; padding-bottom: 0.55em; border-bottom: 2px solid #cacaca; display: flex;">
                                                         <?php 
                                                         if($stops>0) {
@@ -517,7 +530,10 @@
                                                 </div>
                                                 <div style="flex: 1 0 10%;">
                                                     <div style="text-align: center;">
-                                                        <span class="title"><?= date('H:i', $arrv_date) ?></span>
+														<span class="title"><?= date('H:i', $arrv_date) ?></span>
+														<?php if($days>0) { ?>
+															<span class="date_diff"><?= $date_diff->format("%R%a ").($days>1 ? 'days' : 'day') ?></span>
+														<?php } ?>
                                                         <div style="color: #aba3a3; font-size: 0.85em;"><?= $destination_city ?>(<?= $arrv_terminal ?>)</div>
                                                     </div>										
                                                 </div>
@@ -535,16 +551,25 @@
                                             <div style="border-right: 1px solid #e0dcdc; padding: 5px 5px;">
                                                 <div style="text-align: center;">
                                                     <div class="title">
-                                                        <?php 
-                                                        $final_total = $flight[$key]["price"];
+														<?php 
+														$infant_price = isset($flight[$key]["infant_price"]) ? floatval($flight[$key]["infant_price"]) : 0;
+														// $adult = isset($flight[$key]["adult"]) ? floatval($flight[$key]["adult"]) : 0;
+														// $child = isset($flight[$key]["child"]) ? floatval($flight[$key]["child"]) : 0;
+														// $infant = isset($flight[$key]["infant"]) ? floatval($flight[$key]["infant"]) : 0;
+														$adult = isset($state['adult']) ? intval($state['adult']) : 0;
+														$child = isset($state['child']) ? intval($state['child']) : 0;
+														$infant = isset($state['infant']) ? intval($state['infant']) : 0;
+										
+                                                        $final_total = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
 														if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
 															$final_total += $flight[$key]["admin_markup"];
                                                         } 
                                                         if($currentuser['is_admin']=='1') {
-                                                            $costprice = floatval($flight[$key]['cost_price']);
+                                                            $costprice = (floatval($flight[$key]['cost_price']) * ($adult + $child)) + ($infant_price * $infant);
                                                         }
                                                         else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-                                                            $costprice = $flight[$key]["price"];
+															// $costprice = $flight[$key]["price"] + ($infant_price * $infant);
+															$costprice = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
                                                         }
                                                         else {
                                                             $costprice = 0;
@@ -585,7 +610,10 @@
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
                                                 <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
                                                     <div style="color: #ff0000; font-size: 0.80em; display: inline-block;">Seats & rates subject to availability. Confirm before booking.</div>
-                                                <?php } ?>
+												<?php } 
+												else if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]==='api') { ?>
+													<div style="color: #ff0000; font-size: 0.80em; display: inline-block;"><?= $flightitem['remarks'] ?></div>
+												<?php } ?>
                                             </div>
                                         </div>
                                     </div>

@@ -349,7 +349,16 @@
 		<div style="clear: both;"></div>
 	</div>
 	<!-- end of third row-section -->
+	<?php 
+	$primary_passenger = $details[0];
+	$adult = intval($primary_passenger['adult']);
+	$child = intval($primary_passenger['child']);
+	$infant = intval($primary_passenger['infant']);
 
+	$tax = floatval($details[0]["service_charge"]);
+	$others = floatval($details[0]["sgst"]) + floatval($details[0]["cgst"]);
+	$total_taxothers = $tax + $others;
+	?>
 	<!-- forth row-section -->
 	<div style="margin-bottom: 35px; margin-top: 20px; margin-left: -15px; margin-right: -15px; height: auto; margin-top: 10px; margin-bottom: 10px;">
 		<div style="width: 100%;"><span style="font-size: 14px; font-weight: 600; color: #d87811;"><i class="fa fa-info-circle"></i> Booking Details</span></div>
@@ -373,25 +382,39 @@
 							?>
 							<table style="border: 0px; padding: 0px;">
 								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Ticket Fare (each) : </label></td>
+									<td style="width: 66.66%; padding: 0px;"><label>Base Fare: </label></td>
 									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["rate"],2,".",","); ?></td>
 								</tr>
+								<?php if($adult > 0) { ?>
 								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Qty : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo $details[0]["qty"]; ?></td>
+									<td style="width: 66.66%; padding: 0px;"><label>Adult : </label></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?= $adult.' x '.number_format($details[0]["rate"],2,".",","); ?></td>
 								</tr>
+								<?php } ?>
+								<?php if($child > 0) { ?>
 								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Sub Total : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["amount"],2,".",","); ?></td>
+									<td style="width: 66.66%; padding: 0px;"><label>Child : </label></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?= $child.' x '.number_format($details[0]["rate"],2,".",","); ?></td>
 								</tr>
+								<?php } ?>
+								<?php if($infant > 0) { ?>
 								<tr>
+									<td style="width: 66.66%; padding: 0px;"><label>Infant : </label></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?= $infant.' x '.number_format($details[0]["infant_price"],2,".",","); ?></td>
+								</tr>
+								<?php } ?>
+								<tr>
+									<td style="width: 66.66%; padding: 0px;"><label>Tax & Others : </label></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($total_taxothers,2,".",","); ?></td>
+								</tr>
+								<!-- <tr>
 									<td style="width: 66.66%; padding: 0px;"><label>Service Charge : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["service_charge"],2,".",","); ?></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php // echo number_format($details[0]["service_charge"],2,".",","); ?></td>
 								</tr>
 								<tr>
 									<td style="width: 66.66%; padding: 0px;"><label>GST : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?></td>
-								</tr>
+									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php // echo number_format(($details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?></td>
+								</tr> -->
 								<tr>
 									<td style="width: 66.66%; padding: 0px;"><label>Grand Total : </label></td>
 									<td style="width: 33.33%; text-align: right; padding: 0px; padding: 0px; font-weight: 800;"><?php echo number_format($details[0]["total"],2,".",","); ?></td>
@@ -439,28 +462,34 @@
 							?>
 							<table style="border: 0px; padding: 0px;">
 								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Ticket Fare (each) : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["rate"],2,".",","); ?></td>
+									<td style="width: 55%; padding: 0px;"><label>Base Fare : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["rate"],2,".",","); ?></td>
+								</tr>
+								<?php if($adult > 0) { ?>
+								<tr>
+									<td style="width: 55%; padding: 0px;"><label>Adult : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px;"><?= $adult.' x '.number_format($details[0]["rate"],2,".",","); ?></td>
+								</tr>
+								<?php } ?>
+								<?php if($child > 0) { ?>
+								<tr>
+									<td style="width: 55%; padding: 0px;"><label>Child : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px;"><?= $child.' x '.number_format($details[0]["rate"],2,".",","); ?></td>
+								</tr>
+								<?php } ?>
+								<?php if($infant > 0) { ?>
+								<tr>
+									<td style="width: 55%; padding: 0px;"><label>Infant : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px;"><?= $infant.' x '.number_format($details[0]["infant_price"],2,".",","); ?></td>
+								</tr>
+								<?php } ?>
+								<tr>
+									<td style="width: 55%; padding: 0px;"><label>Tax & Others : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px;"><?php echo number_format($total_taxothers,2,".",","); ?></td>
 								</tr>
 								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Qty : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo $details[0]["qty"]; ?></td>
-								</tr>
-								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Sub Total : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["amount"],2,".",","); ?></td>
-								</tr>
-								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Service Charge : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format($details[0]["service_charge"],2,".",","); ?></td>
-								</tr>
-								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>GST : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px;"><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?></td>
-								</tr>
-								<tr>
-									<td style="width: 66.66%; padding: 0px;"><label>Grand Total : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px; font-weight: 800;"><?php echo number_format($details[0]["total"],2,".",","); ?></td>
+									<td style="width: 55%; padding: 0px;"><label>Grand Total : </label></td>
+									<td style="width: 45%; text-align: right; padding: 0px; padding: 0px; font-weight: 800;"><?php echo number_format($details[0]["total"],2,".",","); ?></td>
 								</tr>
 							</table>
 							<?php

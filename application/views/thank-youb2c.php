@@ -188,6 +188,29 @@
 				font-size: 15em;
 				font-weight: 900;				
 			}
+
+			.price-section {
+				list-style: none;
+				padding-left: 0px;
+			}
+
+			.key {
+				width: 40%;
+				display: inline-block;
+			}
+			.key span {
+				font-weight: 800;
+			}
+			.value {
+				width: 30%;
+				display: inline-block;
+				text-align: right;
+			}
+			.grand-total {
+				font-weight: 700;
+				border-top: 1px solid #cdcdcd;
+				border-bottom: 1px solid #cdcdcd;
+			}
 		</style>
         <!--================= PAGE-COVER ================-->
         <section class="page-cover" id="cover-thank-you">
@@ -601,10 +624,10 @@
                                			<table class="table">
                                         	<tbody>
 												<tr>
-                                                	<th><h5>Booking No.</h5></th>
-                                                    <th><h5>Booking Date</h5></th>													
+                                                	<th style="width: 15%;"><h5>Booking No.</h5></th>
+                                                    <th style="width: 20%;"><h5>Booking Date</h5></th>
 													<th><h5>Price Summary</h5></th>
-													<th><h5>Status</h5></th>
+													<th style="width: 20%;"><h5>Status</h5></th>
                                                 </tr>
 												
 												<tr>
@@ -612,17 +635,59 @@
 													<td><?php echo date("d/m/Y H:i:s",strtotime($details[0]["date"]));?></td>
 													<?php
 														$qty = $details[0]["qty"];
+														$passengers = $state['passengers'];
+														$adult = intval($passengers['adult']);
+														$child = intval($passengers['child']);
+														$infant = intval($passengers['infant']);
+
+														$srvchg = $details[0]["service_charge"] * $qty;
+														$gst = ($details[0]["sgst"]+$details[0]["cgst"]);
+
+														$taxothers = round($srvchg + $gst, 0);
 													?>
 													
-													<td><label>Ticket Fare (each) : </label><?php echo number_format($details[0]["rate"],2,".",","); ?><br/>
-													<label>Qty : </label><?php echo $details[0]["qty"]; ?><br/>													
+													<td>
+														<ul style="list-style: none; padding-left: 0px;">
+															<li class="key"><span>Ticket Fare (each) : </span></li>
+															<li class="value"><?php echo number_format($details[0]["rate"],2,".",","); ?></li>
+															<li class="key"><span>Passengers : </span></li>
+															<li class="value"><?= $details[0]["qty"]; ?></li>
+															<?php if($adult > 0) { ?>
+																<li class="key space"><span>Adult : </span></li>
+																<li class="value"><?= $adult.' x '.number_format($details[0]["rate"], 2,".",","); ?></li>
+															<?php } ?>
+															<?php if($child > 0) { ?>
+																<li class="key space"><span>Child : </span></li>
+																<li class="value"><?= $child.' x '.number_format($details[0]["rate"], 2,".",","); ?></li>
+															<?php } ?>
+															<?php if($infant > 0) { ?>
+																<li class="key space"><span>Infant : </span></li>
+																<li class="value"><?= $infant.' x '.number_format($details[0]["infant_price"], 2,".",","); ?></li>
+															<?php } ?>
+															<li class="key"><span>Sub Total : </span></li>
+															<li class="value grand-total"><?= number_format($details[0]["amount"],2,".",","); ?></li>
+															<li class="key"><span>Tax & Others : </span></li>
+															<li class="value"><?= number_format($taxothers,2,".",","); ?></li>
+															<li class="key"><span>Grand Total : </span></li>
+															<li class="value grand-total"><?= number_format($details[0]["total"],2,".",","); ?></li>
+														</ul>
+													</td>
+
+													<!-- <td><label>Ticket Fare (each) : </label><?php echo number_format($details[0]["rate"],2,".",","); ?><br/>
+													<?php if (intval($details[0]["infant"]) > 0 ) { ?>
+														<label>Qty : </label><?php echo $details[0]["qty"].' + '.$details[0]["infant"].' (Infant)'; ?><br/>
+													<?php }
+													else { ?>
+														<label>Qty : </label><?php echo $details[0]["qty"].' + '.$details[0]["infant"]; ?><br/>
+													<?php } ?>
 													<label>Sub Total : </label><?php echo number_format($details[0]["amount"],2,".",","); ?><br/>
-													<label>Service Charge : </label><?php echo number_format($details[0]["service_charge"] * $qty,2,".",","); ?><br/>
+													<label>Service Charge : </label><?php echo number_format($details[0]["service_charge"] * $qty,2,".",","); ?><br/> -->
 													<!--<label>SGST : </label><?php echo number_format($details[0]["sgst"],2,".",","); ?><br/>
 													<label>CGST : </label><?php echo number_format($details[0]["cgst"],2,".",","); ?><br/>-->
 													<!-- <label>GST : </label><?php echo number_format(($details[0]["igst"]+$details[0]["sgst"]+$details[0]["cgst"]),2,".",","); ?><br/> -->
-													<label>GST : </label><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]) * $qty,2,".",","); ?><br/>
-													<label>Grand Total : </label><?php echo number_format($details[0]["total"],2,".",","); ?></td>
+													<!-- <label>GST : </label><?php echo number_format(($details[0]["sgst"]+$details[0]["cgst"]) * $qty,2,".",","); ?><br/>
+													<label>Grand Total : </label><?php echo number_format($details[0]["total"],2,".",","); ?>
+													</td> -->
 													
 													<td>            
 													   <?php echo (($details[0]["customer_status"] === $details[0]["status"]) ? $details[0]["status"] : "PENDING")."<br>";?>

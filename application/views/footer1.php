@@ -298,7 +298,21 @@
                     }
                 });
 
+                $("#sc_source sc_destination").change(function() {
+                    try
+                    {
+                        getAvailableTickets($("#source").val(), $("#destination").val());
+
+                        $('.datepicker').datepicker("show");
+                    }
+                    catch(e) {
+                        console.log(e);
+                        //alert(e);
+                    }
+                });
+
                 getAvailableTickets($("#source").val(), $("#destination").val());
+                //getAvailableTickets($("#sc_source").val(), $("#sc_destination").val());
 
                 $('.datepicker').datepicker({
                     changeMonth: true,

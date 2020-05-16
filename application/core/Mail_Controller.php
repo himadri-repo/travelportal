@@ -517,5 +517,262 @@ class Mail_Controller  extends CI_Controller
 
 		return $company;
 	}
+
+	public function getPG_payload_payu($input_post) {
+		$payload = [];
+		$selected_pg = $input_post['selected_pg'];
+		$selected_convrates = $selected_pg['conv_rate'];
+		$payment_type = $input_post['payment_type'];
+		$amount = $input_post['amount'];
+		$company = $input_post['company'];
+		$current_user = $input_post['current_user'];
+		$return_url = isset($input_post['return_url']) ? $input_post['return_url'] : base_url().'paymentgateway/response';
+
+		$conv_rateobj = false;
+		$conv_rate = 0.00;
+
+		$final_amount = $amount;
+
+		for ($i=0; $selected_convrates && $i<count($selected_convrates); $i++) {
+			$conv_rateobj = $selected_convrates[$i];
+			if($conv_rateobj['payment_mode']==$payment_type) {
+				break;
+			}
+		}
+
+		if($conv_rateobj) {
+			if($conv_rateobj['rate_type']=='percentage') {
+				$conv_rate = $amount * floatval($conv_rateobj['conv_rate']);
+				$final_amount = round($final_amount + $conv_rate, 2);
+			} else {
+				$conv_rate = floatval($conv_rateobj['conv_rate']);
+				$final_amount = round($final_amount + $conv_rate, 2);
+			}
+		}
+
+		// Hash Sequence
+		//sha512        (key|txnid|amount|      productinfo|firstname|email|udf1        |udf2|udf3|udf4|udf5|    |    |    |    |     |SALT)
+		//				 key|txnid|amount      |productinfo|firstname|email|udf1        |udf2|udf3|udf4|udf5|    |    |    |    |     |SALT
+		$hashSequence = "key|txnid|final_amount|productinfo|firstname|email|payment_mode|udf2|udf3|udf4|udf5|udf6|udf7|udf8|udf9|udf10";
+
+		$salt = $selected_pg['configuration']['salt'];
+		$name_array = explode(" ", $current_user['name']);
+
+		$payload['txnid'] = uniqid();
+		$payload['final_amount'] = $final_amount;
+		$payload['key'] = $selected_pg['configuration']['marchent_key'];
+		$payload['firstname'] = ($name_array && count($name_array)>0) ? $name_array[0] : '';
+		$payload['email'] = $current_user['email'];
+		$payload['phone'] = $current_user['mobile'];
+		$payload['productinfo'] = 'Payment for B2B';
+		$payload['surl'] = $return_url; // base_url().'paymentgateway/response';
+		$payload['furl'] = $return_url; // base_url().'paymentgateway/response';
+		$payload['lastname'] = ($name_array && count($name_array)>1) ? $name_array[1] : '';
+		$payload['curl'] = $return_url; // base_url().'paymentgateway/response';
+		$payload['address1'] = 'Kolkata';
+		$payload['address2'] = 'Kolkata';
+		$payload['city'] = 'Kolkata';
+		$payload['state'] = 'West Bengal';
+		$payload['country'] = 'IN';
+		$payload['zipcode'] = '700084';
+		$payload['payment_mode'] = $payment_type==5 ? 'CC' : ($payment_type==6 ? 'DC' : ($payment_type==6 ? 'NB' : ''));
+		$payload['bankcode'] = '';
+		$payload['enforce_paymethod'] = $payment_type==5 ? 'creditcard' : ($payment_type==6 ? 'debitcard' : ($payment_type==6 ? 'netbanking' : ''));
+		$payload['hash'] = $this->getHash($payload, $hashSequence, $salt);
+
+		return $payload;
+	}
+
+	public function getPG_payload_atom($input_post) {
+		$payload = [];
+		$selected_pg = $input_post['selected_pg'];
+		$selected_convrates = $selected_pg['conv_rate'];
+		$payment_type = $input_post['payment_type'];
+		$amount = $input_post['amount'];
+		$company = $input_post['company'];
+		$current_user = $input_post['current_user'];
+
+		$return_url = isset($input_post['return_url']) ? $input_post['return_url'] : base_url().'paymentgateway/response_atom';
+		$conv_rateobj = false;
+		$conv_rate = 0.00;
+
+		$final_amount = $amount;
+
+		for ($i=0; $payment_type>-1 && $selected_convrates && $i<count($selected_convrates); $i++) {
+			$conv_rateobj = $selected_convrates[$i];
+			if($conv_rateobj['payment_mode']==$payment_type) {
+				break;
+			}
+		}
+
+		if($conv_rateobj) {
+			if($conv_rateobj['rate_type']=='percentage') {
+				$conv_rate = $amount * floatval($conv_rateobj['conv_rate']);
+				$final_amount = round($final_amount + $conv_rate, 2);
+			} else {
+				$conv_rate = floatval($conv_rateobj['conv_rate']);
+				$final_amount = round($final_amount + $conv_rate, 2);
+			}
+		}
+
+		$salt = $selected_pg['configuration']['salt'];
+		$marchant_key = $selected_pg['configuration']['marchent_key'];
+		$login = $selected_pg['configuration']['login'];
+		$password = $selected_pg['configuration']['password'];
+
+		$name_array = explode(" ", $current_user['name']);
+
+		$payload['txnid'] = uniqid();
+		//$payload['txndate'] = date("Y-m-d H:i:s");
+		$payload['txndate'] = date("m/d/Y H:i:s");
+		$payload['mode'] = 'test'; //This will be live at later stage
+		$payload['login'] = $login;
+		$payload['password'] = $password;
+		//$payload['productinfo'] = 'Add amount to wallet';
+		$payload['productinfo'] = 'NSE'; //This is a testing product. This would be changed to actual product at later stage
+		$payload['amount'] = $final_amount;
+		$payload['transaction_amount'] = $final_amount;
+		$payload['final_amount'] = $final_amount;
+		$payload['currency'] = 'INR';
+		$payload['return_url'] = $return_url;  // base_url().'paymentgateway/response_atom';
+		$payload['client_code'] = intval($current_user['id']);
+		$payload['salt'] = $salt;
+		$payload['key'] = $marchant_key;
+
+		$payload['name'] = (($name_array && count($name_array)>0) ? $name_array[0] : '').' '.(($name_array && count($name_array)>1) ? $name_array[1] : '');
+		$payload['email'] = $current_user['email'];
+		$payload['mobile'] = $current_user['mobile'];
+
+		$payload['billing_city'] = isset($current_user['address']) ? $current_user['address'] : 'Kolkata';
+		$payload['customer_account'] = '639827';
+		// $payload['surl'] = base_url().'paymentgateway/response';
+		// $payload['furl'] = base_url().'paymentgateway/response';
+		// $payload['lastname'] = ($name_array && count($name_array)>1) ? $name_array[1] : '';
+		// $payload['rurl'] = base_url().'paymentgateway/response';
+		// $payload['address1'] = 'Kolkata';
+		// $payload['address2'] = 'Kolkata';
+		// $payload['city'] = 'Kolkata';
+		// $payload['state'] = 'West Bengal';
+		// $payload['country'] = 'IN';
+		// $payload['zipcode'] = '700084';
+		// $payload['payment_mode'] = $payment_type==5 ? 'CC' : ($payment_type==6 ? 'DC' : ($payment_type==6 ? 'NB' : ''));
+		// $payload['bankcode'] = '';
+		// $payload['enforce_paymethod'] = $payment_type==5 ? 'creditcard' : ($payment_type==6 ? 'debitcard' : ($payment_type==6 ? 'netbanking' : ''));
+		// $payload['hash'] = $this->getHash($payload, $hashSequence, $salt);
+
+		return $payload;
+	}
+
+	public function getPGViewName($pgname = '') {
+		if($pgname === 'PayU') {
+			return 'payu_pw';
+		}
+		else if($pgname === 'Atom') {
+			return 'pw_atom';
+		}
+		else {
+			return false;
+		}
+	}
+
+	public function process_pg_response($payload) {
+		$pg_transid = $payload['mihpayid'];
+		$mode = $payload['mode'];
+		$status = $payload['status'];
+		$txnid = $payload['txnid'];
+		$amount = $payload['amount'];
+		$card_category = $payload['card_category'];
+		$trans_date = $payload['trans_date'];
+		$error = $payload['error'];
+		$message = $payload['message'];
+		$response_json = $payload['response_json'];
+
+		$pg_transaction = $this->User_Model->get_where('pg_transactions_tbl', array('trans_tracking_id' => $txnid));
+
+		$company = $this->session->userdata('company');
+		$user_id = $this->session->userdata('user_id');
+		$current_user = $this->session->userdata('current_user');
+		$companyid = $current_user["companyid"];
+		$companyname = $company['display_name'];
+		$result["company_setting"]=$this->Search_Model->company_setting($companyid);
+
+		$walletid = $current_user['wallet_id'];
+		$wallet_balance = $current_user['wallet_balance'];
+		$sponsoring_companyid = $current_user['sponsoring_companyid'];
+
+		$wallet = $this->User_Model->get_where('system_wallets_tbl', array('id' => $walletid));
+		if($wallet && count($wallet)>0) {
+			$wallet_balance = floatval($wallet[0]['balance']);
+
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['payment_gateway'])) {
+				$result['company_setting'][0]['payment_gateway'] = json_decode($result['company_setting'][0]['payment_gateway'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['bank_accounts'])) {
+				$result['company_setting'][0]['bank_accounts'] = json_decode($result['company_setting'][0]['bank_accounts'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['configuration'])) {
+				$result['company_setting'][0]['configuration'] = json_decode($result['company_setting'][0]['configuration'], true);
+			}
+			if(isset($result['company_setting']) && isset($result['company_setting'][0]['api_integration'])) {
+				$result['company_setting'][0]['api_integration'] = json_decode($result['company_setting'][0]['api_integration'], true);
+			}
+
+			$payload['company'] = $company;
+			$payload['current_user'] = $current_user;
+			$payload['company_setting'] = $result["company_setting"];
+			$payload['wallet'] = $wallet[0];
+			$payload['wallet_balance'] = $wallet_balance;
+		}
+		if($pg_transaction && count($pg_transaction)>0) {
+			$wallet_trans_id = -1;
+			if($status === 'success') {
+				$billed_amount = floatval($pg_transaction[0]['amount']);
+				$wallet_trans_id = $this->User_Model->save("wallet_transaction_tbl", 
+					array(
+						'wallet_id' => $walletid, 
+						'date' => date("Y-m-d H:i:s"),
+						'trans_id' => $txnid,
+						'companyid' => $companyid,
+						'userid' => $user_id,
+						'amount' => $billed_amount,
+						'dr_cr_type' => 'CR',
+						'status' => 1,
+						'trans_type' => $pg_transaction[0]['payment_mode'],
+						'trans_ref_id' => $pg_transid,
+						'trans_ref_date' => $trans_date,
+						'target_companyid' => $sponsoring_companyid,
+						'trans_ref_type' => 'PAYMENT',
+						'narration' => 'Deposited via online payment gateway for online booking (system generated message)',
+						'sponsoring_companyid' => $sponsoring_companyid,
+						'created_by' => $user_id
+					)
+				);
+
+				$return = $this->User_Model->update_table_data('system_wallets_tbl', array('id' => $walletid), array('balance' => ($wallet_balance + $billed_amount)));
+
+				$payload['transacting_amount'] = $billed_amount;
+				$payload['wallet_balance'] = ($wallet_balance + $billed_amount);
+				$payload['wallet_trans_id'] = $wallet_trans_id;
+			}
+
+			$return = $this->User_Model->update_table_data('pg_transactions_tbl', 
+					array('id' => $pg_transaction[0]['id'], 'trans_tracking_id' => $txnid), 
+					array('error' => $error, 'message' => $message, 'response_data' => $response_json, 'response_status' => $status, 
+						'pg_transactionid' => $pg_transid, 'wallet_transactionid' => $wallet_trans_id, 'updated_by' => $user_id, 'updated_on' => date("Y-m-d H:i:s")));
+			
+			$payload['transaction_updated'] = $amount;
+			$payload['pg_transaction_id'] = intval($pg_transaction[0]['id']);
+			//redirect('/user');
+		}
+		else {
+			$payload['wallet_trans_id'] = -1;
+			$payload['pg_transaction_id'] = -1;
+			$payload['transacting_amount'] = $billed_amount;
+			$payload['wallet_balance'] = ($wallet_balance + $billed_amount);
+			$payload['transaction_updated'] = false;
+		}
+
+		return $payload;
+	}
 }
 ?>

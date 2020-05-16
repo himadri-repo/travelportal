@@ -75,6 +75,7 @@
 
             .datepicker {
                 max-width: 100%;
+                width: 100%;
             }
             .ui-datepicker td a:after
             {
