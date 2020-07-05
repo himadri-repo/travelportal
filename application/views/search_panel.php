@@ -797,7 +797,8 @@
         var city_list = [];
         for (let index = 0; index < cities.length; index++) {
             const city = cities[index];
-            if(city && city.sector.toLowerCase().indexOf(request.term)>-1) {
+            const terms = request.term.trim().toLowerCase();
+            if(city && city.sector.toLowerCase().indexOf(terms)>-1) {
                 city_list.push({'label': city.id, 'value': city.sector });
             }
         }

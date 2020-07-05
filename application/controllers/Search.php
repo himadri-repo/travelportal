@@ -1186,6 +1186,8 @@ class Search extends Mail_Controller
 							$adminmarkup = floatval($user['user_markup']['field_value']);
 						}
 					}	
+
+					$state['adminmarkup'] = $adminmarkup;
 				}
 
 				$usertype = '';
@@ -1288,7 +1290,7 @@ class Search extends Mail_Controller
 						$price = ($offeredfare + $tds - ($infant_price * $infant)) / ($adult + $child);
 						$total = 0;
 						foreach ($passengers_fare as $passenger_fare) { 
-							$value = floatval($passenger_fare['BaseFare']);
+							$value = floatval($passenger_fare['BaseFare']) * intval($passenger_fare['PassengerCount']);
 							$total += $value;
 						}
 
@@ -1341,9 +1343,14 @@ class Search extends Mail_Controller
 		$child = intval($state['child']);
 		$infant = intval($state['infant']);
 		$pax = $adult + $child;
+		$infant_fare = floatval($ticket['infant_price']);
+		if($infant===0) {
+			$infant_fare = 0.00;
+		}
 
-		$published_fare = (floatval($ticket['total']) * $pax) + floatval($ticket['infant_price']);
-		$offered_fare = (floatval($ticket['total']) * $pax) + floatval($ticket['infant_price']);
+		$adminmarkup = isset($state['adminmarkup']) ? floatval($state['adminmarkup']) : 0;
+		$published_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
+		$offered_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
 
 		$whl = floatval($ticket['whl_markup']) + floatval($ticket['whl_srvchg']) + floatval($ticket['whl_cgst']) + floatval($ticket['whl_sgst']) - floatval($ticket['whl_disc']);
 		$spl = floatval($ticket['spl_markup']) + floatval($ticket['spl_srvchg']) + floatval($ticket['spl_cgst']) + floatval($ticket['spl_sgst']) - floatval($ticket['spl_disc']);
@@ -1356,7 +1363,7 @@ class Search extends Mail_Controller
 
 		$fare_quote = array(
 			'isprice_changed' => false,
-			'offeredfare' => floatval($ticket['total']) * $pax,
+			'offeredfare' => $offered_fare,
 			'traceid' => $traceid,
 			'fqindex' => intval($ticket['id']),
 			'price' => floatval($ticket['price']),
@@ -1445,51 +1452,57 @@ class Search extends Mail_Controller
 		$fare_quote['passengers_fare'] = [];
 
 		if($adult > 0) {
-			$adult_passenger = array(
-				'Currency' => 'INR',
-				'PassengerType' => 1,
-				'PassengerCount' => $adult,
-				'BaseFare' => floatval($ticket['total']),
-				'Tax' => 0.00,
-				'YQTax' => 0.00,
-				'AdditionalTxnFeeOfrd' => 0.00,
-				'AdditionalTxnFeePub' => 0.00,
-				'PGCharge' => 0.00
-			);
-
-			array_push($fare_quote['passengers_fare'], $adult_passenger);
+			// for($ai=0; $ai<$adult; $ai++) {
+				$adult_passenger = array(
+					'Currency' => 'INR',
+					'PassengerType' => 1,
+					'PassengerCount' => $adult,
+					'BaseFare' => floatval($ticket['total']) + $adminmarkup,
+					'Tax' => 0.00,
+					'YQTax' => 0.00,
+					'AdditionalTxnFeeOfrd' => 0.00,
+					'AdditionalTxnFeePub' => 0.00,
+					'PGCharge' => 0.00
+				);
+	
+				array_push($fare_quote['passengers_fare'], $adult_passenger);
+			// }
 		}
 		
 		if($child > 0) {
-			$adult_passenger = array(
-				'Currency' => 'INR',
-				'PassengerType' => 2,
-				'PassengerCount' => $child,
-				'BaseFare' => floatval($ticket['total']),
-				'Tax' => 0.00,
-				'YQTax' => 0.00,
-				'AdditionalTxnFeeOfrd' => 0.00,
-				'AdditionalTxnFeePub' => 0.00,
-				'PGCharge' => 0.00
-			);
+			// for($ai=0; $ai<$child; $ai++) {
+				$child_passenger = array(
+					'Currency' => 'INR',
+					'PassengerType' => 2,
+					'PassengerCount' => $child,
+					'BaseFare' => floatval($ticket['total']) + $adminmarkup,
+					'Tax' => 0.00,
+					'YQTax' => 0.00,
+					'AdditionalTxnFeeOfrd' => 0.00,
+					'AdditionalTxnFeePub' => 0.00,
+					'PGCharge' => 0.00
+				);
 
-			array_push($fare_quote['passengers_fare'], $adult_passenger);
+				array_push($fare_quote['passengers_fare'], $child_passenger);
+			// }
 		}
 
 		if($infant > 0) {
-			$adult_passenger = array(
-				'Currency' => 'INR',
-				'PassengerType' => 3,
-				'PassengerCount' => $infant,
-				'BaseFare' => floatval($ticket['infant_price']),
-				'Tax' => 0.00,
-				'YQTax' => 0.00,
-				'AdditionalTxnFeeOfrd' => 0.00,
-				'AdditionalTxnFeePub' => 0.00,
-				'PGCharge' => 0.00
-			);
+			// for($ai=0; $ai<$infant; $ai++) {
+				$infant_passenger = array(
+					'Currency' => 'INR',
+					'PassengerType' => 3,
+					'PassengerCount' => $infant,
+					'BaseFare' => floatval($ticket['infant_price']),
+					'Tax' => 0.00,
+					'YQTax' => 0.00,
+					'AdditionalTxnFeeOfrd' => 0.00,
+					'AdditionalTxnFeePub' => 0.00,
+					'PGCharge' => 0.00
+				);
 
-			array_push($fare_quote['passengers_fare'], $adult_passenger);
+				array_push($fare_quote['passengers_fare'], $infant_passenger);
+			// }
 		}
 
 

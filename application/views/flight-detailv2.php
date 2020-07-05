@@ -212,12 +212,14 @@
                                     $passengertype = intval($passenger_fare['PassengerType']);
                                     $passengercount = intval($passenger_fare['PassengerCount']);
                                     $passtype = 'Adult';
-                                    $value = floatval($passenger_fare['BaseFare']);
+                                    $value = floatval($passenger_fare['BaseFare']) * $passengercount;
                                     //$tax += floatval($passenger_fare['Tax']);
                                     if($passengertype === 1) {
                                         $passtype = 'Adult';
+                                        //$value = (floatval($passenger_fare['BaseFare']) + ($total_spl_margin + $total_whl_margin)) * $passengercount;
                                     } else if($passengertype === 2) {
                                         $passtype = 'Child';
+                                        //$value = (floatval($passenger_fare['BaseFare']) + ($total_spl_margin + $total_whl_margin)) * $passengercount;
                                     } else if($passengertype === 3) {
                                         $passtype = 'Infant';
                                     }
@@ -263,9 +265,10 @@
                         </div>
                         <div class="itinerary">
                             <div class="tr-cen-trv">
-                                <?php if($fare_quote && is_array($fare_quote) && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare'])>0) { ?>
-                                    <?php for ($i=0; $i < count($fare_quote['passengers_fare']); $i++) { 
-                                        $passenger = $fare_quote['passengers_fare'][$i];
+                                <?php if($fare_quote && is_array($fare_quote) && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare'])>0) { 
+                                    $i = 0 ?>
+                                    <?php for ($j=0; $j < count($fare_quote['passengers_fare']); $j++) { 
+                                        $passenger = $fare_quote['passengers_fare'][$j];
                                         $passenger_type_code = intval($passenger['PassengerType']);
                                         $passenger_type = $passenger_type_code;
                                         switch ($passenger_type) {
@@ -282,161 +285,169 @@
                                                 $passenger_type = 'Adult';
                                                 break;
                                         }
+                                        $pass_count = intval($passenger['PassengerCount']);
+                                        $pi = 0;
+                                        while ($pi++ < $pass_count) {
                                     ?>
-                                    <div class="fd-ll" style="width:100%;">
-                                        <input type="hidden" id="passenger_type_<?=$i?>" name="passenger_type_<?=$i?>" value="<?= $passenger_type ?>">
-                                        <div class="adttl"><?=$passenger_type ?></div>
-                                        <div class="errorPax" id="errAdult" style="display:none;color:red;"></div>
-                                        <div id="divAdultPax">
-                                            <div class="shd_pnl">
-                                                <div class="clr"></div>
-                                                <div class="pdn12">
-                                                    <div class="str_1">
-                                                        <label class="ctr_cbox" id="mycheckbox">
-                                                            <span id="spnAdult<?=$i ?>"><?= $passenger_type ?> <?= ($i+1) ?></span>
-                                                            <input type="checkbox" name="chkPassenger_<?=$i ?>" checked="true" id="chkPassenger_<?=$i ?>" onclick="CloseTravCheckPass('Adult<?=$i?>')">
-                                                            <span class="cmark_cbox"></span>
-                                                        </label>
-                                                        <div class="arw_rit">
-                                                            <div class="dwn-ar-trv" id="dwnPassenger_<?=$i ?>" onclick="CloseTraveler('Adult<?=$i?>')" style="display: block;"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="trvr_sec" id="divTrvAdult<?=$i?>">
-                                                        <div class="str_2">
-                                                            <label class="label_ti">Title</label>
-                                                            <select id="slPassenger_<?=$i?>" name="slPassenger_<?=$i?>" class="select_trvl" paxtype="<?=$passenger_type?>" idno="<?=$i?>" dynid="<?=$i?>" onchange="CheckSameTraveler(this.id);CookieSave('Adult');SetNameOnLabel('Adult<?=$i?>');" required="">
-                                                                <option value="">Title</option>
-                                                                <option value="Mr">MR</option>
-                                                                <option value="Ms">MS</option>
-                                                                <option value="Mrs">Mrs</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="str_3 mgl15">
-                                                            <label class="label_ti">(First Name &amp; (Middle name, if any)</label>
-                                                            <input type="text" name="txtPassenger_FN_<?=$i ?>" autocomplete="none" id="txtPassenger_FN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter First Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
-                                                        </div>
-                                                        <div class="str_3 mgl15">
-                                                            <label class="label_ti">Last Name</label>
-                                                            <input type="text" name="txtPassenger_LN_<?=$i ?>" autocomplete="none" id="txtPassenger_LN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Last Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
-                                                        </div>
-                                                        
-                                                        <?php if($passenger_type === 'Adult') { ?>
-                                                        <div class="str_3">
-                                                            <label class="label_ti">Email</label>
-                                                            <input type="text" name="txtPassenger_EML_<?=$i ?>" autocomplete="none" id="txtPassenger_EML_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Email Address" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
-                                                        </div>
-                                                        <div class="str_3 mgl15">
-                                                            <label class="label_ti">Mobile</label>
-                                                            <input type="text" name="txtPassenger_MBL_<?=$i ?>" autocomplete="none" id="txtPassenger_MBL_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Your Mobile Number" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
-                                                        </div>
-                                                        <?php } ?>
-                                                        <?php if($passenger_type === 'Infant') { ?>
-                                                        <div class="inf" id="divDOBInfant<?=$i?>">
-                                                            <div class="inf1">Date of Birth </div>
-                                                            <div class="inf2">
-                                                                <select class="sel1" name="slDOBDay_Passenger_<?=$i ?>" id="slDOBDay_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
-                                                                    <option selected="selected" value="0">Day</option>
-                                                                    <option value="01">1</option>
-                                                                    <option value="02">2</option>
-                                                                    <option value="03">3</option>
-                                                                    <option value="04">4</option>
-                                                                    <option value="05">5</option>
-                                                                    <option value="06">6</option>
-                                                                    <option value="07">7</option>
-                                                                    <option value="08">8</option>
-                                                                    <option value="09">9</option>
-                                                                    <option value="10">10</option>
-                                                                    <option value="11">11</option>
-                                                                    <option value="12">12</option>
-                                                                    <option value="13">13</option>
-                                                                    <option value="14">14</option>
-                                                                    <option value="15">15</option>
-                                                                    <option value="16">16</option>
-                                                                    <option value="17">17</option>
-                                                                    <option value="18">18</option>
-                                                                    <option value="19">19</option>
-                                                                    <option value="20">20</option>
-                                                                    <option value="21">21</option>
-                                                                    <option value="22">22</option>
-                                                                    <option value="23">23</option>
-                                                                    <option value="24">24</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="26">26</option>
-                                                                    <option value="27">27</option>
-                                                                    <option value="28">28</option>
-                                                                    <option value="29">29</option>
-                                                                    <option value="30">30</option>
-                                                                    <option value="31">31</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="inf3">
-                                                                <select class="sel1" name="slDOBMonth_Passenger_<?=$i ?>" id="slDOBMonth_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
-                                                                    <option selected="selected" value="0">Month</option>
-                                                                    <option value="01">Jan</option>
-                                                                    <option value="02">Feb</option>
-                                                                    <option value="03">Mar</option>
-                                                                    <option value="04">Apr</option>
-                                                                    <option value="05">May</option>
-                                                                    <option value="06">Jun</option>
-                                                                    <option value="07">Jul</option>
-                                                                    <option value="08">Aug</option>
-                                                                    <option value="09">Sep</option>
-                                                                    <option value="10">Oct</option>
-                                                                    <option value="11">Nov</option>
-                                                                    <option value="12">Dec</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="inf4">
-                                                                <select class="sel1 autoFillDOBYearInfant1" name="slDOBYear_Passenger_<?=$i ?>" id="slDOBYear_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
-                                                                    <option selected="selected" value="0">Year</option>
-                                                                    <option value="2020">2020</option>
-                                                                    <option value="2019">2019</option>
-                                                                    <option value="2018">2018</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="dt-ma">*Date of birth required for Infant</div>
-                                                        </div>
-                                                        <?php } ?>
-                                                        <div class="fl-m-m">
-                                                            <div class="fl-m">
-                                                                <!-- ngIf: !isDomestic && (IsShowDOB || IsShowPassportNumber || IsShowPassportExpirey) -->
-                                                                <div class="fl-mr">
-                                                                    <!-- <div class="fl-mm" id="divFlyerMinusAdult0" ng-click="SlideUPFFlyer('divFlyerAdult0','divFlyerMinusAdult0','divFlyerPlusAdult0')">(-) Frequent flyer number and Meal preference (optional)</div>
-                                                                    <div class="fl-ma" id="divFlyerPlusAdult0" ng-click="SlideDownFFlyer('divFlyerAdult0','divFlyerMinusAdult0','divFlyerPlusAdult0')">(+) Frequent flyer number and Meal preference (optional)</div> -->
+                                            <div class="fd-ll" style="width:100%;">
+                                                <input type="hidden" id="passenger_type_<?=$i?>" name="passenger_type_<?=$i?>" value="<?= $passenger_type ?>">
+                                                <div class="adttl"><?=$passenger_type ?></div>
+                                                <div class="errorPax" id="errAdult" style="display:none;color:red;"></div>
+                                                <div id="divAdultPax">
+                                                    <div class="shd_pnl">
+                                                        <div class="clr"></div>
+                                                        <div class="pdn12">
+                                                            <div class="str_1">
+                                                                <label class="ctr_cbox" id="mycheckbox">
+                                                                    <span id="spnAdult<?=$i ?>"><?= $passenger_type ?> <?= ($i+1) ?></span>
+                                                                    <input type="checkbox" name="chkPassenger_<?=$i ?>" checked="true" id="chkPassenger_<?=$i ?>" onclick="CloseTravCheckPass('Adult<?=$i?>')">
+                                                                    <span class="cmark_cbox"></span>
+                                                                </label>
+                                                                <div class="arw_rit">
+                                                                    <div class="dwn-ar-trv" id="dwnPassenger_<?=$i ?>" onclick="CloseTraveler('Adult<?=$i?>')" style="display: block;"></div>
                                                                 </div>
                                                             </div>
-                                                            <!-- ngIf: !isDomestic && (IsShowDOB || IsShowPassportNumber || IsShowPassportExpirey) -->
-                                                            <div class="fl-d" id="divFlyerAdult<?=$i?>">
-                                                                <div class="fl-d1">
-                                                                    <label class="lbl">Frequent flyer no.</label>
-                                                                    <input type="text" value="" id="txtFFAdult<?=$i?>" name="" placeholder="Frequent Flyer Number" class="in">
-                                                                </div>
-                                                                <div class="fl-d2">
-                                                                    <label class="lbl">AIRLINE</label>
-                                                                    <input type="text" value="" placeholder="Enter Airline Name" class="in" id="txtFFAirAdult<?=$i?>" name="">
-                                                                </div>
-                                                                <div class="fl-d3">
-                                                                    <label class="lbl">Meal Preference </label>
-                                                                    <select class="sel" id="txtFFMealAdult<?=$i?>">
-                                                                        <option value="Select Meal Preference">Select Meal Preference</option>
-                                                                        <option value="Vegetarian Hindu Meal">Vegetarian Hindu Meal</option>
-                                                                        <option value="Baby Meal">Baby Meal</option>
-                                                                        <option value="Hindu ( Non Vegetarian) Meal">Hindu ( Non Vegetarian) Meal </option>
-                                                                        <option value="Kosher Meal">Kosher Meal</option>
-                                                                        <option value="Moslem Meal">Moslem Meal</option>
-                                                                        <option value="Vegetarian Jain Meal">Vegetarian Jain Meal</option>
+                                                            <div class="trvr_sec" id="divTrvAdult<?=$i?>">
+                                                                <div class="str_2">
+                                                                    <label class="label_ti">Title</label>
+                                                                    <select id="slPassenger_<?=$i?>" name="slPassenger_<?=$i?>" class="select_trvl" paxtype="<?=$passenger_type?>" idno="<?=$i?>" dynid="<?=$i?>" onchange="CheckSameTraveler(this.id);CookieSave('Adult');SetNameOnLabel('Adult<?=$i?>');" required="">
+                                                                        <option value="">Title</option>
+                                                                        <option value="Mr">MR</option>
+                                                                        <option value="Ms">MS</option>
+                                                                        <option value="Miss">Miss</option>
+                                                                        <option value="Mstr">Master</option>
+                                                                        <option value="Mrs">Mrs</option>
                                                                     </select>
                                                                 </div>
+                                                                <div class="str_3 mgl15">
+                                                                    <label class="label_ti">(First Name &amp; (Middle name, if any)</label>
+                                                                    <input type="text" name="txtPassenger_FN_<?=$i ?>" autocomplete="none" id="txtPassenger_FN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter First Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                </div>
+                                                                <div class="str_3 mgl15">
+                                                                    <label class="label_ti">Last Name</label>
+                                                                    <input type="text" name="txtPassenger_LN_<?=$i ?>" autocomplete="none" id="txtPassenger_LN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Last Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                </div>
+                                                                
+                                                                <?php if($passenger_type === 'Adult' && $pi === 1) { ?>
+                                                                    <div class="str_3">
+                                                                        <label class="label_ti">Email</label>
+                                                                        <input type="text" name="txtPassenger_EML_<?=$i ?>" autocomplete="none" id="txtPassenger_EML_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Email Address" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                    </div>
+                                                                    <div class="str_3 mgl15">
+                                                                        <label class="label_ti">Mobile</label>
+                                                                        <input type="text" name="txtPassenger_MBL_<?=$i ?>" autocomplete="none" id="txtPassenger_MBL_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Your Mobile Number" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                    </div>
+                                                                <?php } ?>
+                                                                <?php if($passenger_type === 'Infant') { ?>
+                                                                <div class="inf" id="divDOBInfant<?=$i?>">
+                                                                    <div class="inf1">Date of Birth </div>
+                                                                    <div class="inf2">
+                                                                        <select class="sel1" name="slDOBDay_Passenger_<?=$i ?>" id="slDOBDay_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
+                                                                            <option selected="selected" value="0">Day</option>
+                                                                            <option value="01">1</option>
+                                                                            <option value="02">2</option>
+                                                                            <option value="03">3</option>
+                                                                            <option value="04">4</option>
+                                                                            <option value="05">5</option>
+                                                                            <option value="06">6</option>
+                                                                            <option value="07">7</option>
+                                                                            <option value="08">8</option>
+                                                                            <option value="09">9</option>
+                                                                            <option value="10">10</option>
+                                                                            <option value="11">11</option>
+                                                                            <option value="12">12</option>
+                                                                            <option value="13">13</option>
+                                                                            <option value="14">14</option>
+                                                                            <option value="15">15</option>
+                                                                            <option value="16">16</option>
+                                                                            <option value="17">17</option>
+                                                                            <option value="18">18</option>
+                                                                            <option value="19">19</option>
+                                                                            <option value="20">20</option>
+                                                                            <option value="21">21</option>
+                                                                            <option value="22">22</option>
+                                                                            <option value="23">23</option>
+                                                                            <option value="24">24</option>
+                                                                            <option value="25">25</option>
+                                                                            <option value="26">26</option>
+                                                                            <option value="27">27</option>
+                                                                            <option value="28">28</option>
+                                                                            <option value="29">29</option>
+                                                                            <option value="30">30</option>
+                                                                            <option value="31">31</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="inf3">
+                                                                        <select class="sel1" name="slDOBMonth_Passenger_<?=$i ?>" id="slDOBMonth_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
+                                                                            <option selected="selected" value="0">Month</option>
+                                                                            <option value="01">Jan</option>
+                                                                            <option value="02">Feb</option>
+                                                                            <option value="03">Mar</option>
+                                                                            <option value="04">Apr</option>
+                                                                            <option value="05">May</option>
+                                                                            <option value="06">Jun</option>
+                                                                            <option value="07">Jul</option>
+                                                                            <option value="08">Aug</option>
+                                                                            <option value="09">Sep</option>
+                                                                            <option value="10">Oct</option>
+                                                                            <option value="11">Nov</option>
+                                                                            <option value="12">Dec</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="inf4">
+                                                                        <select class="sel1 autoFillDOBYearInfant1" name="slDOBYear_Passenger_<?=$i ?>" id="slDOBYear_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
+                                                                            <option selected="selected" value="0">Year</option>
+                                                                            <option value="2020">2020</option>
+                                                                            <option value="2019">2019</option>
+                                                                            <option value="2018">2018</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="dt-ma">*Date of birth required for Infant</div>
+                                                                </div>
+                                                                <?php } ?>
+                                                                <div class="fl-m-m">
+                                                                    <div class="fl-m">
+                                                                        <!-- ngIf: !isDomestic && (IsShowDOB || IsShowPassportNumber || IsShowPassportExpirey) -->
+                                                                        <div class="fl-mr">
+                                                                            <!-- <div class="fl-mm" id="divFlyerMinusAdult0" ng-click="SlideUPFFlyer('divFlyerAdult0','divFlyerMinusAdult0','divFlyerPlusAdult0')">(-) Frequent flyer number and Meal preference (optional)</div>
+                                                                            <div class="fl-ma" id="divFlyerPlusAdult0" ng-click="SlideDownFFlyer('divFlyerAdult0','divFlyerMinusAdult0','divFlyerPlusAdult0')">(+) Frequent flyer number and Meal preference (optional)</div> -->
+                                                                        </div>
+                                                                    </div>
+                                                                    <!-- ngIf: !isDomestic && (IsShowDOB || IsShowPassportNumber || IsShowPassportExpirey) -->
+                                                                    <div class="fl-d" id="divFlyerAdult<?=$i?>">
+                                                                        <div class="fl-d1">
+                                                                            <label class="lbl">Frequent flyer no.</label>
+                                                                            <input type="text" value="" id="txtFFAdult<?=$i?>" name="" placeholder="Frequent Flyer Number" class="in">
+                                                                        </div>
+                                                                        <div class="fl-d2">
+                                                                            <label class="lbl">AIRLINE</label>
+                                                                            <input type="text" value="" placeholder="Enter Airline Name" class="in" id="txtFFAirAdult<?=$i?>" name="">
+                                                                        </div>
+                                                                        <div class="fl-d3">
+                                                                            <label class="lbl">Meal Preference </label>
+                                                                            <select class="sel" id="txtFFMealAdult<?=$i?>">
+                                                                                <option value="Select Meal Preference">Select Meal Preference</option>
+                                                                                <option value="Vegetarian Hindu Meal">Vegetarian Hindu Meal</option>
+                                                                                <option value="Baby Meal">Baby Meal</option>
+                                                                                <option value="Hindu ( Non Vegetarian) Meal">Hindu ( Non Vegetarian) Meal </option>
+                                                                                <option value="Kosher Meal">Kosher Meal</option>
+                                                                                <option value="Moslem Meal">Moslem Meal</option>
+                                                                                <option value="Vegetarian Jain Meal">Vegetarian Jain Meal</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                        <div class="clr"></div>
                                                     </div>
                                                 </div>
+                                                <!-- <a class="add_adlt" ng-click="CreatePaxPanel('Adult')">+ Add Adult</a> -->
                                                 <div class="clr"></div>
                                             </div>
-                                        </div>
-                                        <!-- <a class="add_adlt" ng-click="CreatePaxPanel('Adult')">+ Add Adult</a> -->
-                                        <div class="clr"></div>
-                                    </div>
+                                        <?php 
+                                            $i++;
+                                            } ?>
                                     <?php } ?>
                                 <?php } ?>
                             </div>

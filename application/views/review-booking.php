@@ -201,7 +201,8 @@
                                 $passengertype = intval($passenger_fare['PassengerType']);
                                 $passengercount = intval($passenger_fare['PassengerCount']);
                                 $passtype = 'Adult';
-                                $value = floatval($passenger_fare['BaseFare']);
+                                // $value = floatval($passenger_fare['BaseFare']);
+                                $value = floatval($passenger_fare['BaseFare']) * $passengercount;
                                 //$tax += floatval($passenger_fare['Tax']);
                                 if($passengertype === 1) {
                                     $passtype = 'Adult';
@@ -248,6 +249,7 @@
                         <div class="tr-cen-trv">
                             <?php if($state && is_array($state) && $state['passengers'] && is_array($state['passengers']) && count($state['passengers'])>0) {
                                 $passengers = $state['passengers'];
+                                $email_visible = false;
                                 for ($i=0; $i < count($passengers); $i++) { 
                                     $passenger = $passengers[$i];
                                     $passenger_type = $passenger['passenger_type'];
@@ -282,7 +284,9 @@
                                                         <label class="label_ti">Last Name</label>
                                                         <span class="input_trvl"><?= $passenger['passenger_last_name'] ?></span>
                                                     </div>
-                                                    <?php if($passenger_type === 'Adult') { ?>
+                                                    <?php if($passenger_type === 'Adult' && !$email_visible) { 
+                                                        $email_visible = true;
+                                                        ?>
                                                         <div class="str_3">
                                                             <label class="label_ti">Email</label>
                                                             <span class="input_trvl"><?= $passenger['passenger_email'] ?></span>

@@ -134,16 +134,16 @@
 					<div class="page-search-form" style="padding: 20px 10px;">
 						<?php 
 						$companyid = intval($this->session->userdata("current_user")["companyid"]);
-						if($companyid === 7) { ?>
+						if($companyid === 1 || $companyid === 7) { ?>
 							<?= $this->load->view('search_panel',$state, TRUE);?>
 						<?php } ?>
 						
-						<ul class="nav nav-tabs" <?= ($companyid===7 ? 'style="display:inline-block; display:none;"' : 'style="display:inline-block;"') ?>>
+						<ul class="nav nav-tabs" <?= (($companyid===1 || $companyid===7) ? 'style="display:inline-block; display:none;"' : 'style="display:inline-block;"') ?>>
 							<li class="active"><a href="#tab-one-way" data-toggle="tab">One Way</a></li>
 							<li ><a href="#tab-round-trip" data-toggle="tab">Round Trip</a></li>
 						</ul>
-						<h2 <?= ($companyid===7 ? 'style="font-size:18px; float: right; display: inline; padding: 10px; display:none"' : 'style="font-size:18px; float: right; display: inline; padding: 10px;"') ?>>Search the <span>Flight <i class="fa fa-plane"></i></span></h2>
-						<div class="tab-content" <?= ($companyid===7 ? 'style="border-top: 1px solid #a1a1a1; display:none"' : 'style="border-top: 1px solid #a1a1a1;"') ?>>
+						<h2 <?= (($companyid===1 || $companyid===7) ? 'style="font-size:18px; float: right; display: inline; padding: 10px; display:none"' : 'style="font-size:18px; float: right; display: inline; padding: 10px;"') ?>>Search the <span>Flight <i class="fa fa-plane"></i></span></h2>
+						<div class="tab-content" <?= (($companyid===1 || $companyid===7) ? 'style="border-top: 1px solid #a1a1a1; display:none"' : 'style="border-top: 1px solid #a1a1a1;"') ?>>
 							<!-- Round Trip Section -->
 							<div id="tab-round-trip" class="tab-pane fade in " style="padding-top: 10px;">
 								<form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_round_trip" method="post" onsubmit="return validation1()">
