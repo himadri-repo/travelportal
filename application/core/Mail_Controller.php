@@ -686,6 +686,7 @@ class Mail_Controller  extends CI_Controller
 		$error = $payload['error'];
 		$message = $payload['message'];
 		$response_json = $payload['response_json'];
+		$billed_amount = 0;
 
 		$pg_transaction = $this->User_Model->get_where('pg_transactions_tbl', array('trans_tracking_id' => $txnid));
 
@@ -773,6 +774,15 @@ class Mail_Controller  extends CI_Controller
 		}
 
 		return $payload;
+	}
+
+	function isCreditAllowed($current_wallet_balance, $amount, $current_user) {
+		
+		$bflag = ($current_user && isset($current_user['credit_ac']) && boolval($current_user['credit_ac']) === true);
+
+		$bflag &= ($current_wallet_balance > -1000000); //max 10 lacks limit
+
+		return $bflag;
 	}
 }
 ?>

@@ -355,6 +355,15 @@
                                     <span class="title">Wallet Balance : </span>
                                     <span class="title"><?= number_format($wallet_balance,2,".",",") ?></span>
                                 </div>
+                                <?php 
+                                if($currentuser && isset($currentuser['credit_ac']) && boolval($currentuser['credit_ac'])) {
+                                ?>
+                                <div>
+                                    <span class="bg_si_d" style="color: #0044cc;">(You have been allowed credit to process this order. But final discretion is with the supplier of this inventory.)</span>
+                                </div>
+                                <?php 
+                                }
+                                ?>                                
                                 <div class="clr"></div>
                             </div>
                         <?php 

@@ -1769,7 +1769,7 @@ class Search extends Mail_Controller
 			}
 			// $walletid = intval($wallet['walletid']);
 			// $wallet_balance = isset($wallet['balance']) ? floatval($wallet['balance']) : 0.00;
-			if($current_wallet_balance >= $amount) {
+			if($current_wallet_balance >= $amount || $this->isCreditAllowed($current_wallet_balance, $amount, $current_user)) {
 				// yes enough balance present now proceed with booking.
 				$payload = false;
 				$this->process_booking($payload);
