@@ -708,7 +708,7 @@
 								<label>Dept. Date</label>
 							</div>
 							<div class="col-sm-6 col-md-4 col-lg-4">
-								<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="dd/mm/yyyy" name="dept_date" id="dept_date" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" value="" readonly/>
+								<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="mm/dd/yyyy" name="dept_date" id="dept_date" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" value="" readonly/>
 								<input class="form-control" placeholder="HH:mm" style="width: 35%; display: inline-block; padding: 0px 2px;" name="dept_date_time" id="dept_date_time" pattern="[0-9]{2}:[0-9]{2}" value=""/>
 							</div>
 						</div>
@@ -725,7 +725,7 @@
 								<label>Arrival Date</label>
 							</div>
 							<div class="col-sm-6 col-md-4 col-lg-4">
-								<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="dd/mm/yyyy" name="arrv_date" id="arrv_date" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}" value="" readonly/>
+								<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="mm/dd/yyyy" name="arrv_date" id="arrv_date" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" value="" readonly/>
 								<input class="form-control" placeholder="HH:mm" style="width: 35%; display: inline-block; padding: 0px 2px;" name="arrv_date_time" id="arrv_date_time" pattern="[0-9]{2}:[0-9]{2}" value=""/>
 							</div>
 						</div>
@@ -807,10 +807,10 @@
 			modal.find('.modal-title').text(`${mode} ticket ` + flight['source_city'] + ' to ' + flight['destination_city']);
 			modal.find('.modal-body #flight_number').val(flight['flight_no']);
 			//modal.find('.modal-body #dept_date').val(formatDate(flight['departure_date']));
-			modal.find('.modal-body #dept_date').val(moment(flight['departure_date'], 'DD-MM-YYYY').format('DD-MM-YYYY'));
+			modal.find('.modal-body #dept_date').val(moment(flight['departure_date'], 'DD/MM/YYYY').format('MM/DD/YYYY'));
 			modal.find('.modal-body #dept_date_time').val(flight['departure_time']);
 			//modal.find('.modal-body #arrv_date').val(formatDate(flight['arrival_date']));
-			modal.find('.modal-body #arrv_date').val(moment(flight['arrival_date'], 'DD-MM-YYYY').format('DD-MM-YYYY'));
+			modal.find('.modal-body #arrv_date').val(moment(flight['arrival_date'], 'DD/MM/YYYY').format('MM/DD/YYYY'));
 			modal.find('.modal-body #arrv_date_time').val(flight['arrival_time']);
 			modal.find('.modal-body #no_of_pax').val(flight['no_of_person']);
 			modal.find('.modal-body #price').val(flight['price']);
@@ -824,15 +824,24 @@
 
 	function save_ticket(ev) {
 		var modelButton = $(ev);
-
 		var ticket = modelButton.data('ticket');
 		var mode = modelButton.data('mode');
 		var modal = $('#ticket_form');
 
+		var dept_date_time = moment(modal.find('.modal-body #dept_date').val()+' '+modal.find('.modal-body #dept_date_time').val(), 'MM-DD-YYYY HH:mm').format('YYYY-MM-DD HH:mm');
+		var arrv_date_time = moment(modal.find('.modal-body #arrv_date').val()+' '+modal.find('.modal-body #arrv_date_time').val(), 'MM-DD-YYYY HH:mm').format('YYYY-MM-DD HH:mm');
+
+		console.log(dept_date_time + ' <-> ' + arrv_date_time);
+
+		if(arrv_date_time <= dept_date_time) {
+			alert('Arrival date must be greater than departure date');
+			return;
+		}
+
 		ticket.flight_no = modal.find('.modal-body #flight_number').val();
-		ticket.departure_date = moment(modal.find('.modal-body #dept_date').val(), 'DD-MM-YYYY').format('YYYY-MM-DD');
+		ticket.departure_date = moment(modal.find('.modal-body #dept_date').val(), 'MM/DD/YYYY').format('YYYY/MM/DD');
 		ticket.departure_time = modal.find('.modal-body #dept_date_time').val();
-		ticket.arrival_date = moment(modal.find('.modal-body #arrv_date').val(), 'DD-MM-YYYY').format('YYYY-MM-DD');
+		ticket.arrival_date = moment(modal.find('.modal-body #arrv_date').val(), 'MM/DD/YYYY').format('YYYY/MM/DD');
 		ticket.arrival_time = modal.find('.modal-body #arrv_date_time').val();
 		ticket.no_of_person = modal.find('.modal-body #no_of_pax').val();
 		ticket.price = modal.find('.modal-body #price').val();
