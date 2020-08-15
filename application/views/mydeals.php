@@ -79,10 +79,14 @@
                                     foreach($tickets as $ticket) {
                                         //http://example.com:90/search/flightdetails/25123
                                         $ticketid = intval($ticket['id']);
-                                        $bookurl = base_url().'search/flightdetails/'.$ticketid.'?qty={qty}';
+                                        $dept_date = date("m/d/yy",strtotime($ticket['departure_date_time']));
+                                        $src = intval($ticket['source']);
+                                        $dest = intval($ticket['destination']);
+                                        //$bookurl = base_url().'search/flightdetails/'.$ticketid.'?qty={qty}';
+                                        $bookurl = base_url().'search/'.'?'.'source='.urlencode($src).'&destination='.urlencode($dest).'&qty=1'.'&dept_date='.urlencode($dept_date);
                                         if(!$isauthenticated) {
-                                            $bookurl = base_url().'search/flightdetails/'.$ticketid.'&qty={qty}';
-                                            $bookurl = base_url()."login?returnurl=$bookurl";
+                                            ////$bookurl = base_url().'search/flightdetails/'.$ticketid.'&qty={qty}';
+                                            $bookurl = base_url()."login?returnurl=".urlencode($bookurl);
                                         }
                                     ?>
                                         <tr>

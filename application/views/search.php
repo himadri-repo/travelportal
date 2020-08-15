@@ -45,6 +45,15 @@
                         	<div class="page-search-form">
                                 <?php 
                                     $companyid = intval($this->session->userdata("current_user")["companyid"]);
+                                    $adult = $state['adult'];
+                                    $source = $state['source'];
+                                    $destination = $state['destination'];
+                                    $departure_date = $state['departure_date'];
+                                    $source_city_name = $state['source_city'];
+                                    $destination_city_name = $state['destination_city'];
+                                    $state['source_city_name'] = $source_city_name;
+                                    $state['destination_city_name'] = $destination_city_name;
+
                                     if($companyid === 1 || $companyid === 7) { ?>
                                         <?= $this->load->view('search_panel',$state, TRUE);?>
                                 <?php } ?>
@@ -136,8 +145,12 @@
 														  <?php
 														  foreach($sources as $sector)
 														  {
+                                                              $selected = '';
+                                                              if(intval($source) === intval($sector['id'])) {
+                                                                $selected = 'selected';
+                                                              }
 														  ?>
-															<option value="<?php echo $sector['id'];?>"><?php echo $sector["sector"];?></option>
+															<option value="<?php echo $sector['id'];?>" <?= $selected;?>><?php echo $sector["sector"];?></option>
 														  <?php
 														  }
 														   ?>										  
@@ -167,7 +180,7 @@
                                                     <div class="form-group">
                                                         <label><span><i class="fa fa-calendar"></i></span>Available Date</label>
                                                        <!--<input class="form-control dpd3" placeholder="Date" name="departure_date_time" id="departure_date_time" autocomplete="off"/>-->
-                                                        <input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly/>
+                                                        <input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly value=<?= date('d/m/Y', strtotime($departure_date)); ?>/>
                                                         <!-- <input class="form-control datepicker" name="departure_date" id="departure_date" readonly required/> -->
                                                         <select class="form-control" name="departure_date_time" id="departure_date_time" style="display:none">
                                                         </select>  

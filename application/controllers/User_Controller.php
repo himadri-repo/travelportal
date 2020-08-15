@@ -1613,6 +1613,7 @@ class User_Controller extends Mail_Controller
 	{
 		$company = $this->session->userdata('company');
 		$companyid = $company["id"];
+		$ticket_id = 0;
 	
 		if(($_SERVER['REQUEST_METHOD'] == 'POST') && $this->session->userdata('user_id'))
 		{									

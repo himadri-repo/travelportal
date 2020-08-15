@@ -63,23 +63,54 @@ class Search extends Mail_Controller
 
 			$result['mywallet']= $this->getMyWallet();
 
+			$sectors = $this->Search_Model->get('city_tbl', null);
+
 			$state = [];
 			$state['contact_number'] = isset($company['mobile'])?$company['mobile']:null;
-			$state['sectors'] = $this->Search_Model->get('city_tbl', null);
+			$state['sectors'] = $sectors;
 			$state['current_user'] = $current_user;
 			$state['sources'] = $sources;
 			//$state['circles'] = json_encode($circles);
 			$state['circles'] = $circles;
-			
 			$state['no_of_person'] = 1;
 			$state['adult'] = 1;
 			$state['child'] = 0;
 			$state['infant'] = 0;
-			$state['class'] = 0;
-			$state['trip_type'] = 'ONE';
 			$state['source'] = -1;
 			$state['destination'] = -1;
 			$state['departure_date'] = date("d-m-Y");
+			$state['source_city'] = '';
+			$state['destination_city'] = '';
+			
+			//landed from hot deals direct post
+			$direct_qty = intval($this->input->get('qty'));
+			$src = intval($this->input->get('source'));
+			$dest = intval($this->input->get('destination'));
+			$dpt_date = date('d-m-Y', strtotime($this->input->get('dept_date')));
+
+			if($direct_qty>0 && $src>0 && $dest>0) {
+				$state['no_of_person'] = $direct_qty;
+				$state['adult'] = $direct_qty;
+				$state['source'] = $src;
+				$state['destination'] = $dest;
+				$state['departure_date'] = $dpt_date;
+
+				for ($i=0; $sectors && $i < count($sectors); $i++) { 
+					$source_item = $sectors[$i];
+					
+					if(intval($src) === intval($source_item['id'])) {
+						$state['source_city'] = $source_item['city'];
+					}
+					if(intval($dest) === intval($source_item['id'])) {
+						$state['destination_city'] = $source_item['city'];
+					}
+				}	
+			}	
+
+			//end of hotdeal posting code
+			
+			$state['class'] = 0;
+			$state['trip_type'] = 'ONE';
 			$state['return_date'] = '';
 			$state['source_city_name']='';
 			$state['destination_city_name']='';
