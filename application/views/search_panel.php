@@ -658,7 +658,8 @@
         "Scheme"
     ];
 
-    var cities = JSON.parse('<?= json_encode($sources) ?>');
+    // var cities = JSON.parse('<?= json_encode($sources) ?>');
+    var cities = JSON.parse('<?= json_encode($sectors) ?>');
 
     $(function() {
         // $( ".datepicker" ).datepicker( "option", "showAnim", "slideDown" );
@@ -798,8 +799,11 @@
         for (let index = 0; index < cities.length; index++) {
             const city = cities[index];
             const terms = request.term.trim().toLowerCase();
-            if(city && city.sector.toLowerCase().indexOf(terms)>-1) {
-                city_list.push({'label': city.id, 'value': city.sector });
+            // if(city && city.sector.toLowerCase().indexOf(terms)>-1) {
+            //     city_list.push({'label': city.id, 'value': city.sector });
+            // }
+            if(city && city.city.toLowerCase().indexOf(terms)>-1) {
+                city_list.push({'label': city.id, 'value': city.city });
             }
         }
         response(city_list);

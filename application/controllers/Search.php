@@ -4485,7 +4485,11 @@ class Search extends Mail_Controller
 			redirect("/login");
 		}
 
-		$ticket_no = $result["details"][0]["ticket_no"];
+		//$ticket_no = $result["details"][0]["ticket_no"];
+		$flight_no = $result["details"][0]["flight_no"];
+		$ticket_no = $result["details"][0]["ticket_id"];
+		$book_id = $result["details"][0]["id"];
+		$ticket_no = "BK-$book_id"."_"."TKT-$ticket_no"."_$flight_no";
 
 		if(isset($_POST['showprice'])) {
 			$showprice = strtolower($_POST['showprice']) === 'off';
