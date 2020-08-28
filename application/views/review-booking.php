@@ -189,6 +189,7 @@
                     </div>
                     <div>
                         <?php if($fare_quote && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare']) > 0) { 
+                            $isFD = boolval($state['isfixeddeparture']);
                             $passengers_fare = $fare_quote['passengers_fare'];
                             $tds = floatval($fare_quote['fare']['total_tds']);
                             $commision = floatval($fare_quote['fare']['total_commission']);
@@ -196,18 +197,34 @@
                             $total_spl_margin = floatval($fare_quote['fare']['total_spl_margin']);
                             $total_whl_margin = floatval($fare_quote['fare']['total_whl_margin']);
                             $tax = round(floatval($fare_quote['fare']['tax']) + floatval($fare_quote['fare']['othercharges']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+                            $finalvalue = $fare_quote['fare']['offeredfare'] + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child));
+                            // if($isFD) {
+                            //     $tax = round(floatval($fare_quote['fare']['tax']) + floatval($fare_quote['fare']['othercharges']) + $tds + (($total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+                            // }
+                            // else {
+                            //     $tax = round(floatval($fare_quote['fare']['tax']) + floatval($fare_quote['fare']['othercharges']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+                            // }
                             $total = 0;
                             foreach ($passengers_fare as $passenger_fare) { 
                                 $passengertype = intval($passenger_fare['PassengerType']);
                                 $passengercount = intval($passenger_fare['PassengerCount']);
+                                $admin_markup = floatval($passenger_fare['admin_markup']);
+
                                 $passtype = 'Adult';
                                 // $value = floatval($passenger_fare['BaseFare']);
                                 $value = floatval($passenger_fare['BaseFare']) * $passengercount;
+                                $finalvalue += $admin_markup * $passengercount;
                                 //$tax += floatval($passenger_fare['Tax']);
                                 if($passengertype === 1) {
                                     $passtype = 'Adult';
+                                    // if($isFD) {
+                                    //     $value += (($total_spl_margin + $total_whl_margin) * $passengercount);
+                                    // }
                                 } else if($passengertype === 2) {
                                     $passtype = 'Child';
+                                    // if($isFD) {
+                                    //     $value += (($total_spl_margin + $total_whl_margin) * $passengercount);
+                                    // }
                                 } else if($passengertype === 3) {
                                     $passtype = 'Infant';
                                 }
@@ -223,14 +240,24 @@
                             $total = round($total, 0);
                             ?>
                         <?php } ?>
+
                         <div class="tr-summary">
+                            <div class="tr-count">Total Taxes & Charges</div>
+                            <div class="tr-value"><span><?= ($finalvalue - $total) ?></span></div>
+                        </div>
+                        <div class="tr-summary highlight grand-total">
+                            <div class="tr-count">Grand Total</div>
+                            <div class="tr-value"><span><?= ($finalvalue) ?></span></div>
+                        </div>
+
+                        <!-- <div class="tr-summary">
                             <div class="tr-count">Total Taxes & Charges</div>
                             <div class="tr-value"><span><?= $tax ?></span></div>
                         </div>
                         <div class="tr-summary highlight grand-total">
                             <div class="tr-count">Grand Total</div>
                             <div class="tr-value"><span><?= ($total + $tax) ?></span></div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
                 <!-- End : Commercial part end -->

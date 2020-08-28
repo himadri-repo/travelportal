@@ -207,7 +207,9 @@ class Search extends Mail_Controller
 			$child = intval($this->input->post('child')) > 0 ? intval($this->input->post('child')) : 0;
 			$infant = intval($this->input->post('infant')) > 0 ? intval($this->input->post('infant')) : 0;
 
-			$no_of_person = $adult + $child + $infant;
+			//$no_of_person = $adult + $child + $infant;
+			//no of person should be only adult + child and not include infant
+			$no_of_person = $adult + $child;
 
 			$class_type = $this->input->post('class_type');
 			$class = intval($this->input->post('optClass'))>0 ? intval($this->input->post('optClass')) : 0; //0 means economy
@@ -413,7 +415,7 @@ class Search extends Mail_Controller
 					"trip_type"=>"ONE",
 					"approved"=>"1",
 					"available"=>"YES",
-					"no_of_person"=>$this->input->post('no_of_person')
+					"no_of_person"=>$no_of_person
 					//"t.availibility>="=>$days
 				
 					);
@@ -1116,6 +1118,7 @@ class Search extends Mail_Controller
 			$this->session->set_userdata('no_of_person', $direct_qty);
 		}
 
+		$isFD = false;
 		$api_fare_quote = [];
 		$state = $this->session->userdata('state');
 		$error = $this->session->userdata('ERROR');
@@ -1235,6 +1238,8 @@ class Search extends Mail_Controller
 				} else if($current_user['type']==='EMP') {
 					$usertype = 'EMP';
 				}
+
+				$isFD = ($ticket['sale_type'] !== 'api');
 		
 				//$ticketupdated = $this->calculationTicketValue($ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup);
 				if($ticket['sale_type'] !== 'api') {
@@ -1339,13 +1344,15 @@ class Search extends Mail_Controller
 							'adult' => $adult,
 							'child' => $child,
 							'infant' => $infant,
-							'infant_price' => $infant_price
+							'infant_price' => $infant_price,
+							'admin_markup' => $adminmarkup
 						);
 
 						$state['financial'] = $financial;
 					}
 
 					$state['sale_type'] = $ticket['sale_type'];
+					$state['isfixeddeparture'] = boolval($isFD);
 
 					$result['mywallet']= $this->getMyWallet();
 					$result['state']= $state;
@@ -1380,8 +1387,10 @@ class Search extends Mail_Controller
 		}
 
 		$adminmarkup = isset($state['adminmarkup']) ? floatval($state['adminmarkup']) : 0;
-		$published_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
-		$offered_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
+		// $published_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
+		// $offered_fare = ((floatval($ticket['total']) + $adminmarkup) * $pax) + ($infant_fare * $infant);
+		$published_fare = ((floatval($ticket['total'])) * $pax) + ($infant_fare * $infant);
+		$offered_fare = ((floatval($ticket['total'])) * $pax) + ($infant_fare * $infant);
 
 		$whl = floatval($ticket['whl_markup']) + floatval($ticket['whl_srvchg']) + floatval($ticket['whl_cgst']) + floatval($ticket['whl_sgst']) - floatval($ticket['whl_disc']);
 		$spl = floatval($ticket['spl_markup']) + floatval($ticket['spl_srvchg']) + floatval($ticket['spl_cgst']) + floatval($ticket['spl_sgst']) - floatval($ticket['spl_disc']);
@@ -1488,12 +1497,13 @@ class Search extends Mail_Controller
 					'Currency' => 'INR',
 					'PassengerType' => 1,
 					'PassengerCount' => $adult,
-					'BaseFare' => floatval($ticket['total']) + $adminmarkup,
+					'BaseFare' => floatval($ticket['price']), //floatval($ticket['total'])
 					'Tax' => 0.00,
 					'YQTax' => 0.00,
 					'AdditionalTxnFeeOfrd' => 0.00,
 					'AdditionalTxnFeePub' => 0.00,
-					'PGCharge' => 0.00
+					'PGCharge' => 0.00,
+					'admin_markup' => $adminmarkup
 				);
 	
 				array_push($fare_quote['passengers_fare'], $adult_passenger);
@@ -1506,12 +1516,13 @@ class Search extends Mail_Controller
 					'Currency' => 'INR',
 					'PassengerType' => 2,
 					'PassengerCount' => $child,
-					'BaseFare' => floatval($ticket['total']) + $adminmarkup,
+					'BaseFare' => floatval($ticket['price']), //floatval($ticket['total'])
 					'Tax' => 0.00,
 					'YQTax' => 0.00,
 					'AdditionalTxnFeeOfrd' => 0.00,
 					'AdditionalTxnFeePub' => 0.00,
-					'PGCharge' => 0.00
+					'PGCharge' => 0.00,
+					'admin_markup' => $adminmarkup
 				);
 
 				array_push($fare_quote['passengers_fare'], $child_passenger);
@@ -1529,7 +1540,8 @@ class Search extends Mail_Controller
 					'YQTax' => 0.00,
 					'AdditionalTxnFeeOfrd' => 0.00,
 					'AdditionalTxnFeePub' => 0.00,
-					'PGCharge' => 0.00
+					'PGCharge' => 0.00,
+					'admin_markup' => 0
 				);
 
 				array_push($fare_quote['passengers_fare'], $infant_passenger);
@@ -1543,7 +1555,8 @@ class Search extends Mail_Controller
 	private function calculationTicketValue(&$ticket, $defaultRPD, $rateplan_details, $companyid, $adminmarkup=0, $usertype='') {
 		$rateplanid = $ticket['rate_plan_id'];
 		$seller_rateplanid = $ticket['seller_rateplan_id'];
-		$price = $ticket['price'];
+		//$price = $ticket['price'];
+		$price = floatval($ticket['total']);
 		$price_infant = isset($ticket['infant_price']) ? $ticket['infant_price'] : 0;
 		
 		$ticket['whl_markup'] = 0;
@@ -1619,7 +1632,7 @@ class Search extends Mail_Controller
 		// $ticket['price'] += $tax_others;
 
 		$ticket['admin_markup'] = $adminmarkup;
-		$ticket['price'] += ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
+		$ticket['price'] = $price + ($ticket['whl_markup'] + $ticket['spl_markup'] + $ticket['whl_srvchg'] + $ticket['spl_srvchg'] 
 				+ ($ticket['whl_srvchg'] * $ticket['whl_cgst'] / 100)
 				+ ($ticket['whl_srvchg'] * $ticket['whl_sgst'] / 100)
 				+ ($ticket['spl_srvchg'] * $ticket['spl_cgst'] / 100)
@@ -2502,7 +2515,7 @@ class Search extends Mail_Controller
 				if($booking_info && $current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
 					$booking_id = intval($booking_info['booking_id']);
 					$booking_date = $booking_info['booking_date'];
-					$total_costprice = floatval($state['financial']['grand_total']);
+					$total_costprice = floatval($state['financial']['grand_total']) - (floatval($state['financial']['admin_markup']) * ($state['adult'] + $state['child']));
 					$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
 				}
 

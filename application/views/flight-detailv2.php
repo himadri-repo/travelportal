@@ -188,7 +188,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="javascript:proceed();">Continue</button>
+                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="return proceed();">Continue</button>
                     </div>
                     <div id="dvcommercial" class="commercial-section right stickyitem">
                         <div class="section-head money">
@@ -199,6 +199,7 @@
                         </div>
                         <div>
                             <?php if($fare_quote && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare']) > 0) { 
+                                $isFD = boolval($state['isfixeddeparture']);
                                 $passengers_fare = $fare_quote['passengers_fare'];
                                 $tds = floatval($fare_quote['fare']['total_tds']);
                                 $commision = floatval($fare_quote['fare']['total_commission']);
@@ -211,14 +212,23 @@
                                 foreach ($passengers_fare as $passenger_fare) { 
                                     $passengertype = intval($passenger_fare['PassengerType']);
                                     $passengercount = intval($passenger_fare['PassengerCount']);
+                                    $admin_markup = floatval($passenger_fare['admin_markup']);
                                     $passtype = 'Adult';
+                                    //$value = floatval($passenger_fare['BaseFare']) * $passengercount;
                                     $value = floatval($passenger_fare['BaseFare']) * $passengercount;
+                                    $finalvalue += $admin_markup * $passengercount;
                                     //$tax += floatval($passenger_fare['Tax']);
                                     if($passengertype === 1) {
                                         $passtype = 'Adult';
+                                        // if($isFD) {
+                                        //    $value += (($total_spl_margin + $total_whl_margin) * $passengercount);
+                                        // }
                                         //$value = (floatval($passenger_fare['BaseFare']) + ($total_spl_margin + $total_whl_margin)) * $passengercount;
                                     } else if($passengertype === 2) {
                                         $passtype = 'Child';
+                                        // if($isFD) {
+                                        //     $value += (($total_spl_margin + $total_whl_margin) * $passengercount);
+                                        // }
                                         //$value = (floatval($passenger_fare['BaseFare']) + ($total_spl_margin + $total_whl_margin)) * $passengercount;
                                     } else if($passengertype === 3) {
                                         $passtype = 'Infant';
@@ -252,7 +262,7 @@
                                 <div class="tr-value"><span><?= ($finalvalue) ?></span></div>
                             </div>
                         </div>
-                        <button id="btnContinue_2" name="btnContinue_2" class="action-button" onclick="javascript:proceed();">Continue</button>
+                        <button id="btnContinue_2" name="btnContinue_2" class="action-button" onclick="return proceed();">Continue</button>
                     </div>
                     <div id="dvpassengers" class="flight-section left hidden">
                         <div class="section-head people">
@@ -452,7 +462,7 @@
                                 <?php } ?>
                             </div>
                         </div>
-                        <button type="button" id="btnContinue_1" name="btnContinue_1" class="action-button" onclick="javascript:proceed();">Continue</button>
+                        <button type="button" id="btnContinue_1" name="btnContinue_1" class="action-button" onclick="return proceed();">Continue</button>
                     </div>
                     <!-- Payment Section -->
                     <?php 
@@ -525,7 +535,7 @@
                                 }
                             } ?>
                         </div>
-                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="javascript:proceed();">Continue</button>
+                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="return proceed();">Continue</button>
                     </div>
                     <!-- End of Payment Section -->
                 </form>
@@ -601,6 +611,12 @@
                     //     alert(JSON.stringify(ev));
                     // });
                 }
+                else if(msg !== '') {
+                    screen_index=2;
+
+                    alert(msg);
+                    msg = '';
+                }
             }
             else {
                 screen_index = 1;
@@ -660,8 +676,38 @@
         }
     }
 
+    var msg = '';
+
     function isvalidform() {
-        return true;
+        msg = '';
+        var flag = false;
+
+        var length = $('.select_trvl').length;
+
+        for (let index = 0; index < length; index++) {
+            const element = $($('.select_trvl')[index]);
+            
+            if(element.val() === '') {
+                //not yet filled. Lets get field placeholder and paxtype
+                msg += `Title of ${element.attr('paxtype')} is missing\n`;
+            }
+        }
+
+        var length = $('.input_trvl').length;
+
+        for (let index = 0; index < length; index++) {
+            const element = $($('.input_trvl')[index]);
+            
+            if(element.val() === '') {
+                //not yet filled. Lets get field placeholder and paxtype
+                msg += `${element.attr('placeholder')} of ${element.attr('paxtype')}\n`;
+            }
+        }
+
+        console.log(msg);
+
+        flag = (msg === '');
+        return flag;
     }
 
     function selectPaymentMethod(ctrl) {
