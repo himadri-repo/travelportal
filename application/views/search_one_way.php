@@ -428,6 +428,9 @@
 																else if($flight[$key]["data_collected_from"]=='sng') {
 																	$splcode = 'oxytra-spl-9';
 																}
+																else if($flight[$key]["data_collected_from"]=='rtt') {
+																	$splcode = 'oxytra-spl-10';
+																}
 															}
 															else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
 																$splcode = $flight[$key]["companyname"];
