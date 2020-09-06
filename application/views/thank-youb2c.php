@@ -308,10 +308,18 @@
 												foreach($details as $key=>$value)
 												{
 													if($details[$key]['customer_status']=='PENDING' || $details[$key]['customer_status']=='APPROVED') {
+														$passenger_type = intval($details[$key]['passenger_type']);
 														?>
 														<tr>
 															<td><?php echo $ctr;?></td>
-															<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>																										
+															<?php 
+															if($passenger_type === 3) { ?>
+																<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] . "(Infant)"?></th>
+															<?php }
+															else { ?>
+																<td><?php echo $details[$key]["prefix"]." ".$details[$key]["first_name"]." ".$details[$key]["last_name"] ?></th>
+															<?php } ?>
+															
 															<!-- <td><?php echo $details[$key]["age"];?></td>
 															<td><?php echo $details[$key]["mobile_no"];?></td>
 															<td><?php echo $details[$key]["cemail"];?></td> -->
@@ -642,8 +650,11 @@
 
 														$srvchg = $details[0]["service_charge"] * $qty;
 														$gst = ($details[0]["sgst"]+$details[0]["cgst"]);
+														$admin_markup = ($details[0]["admin_markup"]) * intval($details[0]["qty"]);
 
-														$taxothers = round($srvchg + $gst, 0);
+														$taxothers = round($srvchg + $gst + $admin_markup, 0);
+
+														$total = $details[0]["total"] + $admin_markup;
 													?>
 													
 													<td>
@@ -651,7 +662,12 @@
 															<li class="key"><span>Ticket Fare (each) : </span></li>
 															<li class="value"><?php echo number_format($details[0]["rate"],2,".",","); ?></li>
 															<li class="key"><span>Passengers : </span></li>
-															<li class="value"><?= $details[0]["qty"]; ?></li>
+															<?php if($infant > 0) { ?>
+																<li class="value"><?= $details[0]["qty"].' + '.$infant.' (Infant)' ; ?></li>
+															<?php } 
+															else { ?>
+																<li class="value"><?= $details[0]["qty"]; ?></li>
+															<?php } ?>
 															<?php if($adult > 0) { ?>
 																<li class="key space"><span>Adult : </span></li>
 																<li class="value"><?= $adult.' x '.number_format($details[0]["rate"], 2,".",","); ?></li>
@@ -669,7 +685,7 @@
 															<li class="key"><span>Tax & Others : </span></li>
 															<li class="value"><?= number_format($taxothers,2,".",","); ?></li>
 															<li class="key"><span>Grand Total : </span></li>
-															<li class="value grand-total"><?= number_format($details[0]["total"],2,".",","); ?></li>
+															<li class="value grand-total"><?= number_format($total,2,".",","); ?></li>
 														</ul>
 													</td>
 

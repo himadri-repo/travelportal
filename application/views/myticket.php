@@ -357,7 +357,11 @@
 
 	$tax = floatval($details[0]["service_charge"]);
 	$others = floatval($details[0]["sgst"]) + floatval($details[0]["cgst"]);
-	$total_taxothers = $tax + $others;
+
+	$admin_markup = floatval($details[0]["admin_markup"]) * ($adult+$child);
+	$total_taxothers = $tax + $others + $admin_markup;
+
+	$total = floatval($details[0]["total"]) + $admin_markup;
 	?>
 	<!-- forth row-section -->
 	<div style="margin-bottom: 35px; margin-top: 20px; margin-left: -15px; margin-right: -15px; height: auto; margin-top: 10px; margin-bottom: 10px;">
@@ -417,7 +421,7 @@
 								</tr> -->
 								<tr>
 									<td style="width: 66.66%; padding: 0px;"><label>Grand Total : </label></td>
-									<td style="width: 33.33%; text-align: right; padding: 0px; padding: 0px; font-weight: 800;"><?php echo number_format($details[0]["total"],2,".",","); ?></td>
+									<td style="width: 33.33%; text-align: right; padding: 0px; padding: 0px; font-weight: 800;"><?php echo number_format($total,2,".",","); ?></td>
 								</tr>
 							</table>
 							<?php 

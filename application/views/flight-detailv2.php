@@ -30,6 +30,7 @@
                 $dep_time = date('H:i', strtotime($flight['departure_date_time']));
                 $arv_date_time = date('D - d-M-Y', strtotime($flight['arrival_date_time']));
                 $arv_time = date('H:i', strtotime($flight['arrival_date_time']));
+                $dept_year = intval(date('Y', strtotime($flight['departure_date_time'])));
 
                 $dateDiff = intval((strtotime($flight["arrival_date_time"])-strtotime($flight["departure_date_time"]))/60);
 
@@ -276,7 +277,10 @@
                         <div class="itinerary">
                             <div class="tr-cen-trv">
                                 <?php if($fare_quote && is_array($fare_quote) && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare'])>0) { 
-                                    $i = 0 ?>
+                                    $i = 0;
+                                    $email = $currentuser['email'];
+                                    $mobile = $currentuser['mobile'];
+                                    ?>
                                     <?php for ($j=0; $j < count($fare_quote['passengers_fare']); $j++) { 
                                         $passenger = $fare_quote['passengers_fare'][$j];
                                         $passenger_type_code = intval($passenger['PassengerType']);
@@ -341,11 +345,11 @@
                                                                 <?php if($passenger_type === 'Adult' && $pi === 1) { ?>
                                                                     <div class="str_3">
                                                                         <label class="label_ti">Email</label>
-                                                                        <input type="text" name="txtPassenger_EML_<?=$i ?>" autocomplete="none" id="txtPassenger_EML_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Email Address" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                        <input type="text" name="txtPassenger_EML_<?=$i ?>" autocomplete="none" id="txtPassenger_EML_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Email Address" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="" value="<?=$email ?>">
                                                                     </div>
                                                                     <div class="str_3 mgl15">
                                                                         <label class="label_ti">Mobile</label>
-                                                                        <input type="text" name="txtPassenger_MBL_<?=$i ?>" autocomplete="none" id="txtPassenger_MBL_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Your Mobile Number" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                        <input type="text" name="txtPassenger_MBL_<?=$i ?>" autocomplete="none" id="txtPassenger_MBL_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Your Mobile Number" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="" value="<?=$mobile ?>">
                                                                     </div>
                                                                 <?php } ?>
                                                                 <?php if($passenger_type === 'Infant') { ?>
@@ -407,9 +411,17 @@
                                                                     <div class="inf4">
                                                                         <select class="sel1 autoFillDOBYearInfant1" name="slDOBYear_Passenger_<?=$i ?>" id="slDOBYear_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
                                                                             <option selected="selected" value="0">Year</option>
-                                                                            <option value="2020">2020</option>
+                                                                            <?php 
+                                                                            $iidx=0;
+                                                                            while($iidx<3) { 
+                                                                                $yr = ($dept_year-$iidx); ?>
+                                                                                <option value="<?=$yr?>"><?=$yr?></option>
+                                                                            <?php 
+                                                                                $iidx++;
+                                                                            } ?>
+                                                                            <!-- <option value="2020">2020</option>
                                                                             <option value="2019">2019</option>
-                                                                            <option value="2018">2018</option>
+                                                                            <option value="2018">2018</option> -->
                                                                         </select>
                                                                     </div>
                                                                     <div class="dt-ma">*Date of birth required for Infant</div>

@@ -355,6 +355,7 @@ Class Search_Model extends CI_Model
 		$qry = "select 	cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr, cus.airline_ticket_no, u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.display_name as airline,a1.display_name as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1, case when u.is_admin=1 then 'EMP' else u.type end as type, u.address, 
+						case when cus.type=1 then 'Adult' when cus.type=2 then 'Child' else 'Infant' end as passenger_type_code, b.admin_markup, 
 						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty, b.adult, b.child, b.infant, b.infant_price, ((b.price * b.qty) + (b.infant_price * b.infant)) as amount, (b.total) as total, b.costprice, b.rateplanid, 
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,

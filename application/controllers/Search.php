@@ -1319,7 +1319,8 @@ class Search extends Mail_Controller
 						$discount = floatval($api_fare_quote['fare']['discount']);
 						$total_spl_margin = floatval($api_fare_quote['fare']['total_spl_margin']);
 						$total_whl_margin = floatval($api_fare_quote['fare']['total_whl_margin']);
-						$tax = round(floatval($api_fare_quote['fare']['tax']) + floatval($api_fare_quote['fare']['othercharges']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+						//$tax = round(floatval($api_fare_quote['fare']['tax']) + floatval($api_fare_quote['fare']['othercharges']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child)) - $commision - $discount, 0);
+						$tax = round(floatval($api_fare_quote['fare']['tax']) + floatval($api_fare_quote['fare']['othercharges']) + $tds - $commision - $discount, 0);
 
 						$infant_price = floatval($api_fare_quote['fare']['infant_price']);
 						$offeredfare = floatval($api_fare_quote['fare']['offeredfare']);
@@ -1971,6 +1972,8 @@ class Search extends Mail_Controller
 		$no_of_passengers = 0;
 		if($postedvalue && $state && is_array($state) && intval($state['no_of_person'])>0) {
 			$no_of_passengers = intval($state['no_of_person']);
+			$infant = intval($state['infant']);
+			$no_of_passengers += $infant;
 
 			for ($i=0; $i < $no_of_passengers; $i++) { 
 				$enable = (($postedvalue["chkPassenger_$i"] === 'on') ? true : false);
@@ -2515,7 +2518,8 @@ class Search extends Mail_Controller
 				if($booking_info && $current_user["is_admin"]!='1' && $current_user["type"]!='EMP') {
 					$booking_id = intval($booking_info['booking_id']);
 					$booking_date = $booking_info['booking_date'];
-					$total_costprice = floatval($state['financial']['grand_total']) - (floatval($state['financial']['admin_markup']) * ($state['adult'] + $state['child']));
+					//$total_costprice = floatval($state['financial']['grand_total']) - (floatval($state['financial']['admin_markup']) * ($state['adult'] + $state['child']));
+					$total_costprice = floatval($state['financial']['grand_total']); // - (floatval($state['financial']['admin_markup']) * ($state['adult'] + $state['child']));
 					$transactionresult = $this->do_wallet_transaction($current_user, $company, $ticket, array('booking_id' => $booking_id, 'booking_date' => $booking_date, 'total_costprice'=>$total_costprice));
 				}
 
@@ -4515,6 +4519,7 @@ class Search extends Mail_Controller
 			$qty = intval($result["details"][0]["qty"]);
 
 			$par_ticket_rate = round($extra_markup/$qty);
+			$admin_markup = ($details[0]["admin_markup"]) * intval($details[0]["qty"]);
 
 			$result["details"][0]["rate"] = floatval($result["details"][0]["rate"])+$par_ticket_rate;
 
@@ -4524,7 +4529,7 @@ class Search extends Mail_Controller
 			$result["details"][0]["sgst"] = $result["details"][0]["sgst"] * $qty;
 			$result["details"][0]["cgst"] = $result["details"][0]["cgst"] * $qty;
 
-			$result["details"][0]["total"] = $result["details"][0]["total"] + $extra_markup;
+			$result["details"][0]["total"] = $result["details"][0]["total"] + $extra_markup + $admin_markup;
 			// $par_ticket_rate
 		}
 		$result["options"] = array('pdf' => false, 'showprice' => $showprice);  
