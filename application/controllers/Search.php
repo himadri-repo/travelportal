@@ -235,12 +235,12 @@ class Search extends Mail_Controller
 				$thirdparty_tickets = null;
 				//read company settings.
 				//what all thirdparty integration enabled, work on those library only.
+				$airlines = $this->Search_Model->get('airline_tbl', array());
 				$listof3ppintegrations = $this->getThirdpartyIntegrations($companyid, $current_user);
 				if($companyid === 1 || $companyid === 7) {
 					//
 					$api_integration = null;
 					$company_settings = $this->Search_Model->company_setting($companyid);
-					$airlines = $this->Search_Model->get('airline_tbl', array());
 
 					#region commented
 					// $thirdparty_apis = $this->Search_Model->get('thirdparty_api_tbl', array('name' => "'tmz'"));
@@ -473,6 +473,8 @@ class Search extends Mail_Controller
 					}
 
 					$modifiable_attributes[] = array('id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no'], 'source_city' => $ticket['source_city'], 
+						'airline' => $ticket['airline'], 
+						'airlineid' => $ticket['airlineid'], 
 						'destination_city' => $ticket['destination_city'], 
 						'departure_date' => date("d-m-Y",strtotime($ticket['departure_date_time'])), 
 						'departure_time' => date("H:i",strtotime($ticket['departure_date_time'])), 
@@ -655,6 +657,7 @@ class Search extends Mail_Controller
 				
 				$result["state"] = $state;
 				$result["flight"]=$tickets;
+				$result["airlines"]=$airlines;
 				$result["flight_attributes"]=$modifiable_attributes;
 				$result["rateplan"]=$rateplans; // $default_rp;
 				$result["currentuser"]=$currentuser;
@@ -4576,6 +4579,7 @@ class Search extends Mail_Controller
 			log_message('debug', "Taking action ($mode) on Ticket - ".$ticket['id']." => ".json_encode($ticket)." | ".json_encode($targetticket));
 			if(intval($targetticket['companyid']) === $companyid) {
 				if($this->Search_Model->update('tickets_tbl', array(
+					'airline' => $ticket['airlineid'], 
 					'flight_no' => $ticket['flight_no'], 
 					'no_of_person' => $ticket['no_of_person'], 
 					'max_no_of_person' => $ticket['no_of_person'], 

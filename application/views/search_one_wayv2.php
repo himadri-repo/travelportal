@@ -697,6 +697,34 @@
 					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 edit-item" id="edit-item">
 						<div class="row">
 							<div class="col-sm-6 col-md-2 col-lg-2">
+								<!-- Selected airline -->
+								<label>Airline</label>
+							</div>
+							<div class="col-sm-6 col-md-4 col-lg-4">
+								<select class="form-control" name="airline" id="airline">
+									<option value="-1" selected>Airline</option>
+									<?php
+									if($airlines && count($airlines)>0) {
+										foreach($airlines as $key=>$value)
+										{ ?>
+											<option value="<?php echo $airlines[$key]["id"];?>"><?php echo $airlines[$key]["display_name"];?></option>
+										<?php
+										}
+									}
+									?>										  
+								</select>
+							</div>
+							<div class="col-sm-6 col-md-2 col-lg-2">
+								<!-- Flight Number, PAX & base rate -->
+								<label></label>
+							</div>
+							<div class="col-sm-6 col-md-4 col-lg-4">
+								<!--<input class="form-control datepicker" style="width: 60%; display: inline-block; padding: 0px 2px;" placeholder="mm/dd/yyyy" name="dept_date" id="dept_date" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}" value="" readonly/>
+								<input class="form-control" placeholder="HH:mm" style="width: 35%; display: inline-block; padding: 0px 2px;" name="dept_date_time" id="dept_date_time" pattern="[0-9]{2}:[0-9]{2}" value=""/> -->
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-6 col-md-2 col-lg-2">
 								<!-- Flight Number, PAX & base rate -->
 								<label>Flight #</label>
 							</div>
@@ -810,6 +838,7 @@
 			modal.find('.modal-body #dept_date').val(moment(flight['departure_date'], 'DD/MM/YYYY').format('MM/DD/YYYY'));
 			modal.find('.modal-body #dept_date_time').val(flight['departure_time']);
 			//modal.find('.modal-body #arrv_date').val(formatDate(flight['arrival_date']));
+			modal.find('.modal-body #airline').val(flight['airlineid']).change();
 			modal.find('.modal-body #arrv_date').val(moment(flight['arrival_date'], 'DD/MM/YYYY').format('MM/DD/YYYY'));
 			modal.find('.modal-body #arrv_date_time').val(flight['arrival_time']);
 			modal.find('.modal-body #no_of_pax').val(flight['no_of_person']);
@@ -838,6 +867,7 @@
 			return;
 		}
 
+		ticket.airlineid = modal.find('.modal-body #airline').val();
 		ticket.flight_no = modal.find('.modal-body #flight_number').val();
 		ticket.departure_date = moment(modal.find('.modal-body #dept_date').val(), 'MM/DD/YYYY').format('YYYY/MM/DD');
 		ticket.departure_time = modal.find('.modal-body #dept_date_time').val();
