@@ -91,7 +91,10 @@
                                     ?>
                                         <tr>
                                             <th scope="row"><?= date("jS M Y",strtotime($ticket['departure_date_time'])); ?></th>
-                                            <td><?= number_format($ticket['ticket_price'],2)?></td>
+                                            <!-- <td><?= number_format($ticket['ticket_price'],2) ?> </td> -->
+                                            <td>Available</td>
+                                            <!-- <td><?= number_format($ticket['ticket_price'],2)?></td> -->
+                                            <td>Available</td>
                                             <td><?= $ticket['aircode']?></td>
                                             <td><?= $ticket['flight_no']?></td>
                                             <td><?= date("H:i",strtotime($ticket['departure_date_time'])); ?></td>
@@ -141,7 +144,13 @@
                                             <?php 
                                                 }
                                                 else if($idx>1) { ?>
-                                                    <td style="font-weight: 600;"><?= str_pad($ticket_calender[$i][$key], 10, ' ', STR_PAD_LEFT) ?></td>
+                                                    <?php if($ticket_calender[$i][$key] !== '-') { ?>
+                                                        <!-- <td style="font-weight: 600;">//str_pad($ticket_calender[$i][$key], 10, ' ', STR_PAD_LEFT)</td> -->
+                                                        <td style="font-weight: 600;"><?= str_pad('Available', 10, ' ', STR_PAD_LEFT) ?></td>
+                                                    <?php }
+                                                    else { ?>
+                                                        <td style="font-weight: 600;"><?= str_pad('-', 10, ' ', STR_PAD_LEFT) ?></td>
+                                                    <?php } ?>
                                                 <?php }
                                                 $idx++;
                                             } ?>
