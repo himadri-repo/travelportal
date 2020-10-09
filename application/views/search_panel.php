@@ -466,6 +466,11 @@
         background-color: #0b3dca;
     }
 </style>
+<?php
+    $api_style = false;
+
+    $sources = $state['sources'];
+?>
 <div class="container_bg">
     <div class="middle_part">
         <h1 class="">
@@ -496,15 +501,63 @@
                     <input type="hidden" id="class_type" name="class_type" value="<?= $class ?>"> 
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>From</span> -->
-                        <div class="group-item auto-height">
-                            <input type="text" id="sc_source" name="sc_source" title="Departing airport" placeholder="From" class="sc-input transit-point" autocomplete="off" field="source" style="text-transform: uppercase; font-size: 15px; width: 100%;" value="<?= $source_city_name ?>">
+                        <?php 
+                        if($api_style) {
+                        ?>
+                            <div class="group-item auto-height">
+                                <input type="text" id="sc_source" name="sc_source" title="Departing airport" placeholder="From" class="sc-input transit-point" autocomplete="off" field="source" style="text-transform: uppercase; font-size: 15px; width: 100%;" value="<?= $source_city_name ?>">
+                            </div>
+                        <?php 
+                        }
+                        else {
+                        ?>
+                        <div class="form-group">
+
+                            <label style="color: #0b3dca;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>From</label>
+                            <select class="form-control" name="sc_source" id="sc_source">
+                                <option value="">Source</option>
+                                <?php
+                                foreach($sources as $sector)
+                                {
+                                ?>
+                                    <option value="<?php echo $sector['id'];?>" <?php if($source==$sector["id"]) echo "selected"; ?>><?php echo $sector["sector"];?></option>
+                                <?php
+                                }
+                                ?> 
+                            </select>
                         </div>
+                        <?php 
+                        }
+                        ?>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>To</span> -->
+                        <?php
+                        if($api_style) {
+                        ?>
                         <div class="group-item auto-height">
                             <input type="text" id="sc_destination" name="sc_destination" title="Arriving airport" placeholder="To" class="sc-input transit-point" autocomplete="off" field="destination" value="<?= $destination_city_name ?>">
                         </div>
+                        <?php 
+                        }
+                        else {
+                        ?>
+                        <div class="form-group">
+                            <label style="color: #0b3dca;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>To</label>
+                                <select class="form-control" name="sc_destination" id="sc_destination">
+                                <option value="">Destination</option>
+                                <?php 
+                                if(intval($destination)>-1) {
+                                ?>
+                                <option value="<?= $destination ?>" selected><?= $destination_city_name ?></option>
+                                <?php
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <?php 
+                        }
+                        ?>
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
                         <!-- <span>Dept Date</span> -->
@@ -821,4 +874,44 @@
 
         // $(ctrl).addClass('selected');
     }
+
+    <?php 
+    if(!$api_style) {
+    ?>
+	$(document).ready(function() 
+	{	
+        var url = document.location.href;
+		// url = url.substr(0, url.lastIndexOf('/'));
+        url = document.location.origin;
+
+        $("#sc_destination").change(function(ev) {
+            // alert(JSON.stringify(ev));
+            // alert($(this).val());
+            $("#destination").val($(this).val());
+        });
+
+		$("#sc_source").change(function()
+		{
+            // alert($(this).val() + ' - ' + $("#sc_source").val());
+            $.ajax ({
+                type: "POST",
+                url: ""+url+"/adminarea/ajax/filter_city.php", 
+                data: {source:$("#sc_source").val(),trip_type:'ONE'},
+                dataType: "json",  
+                success: function(data)
+                {	
+                    $("#source").val($("#sc_source").val());
+                    $("#sc_destination").html("");				
+                    $("#sc_destination").append("<option value=''>Destination</option>");
+                    $.each(data, function(key, value) 
+                    {  
+                        $("#sc_destination").append("<option value='"+data[key]["id"]+"'>"+data[key]["city"]+"</option>");
+                    });
+                }
+			});
+		});
+    });
+    <?php 
+    }
+    ?>
 </script>

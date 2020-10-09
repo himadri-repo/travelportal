@@ -5,7 +5,7 @@ $today=date("Y-m-d");
 $sql="SELECT DISTINCT(c.city),c.id FROM tickets_tbl t 
 INNER JOIN city_tbl c ON t.destination=c.id 
 WHERE t.source='".$_REQUEST["source"]."' AND t.trip_type='".$_REQUEST["trip_type"]."' 
-AND DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')>=$today AND t.approved=1";
+AND DATE_FORMAT(t.departure_date_time, '%Y-%m-%d')>=$today AND t.approved=1 and available='YES'";
 
 
 $result=mysql_query($sql);

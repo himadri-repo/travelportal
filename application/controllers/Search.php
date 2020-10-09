@@ -622,13 +622,15 @@ class Search extends Mail_Controller
 				
 				$this->session->set_userdata('tickets',$tickets);
 
-				if($companyid==1 || $companyid==7) {
-					//Please enable this if system fare is integrated in this account
-					$circles = $this->Search_Model->get_cities();
-				}
-				else {
-					$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
-				}
+				// if($companyid==1 || $companyid==7) {
+				// 	//Please enable this if system fare is integrated in this account
+				// 	$circles = $this->Search_Model->get_cities();
+				// }
+				// else {
+				// 	$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				// }
+				
+				$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
 				$sources = $this->get_filtered_sources($circles);
 					
 				$result['sources']=$sources;

@@ -120,6 +120,18 @@
     color: rgba(17, 50, 210, 0.77);
     font-weight: 600;
 }
+.blink_me {
+  animation: blinker 3s linear infinite;
+  color: #ff0000; 
+  font-size: 1.60em;
+  display: inline-block;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
 </style>         
 <div id="progressbar" class="search_overlay" style="display:none">
 	<img src="<?php echo base_url(); ?>images/progress.gif" style="width: 100%; height: 100%;" title="Search is progressing ...">
@@ -609,10 +621,10 @@
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
                                                 <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
-                                                    <div style="color: #ff0000; font-size: 0.80em; display: inline-block;">Seats & rates subject to availability. Confirm before booking.</div>
+                                                    <div class="blink_me">Seats & rates are subject to availability. Confirm before booking.</div>
 												<?php } 
 												else if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]==='api') { ?>
-													<div style="color: #ff0000; font-size: 0.80em; display: inline-block;"><?= $flightitem['remarks'] ?></div>
+													<div class="blink_me"><?= $flightitem['remarks'] ?></div>
 												<?php } ?>
                                             </div>
                                         </div>
