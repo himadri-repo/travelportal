@@ -403,9 +403,13 @@ class Company extends REST_Controller {
                 $b2bmarkup_value = floatval($booking['field_value']);
             }
             
-            $booking['rate'] = floatval($booking['rate']) - $b2bmarkup_value;
-            $booking['amount'] = floatval($booking['amount']) - ($b2bmarkup_value * intval($booking['qty']));
-            $booking['total'] = floatval($booking['total']) - ($b2bmarkup_value * intval($booking['qty']));
+            // $booking['rate'] = floatval($booking['rate']) - $b2bmarkup_value;
+            // $booking['amount'] = floatval($booking['amount']) - ($b2bmarkup_value * intval($booking['qty']));
+            // $booking['total'] = floatval($booking['total']) - ($b2bmarkup_value * intval($booking['qty']));
+
+            $booking['rate'] = floatval($booking['rate']);
+            $booking['amount'] = floatval($booking['amount']);
+            $booking['total'] = floatval($booking['total']);
 
             $ticket = null;
             for ($ti=0; $ti<count($tickets); $ti++) { 
