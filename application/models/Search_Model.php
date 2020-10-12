@@ -352,7 +352,7 @@ Class Search_Model extends CI_Model
 		// $this->db->where($arr);
 		// $this->db->order_by("cus.id","ASC");
 
-		$qry = "select 	cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr, cus.airline_ticket_no, u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
+		$qry = "select 	cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.dob,cus.mobile_no,cus.pnr, cus.airline_ticket_no, u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.display_name as airline,a1.display_name as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1, case when u.is_admin=1 then 'EMP' else u.type end as type, u.address, 
 						case when cus.type=1 then 'Adult' when cus.type=2 then 'Child' else 'Infant' end as passenger_type_code, b.admin_markup, 
@@ -389,7 +389,7 @@ Class Search_Model extends CI_Model
 	 public function refrence_booking_details($id) 
 	{    
         $arr=array("b.booking_id"=>$id);  	
-		$this->db->select('cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status');
+		$this->db->select('cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.dob,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status');
 		$this->db->from('tickets_tbl as t');
 		$this->db->join('refrence_booking_tbl b', 'b.ticket_id = t.id');
 		$this->db->join('airline_tbl a', 'a.id = t.airline');
@@ -418,7 +418,7 @@ Class Search_Model extends CI_Model
 	{    
 	    
         $arr=array("b.id"=>$id);  	
-		$this->db->select('cus.prefix,cus.email as cemail,cus.first_name, cus.type as passenger_type, cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status');
+		$this->db->select('cus.prefix,cus.email as cemail,cus.first_name, cus.type as passenger_type, cus.last_name,cus.age,cus.dob,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status');
 		$this->db->from('tickets_tbl as t');
 		$this->db->join('refrence_booking_tbl b', 'b.ticket_id = t.id');
 		$this->db->join('airline_tbl a', 'a.id = t.airline');
@@ -447,7 +447,7 @@ Class Search_Model extends CI_Model
 	{    
 	    
         $arr=array("b.id"=>$id);  	
-		$this->db->select('cus.prefix,cus.email as cemail,cus.first_name, cus.type as passenger_type, cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status,t.price,t.markup');
+		$this->db->select('cus.prefix,cus.email as cemail,cus.first_name, cus.type as passenger_type, cus.last_name,cus.age,cus.dob,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status,t.price,t.markup');
 		$this->db->from('tickets_tbl as t');
 		$this->db->join('refrence_booking_tbl b', 'b.ticket_id = t.id');
 		$this->db->join('airline_tbl a', 'a.id = t.airline');
@@ -904,7 +904,7 @@ Class Search_Model extends CI_Model
 		$fromdate = $fromdate === NULL ? '' : $fromdate;
 		$todate = $todate === NULL ? '' : $todate;
 
-		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.type as passenger_type, cus.age, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status,  
+		$sql = "select cus.id, cus.prefix, cus.first_name, cus.last_name, cus.mobile_no, cus.type as passenger_type, cus.age, cus.dob, cus.email, cus.airline_ticket_no, cus.pnr, cus.ticket_fare, cus.ticket_fare, cus.costprice, cus.booking_id as cus_booking_id, cus.refrence_id, cus.companyid, cus.status,  
 				b.id as booking_id, b.booking_date, b.booking_confirm_date, b.pbooking_id, b.ticket_id, b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,  
 				case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' when b.status=32 then 'REQUEST FOR CANCEL' when b.status=64 then 'REQUEST FOR HOLD' end as booking_status,  
 				b.total, b.costprice  
@@ -1957,11 +1957,14 @@ Class Search_Model extends CI_Model
 					{
 						try
 						{
+							$dob = date("Y-m-d", strtotime(intval($customer["passenger_dob_year"])."-".intval($customer["passenger_dob_month"])."-".intval($customer["passenger_dob_day"])));
+
 							$arr=array("prefix"=>$customer["passenger_title"],
 										"first_name"=>$customer["passenger_first_name"],
 										"last_name"=>$customer["passenger_last_name"],
 										"mobile_no"=>$customer["passenger_mobile"],
 										"age"=>$customer["passenger_age"], 
+										"dob"=>($customer["passenger_type_code"]==="3"?$dob:null),
 										"type"=>intval($customer["passenger_type_code"]), 
 										"ticket_fare"=>round($amount/intval($parameters["qty"]), 0),
 										"costprice"=>round(floatval($parameters["costprice"]), 0),
@@ -2161,7 +2164,7 @@ Class Search_Model extends CI_Model
 		$pnr = isset($payload['filter']['pnr']) ? $payload['filter']['pnr'] : '';
 		if($pnr!='') {
 			$sql = "select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
-							cus.first_name, cus.last_name, cus.type as passenger_type, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
+							cus.first_name, cus.last_name, cus.type as passenger_type, cus.age, cus.dob, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
 					from customer_information_tbl cus
 					inner join bookings_tbl bk on bk.id=cus.booking_id and bk.status=2
 					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
@@ -2170,7 +2173,7 @@ Class Search_Model extends CI_Model
 					where cus.pnr like '$pnr%' and (bk.seller_companyid=$companyid)
 					union all
 					select 	c1.city as source, c2.city as destination, tkt.departure_date_time, tkt.arrival_date_time, bk.status, tkt.max_no_of_person, tkt.no_of_person, bk.ticket_id, cus.id, cus.prefix, 
-							cus.first_name, cus.last_name, cus.type as passenger_type, cus.age, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
+							cus.first_name, cus.last_name, cus.type as passenger_type, cus.age, cus.dob, cus.airline_ticket_no, cus.pnr, cus.booking_id, cus.refrence_id, cus.status, tkt.companyid
 					from customer_information_tbl cus
 					inner join bookings_tbl bk on bk.id=cus.refrence_id and bk.status=2
 					inner join tickets_tbl tkt on tkt.id=bk.ticket_id
