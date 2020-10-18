@@ -6,7 +6,150 @@ class Sale_Direction {
 	const Supplier_To_Wholesaler = 2;
 }
 
-Class Search_Model extends CI_Model
+Class BaseModel extends CI_Model {
+	public $processnotification = true;
+	public function _constructor() {
+
+	}
+
+	//Common methods
+    public function save($tbl,$data) 
+	{    
+		try {
+			if($this->db->insert($tbl,$data))
+			{
+				
+				return $this->db->insert_id();
+			}
+			else
+			{
+				echo $this->db->last_query();die();
+				return false;
+			}
+		}	
+		catch(Exception $ex) {
+			log_message('error', $ex);
+		}
+	}
+	//end of Common methods
+
+	public function getNotifyPayload($ntfyfeed) {
+		log_message('debug', "BaseModel::getNotifyPayload - Payload: ".json_encode($ntfyfeed));
+
+		$doctype = strtolower($ntfyfeed['doctype']);
+		$docno = intval($ntfyfeed['docno']);
+		$template = strtolower($ntfyfeed['template']);
+
+		$ntfypayload = [];
+
+		switch($doctype) {
+			case 'booking':
+				$ntfypayload['template'] = $template;
+				$doc = $this->getBookingInfo4Notification($docno);
+				$ntfypayload['document'] = $doc;
+				$ntfypayload['payload'] = false;
+				if($doc) {	
+					$ntfypayload['payload'] = array(
+						'fname' => $doc['customer_username'],
+						'lname' => '',
+						'email' => $doc['customer_username'].' <'.$doc['customer_email'].'>',
+						'reply_email' => $doc['seller_username'].' <'.$doc['seller_email'].'>',
+						'data' => '',
+						'order' => array(
+							'orderid' => 'BK-'.$doc['bookingid'],
+							'orddate' => date("Y-m-d H:i:s", strtotime($doc['booking_date'].'+05:30')),
+							'value' => floatval($doc['price']),
+							'status' => $doc['status'],
+							'sector' => $doc['source'].' - '.$doc['destination'],
+							'departure_date' => date("Y-m-d H:i:s", strtotime($doc['departure_date_time'].'+05:30')),
+							'arrival_date' => date("Y-m-d H:i:s", strtotime($doc['arrival_date_time'].'+05:30')),
+							'pax' => intval($doc['qty']).' + '.intval($doc['infant']).'(Infant)',
+							'trip_type' => $doc['trip_type'],
+							'ticket_no' => $doc['ticket_no'],
+						),
+						'sender' => array(
+							'name' => $doc['seller_companyname'],
+							'email' => $doc['seller_companyname'].' <'.$doc['seller_email'].'>',
+							'siteurl' => $doc['seller_url'],
+							'undersigned' => 'Operation - '.$doc['seller_companyname'],
+							'mobile' => $doc['seller_mobile']
+						)
+					);
+				}
+
+				break;	
+			default:
+				log_message('debug', "BaseModel::getNotifyPayload - DocType invalid");
+		}
+
+		return $ntfypayload;
+	}
+
+	public function getBookingInfo4Notification($bookingid) {
+		$sql = "select 	sl_cmp.id as seller_companyid, sl_cmp.display_name as seller_companyname, sl_cmp.baseurl as seller_url, cus_cmp.id as customer_companyid, cus_cmp.display_name as customer_companyname, 
+						sl_usr.id as seller_userid, sl_usr.name as seller_username, sl_usr.email as seller_email, sl_usr.mobile as seller_mobile, sl_usr.type as seller_type,
+						cus_usr.id as customer_userid, cus_usr.name as customer_username, cus_usr.email as customer_email, cus_usr.mobile as customer_mobile, cus_usr.type as customer_type
+						,bk.id as bookingid, bk.booking_date, case when bk.status=0 then 'Pending' else (case when bk.status=2 then 'Processed' else 'In-Process' end) end as status
+						,tk.id as ticketid, tk.ticket_no, src.city as source, dst.city as destination, tk.departure_date_time, tk.arrival_date_time, tk.flight_no, tk.terminal, 
+						air.airline, air.aircode,
+						bk.total as price, bk.qty, bk.adult, bk.child, bk.infant, case when bk.trip_type=1 then 'ONE_WAY' else 'ROUND_TRIP' end as trip_type
+				from bookings_tbl bk
+				inner join company_tbl sl_cmp on bk.seller_companyid=sl_cmp.id and sl_cmp.active=1
+				inner join user_tbl sl_usr on bk.seller_userid=sl_usr.id and sl_usr.active=1
+				inner join company_tbl cus_cmp on bk.customer_companyid=cus_cmp.id and sl_cmp.active=1
+				inner join user_tbl cus_usr on bk.customer_userid=cus_usr.id and sl_usr.active=1
+				inner join tickets_tbl tk on tk.id=bk.ticket_id
+				inner join city_tbl src on src.id=tk.source
+				inner join city_tbl dst on dst.id=tk.destination
+				inner join airline_tbl air on air.id=tk.airline
+				where bk.id=$bookingid";
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{
+			$booking = $query->result_array()[0];
+            return $booking;
+		}
+		else
+		{
+			//return $sql;
+			return false;
+		}
+	}
+
+	public function notify($ntfyfeed) {
+		$ntfyinfo = $this->getNotifyPayload($ntfyfeed);
+		log_message('debug', "BaseModel::notify - Notification feed provided : ".json_encode($ntfyfeed));
+		//Notify to user
+		if($this->processnotification && $ntfyinfo && isset($ntfyinfo['document']) && isset($ntfyinfo['payload']) && $ntfyinfo['payload']) {
+			$tbl = 'notification_tbl';
+			$document = $ntfyinfo['document'];
+			$payload = $ntfyinfo['payload'];
+			$payload = json_encode($payload, JSON_UNESCAPED_UNICODE);
+			$arr = array(
+				'date' => date("Y-m-d H:i:s"),
+				'mode' => 'EMAIL',
+				'companyid' => $document['seller_companyid'],
+				'payloaddata' => $payload,
+				'templatename' => $ntfyfeed['template'],
+				'module' => $ntfyfeed['template'],
+				'receipients' => $document['customer_username'].' <'.$document['customer_email'].'>',
+				'status' => 0,
+				'isread' => 0,
+				'created_on' => date("Y-m-d H:i:s"),
+				'created_by' => $document['customer_userid']
+			);
+
+			log_message('debug', "BaseModel::notify - Notification table data : ".json_encode($arr));
+			$notifyid = $this->save($tbl, $arr);
+
+			log_message('debug', "BaseModel::notify - Notifier Id : $notifyid | Payload: $payload");
+		}		
+	}
+}
+
+Class Search_Model extends BaseModel
 {
 	protected $default_infant_price = 1500;
 
@@ -302,24 +445,24 @@ Class Search_Model extends CI_Model
 		}         	
 	}	
 	
-    public function save($tbl,$data) 
-	{    
-		try {
-			if($this->db->insert($tbl,$data))
-			{
+    // public function save($tbl,$data) 
+	// {    
+	// 	try {
+	// 		if($this->db->insert($tbl,$data))
+	// 		{
 				
-				return $this->db->insert_id();
-			}
-			else
-			{
-				echo $this->db->last_query();die();
-				return false;
-			}
-		}	
-		catch(Exception $ex) {
-			log_message('error', $ex);
-		}
-	}
+	// 			return $this->db->insert_id();
+	// 		}
+	// 		else
+	// 		{
+	// 			echo $this->db->last_query();die();
+	// 			return false;
+	// 		}
+	// 	}	
+	// 	catch(Exception $ex) {
+	// 		log_message('error', $ex);
+	// 	}
+	// }
 	
 	// public function update($tbl, $data, $filter) {
 	// 	// $this->db->update('employee_master',$data,array('emp_ID' => 1));
@@ -1012,6 +1155,11 @@ Class Search_Model extends CI_Model
 		$sale_type = (isset($booking['ticket']) && isset($booking['ticket']['sale_type']))?$booking['ticket']['sale_type']:'request';
 		$pnr = ($selected_ticket && isset($selected_ticket['pnr']))?$selected_ticket['pnr']:'';
 
+		// $customer_company = $this->get('company_tbl', array("id" => $customer_companyid));
+		// $customer_company_user = $this->get('user_tbl', array("id" => $customer_company["primary_user_id"]));
+		// $seller_company = $this->get('company_tbl', array("id" => $seller_companyid));
+		// $seller_company_user = $this->get('user_tbl', array("id" => $seller_company["primary_user_id"]));
+
 		$ticketid = -1;
 		$bookingupdate = -1;
 
@@ -1269,6 +1417,9 @@ Class Search_Model extends CI_Model
 				$customeruserinfo = $this->get('user_tbl', array('id' => $customer_userid));
 				$customercompanyinfo = $this->get('company_tbl', array('id' => $customer_companyid));
 
+				$selleruserinfo = $this->get('user_tbl', array('id' => $seller_userid));
+				$sellercompanyinfo = $this->get('company_tbl', array('id' => $seller_companyid));
+
 				if($sale_type === 'live') {
 					$booking['status'] = 2; //processed
 				}
@@ -1400,6 +1551,18 @@ Class Search_Model extends CI_Model
 					}
 
 					log_message('debug', "Search_Model::upsert_booking - Booking activity : $returnedValue");
+
+					//Notify to user
+					if($process_db_interaction) {
+						log_message('debug', "Search_Model::upsert_booking - Notifying customer");
+
+						$this->notify(array(
+							'doctype' => 'booking',
+							'docno' => $booking_id,
+							'template' => 'booking'
+						));
+					}
+
 					//Check if there is a price differance or not.
 					//if not then no need to update ticket information in old booking
 					//if there is price differance then update old booking details
@@ -2000,6 +2163,13 @@ Class Search_Model extends CI_Model
 
 				if($booking_id>0 && $booking_activity_id>0) {
 					$this->db->trans_complete();
+
+					//notify all the user
+					$this->notify(array(
+						'doctype' => 'booking',
+						'docno' => $booking_id,
+						'template' => 'booking'
+					));
 				}
 				else {
 					$this->db->trans_rollback();
