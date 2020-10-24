@@ -4,6 +4,8 @@ include_once(APPPATH.'core/Mail_Controller.php');
 include(APPPATH.'entities/company.php');
 include_once(APPPATH.'core/Common.php');
 include_once(APPPATH.'core/TransactionResponse.php');
+include(APPPATH.'entities/specialticket.php');
+
 define('PAGE_SIZE', 25);
 
 class Search extends Mail_Controller 
@@ -189,6 +191,435 @@ class Search extends Mail_Controller
 		return $selected_3pp_api;
 	}
 
+	public function getTokenCookie() {
+		$cookie=dirname(__FILE__)."/cookie.txt"; 
+		$url = 'https://www.airtripsonline.com/site/get'; 
+		$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+
+		$curl = curl_init(); 
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_COOKIEJAR => $cookie,
+			CURLOPT_COOKIEFILE => $cookie,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_CUSTOMREQUEST => "GET",
+			CURLOPT_USERAGENT => $useragent,
+			CURLOPT_HEADER => true,
+			CURLOPT_HTTPHEADER => array(
+				"host: www.airtripsonline.com",
+				"accept: application/json",
+				"cache-control: no-cache",
+				"content-type: application/json"
+			),
+		));
+
+		$response = curl_exec($curl);
+		$jsonresult = json_decode($response);
+		$err = curl_error($curl);
+
+		$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+		$header = substr($response, 0, $header_size);
+		$body = substr($response, $header_size);
+		curl_close($curl);
+
+		$headers_indexed_arr = explode("\r\n", $header);
+		$status_message = array_shift($headers_indexed_arr);
+		$headers_arr = [];
+		foreach ($headers_indexed_arr as $value) {
+			if(false !== ($matches = explode(':', $value, 2)) && count($matches) > 1) {
+				$headers_arr["{$matches[0]}"] = trim($matches[1]);
+			}                
+		}		
+		$csrf = null;
+		if(isset($headers_arr['Csrf'])) {
+			$csrf = $headers_arr['Csrf'];
+		}
+
+		log_message('debug', 'Headers received: '.json_encode($headers_arr));
+		log_message('debug', $csrf);
+
+		return $headers_arr;
+	}
+
+	public function doAuth($uid, $pwd) {
+
+		$result = $this->getTokenCookie();
+		$csrf = null;
+
+		if($result && isset($result['Csrf'])) {
+			$csrf = $result['Csrf'];
+		}
+
+		$hash = null;
+		if($csrf) {
+			$hash = hash('sha256', $pwd, false);
+
+			$hash = hash('sha256', $csrf.''.$hash, false);
+		}
+
+		$cookie=dirname(__FILE__)."/cookie.txt"; 
+		$url = 'https://www.airtripsonline.com/agency/login'; 
+		$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+
+		$curl = curl_init(); 
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_COOKIEJAR => $cookie,
+			CURLOPT_COOKIEFILE => $cookie,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_USERAGENT => $useragent,
+			CURLOPT_HEADER => true,
+			CURLOPT_HTTPHEADER => array(
+				"host: www.airtripsonline.com",
+				"accept: application/json",
+				"cache-control: no-cache",
+				"content-type: application/json",
+				"Csrf: $csrf"
+			),
+			CURLOPT_POSTFIELDS => json_encode(array(
+				"email" => $uid,
+				"password" => $hash
+			))
+		));
+
+		$response = curl_exec($curl);
+		$jsonresult = json_decode($response);
+		$err = curl_error($curl);
+
+		$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+		$header = substr($response, 0, $header_size);
+		$body = substr($response, $header_size);
+		curl_close($curl);
+
+		return array('Csrf' => $csrf, 'Hash' => $hash);
+	}
+
+	public function getOnlineTicketsByPollingId($pollingid, $csrf) {
+		$cookie=dirname(__FILE__)."/cookie.txt"; 
+		$url = 'https://www.airtripsonline.com/air/search/result'; 
+		$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+
+		$curl = curl_init(); 
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_COOKIEJAR => $cookie,
+			CURLOPT_COOKIEFILE => $cookie,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_USERAGENT => $useragent,
+			CURLOPT_HEADER => true,
+			CURLOPT_HTTPHEADER => array(
+				"host: www.airtripsonline.com",
+				"accept: application/json",
+				"cache-control: no-cache",
+				"content-type: application/json",
+				"Csrf: $csrf"
+			),
+			CURLOPT_POSTFIELDS => json_encode(array(
+				"pollingId" => $pollingid
+			))
+		));
+
+		$response = curl_exec($curl);
+		$jsonresult = json_decode($response);
+		$err = curl_error($curl);
+
+		$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+		$header = substr($response, 0, $header_size);
+		$body = substr($response, $header_size);
+		curl_close($curl);
+
+		$live_ticket_data = json_decode($body, true);
+
+		return $live_ticket_data;
+	}
+
+	public function getOnlineInventory($source, $destination, $adult, $child, $infant, $dept_date, $airline, $context) {
+		$specialtickets = [];
+		$livetickets = [];
+		try
+		{
+			$csrf = null;
+			$result = $this->doAuth("radharaniholidays@gmail.com", "Indu@12356");
+			if($result && isset($result['Csrf'])) {
+				$csrf = $result['Csrf'];
+			}
+
+			$cookie=dirname(__FILE__)."/cookie.txt"; 
+			$url = "https://www.airtripsonline.com/air/search/supplier?adt=$adult&chd=$child&inf=$infant&cabin=Economy&dDate=$dept_date&dc=IN&destination=$destination&oc=IN&origin=$source&product=$airline";
+
+			$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+	
+			$curl = curl_init(); 
+	
+			curl_setopt_array($curl, array(
+				CURLOPT_URL => $url,
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_COOKIEJAR => $cookie,
+				CURLOPT_COOKIEFILE => $cookie,
+				CURLOPT_ENCODING => "",
+				CURLOPT_MAXREDIRS => 10,
+				CURLOPT_TIMEOUT => 0,
+				CURLOPT_FOLLOWLOCATION => true,
+				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				CURLOPT_SSL_VERIFYPEER => false,
+				CURLOPT_CUSTOMREQUEST => "GET",
+				CURLOPT_USERAGENT => $useragent,
+				CURLOPT_HEADER => true,
+				CURLOPT_HTTPHEADER => array(
+					"host: www.airtripsonline.com",
+					"accept: application/json",
+					"cache-control: no-cache",
+					"content-type: application/json",
+					"Csrf: $csrf"
+				),
+			));
+	
+			$response = curl_exec($curl);
+			$err = curl_error($curl);			
+
+			$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+			$header = substr($response, 0, $header_size);
+			$body = substr($response, $header_size);
+			// $jsonresult = json_decode($body);
+	
+ 		 	curl_close($curl);
+
+			$live_ticket_data = json_decode($body, true);
+			$poolingids = [];
+			if($live_ticket_data && $live_ticket_data['resCode'] === '200' && $live_ticket_data['message'] && is_array($live_ticket_data['message']) && count($live_ticket_data['message'])>0) {
+				$poolingids = $live_ticket_data['message'];
+			}
+
+			if(count($poolingids) > 0) {
+				log_message('debug', 'Polling ids : '.json_encode($poolingids));
+				$dept_date = date_format(date_create($dept_date), 'Ymd');
+				$invkey = strtoupper(trim($source)).strtoupper(trim($destination)).$dept_date;
+
+				$i = 0;
+				$retrycount = 0;
+				while($poolingids && $i<count($poolingids)) {
+					$pollingid = $poolingids[$i];
+
+					$payload = $this->getOnlineTicketsByPollingId($pollingid, $csrf);
+
+					if(count($payload)>0 && isset($payload['resCode']) && $payload['resCode'] === '200' && isset($payload['isFlights']) && intval($payload['isFlights'])>0) {
+						$retrycount = 0;
+						$i++;
+
+						if(isset($payload['fltSchedule']) && isset($payload['fltSchedule'][$invkey])) {
+							$tickets = $payload['fltSchedule'][$invkey];
+
+							$filled_tickets = $this->fill_transform_ticket($tickets, array(
+								'source' => $source,
+								'destination' => $destination,
+								'sourcecityid' => $context['sourcecityid'],
+								'destinationcityid' => $context['destinationcityid'],
+								'dept_date' => $dept_date,
+								'airline' => $airline,
+								'adult' => $adult,
+								'child' => $child,
+								'infant' => $infant
+							));
+
+							for($ii1=0; $ii1<count($filled_tickets); $ii1++) {
+								$filledticket = $filled_tickets[$ii1];
+
+								if($filledticket) {
+									if($filledticket->ticket_type === 'special') {
+										$specialtickets[] = $filledticket;
+									}
+									$liveticketsp[] = $filledticket;
+								}
+							}
+						}
+					}
+					else {
+						if($retrycount<=5) {
+							$retrycount++;
+							usleep(1000000); //sleep for 1 secs.
+						}
+						else {
+							$i++;
+						}
+					}
+				}
+			}
+		}
+		catch(Exception $ex) {
+			log_message('debug', "Live inventory [Exception] => ".$ex);
+		}
+
+		return array('special_tickets' => $specialtickets, 'live_tickets' => $liveticketsp);
+	}
+
+	public function fill_transform_ticket($tickets, $context) {
+		$special_tickets = [];
+		
+		if($tickets && count($tickets)>0) {
+			for($i=0; $i<count($tickets); $i++) {
+				$ticket = $tickets[$i];
+				$fcn = null;
+				$fs = [];
+				if($ticket && isset($ticket['OD']) && is_array($ticket['OD']) && count($ticket['OD'])>0) {
+					$fcn = isset($ticket['OD'][0]['fcn']) ? strtolower($ticket['OD'][0]['fcn']) : null;
+					$fs = isset($ticket['OD'][0]['FS']) ? $ticket['OD'][0]['FS'] : [];
+				}
+
+				if($fcn && $fs && count($fs) === 1) {
+					//only no stop flights allowed
+					$special_ticket = new SpecialTicket();
+					$special_ticket->ticket_type = $fcn;
+					$special_ticket->source = intval($context['sourcecityid']);
+					$special_ticket->destination = intval($context['destinationcityid']);
+					$special_ticket->sourcecode = $context['source'];
+					$special_ticket->destinationcode= $context['destination'];
+					$spltkt = $special_ticket->transform_online_ticket($ticket, $context);
+	
+					$special_tickets[] = $special_ticket;
+				}
+			}
+		}
+
+		return $special_tickets;
+	}
+
+	//array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city)
+	function save_special_inventory($special_tickets, $context) {
+		$flag = false;
+		$airlines = $context['airlines'];
+		$sourcecity = $context['sourcecity'];
+		$destinationcity = $context['destinationcity'];
+
+		try
+		{
+			for($i=0; $i<count($special_tickets); $i++) {
+				$special_ticket = $special_tickets[$i];
+
+				$ticket = $this->Search_Model->get('tickets_tbl', array('ticket_no' => "'".$special_ticket->ticket_no."'", 'data_collected_from' => "'atrip'"));
+				if($ticket && isset($ticket) && is_array($ticket) && count($ticket)>0) {
+					$ticket = $ticket[0];
+					log_message('debug', "save_special_inventory (Ticket found) => ".json_encode($ticket));
+				}
+				else {
+					$ticket = NULL;
+				}
+
+				if($ticket) {
+					//update | update($tbl,$data,$arr) 
+					$this->Search_Model->update('tickets_tbl', array(
+						'price' => $special_ticket->price,
+						'total' => $special_ticket->total,
+						'no_of_person' => $special_ticket->no_of_person,
+						'max_no_of_person' => $special_ticket->max_no_of_person,
+						'availibility' => $special_ticket->availibility,
+						'available' => $special_ticket->no_of_person > 0 ? 'YES' : 'NO',
+						'departure_date_time' => $special_ticket->departure_date_time,
+						'arrival_date_time' => $special_ticket->arrival_date_time,
+						'terminal' => $special_ticket->terminal,
+						'terminal1' => $special_ticket->terminal1,
+						'remarks' => $special_ticket->remarks,
+						'updated_by' => $special_ticket->created_by,
+						'updated_on' => date('Y-m-d H:i:s'),
+						'last_sync_key' => $special_ticket->last_sync_key,
+						'price_infant' => $special_ticket->price_infant
+					), array('ticket_no' => $special_ticket->ticket_no, 'data_collected_from' => 'atrip'));
+				}
+				else {
+					//insert
+					$airline = 0;
+					for($ii1=0; $ii1<count($airlines); $ii1++) {
+						if($airlines[$ii1]['aircode'] === $special_ticket->aircode) {
+							$airline = intval($airlines[$ii1]['id']);
+							break;
+						}
+					}
+
+					$tktid = $this->Search_Model->save('tickets_tbl', array(
+						'created_date' => date('Y-m-d H:i:s'),
+						'source' => $special_ticket->source,
+						'destination' => $special_ticket->destination,
+						'trip_type' => $special_ticket->trip_type,
+						'departure_date_time' => $special_ticket->departure_date_time,
+						'arrival_date_time' => $special_ticket->arrival_date_time,
+						"flight_no" => $special_ticket->flight_no,
+						"terminal" => $special_ticket->terminal,
+						"terminal1" => $special_ticket->terminal1,
+						"no_of_person" => $special_ticket->no_of_person,
+						"max_no_of_person" => $special_ticket->max_no_of_person,
+						"availibility" => $special_ticket->no_of_person,
+						"available" => $special_ticket->no_of_person > 0 ? 'YES' : 'NO',
+						"class" => $special_ticket->class,
+						"no_of_stops" => $special_ticket->no_of_stop,
+						// "stops_name" => $ticket['stop_name'],
+						// "no_of_stops1" => $ticket['no_of_stops1'],
+						// "stops_name1" => $ticket['stops_name1'],
+						"airline" => $airline,
+						// "airline1" => $ticket['airline1'],
+						"aircode" => $special_ticket->aircode,
+						// "aircode1" => $ticket['aircode1'],
+						"ticket_no" => $special_ticket->ticket_no,
+						"price" => $special_ticket->price,
+						"baggage" => $special_ticket->baggage,
+						"meal" => $special_ticket->meal,
+						"markup" => $special_ticket->markup,
+						"admin_markup" => 0,
+						"discount" => 0,
+						"total" => $special_ticket->total,
+						"sale_type" => $special_ticket->sale_type,
+						"refundable" => $special_ticket->refundable,
+						"user_id" => $special_ticket->user_id,
+						"remarks" => $special_ticket->remarks,
+						"approved" => $special_ticket->approved,
+						// "available" => 'NO', //'YES', //Making this as a temporary fix. With live booking this will be changed
+						"data_collected_from" => $special_ticket->data_collected_from,
+						"last_sync_key" => $special_ticket->last_sync_key,
+						"created_by" => $special_ticket->created_by,
+						"companyid" => $special_ticket->companyid,
+						"price_child" => 0.00,
+						"price_infant" => $special_ticket->price_infant,
+						"cancel_rate" => $special_ticket->cancel_rate,
+						"booking_freeze_by" => $special_ticket->departure_date_time,
+						"tag" => $special_ticket->tag
+					));
+
+					if($tktid && intval($tktid)>0) {
+						log_message('debug', "New special inventory added $tktid");
+					}
+				}
+			}
+
+			$flag = true;
+		}
+		catch(Exception $ex) {
+			log_message('debug', $ex);
+		}
+
+		return $flag;
+	}
+
 	public function search_one_way()
 	{ 
 		if ($this->session->userdata('user_id')) 
@@ -233,6 +664,8 @@ class Search extends Mail_Controller
 
 				// Load 3rd party inventory
 				$thirdparty_tickets = null;
+				$live_ticket_data = NULL;
+				
 				//read company settings.
 				//what all thirdparty integration enabled, work on those library only.
 				$airlines = $this->Search_Model->get('airline_tbl', array());
@@ -348,39 +781,53 @@ class Search extends Mail_Controller
 							}
 						}
 					}
+
+					//Live ticket checks
+					$dept_date = date_format(date_create($this->input->post('departure_date')), 'Y-m-d');
+					$liveInventory = $this->getOnlineInventory($source_city['code'], $destination_city['code'], 1, 1, 1, $dept_date, "DOMAIR", array('sourcecityid' => intval($source_city['id']), 'destinationcityid' => intval($destination_city['id'])));
+
+					if($liveInventory && isset($liveInventory['live_tickets'])) {
+						$live_ticket_data = $liveInventory['live_tickets'];
+
+						//save special fare to DB.
+						$special_tickets = $liveInventory['special_tickets'];
+						if($special_tickets && count($special_tickets) > 0) {
+							$this->save_special_inventory($special_tickets, array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city));
+						}
+					}
 				}
 
-				//Live ticket checks
-				$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
-				$url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=5239f6f98b93cbe7b61a9f47a7ba1634&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
+				#region Old Goibibo code
+				// $url = "http://developer.goibibo.com/api/search/?app_id=f8803086&app_key=5239f6f98b93cbe7b61a9f47a7ba1634&format=json&source=".$source_city['code']."&destination=".$destination_city['code']."&dateofdeparture=".$dept_date."&seatingclass=E&adult=1&children=0&infant=0&counter=100";
 	
-				$curl = curl_init();
+				// $curl = curl_init();
 
-				curl_setopt_array($curl, array(
-					CURLOPT_URL => $url,
-					CURLOPT_RETURNTRANSFER => true,
-					CURLOPT_ENCODING => "",
-					CURLOPT_MAXREDIRS => 10,
-					CURLOPT_TIMEOUT => 30,
-					CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-					CURLOPT_CUSTOMREQUEST => "GET",
-					CURLOPT_HTTPHEADER => array(
-					"cache-control: no-cache"
-					),
-				));
+				// curl_setopt_array($curl, array(
+				// 	CURLOPT_URL => $url,
+				// 	CURLOPT_RETURNTRANSFER => true,
+				// 	CURLOPT_ENCODING => "",
+				// 	CURLOPT_MAXREDIRS => 10,
+				// 	CURLOPT_TIMEOUT => 30,
+				// 	CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+				// 	CURLOPT_CUSTOMREQUEST => "GET",
+				// 	CURLOPT_HTTPHEADER => array(
+				// 	"cache-control: no-cache"
+				// 	),
+				// ));
 		
-				$response = curl_exec($curl);
-				$err = curl_error($curl);
+				// $response = curl_exec($curl);
+				// $err = curl_error($curl);
 		
-				curl_close($curl);
+				// curl_close($curl);
 
-				$live_ticket_data = json_decode($response, true);
-				if($live_ticket_data && count($live_ticket_data)>0 && isset($live_ticket_data['data']['onwardflights'])) {
-					$live_ticket_data = $live_ticket_data['data']['onwardflights'];
-				}
-				else {
-					$live_ticket_data = NULL;
-				}
+				// $live_ticket_data = json_decode($response, true);
+				// if($live_ticket_data && count($live_ticket_data)>0 && isset($live_ticket_data['data']['onwardflights'])) {
+				// 	$live_ticket_data = $live_ticket_data['data']['onwardflights'];
+				// }
+				// else {
+				// 	$live_ticket_data = NULL;
+				// }
+				#endregion
 		
 				$company = $this->session->userdata('company');
 				$currentuser = $this->session->userdata('current_user');
@@ -491,12 +938,18 @@ class Search extends Mail_Controller
 					if($live_ticket_data && count($live_ticket_data)>0 && $ticket['sale_type']!=='api') {
 						for ($tk=0; $tk < count($live_ticket_data); $tk++) {
 							$live_ticket = $live_ticket_data[$tk];
-							$depttime = (isset($live_ticket['deptime']) ? $live_ticket['deptime']: '');
+							$depttime = date('H:i', strtotime($live_ticket->departure_date_time));
+							//$depttime = (isset($live_ticket['departure_date_time']) ? $live_ticket['departure_date_time']: '');
 							$tkt_deptime = date('H:i', strtotime($ticket['departure_date_time']));
 							$range1 = date('H:i', strtotime($ticket['departure_date_time'])-(60*20));
 							$range2 = date('H:i', strtotime($ticket['departure_date_time'])+(60*20)); //If 20 mins is risky we can reduce it.
-							$carrierid = (isset($live_ticket['carrierid']) ? $live_ticket['carrierid'] : '');
-							$cachekey = $carrierid.'-'.$live_ticket['flightno'];
+							//$carrierid = (isset($live_ticket['carrierid']) ? $live_ticket['carrierid'] : '');
+							//$carrierid = (isset($live_ticket['aircode']) ? $live_ticket['aircode'] : '');
+							$carrierid = $live_ticket->aircode;
+							//$cachekey = $carrierid.'-'.$live_ticket['flightno'];
+							//$cachekey = $live_ticket['ticket_no'];
+							//$cachekey = $live_ticket->ticket_no;
+							$cachekey = $live_ticket->flight_no;
 							//$flight_no = str_replace('_', '', str_replace('-', '', $ticket['flight_no']));
 							$flight_no = trim($ticket['flight_no']);
 							$fl_no = 0;
@@ -509,7 +962,7 @@ class Search extends Mail_Controller
 
 							log_message('debug', "Match criteria => $carrierid === ".$ticket['aircode']." | $depttime === $tkt_deptime | $depttime>=$range1 && $depttime<=$range2 | Within range -> ".($depttime>=$range1 && $depttime<=$range2));
 
-							if($live_ticket && intval($live_ticket['stops'])===0 && ($flight_no===$cachekey || ($carrierid===$ticket['aircode'] && ($depttime===$tkt_deptime || ($depttime>=$range1 && $depttime<=$range2))))) {
+							if($live_ticket && intval($live_ticket->no_of_stop)===0 && ($flight_no===$cachekey || ($carrierid===$ticket['aircode'] && ($depttime===$tkt_deptime || ($depttime>=$range1 && $depttime<=$range2))))) {
 								if($flight_no===$cachekey) {
 									$ticket['live_corrected'] = false;
 								} else {
@@ -526,21 +979,22 @@ class Search extends Mail_Controller
 					if($live_ticket) {
 						$ticketid = intval($ticket['id']);
 						log_message('debug', "Matching Live Ticket => ".json_encode($live_ticket, TRUE));
-						$live_dept_date = date('Y-m-d H:i:s', strtotime($live_ticket['depdate']));
-						$live_arrv_date = date('Y-m-d H:i:s', strtotime($live_ticket['arrdate']));
-						$live_flight_no = $live_ticket['carrierid']."-".$live_ticket['flightcode'];
+						$live_dept_date = date('Y-m-d H:i:s', strtotime($live_ticket->departure_date_time));
+						$live_arrv_date = date('Y-m-d H:i:s', strtotime($live_ticket->arrival_date_time));
+						$live_flight_no = $live_ticket->flight_no; //$live_ticket['carrierid']."-".$live_ticket['flightcode'];
 
 						log_message('debug', "Dept Date => $live_dept_date | Arrv Date => ".$live_arrv_date);
 
 						$ticket['departure_date_time'] = $live_dept_date;
 						$ticket['arrival_date_time'] = $live_arrv_date;
 						$ticket['flight_no'] = $live_flight_no;
-						$ticket['terminal'] = isset($live_ticket['depterminal'])?'T-'.$live_ticket['depterminal']:'';
-						$ticket['departure_terminal'] = isset($live_ticket['depterminal'])?'T-'.$live_ticket['depterminal']:'';
-						$ticket['arrival_terminal'] = isset($live_ticket['arrterminal'])?'T-'.$live_ticket['arrterminal']:'';
+						$ticket['terminal'] = isset($live_ticket->terminal)?$live_ticket->terminal:'';
+						$ticket['departure_terminal'] = isset($live_ticket->terminal)?$live_ticket->terminal:'';
+						$ticket['arrival_terminal'] = isset($live_ticket->terminal1)?$live_ticket->terminal1:'';
 
-						$ticket['live_fare'] = floatval($live_ticket['fare']['adulttotalfare']);
-						$ticket['seatsavailable'] = intval($live_ticket['seatsavailable']);
+						//$ticket['live_fare'] = floatval($live_ticket['fare']['adulttotalfare']);
+						$ticket['live_fare'] = floatval($live_ticket->price);
+						$ticket['seatsavailable'] = intval($live_ticket->no_of_person);
 
 						if(isset($ticket['live_corrected']) && boolval($ticket['live_corrected'])) {
 							log_message('debug', 'There is a change according to system info => flight_no: '.$ticket['flight_no'].' | terminal: '.$ticket['departure_terminal'].' | terminal1: '.$ticket['arrival_terminal']);
@@ -548,8 +1002,8 @@ class Search extends Mail_Controller
 								'departure_date_time' => $live_dept_date, 
 								'arrival_date_time' => $live_arrv_date, 
 								'flight_no' => $live_flight_no, 
-								'terminal' => isset($live_ticket['depterminal'])?'T-'.$live_ticket['depterminal']:'', 
-								'terminal1' => isset($live_ticket['arrterminal'])?'T-'.$live_ticket['arrterminal']:''
+								'terminal' => $ticket['terminal'], 
+								'terminal1' => $ticket['arrival_terminal']
 							), array('id' => $ticketid));
 	
 							log_message('debug', "Ticket updated with live info => $ticket_update_result");

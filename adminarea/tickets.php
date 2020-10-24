@@ -90,6 +90,7 @@ if(!in_array(5,$auth))
 														<option value="sng">SS Travels</option>
 														<option value="rtt">Rose Tours & Travels</option>
 														<option value="tgtt">Trans Global</option>
+														<option value="atrip">Airtrip</option>
 													</select>
 												</div> 												
 												
