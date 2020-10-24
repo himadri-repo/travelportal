@@ -1553,6 +1553,7 @@ Class Search_Model extends BaseModel
 					log_message('debug', "Search_Model::upsert_booking - Booking activity : $returnedValue");
 
 					//Notify to user
+					#region Notify user via Email
 					if($process_db_interaction) {
 						log_message('debug', "Search_Model::upsert_booking - Notifying customer");
 
@@ -1562,6 +1563,7 @@ Class Search_Model extends BaseModel
 							'template' => 'booking'
 						));
 					}
+					#endregion
 
 					//Check if there is a price differance or not.
 					//if not then no need to update ticket information in old booking
