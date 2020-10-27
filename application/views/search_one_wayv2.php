@@ -405,7 +405,8 @@
                                 }
                                 
                                 //if($flight[$key]["adult_total"]>0) {
-                                $splcode = 'special fare';
+								$splcode = 'special fare';
+								$rmkrs = '';
                                 if(isset($flight[$key]["sale_type"]) && $flight[$key]["sale_type"] !== 'api') {
                                     $source_city = $flightitem['source_city_code'];
                                     $destination_city = $flightitem['destination_city_code'];
@@ -429,12 +430,14 @@
 									$arrv_terminal = "T-".$flightitem['arrival_terminal'];
                                 }
                                 
-
+								//$flightitem
                                 if((intval($flight[$key]["companyid"])===intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
-                                    $splcode = $flight[$key]["data_collected_from"];
+									$splcode = $flight[$key]["data_collected_from"];
+									$rmkrs = $flight[$key]["remarks"];
 								}
 								else if((intval($flight[$key]["companyid"])!==intval($currentuser['companyid'])) && intval($currentuser['is_admin'])===1) {
 									$splcode = $flight[$key]["companyname"];
+									$rmkrs = $flight[$key]["remarks"];
 								}
 								
 								$sale_type = $flight[$key]["sale_type"];
@@ -617,6 +620,7 @@
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
                                                 <?php if($flightitem["live_fare"]>0 && $flightitem["sale_type"]!=='api') {?>
                                                     <!-- <div style="color: #1433a5; font-size: 0.80em; display: inline-block;">Current System fare : <i class='fa fa-inr'></i> <?= number_format($flightitem["live_fare"],2,".",","); ?> | <?= ($flightitem["seatsavailable"]>10?'10+':$flightitem["seatsavailable"]) ?> seat(s) left</div> -->
+													<div style="color: #1433a5; font-size: 0.80em; display: inline-block;"><?= $rmkrs ?></div>
                                                 <?php } ?>
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">

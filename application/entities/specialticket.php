@@ -139,7 +139,7 @@ class SpecialTicket {
                 $cancel = isset($adultdata['farerule']) ? (floatval($adultdata['farerule']['cancel'])+200) : 0;
                 $meal = (isset($adultdata['meal']) && boolval($adultdata['meal'])) ? 'YES' : 'NO';
                 $bag = (isset($adultdata['bag']) && isset($adultdata['bag']['value'])) ? $adultdata['bag']['value'].' '.$adultdata['bag']['unit'] : '';
-                $this->remarks = 'Meal : '.$meal.' | baggage : '.$bag.' | Reschedule : '.$reschedule.' | Cancel : '.$cancel;
+                $this->remarks = 'Meal : '.$meal.' | baggage : '.$bag.' | Reschedule : '.$reschedule.' | Cancel : '.$cancel.' | ['. strtoupper($this->ticket_type) .']';
                 $this->cancel_rate = $cancel;
 
                 $this->ticket_no = $ticketid;
@@ -159,6 +159,62 @@ class SpecialTicket {
         }
 
         return $this;
+    }
+
+    public function fill_data($ticket) {
+        if(!$ticket) return;
+
+        try {
+            $this->id = $ticket->id;
+            $this->trip_type = $ticket->trip_type;
+            $this->supplier = $ticket->supplier;
+            $this->suppliercode = $ticket->suppliercode;
+            $this->departure_date_time = $ticket->departure_date_time;
+            $this->arrival_date_time = $ticket->arrival_date_time;
+            $this->flight_no = $ticket->flight_no;
+            $this->aircode = $ticket->aircode;
+            $this->airlinecode = $ticket->airlinecode;
+            $this->airlinename = $ticket->airlinename;
+            $this->dept_airport_name = $ticket->dept_airport_name;
+            $this->arrv_airport_name = $ticket->arrv_airport_name;
+            $this->class = $ticket->class;
+            $this->totalduration = $ticket->totalduration;
+            $this->sourcecode = $ticket->sourcecode;
+            $this->destinationcode = $ticket->destinationcode;
+            $this->terminal = $ticket->terminal;
+            $this->terminal1 = $ticket->terminal1;
+
+            $this->no_of_person = $ticket->no_of_person;
+            $this->availibility = $ticket->availibility;
+            $this->max_no_of_person = $ticket->max_no_of_person;
+            $this->available = $ticket->available;
+            $this->no_of_stop = $ticket->no_of_stop;
+            $this->data_collected_from = 'atrip';
+            $this->last_sync_key = $ticket->last_sync_key;
+            $this->companyid = $ticket->companyid;
+            $this->user_id = $ticket->user_id;
+            $this->created_by = $ticket->created_by;
+            $this->refundable = $ticket->refundable;
+            $this->approved = $ticket->approved;
+            $this->sale_type = $ticket->sale_type;
+            $this->tag = $ticket->tag;
+
+            $this->remarks = $ticket->remarks;
+            $this->cancel_rate = $ticket->cancel_rate;
+
+            $this->ticket_no = $ticket->ticket_no;
+            
+            $this->price = $ticket->price;
+            $this->total = $ticket->total;
+            $this->baggage = $ticket->baggage;
+            $this->meal = $ticket->meal;
+            $this->markup = $ticket->markup;
+            $this->discount = $ticket->discount;
+            $this->price_infant = $ticket->price_infant;
+        }
+        catch(Exception $ex) {
+            log_message('debug', $ex);
+        }
     }
 }
 ?>

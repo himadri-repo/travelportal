@@ -359,6 +359,7 @@ class Search extends Mail_Controller
 	public function getOnlineInventory($source, $destination, $adult, $child, $infant, $dept_date, $airline, $context) {
 		$specialtickets = [];
 		$livetickets = [];
+		$minfarelist = array();
 		try
 		{
 			$csrf = null;
@@ -445,12 +446,37 @@ class Search extends Mail_Controller
 							));
 
 							for($ii1=0; $ii1<count($filled_tickets); $ii1++) {
-								$filledticket = $filled_tickets[$ii1];
+								$filledticket = $filled_tickets[$ii1];								
 
 								if($filledticket) {
-									if($filledticket->ticket_type === 'special') {
-										$specialtickets[] = $filledticket;
+									// $minfarelist[$filledticket->flight_no] = $filledticket->total;
+
+									if(!isset($minfarelist[$filledticket->flight_no]) || floatval($minfarelist[$filledticket->flight_no]) > floatval($filledticket->total)) {
+										$splticket = null;
+										for($yi=0; $yi<count($specialtickets); $yi++) {
+											$splticket = $specialtickets[$yi];
+											$flightno = trim($splticket->flight_no);
+											$flightno1 = trim($filledticket->flight_no);
+											if($flightno === $flightno1) {
+												break;
+											}
+											else {
+												$splticket = null;
+											}
+										}
+
+										if($splticket) {
+											$splticket->fill_data($filledticket);
+										}
+										else {
+											$specialtickets[] = $filledticket;
+										}
+										$minfarelist[$filledticket->flight_no] = floatval($filledticket->total);
 									}
+
+									// if($filledticket->ticket_type === 'special') {
+									// 	$specialtickets[] = $filledticket;
+									// }
 									$liveticketsp[] = $filledticket;
 								}
 							}
@@ -1190,7 +1216,7 @@ class Search extends Mail_Controller
 			'source1' => 0,
 			'destination' => 0,
 			'uid' => intval($ticket['user_id']),
-			'remarks' => 'FD ticket',
+			'remarks' => trim($ticket['remarks']), //'FD ticket',
 			'departure_date_time1' => '',
 			'arrival_date_time1' => '',
 			'flight_no1' => '',
