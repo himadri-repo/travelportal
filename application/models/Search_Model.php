@@ -1388,6 +1388,19 @@ Class Search_Model extends BaseModel
 
 				}
 
+				//Notify to user
+				#region Notify user via Email
+				if($process_db_interaction) {
+					log_message('debug', "Search_Model::upsert_booking - Notifying customer/wholesaler/supplier");
+
+					$this->notify(array(
+						'doctype' => 'booking',
+						'docno' => $booking_id,
+						'template' => 'booking'
+					));
+				}
+				#endregion				
+
 				if($bookingupdate>0) {
 					$this->db->trans_complete();
 				}
