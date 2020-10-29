@@ -32,6 +32,11 @@ class Search extends Mail_Controller
 	{  
 		if ($this->session->userdata('user_id')) 
 		{ 
+			//*************** Temporary code, must be deleted before deployment */
+			// $this->Search_Model->cancel_booking(2431); //Child
+			// $this->Search_Model->cancel_booking(2430); //Parent
+			//*************** End of Temporary code, must be deleted before deployment */
+
 			$current_user = $this->session->userdata('current_user');
 			$company = $this->session->userdata('company');
 			if(NEW_FLOW) {

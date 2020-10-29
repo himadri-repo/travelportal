@@ -12,6 +12,23 @@ Class BaseModel extends CI_Model {
 
 	}
 
+	public function query($sql) {
+		log_message('debug', "Query => $sql");
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{
+			$result = $query->result_array();
+            return $result;
+		}
+		else
+		{
+			//return $sql;
+			return false;
+		}
+	}
+
 	//Common methods
     public function save($tbl,$data) 
 	{    
@@ -89,7 +106,7 @@ Class BaseModel extends CI_Model {
 		$sql = "select 	sl_cmp.id as seller_companyid, sl_cmp.display_name as seller_companyname, sl_cmp.baseurl as seller_url, cus_cmp.id as customer_companyid, cus_cmp.display_name as customer_companyname, 
 						sl_usr.id as seller_userid, sl_usr.name as seller_username, sl_usr.email as seller_email, sl_usr.mobile as seller_mobile, sl_usr.type as seller_type,
 						cus_usr.id as customer_userid, cus_usr.name as customer_username, cus_usr.email as customer_email, cus_usr.mobile as customer_mobile, cus_usr.type as customer_type
-						,bk.id as bookingid, bk.booking_date, case when bk.status=0 then 'Pending' else (case when bk.status=2 then 'Processed' else 'In-Process' end) end as status
+						,bk.id as bookingid, bk.booking_date, case when bk.status=0 then 'Pending' else (case when bk.status=2 then 'Processed' else (case when bk.status=8 then 'Rejected' else 'In-Process' end) end) end as status
 						,tk.id as ticketid, tk.ticket_no, src.city as source, dst.city as destination, tk.departure_date_time, tk.arrival_date_time, tk.flight_no, tk.terminal, 
 						air.airline, air.aircode,
 						bk.total as price, bk.qty, bk.adult, bk.child, bk.infant, case when bk.trip_type=1 then 'ONE_WAY' else 'ROUND_TRIP' end as trip_type
@@ -795,7 +812,8 @@ Class Search_Model extends BaseModel
 			$this->db->where($arr, null, false);
 		}
 		
-		$query = $this->db->get();							
+		$query = $this->db->get();
+		$qry = $this->db->last_query();
 		if ($query->num_rows() > 0) 
 		{					
             return $query->result_array();		
@@ -1399,7 +1417,22 @@ Class Search_Model extends BaseModel
 						'template' => 'booking'
 					));
 				}
-				#endregion				
+				#endregion
+
+				//if order is cancelled then we need to reverse the payment deducted and also adjust accounts.
+				if($booking['status'] == 8) {
+					$result = $this->cancel_booking($booking_id);
+					if($result) {
+						log_message('debug', "Search_Model::upsert_booking - Notifying customer/wholesaler/supplier as the previous booking got cancelled, wallet deduction & accounts transactions are reversed");
+
+						//Notification to be sent to both customer and vendor
+						// $this->notify(array(
+						// 	'doctype' => 'booking',
+						// 	'docno' => $booking_id,
+						// 	'template' => 'wallet_update'
+						// ));
+					}
+				}
 
 				if($bookingupdate>0) {
 					$this->db->trans_complete();
@@ -1865,6 +1898,112 @@ Class Search_Model extends BaseModel
 		else {
 			return array('status' => true, 'booking_id' => $returnedValue, 'sale_type' => $sale_type, 'message' => 'Successfully saved');
 		}
+	}
+
+	//wallet reverse due to cancel booking
+	public function cancel_booking($bookingid = -1) {
+		if($bookingid<=0) return false;
+
+		$flag = false;
+
+		//Get the booking details by booking id
+		$booking = $this->get('bookings_tbl', array('id' => $bookingid));
+		if($booking && count($booking) > 0) {
+			$booking = $booking[0];
+		}
+		//get the booking_details related to wallet reverse
+		if($booking && intval($booking['status']) === 8) {
+			if (intval($booking['id']) > 0 && intval($booking['pbooking_id']) > 0) {
+				//Booking cancelled between supplier and wholesaler
+				$parent_bookingid = intval($booking['pbooking_id']);
+				$transid = uniqid();
+				$wallet_trans_date = date('Y-m-d H:i:s');
+				$wallettrans = $this->get('wallet_transaction_tbl', array('trans_ref_id' => $parent_bookingid, 'trans_type' => 20, 'userid' => 0, 'sponsoring_companyid' => -1));
+			} elseif (intval($booking['id']) > 0 && intval($booking['pbooking_id']) === 0) {
+				$parent_bookingid = intval($booking['pbooking_id']);
+				$transid = uniqid();
+				$wallet_trans_date = date('Y-m-d H:i:s');
+				$wallettrans = $this->query("select * from wallet_transaction_tbl where trans_ref_id = $bookingid and trans_type=20 and userid>0"); // $this->get('wallet_transaction_tbl', array('trans_ref_id' => $parent_bookingid, 'trans_type' => 20, 'userid' => 0, 'sponsoring_companyid' => -1));
+			}
+
+			for($i=0; $i<count($wallettrans); $i++) {
+				$wallettran = $wallettrans[$i];
+				$walletid = $wallettran['wallet_id'];
+
+				$doc_ref_type = $wallettran['trans_ref_type']==='PURCHASE' ? 'CREDIT NOTE' : 'DEBIT NOTE';
+				$crdrtype = $wallettran['dr_cr_type']==='CR' ?'DR':'CR';
+				$amount = abs($wallettran['amount']);
+				$transactinguserid = intval($wallettran['userid']);
+				
+				$transaction_id = $this->save("wallet_transaction_tbl", array(
+					"wallet_id" => $walletid, 
+					"date" => $wallet_trans_date, 
+					"trans_id" => $transid, 
+					"trans_tracking_id" => $wallettran['trans_id'], 
+					"companyid" => $wallettran['companyid'], 
+					"userid" => $transactinguserid, 
+					"amount" => $amount, 
+					'dr_cr_type'=> $crdrtype,
+					'trans_type'=> $wallettran['trans_type'], /*20 is for Ticket Booking | 11 is Credit Note | 12 is Debit Note*/
+					"trans_ref_id" => $wallettran['trans_ref_id'],
+					"trans_ref_date" => $wallettran['trans_ref_date'],
+					'trans_ref_type'=> $doc_ref_type,
+					"trans_documentid" => $bookingid,
+					"narration" => "Booking # BK-$bookingid is cancelled. So reversing wallet transactions. $doc_ref_type (ref: $transid) issued.",
+					"sponsoring_companyid" => $wallettran['sponsoring_companyid'],
+					"status" => 1,
+					"approved_by" => $booking['seller_userid'],
+					"approved_on" => $wallet_trans_date,
+					"target_companyid" => $wallettran['target_companyid'], 
+					"created_by" => $booking['seller_userid'],
+					"created_on" => $wallet_trans_date
+				));
+
+				$wallet = $this->get("system_wallets_tbl", array('id' => $walletid));
+				if($wallet && count($wallet)>0) {
+					$wallet = $wallet[0];
+				}
+
+				if($wallet) {
+					$walletsummary = $this->update("system_wallets_tbl", array("balance" => floatval($wallet['balance']) + ($crdrtype === 'CR'? $amount : -$amount)), array("id" => $walletid));
+					$walletoldbalance = floatval($wallet['balance']);
+					$wallet = $this->get("system_wallets_tbl", array('id' => $walletid));
+					if($wallet && count($wallet)>0) {
+						$wallet = $wallet[0];
+					}
+
+					log_message('debug', "Wallet summary of $walletid updated. Old value : $walletoldbalance | New value : ".floatval($wallet['balance']));
+				}
+
+				//This is the place to add account transaction
+				$seller_companyid = $wallettran['companyid'];
+				$customer_companyid = $wallettran['target_companyid'];
+				$seller_company = $this->get('company_tbl', array('id' => $seller_companyid));
+				if($seller_company && count($seller_company) > 0) {
+					$seller_company = $seller_company[0];
+				}
+		
+				$whl_voucher_no = $this->save("account_transactions_tbl", array(
+					"voucher_no" => $this->Search_Model->get_next_voucherno($seller_company), 
+					"transacting_companyid" => $customer_companyid, 
+					"transacting_userid" => $transactinguserid > 0 ? $transactinguserid : 0, //$parameters["customer_userid"],  This is in between wholesaler and supplier primary account so userid is zero
+					"documentid" => $bookingid, 
+					"document_date" => $booking['booking_date'], 
+					"document_type" => $doc_ref_type==='DEBIT NOTE'?4:3,
+					"transaction_type" => $doc_ref_type,
+					"debit" => $crdrtype==='DR' ? $amount : 0,  
+					"credit" => $crdrtype==='CR' ? $amount : 0,   /* Collection received from Customer so posting it to his credit account */
+					"companyid" => $seller_companyid,  
+					"credited_accountid" => null,  //some dummy value
+					"created_by" => $booking['seller_userid'],
+					"narration" => "Transaction reversed due to cancellation of (Booking id: $bookingid dated: ".date("Y-m-d H:i:s", strtotime($booking["booking_date"].'+00:00'))
+				));
+
+				$flag = $transaction_id > -1 && $whl_voucher_no > -1;
+			}
+		}
+
+		return $flag;
 	}
 
 	private function raiseVoucher($payload) {
