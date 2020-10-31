@@ -543,9 +543,20 @@ class Search extends Mail_Controller
 		$airlines = $context['airlines'];
 		$sourcecity = $context['sourcecity'];
 		$destinationcity = $context['destinationcity'];
+		$deptdate = $context['departure_date'];
 
 		try
 		{
+			//MIGHT_BE_SOLD_OR_ON_REQUEST
+			$key = uniqid();
+			$flag_result = $this->Search_Model->update('tickets_tbl', array(
+				'last_sync_key' => $key
+			), array(
+				'data_collected_from' => 'atrip',
+				'date_format(departure_date_time, "%Y-%m-%d") = ' => date("Y-m-d",strtotime($deptdate)),
+				'last_sync_key <>' => 'MIGHT_BE_SOLD_OR_ON_REQUEST'
+			));
+
 			for($i=0; $i<count($special_tickets); $i++) {
 				$special_ticket = $special_tickets[$i];
 
@@ -641,6 +652,17 @@ class Search extends Mail_Controller
 					}
 				}
 			}
+
+			//now remove all left out tickets
+			$flag_result = $this->Search_Model->update('tickets_tbl', array(
+				'last_sync_key' => 'MIGHT_BE_SOLD_OR_ON_REQUEST',
+				"no_of_person" => 0,
+				"availibility" => 0,
+				"available" => 'NO'
+			), array(
+				'data_collected_from' => 'atrip',
+				'last_sync_key' => $key
+			));
 
 			$flag = true;
 		}
@@ -823,7 +845,7 @@ class Search extends Mail_Controller
 						//save special fare to DB.
 						$special_tickets = $liveInventory['special_tickets'];
 						if($special_tickets && count($special_tickets) > 0) {
-							$this->save_special_inventory($special_tickets, array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city));
+							$this->save_special_inventory($special_tickets, array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city, 'departure_date' => $dept_date));
 						}
 					}
 				}
