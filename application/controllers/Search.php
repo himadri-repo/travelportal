@@ -377,7 +377,8 @@ class Search extends Mail_Controller
 			$url = "https://www.airtripsonline.com/air/search/supplier?adt=$adult&chd=$child&inf=$infant&cabin=Economy&dDate=$dept_date&dc=IN&destination=$destination&oc=IN&origin=$source&product=$airline";
 
 			$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
-	
+
+/*			
 			$curl = curl_init(); 
 	
 			curl_setopt_array($curl, array(
@@ -409,11 +410,13 @@ class Search extends Mail_Controller
 			$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
 			$header = substr($response, 0, $header_size);
 			$body = substr($response, $header_size);
-			// $jsonresult = json_decode($body);
 	
  		 	curl_close($curl);
 
 			$live_ticket_data = json_decode($body, true);
+*/
+			$live_ticket_data = null;
+			$liveticketsp = [];
 			$poolingids = [];
 			if($live_ticket_data && $live_ticket_data['resCode'] === '200' && $live_ticket_data['message'] && is_array($live_ticket_data['message']) && count($live_ticket_data['message'])>0) {
 				$poolingids = $live_ticket_data['message'];
