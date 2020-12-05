@@ -499,7 +499,7 @@
                     <input type="hidden" id="child" name="child" value="<?= (intval($child)>0 ? intval($child) : 0) ?>"> 
                     <input type="hidden" id="infant" name="infant" value="<?= (intval($infant)>0 ? intval($infant) : 0) ?>"> 
                     <input type="hidden" id="class_type" name="class_type" value="<?= $class ?>"> 
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator">
                         <!-- <span>From</span> -->
                         <?php 
                         if($api_style) {
@@ -530,7 +530,7 @@
                         }
                         ?>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator">
                         <!-- <span>To</span> -->
                         <?php
                         if($api_style) {
@@ -559,13 +559,13 @@
                         }
                         ?>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator">
                         <!-- <span>Dept Date</span> -->
                         <div class="group-item auto-height">
                             <input id="departure_date" name="departure_date" type="text" class="datepicker sc-input" placeholder="Journey Date" autocomplete="off" value="<?= $departure_date ?>">
                         </div>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator">
                         <!-- <span>Rtn Date</span> -->
                         <div class="group-item auto-height">
                             <input id="return_date" name="return_date" type="text" class="datepicker sc-input" placeholder="Return Date" autocomplete="off" disabled value="<?= $return_date ?>">
@@ -804,6 +804,20 @@
         });
     });
 
+    function setType(trip_type) {
+        //alert(trip_type);
+
+        if(trip_type && trip_type==='R') {
+            $('#return_date').removeAttr('disabled');
+            $('.click-round').addClass('bg-color');
+            $('.click-one').removeClass('bg-color');
+        }
+        else if(trip_type && trip_type==='O') {
+            $('#return_date').attr('disabled', 'disabled');
+            $('.click-round').removeClass('bg-color');
+            $('.click-one').addClass('bg-color');
+        }
+    }
 
     function updateTravellersCount() {
         var travellers_count = 0;

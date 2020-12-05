@@ -91,6 +91,7 @@ if(!in_array(5,$auth))
 														<option value="rtt">Rose Tours & Travels</option>
 														<option value="tgtt">Trans Global</option>
 														<option value="atrip">Airtrip</option>
+														<option value="bmf">Book My FLy</option>
 													</select>
 												</div> 												
 												
