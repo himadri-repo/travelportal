@@ -4,6 +4,16 @@ $dt=new DateTime();
 if(isset($_REQUEST["tag"]))
 {
 	$tag=$_REQUEST["tag"];
+	$sector = isset($_REQUEST["sector"])?$_REQUEST["sector"]:"";
+	$source = "";
+	$destination = "";
+	if($sector && $sector!=='') {
+		$sectors = explode('-', $sector);
+		if(count($sectors)>1) {
+			$source = trim($sectors[0]);
+			$destination = trim($sectors[1]);
+		}
+	}
 	$response=array();
 	switch($tag)
 	{
@@ -30,7 +40,14 @@ if(isset($_REQUEST["tag"]))
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE  $field='$value' and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue ORDER BY t.id DESC";
+								WHERE  $field='$value' and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue ";
+							if($source!=='') {
+								$sql .= " and source.code='$source' ";
+							}
+							if($destination!=='') {
+								$sql .= " and destination.code='$destination' ";
+							}
+							$sql .= "ORDER BY t.id DESC";
 						}
 						else
 						{
@@ -39,11 +56,17 @@ if(isset($_REQUEST["tag"]))
 									INNER JOIN user_tbl u ON u.id = t.user_id
 									INNER JOIN city_tbl source ON source.id = t.source
 									INNER JOIN city_tbl destination ON destination.id = t.destination
-								WHERE DATE_FORMAT(t.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue
-								ORDER BY t.id DESC";
+								WHERE DATE_FORMAT(t.departure_date_time,'%Y-%m-%d %H:%i:%s')>='$dt_from' and t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue ";
+							if($source!=='') {
+								$sql .= " and source.code='$source' ";
+							}
+							if($destination!=='') {
+								$sql .= " and destination.code='$destination' ";
+							}
+							$sql .= "ORDER BY t.id DESC";
 						}
 					}
-          else
+          			else
 					{
 						
 						$dt_from=date("Y-m-d",strtotime($_REQUEST['dt_from']));
@@ -55,7 +78,15 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and $field='$value' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ";
+
+							if($source!=='') {
+								$sql .= " and source.code='$source' ";
+							}
+							if($destination!=='') {
+								$sql .= " and destination.code='$destination' ";
+							}
+							$sql .= "ORDER BY t.id DESC";
 					    }
 						else
 						{
@@ -64,7 +95,15 @@ if(isset($_REQUEST["tag"]))
 								INNER JOIN user_tbl u ON u.id = t.user_id
 								INNER JOIN city_tbl source ON source.id = t.source
 								INNER JOIN city_tbl destination ON destination.id = t.destination							
-								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ORDER BY t.id DESC";
+								WHERE t.no_of_person<=$allowEmptyStock and t.no_of_person>=$greaterValue and DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')>='$dt_from' AND DATE_FORMAT(t.departure_date_time,'%Y-%m-%d')<='$dt_to' ";
+
+							if($source!=='') {
+								$sql .= " and source.code='$source' ";
+							}
+							if($destination!=='') {
+								$sql .= " and destination.code='$destination' ";
+							}
+							$sql .= "ORDER BY t.id DESC";
 						}
 					}
 					//echo $sql;

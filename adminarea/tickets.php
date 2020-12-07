@@ -54,7 +54,7 @@ if(!in_array(5,$auth))
 										</div>
 										<div class="row">
 											<div class="form-group has-info col-xs-12 col-sm-12 col-md-12" style="float:left;margin-top:15px;">
-												<div class="col-sm-2" id="div_txt_name">
+												<div class="col-sm-1" id="div_txt_name">
 													<!--<span class="block input-icon input-icon-left">
 													<input class="col-xs-12 col-sm-12" type="text" name="txt_search" id="txt_search" placeholder="Search..." value="" >-->
 													<select  class="col-xs-12 col-sm-12" name="field" id="field">
@@ -64,7 +64,7 @@ if(!in_array(5,$auth))
 													</select>
 												</div>
 												
-												<div class="col-sm-2 col-xs-2 col-md-2" id="div_status">
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_status">
 													<select  class="col-xs-12 col-sm-12" name="status" id="status">	
 														<option value="">All</option>
 														<option value="0">Pending</option>
@@ -74,7 +74,7 @@ if(!in_array(5,$auth))
 													</select>
 												</div> 
 
-												<div class="col-sm-2 col-xs-2 col-md-2" id="div_data_collected_from" style="display:none">
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_data_collected_from" style="display:none">
 													<select  class="col-xs-12 col-sm-12" name="data_collected_from" id="data_collected_from">	
 														<option value="">All</option>
 														<option value="airiq">AirIQ</option>
@@ -95,7 +95,30 @@ if(!in_array(5,$auth))
 													</select>
 												</div> 												
 												
-												<div class="col-sm-2 col-xs-2 col-md-2" id="div_user" style="display:none">
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_sector">
+													<select  class="col-xs-12 col-sm-12" name="sector" id="sector">
+														<option value="">Select Sectors</option>
+														<?php 
+														$sql="select  distinct src.id as source_city_id, src.city as source_city, src.code as source_city_code, dst.id as destination_city_id, dst.city as destination_city, dst.code as destination_city_code, 
+																	  concat(src.`code`, concat(' - ', dst.`code`)) as sector_by_code, concat(src.city, concat(' - ', dst.city)) as sector_by_name
+															from tickets_tbl tkt
+															inner join city_tbl src on src.id=tkt.source
+															inner join city_tbl dst on dst.id=tkt.destination
+															where tkt.departure_date_time>now()
+															order by concat(src.`code`, concat(' - ', dst.`code`))";
+
+													$result=mysql_query($sql);
+													while($row=mysql_fetch_array($result))
+													{										
+														?>
+														<option value="<?php echo $row["sector_by_code"];?>"><?php echo $row["sector_by_name"]; ?></option>
+														<?php
+													}
+													?>
+													</select>
+												</div>
+
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_user" style="display:none">
 													<select  class="col-xs-12 col-sm-12" name="user_id" id="user_id">
 														<option value="">Select Agent</option>
 														<?php 
@@ -109,13 +132,13 @@ if(!in_array(5,$auth))
 													}
 													?>
 													</select>
-												</div>
+												</div>												
 												
-												<div class="col-sm-2 col-xs-2 col-md-2" id="div_date_from">
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_date_from">
 													<input type="text"  id="dt_date_from" name="dt_date_from" placeholder="Date From" class="col-xs-12 col-sm-12 dpd3">									
 												</div>
 										
-												<div class="col-sm-2 col-xs-2 col-md-2" id="div_date_to">
+												<div class="col-sm-1 col-xs-1 col-md-1" id="div_date_to">
 													<input type="text"  id="dt_date_to" name="dt_date_to" placeholder="Date To" class="col-xs-12 col-sm-12 dpd3">														
 												</div>
 												
