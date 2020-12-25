@@ -234,6 +234,14 @@ class Company extends REST_Controller {
 
     public function customer_get($company, $customerid) {
         $customer = $this->Admin_Model->get_customer(intval($company), intval($customerid));
+        if($customer && count($customer)>0) {
+            $customer[0]['transactions'] = [];
+
+            $transactions = $this->Admin_Model->get_transactions(intval($company), intval($customerid));
+            if($transactions) {
+                $customer[0]['transactions'] = $transactions;
+            }
+        }
 
         $this->set_response($customer, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }

@@ -1067,5 +1067,30 @@ Class Admin_Model extends CI_Model
 			return false;
 		}
 	}
+
+	function get_transactions($companyid=-1, $customerid=-1) {
+		$sql = "select wt.*, sw.allowed_transactions, sw.balance, sw.type, sw.status, sw.sponsoring_companyid
+			from wallet_transaction_tbl wt
+			inner join system_wallets_tbl sw on sw.id=wt.wallet_id
+			where (wt.companyid=$companyid or -1=$companyid) and (wt.userid=$customerid or -1=$customerid)
+			order by wt.date asc";
+
+		if($companyid>-1 || $customerid>-1) {
+			$query = $this->db->query($sql);
+
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{					
+				return $query->result_array();
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+	}
 }	
 ?>
