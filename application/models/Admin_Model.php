@@ -159,6 +159,10 @@ Class Admin_Model extends CI_Model
             $data = null;
 		}
 
+		if(isset($customer['transactions'])) {
+			unset($customer['transactions']);
+		}
+
 		if($customer['rateplanid']=='-1') {
 			//unset($customer['rateplanid']);
 			$customer['rateplanid'] = NULL;
