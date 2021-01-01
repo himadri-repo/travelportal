@@ -302,6 +302,25 @@
                                         $pass_count = intval($passenger['PassengerCount']);
                                         $pi = 0;
                                         while ($pi++ < $pass_count) {
+                                            $stored_passenger = false;
+                                            $pass_title = '';
+                                            $pass_first_name = '';
+                                            $pass_last_name = '';
+                                            $pass_dob_day = 0;
+                                            $pass_dob_month = 0;
+                                            $pass_dob_year = 0;
+                                            if($i<count($stored_passengers)) {
+                                                $stored_passenger = $stored_passengers[$i];
+
+                                                $pass_title = $stored_passenger['passenger_title'];
+                                                $pass_first_name = $stored_passenger['passenger_first_name'];
+                                                $pass_last_name =  $stored_passenger['passenger_last_name'];
+
+                                                $pass_dob_day =  intval($stored_passenger['passenger_dob_day']);
+                                                $pass_dob_month =  intval($stored_passenger['passenger_dob_month']);
+                                                $pass_dob_year =  intval($stored_passenger['passenger_dob_year']);
+                                            }
+    
                                     ?>
                                             <div class="fd-ll" style="width:100%;">
                                                 <input type="hidden" id="passenger_type_<?=$i?>" name="passenger_type_<?=$i?>" value="<?= $passenger_type ?>">
@@ -326,20 +345,20 @@
                                                                     <label class="label_ti">Title</label>
                                                                     <select id="slPassenger_<?=$i?>" name="slPassenger_<?=$i?>" class="select_trvl" paxtype="<?=$passenger_type?>" idno="<?=$i?>" dynid="<?=$i?>" onchange="CheckSameTraveler(this.id);CookieSave('Adult');SetNameOnLabel('Adult<?=$i?>');" required="">
                                                                         <option value="">Title</option>
-                                                                        <option value="Mr">MR</option>
-                                                                        <option value="Ms">MS</option>
-                                                                        <option value="Miss">Miss</option>
-                                                                        <option value="Mstr">Master</option>
-                                                                        <option value="Mrs">Mrs</option>
+                                                                        <option value="Mr" <?= $pass_title==='Mr'? 'selected' : '' ?>>MR</option>
+                                                                        <option value="Ms" <?= $pass_title==='Ms'? 'selected' : '' ?>>MS</option>
+                                                                        <option value="Miss" <?= $pass_title==='Miss'? 'selected' : '' ?>>Miss</option>
+                                                                        <option value="Mstr" <?= $pass_title==='Mstr'? 'selected' : '' ?>>Master</option>
+                                                                        <option value="Mrs" <?= $pass_title==='Mrs'? 'selected' : '' ?>>Mrs</option>
                                                                     </select>
                                                                 </div>
                                                                 <div class="str_3 mgl15">
                                                                     <label class="label_ti">(First Name &amp; (Middle name, if any)</label>
-                                                                    <input type="text" name="txtPassenger_FN_<?=$i ?>" autocomplete="none" id="txtPassenger_FN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter First Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                    <input type="text" name="txtPassenger_FN_<?=$i ?>" autocomplete="none" id="txtPassenger_FN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter First Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="" value="<?= $pass_first_name ?>">
                                                                 </div>
                                                                 <div class="str_3 mgl15">
                                                                     <label class="label_ti">Last Name</label>
-                                                                    <input type="text" name="txtPassenger_LN_<?=$i ?>" autocomplete="none" id="txtPassenger_LN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Last Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="">
+                                                                    <input type="text" name="txtPassenger_LN_<?=$i ?>" autocomplete="none" id="txtPassenger_LN_<?=$i ?>" paxtype="<?= $passenger_type ?>" idno="<?=$i ?>" dynid="<?=$i ?>" class="input_trvl" placeholder="Enter Last Name" onblur="PreventSpecialCharacter(this);CheckSameTraveler(this.id);CookieSave('<?= $passenger_type ?>');SetNameOnLabel('<?= $passenger_type ?><?=$i ?>');" required="" value="<?= $pass_last_name ?>">
                                                                 </div>
                                                                 
                                                                 <?php if($passenger_type === 'Adult' && $pi === 1) { ?>
@@ -358,54 +377,54 @@
                                                                     <div class="inf2">
                                                                         <select class="sel1" name="slDOBDay_Passenger_<?=$i ?>" id="slDOBDay_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
                                                                             <option selected="selected" value="0">Day</option>
-                                                                            <option value="01">1</option>
-                                                                            <option value="02">2</option>
-                                                                            <option value="03">3</option>
-                                                                            <option value="04">4</option>
-                                                                            <option value="05">5</option>
-                                                                            <option value="06">6</option>
-                                                                            <option value="07">7</option>
-                                                                            <option value="08">8</option>
-                                                                            <option value="09">9</option>
-                                                                            <option value="10">10</option>
-                                                                            <option value="11">11</option>
-                                                                            <option value="12">12</option>
-                                                                            <option value="13">13</option>
-                                                                            <option value="14">14</option>
-                                                                            <option value="15">15</option>
-                                                                            <option value="16">16</option>
-                                                                            <option value="17">17</option>
-                                                                            <option value="18">18</option>
-                                                                            <option value="19">19</option>
-                                                                            <option value="20">20</option>
-                                                                            <option value="21">21</option>
-                                                                            <option value="22">22</option>
-                                                                            <option value="23">23</option>
-                                                                            <option value="24">24</option>
-                                                                            <option value="25">25</option>
-                                                                            <option value="26">26</option>
-                                                                            <option value="27">27</option>
-                                                                            <option value="28">28</option>
-                                                                            <option value="29">29</option>
-                                                                            <option value="30">30</option>
-                                                                            <option value="31">31</option>
+                                                                            <option value="01" <?= $pass_dob_day===1? 'selected' : '' ?>>1</option>
+                                                                            <option value="02" <?= $pass_dob_day===2? 'selected' : '' ?>>2</option>
+                                                                            <option value="03" <?= $pass_dob_day===3? 'selected' : '' ?>>3</option>
+                                                                            <option value="04" <?= $pass_dob_day===4? 'selected' : '' ?>>4</option>
+                                                                            <option value="05" <?= $pass_dob_day===5? 'selected' : '' ?>>5</option>
+                                                                            <option value="06" <?= $pass_dob_day===6? 'selected' : '' ?>>6</option>
+                                                                            <option value="07" <?= $pass_dob_day===7? 'selected' : '' ?>>7</option>
+                                                                            <option value="08" <?= $pass_dob_day===8? 'selected' : '' ?>>8</option>
+                                                                            <option value="09" <?= $pass_dob_day===9? 'selected' : '' ?>>9</option>
+                                                                            <option value="10" <?= $pass_dob_day===10? 'selected' : '' ?>>10</option>
+                                                                            <option value="11" <?= $pass_dob_day===11? 'selected' : '' ?>>11</option>
+                                                                            <option value="12" <?= $pass_dob_day===12? 'selected' : '' ?>>12</option>
+                                                                            <option value="13" <?= $pass_dob_day===13? 'selected' : '' ?>>13</option>
+                                                                            <option value="14" <?= $pass_dob_day===14? 'selected' : '' ?>>14</option>
+                                                                            <option value="15" <?= $pass_dob_day===15? 'selected' : '' ?>>15</option>
+                                                                            <option value="16" <?= $pass_dob_day===16? 'selected' : '' ?>>16</option>
+                                                                            <option value="17" <?= $pass_dob_day===17? 'selected' : '' ?>>17</option>
+                                                                            <option value="18" <?= $pass_dob_day===18? 'selected' : '' ?>>18</option>
+                                                                            <option value="19" <?= $pass_dob_day===19? 'selected' : '' ?>>19</option>
+                                                                            <option value="20" <?= $pass_dob_day===20? 'selected' : '' ?>>20</option>
+                                                                            <option value="21" <?= $pass_dob_day===21? 'selected' : '' ?>>21</option>
+                                                                            <option value="22" <?= $pass_dob_day===22? 'selected' : '' ?>>22</option>
+                                                                            <option value="23" <?= $pass_dob_day===23? 'selected' : '' ?>>23</option>
+                                                                            <option value="24" <?= $pass_dob_day===24? 'selected' : '' ?>>24</option>
+                                                                            <option value="25" <?= $pass_dob_day===25? 'selected' : '' ?>>25</option>
+                                                                            <option value="26" <?= $pass_dob_day===26? 'selected' : '' ?>>26</option>
+                                                                            <option value="27" <?= $pass_dob_day===27? 'selected' : '' ?>>27</option>
+                                                                            <option value="28" <?= $pass_dob_day===28? 'selected' : '' ?>>28</option>
+                                                                            <option value="29" <?= $pass_dob_day===29? 'selected' : '' ?>>29</option>
+                                                                            <option value="30" <?= $pass_dob_day===30? 'selected' : '' ?>>30</option>
+                                                                            <option value="31" <?= $pass_dob_day===31? 'selected' : '' ?>>31</option>
                                                                         </select>
                                                                     </div>
                                                                     <div class="inf3">
                                                                         <select class="sel1" name="slDOBMonth_Passenger_<?=$i ?>" id="slDOBMonth_Passenger_<?=$i ?>" onchange="CookieSave('<?= $passenger_type ?>')">
                                                                             <option selected="selected" value="0">Month</option>
-                                                                            <option value="01">Jan</option>
-                                                                            <option value="02">Feb</option>
-                                                                            <option value="03">Mar</option>
-                                                                            <option value="04">Apr</option>
-                                                                            <option value="05">May</option>
-                                                                            <option value="06">Jun</option>
-                                                                            <option value="07">Jul</option>
-                                                                            <option value="08">Aug</option>
-                                                                            <option value="09">Sep</option>
-                                                                            <option value="10">Oct</option>
-                                                                            <option value="11">Nov</option>
-                                                                            <option value="12">Dec</option>
+                                                                            <option value="01" <?= $pass_dob_month===1? 'selected' : '' ?>>Jan</option>
+                                                                            <option value="02" <?= $pass_dob_month===2? 'selected' : '' ?>>Feb</option>
+                                                                            <option value="03" <?= $pass_dob_month===3? 'selected' : '' ?>>Mar</option>
+                                                                            <option value="04" <?= $pass_dob_month===4? 'selected' : '' ?>>Apr</option>
+                                                                            <option value="05" <?= $pass_dob_month===5? 'selected' : '' ?>>May</option>
+                                                                            <option value="06" <?= $pass_dob_month===6? 'selected' : '' ?>>Jun</option>
+                                                                            <option value="07" <?= $pass_dob_month===7? 'selected' : '' ?>>Jul</option>
+                                                                            <option value="08" <?= $pass_dob_month===8? 'selected' : '' ?>>Aug</option>
+                                                                            <option value="09" <?= $pass_dob_month===9? 'selected' : '' ?>>Sep</option>
+                                                                            <option value="10" <?= $pass_dob_month===10? 'selected' : '' ?>>Oct</option>
+                                                                            <option value="11" <?= $pass_dob_month===11? 'selected' : '' ?>>Nov</option>
+                                                                            <option value="12" <?= $pass_dob_month===12? 'selected' : '' ?>>Dec</option>
                                                                         </select>
                                                                     </div>
                                                                     <div class="inf4">
@@ -415,7 +434,7 @@
                                                                             $iidx=0;
                                                                             while($iidx<3) { 
                                                                                 $yr = ($dept_year-$iidx); ?>
-                                                                                <option value="<?=$yr?>"><?=$yr?></option>
+                                                                                <option value="<?=$yr?>" <?= $pass_dob_year===$yr? 'selected' : '' ?>><?=$yr?></option>
                                                                             <?php 
                                                                                 $iidx++;
                                                                             } ?>

@@ -676,10 +676,19 @@ class Search extends Mail_Controller
 		return $flag;
 	}
 
+	private function clear_session() {
+		$this->session->unset_userdata('state');
+		$this->session->unset_userdata('ERROR');
+
+		$this->session->unset_userdata('selected_ticket');
+	}
+
 	public function search_one_way()
 	{ 
 		if ($this->session->userdata('user_id')) 
 		{	
+			$this->clear_session();
+
 			$company = $this->session->userdata('company');
 			$current_user = $this->session->userdata('current_user');
 			$companyid = intval($company["id"]);
@@ -977,7 +986,7 @@ class Search extends Mail_Controller
 
 					$modifiable_attributes[] = array('id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no'], 'source_city' => $ticket['source_city'], 
 						'airline' => $ticket['airline'], 
-						'airlineid' => $ticket['airlineid'], 
+						'airlineid' => $ticket['airline'], 
 						'destination_city' => $ticket['destination_city'], 
 						'departure_date' => date("d-m-Y",strtotime($ticket['departure_date_time'])), 
 						'departure_time' => date("H:i",strtotime($ticket['departure_date_time'])), 
@@ -1261,6 +1270,7 @@ class Search extends Mail_Controller
 			'library_name' => '',
 			'config' => [],
 			'airline_name' => $ticket['airline'],
+			'airlineid' => $ticket['airline'],
 			'infant_price' => $infant_price,
 			'ResultIndex' => '',
 			'IsLCC' => false,
@@ -1638,6 +1648,18 @@ class Search extends Mail_Controller
 		$state = $this->session->userdata('state');
 		$error = $this->session->userdata('ERROR');
 
+		$selected_ticket = $this->session->userdata('selected_ticket');
+		log_message('debug', "Selected Ticket Data => ".json_encode($selected_ticket));
+
+		$passengers = [];
+		if(isset($selected_ticket)) {
+			$selected_ticket_state = &$selected_ticket['state'];
+			if(isset($selected_ticket_state['passengers'])) {
+				$passengers = $selected_ticket_state['passengers'];
+				$state['passengers'] = $passengers;
+			}
+		}
+
 		if(isset($error)) {
 			$this->session->unset_userdata('ERROR');
 		}
@@ -1771,6 +1793,7 @@ class Search extends Mail_Controller
 					if(isset($library_name)) {
 						$this->load->library($library_name, $lib_config);
 						$api_fare_quote = $this->$library_name->fare_quote($ticket);
+						$api_fare_quote = $this->map_fare_quote($api_fare_quote, $state);
 
 						if($api_fare_quote && is_array($api_fare_quote) && count($api_fare_quote) > 0) {
 							$isprice_changed = isset($api_fare_quote['isprice_changed']) ? boolval($api_fare_quote['isprice_changed']) : false;
@@ -1873,6 +1896,7 @@ class Search extends Mail_Controller
 					$result['mywallet']= $this->getMyWallet();
 					$result['state']= $state;
 					$result['fare_quote'] = $api_fare_quote;
+					$result['stored_passengers'] = $passengers;
 
 					log_message('debug', json_encode($result));
 
@@ -1889,6 +1913,28 @@ class Search extends Mail_Controller
 				}
 			}
 		}
+	}
+
+	private function map_fare_quote(&$fare_quote, $state) {
+		$adminmarkup = isset($state['adminmarkup']) ? floatval($state['adminmarkup']) : 0;
+
+		if(!$fare_quote || (isset($fare_quote["passengers_fare"]) && count($fare_quote["passengers_fare"]) > 0)) {
+			$count = count($fare_quote["passengers_fare"]);
+			$passengers = &$fare_quote["passengers_fare"];
+			for ($ai=0; $ai<$count; $ai++) {
+				$passenger = &$passengers[$ai];
+				if(isset($passenger['PassengerType'])) {
+					if(intval($passenger['PassengerType']) === 3) { //infant
+						$passenger['admin_markup'] = 0;
+					}
+					else {
+						$passenger['admin_markup'] = $adminmarkup;
+					}
+				}
+			}
+		}
+
+		return $fare_quote;
 	}
 
 	private function getFareQuote($ticket, $ticketupdated, $current_user, $company, $state) {

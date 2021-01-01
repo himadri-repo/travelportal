@@ -13,7 +13,7 @@
 	cursor: pointer; /* Add a pointer on hover */
 }
 .search_overlay img {
-    opacity: 0.7;
+    opacity: 0.9;
 }
 </style>         
         <div id="progressbar" class="search_overlay" style="display:none">
