@@ -181,6 +181,7 @@
     }
     .sc-input {
         height: 60px;
+        text-align: center;
     }
     #sc_btnsearch {
         border: solid 0px #cdcdcd;
@@ -465,6 +466,11 @@
     .selected ~ .chk_flt {
         background-color: #0b3dca;
     }
+
+    #return_date:disabled {
+        background-color: #faa61a52;
+        color: #cdcdcd;
+    }
 </style>
 <?php
     $api_style = false;
@@ -482,14 +488,17 @@
             <input name="Trip" id="radio1" class="hide-round2 rund" value="Two" type="radio" style="display: none;">
             <!-- <input name="Trip" id="rdoMul" class="hide-round2 rund" value="Mul" type="radio" style="display: none;"> -->
             <ul>
-                <li class="border-lft flig-show click-one bg-color" onclick="setType('O');">One Way </li>
-                <li class="click-round flig-show" onclick="setType('R');">Round Trip</li>
+            <?php
+                $triptype = isset($state['triptype']) ? $state['triptype'] : 'oneway';
+            ?>
+                <li class="border-lft flig-show click-one <?= $triptype === 'oneway' ? 'bg-color' : '' ?>" onclick="setType('O');">One Way </li>
+                <li class="click-round flig-show <?= $triptype === 'round' ? 'bg-color' : '' ?>" onclick="setType('R');">Round Trip</li>
             </ul>
         </div>
         <div class="clr"></div>
         <div class="search_bg">
             <!-- <div class="h-100"> -->
-                <form class="h-100" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation_ticket_search('oneway')">
+                <form class="h-100" id="frm_one_way" action="<?php echo base_url(); ?>search/search_one_way" method="post" onsubmit="return validation_ticket_search();">
                     <input type="hidden" id="trip_type" name="trip_type" value="<?= $trip_type ?>"> 
                     <input type="hidden" id="source" name="source" value="<?= intval($source) ?>"> 
                     <input type="hidden" id="destination" name="destination" value="<?= intval($destination) ?>"> 
@@ -499,7 +508,7 @@
                     <input type="hidden" id="child" name="child" value="<?= (intval($child)>0 ? intval($child) : 0) ?>"> 
                     <input type="hidden" id="infant" name="infant" value="<?= (intval($infant)>0 ? intval($infant) : 0) ?>"> 
                     <input type="hidden" id="class_type" name="class_type" value="<?= $class ?>"> 
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator no-padding">
                         <!-- <span>From</span> -->
                         <?php 
                         if($api_style) {
@@ -513,8 +522,8 @@
                         ?>
                         <div class="form-group">
 
-                            <label style="color: #0b3dca;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>From</label>
-                            <select class="form-control" name="sc_source" id="sc_source">
+                            <label style="color: #0b3dca;display: block;float: left;padding: 20px 0 0 10px;margin: 0px;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>From</label>
+                            <select class="form-control sc-input" name="sc_source" id="sc_source" style="border: 0px; float:right; width: 85%;">
                                 <option value="">Source</option>
                                 <?php
                                 foreach($sources as $sector)
@@ -530,7 +539,7 @@
                         }
                         ?>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-3 seperator no-padding">
                         <!-- <span>To</span> -->
                         <?php
                         if($api_style) {
@@ -543,8 +552,8 @@
                         else {
                         ?>
                         <div class="form-group">
-                            <label style="color: #0b3dca;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>To</label>
-                                <select class="form-control" name="sc_destination" id="sc_destination">
+                            <label style="color: #0b3dca;display: block;float: left;padding: 20px 0 0 10px;margin: 0px;"><span style="margin-right: 8px;"><i class="fa fa-map-marker"></i></span>To</label>
+                            <select class="form-control sc-input" name="sc_destination" id="sc_destination" style="border: 0px; float:right; width: 85%;">
                                 <option value="">Destination</option>
                                 <?php 
                                 if(intval($destination)>-1) {
@@ -559,13 +568,13 @@
                         }
                         ?>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator no-padding">
                         <!-- <span>Dept Date</span> -->
                         <div class="group-item auto-height">
                             <input id="departure_date" name="departure_date" type="text" class="datepicker sc-input" placeholder="Journey Date" autocomplete="off" value="<?= $departure_date ?>">
                         </div>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator">
+                    <div class="col-xs-12 col-sm-12 col-md-2 col-lg-1 seperator no-padding">
                         <!-- <span>Rtn Date</span> -->
                         <div class="group-item auto-height">
                             <input id="return_date" name="return_date" type="text" class="datepicker sc-input" placeholder="Return Date" autocomplete="off" disabled value="<?= $return_date ?>">
@@ -713,6 +722,7 @@
 
     // var cities = JSON.parse('<?= json_encode($sources) ?>');
     var cities = JSON.parse('<?= json_encode($sectors) ?>');
+    var triptype = '<?= $triptype ?>';
 
     $(function() {
         // $( ".datepicker" ).datepicker( "option", "showAnim", "slideDown" );
@@ -802,20 +812,34 @@
 
             event.stopPropagation();
         });
+
+        if(triptype === 'oneway') {
+            setType('O');
+        }
+        else {
+            setType('R');
+        }
+        
     });
 
     function setType(trip_type) {
         //alert(trip_type);
+        //let url = "<?php echo base_url(); ?>search/search_one_way";
+        //alert($('#frm_one_way').attr('action'));
 
         if(trip_type && trip_type==='R') {
             $('#return_date').removeAttr('disabled');
             $('.click-round').addClass('bg-color');
             $('.click-one').removeClass('bg-color');
+            $('#frm_one_way').attr('action', "<?php echo base_url(); ?>search/search_round_trip");
+            triptype = 'round';
         }
         else if(trip_type && trip_type==='O') {
             $('#return_date').attr('disabled', 'disabled');
             $('.click-round').removeClass('bg-color');
             $('.click-one').addClass('bg-color');
+            $('#frm_one_way').attr('action', "<?php echo base_url(); ?>search/search_one_way");
+            triptype = 'oneway';
         }
     }
 

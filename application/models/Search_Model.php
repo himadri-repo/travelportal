@@ -239,6 +239,88 @@ Class Search_Model extends BaseModel
 			return false;
 		}         	
 	}
+
+	public function search_round_wayv2($arr) {
+		// $dt_from = date("Y-m-d H:i:s");
+		$companyid = $arr["companyid"];
+		$source = $arr["source"];
+		$destination = $arr["destination"];
+		$from_date = $arr["from_date"];
+		$to_date = $arr["to_date"];
+		$triptype = $arr["trip_type"];
+		$approved = $arr["approved"];
+		$available = $arr["available"];
+		$no_of_person = $arr["no_of_person"];
+		$infant_price = $this->default_infant_price;
+
+		$sql = "select 	tkt.direction, tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city as source_city, ct1.code as source_city_code, ct2.city as destination_city, ct2.code as destination_city_code, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, 
+			tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, tkt.total, al.display_name as airline, al.id as airlineid, al.image, al.aircode as aircode, tkt.ticket_no, tkt.price, cm.id as companyid, cm.display_name as companyname, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.tag, 
+			tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, if(tkt.price_infant<=0, $infant_price*2, tkt.price_infant) as infant_price, tkt.fare_rule, tkt.adult_count as adult, tkt.child_count as child, tkt.infant_count as infant, tkt.remarks, 
+			max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airlinecode, max(ltkt.adultbasefare) as adultbasefare, max(ltkt.adult_tax_fees) as adult_tax_fees, 
+			max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, max(ltkt.adultbasefare+ltkt.adult_tax_fees+200) as adult_total
+			from 
+			(
+				select *, 'OB' as direction
+				from tickets_tbl tkt1
+				where 	(tkt1.source=$source and tkt1.destination=$destination) and tkt1.trip_type='ONE' and tkt1.available='YES' and tkt1.approved=$approved  
+						and (DATE_FORMAT(tkt1.departure_date_time,'%Y-%m-%d')='$from_date') and tkt1.no_of_person>=$no_of_person
+				union
+				select *, 'IB' as direction 
+				from tickets_tbl tkt2
+				where 	(tkt2.source=$destination and tkt2.destination=$source) and tkt2.trip_type='ONE' and tkt2.available='YES' and tkt2.approved=$approved  
+						and (DATE_FORMAT(tkt2.departure_date_time,'%Y-%m-%d')='$to_date') and tkt2.no_of_person>=$no_of_person
+				union
+				select *, 'OI' as direction 
+				from tickets_tbl tkt3
+				where 	(tkt3.source=$source and tkt3.destination=$destination and tkt3.source1=$destination and tkt3.destination1=$source) and tkt3.trip_type='ROUND' and tkt3.available='YES' and tkt3.approved=$approved  
+						and (DATE_FORMAT(tkt3.departure_date_time,'%Y-%m-%d')='$from_date' and DATE_FORMAT(tkt3.departure_date_time1,'%Y-%m-%d')='$to_date') and tkt3.no_of_person>=$no_of_person
+			) tkt 
+			inner join city_tbl ct1 on tkt.source=ct1.id 
+			inner join city_tbl ct2 on tkt.destination=ct2.id 
+			inner join airline_tbl al on al.id=tkt.airline 
+			inner join company_tbl cm on tkt.companyid=cm.id 
+			inner join 
+			(  
+				(
+					select spl.companyid as supplierid, spd.rate_plan_id, whl.companyid as sellerid, whd.rate_plan_id as seller_rateplan_id 
+					from wholesaler_tbl spl  
+					inner join wholesaler_services_tbl spd on spl.id=spd.wholesaler_rel_id and spd.active = 1 and spd.allowfeed=1 
+					inner join metadata_tbl mtd on mtd.id=spd.serviceid and mtd.active = 1 and mtd.associated_object_type='services' 
+					inner join supplier_tbl whl on spl.companyid=whl.supplierid and whl.companyid=spl.salerid and whl.active=1 
+					inner join supplier_services_tbl whd on whl.id=whd.supplier_rel_id and whd.active=1 and whd.allowfeed=1 
+					where spl.salerid=$companyid
+				) 
+				union all 
+				(
+					select cm.id as supplierid, rp.id as rate_plan_id, 0 as sellerid, 0 as seller_rateplan_id 
+					from company_tbl cm 
+					inner join rateplan_tbl rp on cm.id=rp.companyid and rp.active=1 and rp.default=1 
+					where cm.id=$companyid 
+					limit 1
+				) 
+			) as rpt on tkt.companyid = rpt.supplierid 
+			left outer join live_tickets_tbl ltkt on ltkt.source=tkt.source and tkt.destination=ltkt.destination and al.aircode=ltkt.carrierid and ltkt.active=1  
+					and ltkt.departure_date_time>=DATE_SUB(tkt.departure_date_time, INTERVAL 15 MINUTE)  
+					and ltkt.departure_date_time<=DATE_ADD(tkt.departure_date_time, INTERVAL 15 MINUTE) 
+					and ltkt.airline is not null 
+			group by tkt.direction, tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city, ct2.city, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person  
+					, tkt.class, tkt.no_of_stops, tkt.data_collected_from, al.airline, al.id, al.image, tkt.aircode, tkt.ticket_no, tkt.price, cm.id, cm.display_name, tkt.user_id ,tkt.data_collected_from,  
+					tkt.refundable, tkt.sale_type, tkt.updated_on, tkt.updated_by, tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id,  
+					tkt.price_infant, tkt.fare_rule, tkt.adult_count, tkt.child_count, tkt.infant_count, tkt.remarks, tkt.total, tkt.tag, tkt.markup
+			order by (price + admin_markup + markup)";
+
+		$query = $this->db->query($sql);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			//return $sql;
+			return false;
+		}
+	}
 	
 	 public function search_one_way($arr) 
 	{

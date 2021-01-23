@@ -618,9 +618,10 @@
                                     <div class="row">
                                         <div style="border-top: 2px solid #b1b1b17d; margin: 1px 20px;">
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
-                                                <?php if($flightitem["live_fare"]>0 && $flightitem["sale_type"]!=='api') {?>
+                                                <?php //if($flightitem["live_fare"]>0 && $flightitem["sale_type"]!=='api') {?>
+												<?php if($flightitem["sale_type"]!=='api') {?>
                                                     <!-- <div style="color: #1433a5; font-size: 0.80em; display: inline-block;">Current System fare : <i class='fa fa-inr'></i> <?= number_format($flightitem["live_fare"],2,".",","); ?> | <?= ($flightitem["seatsavailable"]>10?'10+':$flightitem["seatsavailable"]) ?> seat(s) left</div> -->
-													<div style="color: #1433a5; font-size: 0.80em; display: inline-block;"><?= $rmkrs ?></div>
+													<div style="color: #ff0000; font-size: 1.20em; display: inline-block;"><?= $rmkrs ?></div>
                                                 <?php } ?>
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
@@ -955,28 +956,40 @@
 		alert(`Clone : Ticket Id ${id}`);
 	}
 
-	function validation_ticket_search(mode='oneway')
+	function validation_ticket_search()
 	{
+		//alert(triptype);
 		$("#progressbar").hide();
-	    if($("#trip_type").val()=="")
+		if($("#sc_source").val()=="")
 		{
-			$("#trip_type").addClass('is-invalid');
-			$("#trip_type").parent().find(".error").remove();
-			$("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+			// $("#trip_type").addClass('is-invalid');
+			// $("#trip_type").parent().find(".error").remove();
+			// $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+			alert("Departing city is mandatory");
 			return false;
 		}
-		else if($("#dt_from").val()=="")
+		else if($("#sc_destination").val()=="")
 		{
-			$("#dt_from").addClass('is-invalid');
-			$("#dt_from").parent().find(".error").remove();
-			$("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+			// $("#trip_type").addClass('is-invalid');
+			// $("#trip_type").parent().find(".error").remove();
+			// $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+			alert("Arriving city is mandatory");
 			return false;
 		}
-		else if($("#dt_to").val()=="")
+		else if($("#departure_date").val()=="")
 		{
-			$("#dt_to").addClass('is-invalid');
-			$("#dt_to").parent().find(".error").remove();
-			$("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+			// $("#dt_from").addClass('is-invalid');
+			// $("#dt_from").parent().find(".error").remove();
+			// $("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+			alert("Departure date can't be empty or invalid");
+			return false;
+		}
+		else if(triptype==='round' && ($("#return_date").val()=="" || new Date($("#return_date").val())<new Date($("#departure_date").val()) ))
+		{
+			// $("#dt_to").addClass('is-invalid');
+			// $("#dt_to").parent().find(".error").remove();
+			// $("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+			alert("In case of round trip booking, return date is mandatory and must be same or greater than departuere date");
 			return false;
 		}
 		else

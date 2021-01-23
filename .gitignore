@@ -30,3 +30,5 @@ atompay/*
 *.sublime-project
 /tests/tests/
 /tests/results/
+admin
+admin/*

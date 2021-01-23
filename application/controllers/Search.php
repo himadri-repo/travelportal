@@ -824,6 +824,7 @@ class Search extends Mail_Controller
 								'child' => $child,
 								'infant' => $infant,
 								'departure_date' => $this->input->post('departure_date'),
+								'return_date' => false,
 								'source_city' => $source_city,
 								'destination_city' => $destination_city,
 								'source_city_code' => trim($source_city['code']),
@@ -836,7 +837,8 @@ class Search extends Mail_Controller
 								'supl_company' => $supplier_company,
 								'supl_rateplan_id' => $api['supplier_rateplanid'],
 								'default_rateplan_id' => $api['seller_rateplan'],
-								'airlines' => $airlines
+								'airlines' => $airlines,
+								'trip_type' => 'one'
 							));
 	
 							log_message('debug', "3pp ($api_3pp_name) => ".json_encode($tkts_3pp));
@@ -1162,6 +1164,7 @@ class Search extends Mail_Controller
 				$state['sources'] = $sources;
 				//$state['circles'] = json_encode($circles);
 				$state['circles'] = $circles;
+				$state['triptype'] = 'oneway';
 				
 				$state['no_of_person'] = $no_of_person;
 				$state['adult'] = $adult;
@@ -1549,8 +1552,478 @@ class Search extends Mail_Controller
 			redirect("/login");  
 	}
 	
-	
 	public function search_round_trip()
+	{ 
+		if ($this->session->userdata('user_id')) 
+		{	
+			$this->clear_session();
+
+			$company = $this->session->userdata('company');
+			$current_user = $this->session->userdata('current_user');
+			$companyid = intval($company["id"]);
+			$source = intval($this->input->post('source'));
+			$destination = intval($this->input->post('destination'));
+			$no_of_person = intval($this->input->post('no_of_person'));
+
+			$source_city_name = $this->input->post('sc_source');
+			$destination_city_name = $this->input->post('sc_destination');
+
+			$adult = intval($this->input->post('adult')) > 0 ? intval($this->input->post('adult')) : $no_of_person;
+			$child = intval($this->input->post('child')) > 0 ? intval($this->input->post('child')) : 0;
+			$infant = intval($this->input->post('infant')) > 0 ? intval($this->input->post('infant')) : 0;
+
+			//$no_of_person = $adult + $child + $infant;
+			//no of person should be only adult + child and not include infant
+			$no_of_person = $adult + $child;
+
+			$class_type = $this->input->post('class_type');
+			$class = intval($this->input->post('optClass'))>0 ? intval($this->input->post('optClass')) : 0; //0 means economy
+
+			$dept_date = date_format(date_create($this->input->post('departure_date')), 'Ymd');
+			$rtn_date = date_format(date_create($this->input->post('return_date')), 'Ymd');
+
+			log_message('debug', 'Search posted payload: '.json_encode($_POST));
+
+			if($_SERVER['REQUEST_METHOD'] == 'POST' && $source>0 && $destination>0) 
+			{			  
+				$source_city = $this->User_Model->get('city_tbl', array('id' => $source));
+				if($source_city && count($source_city)>0) {
+					$source_city = $source_city[0];
+					$source_city_name = $source_city['city'];
+				}
+				$destination_city = $this->User_Model->get('city_tbl', array('id' => $destination));
+				if($destination_city && count($destination_city)>0) {
+					$destination_city = $destination_city[0];
+					$destination_city_name = $destination_city['city'];
+				}
+
+				// Load 3rd party inventory
+				$thirdparty_tickets = null;
+				$live_ticket_data = NULL;
+				
+				//read company settings.
+				//what all thirdparty integration enabled, work on those library only.
+				$airlines = $this->Search_Model->get('airline_tbl', array());
+				$listof3ppintegrations = $this->getThirdpartyIntegrations($companyid, $current_user);
+				if($companyid === 1 || $companyid === 7) {
+					//
+					$api_integration = null;
+					$company_settings = $this->Search_Model->company_setting($companyid);
+
+					$thirdparty_tickets = [];
+					if($listof3ppintegrations && is_array($listof3ppintegrations) && count($listof3ppintegrations)>0) {
+
+						foreach ($listof3ppintegrations as $api) {
+							$api_3pp_name = $api['name'];
+							$this->load->library($api['library_name'], $api);
+
+							$load_lib = $this->load_thirdparty_inventory($api['library_name']);
+							$suplcompanyid = intval($api['supplier_companyid']);
+							if($suplcompanyid>-1) {
+								$supplier_company = $this->Admin_Model->get_company($api['supplier_companyid']);
+								if($supplier_company && is_array($supplier_company) && count($supplier_company)>0) {
+									$supplier_company = $supplier_company[0];
+								}
+							}
+							else {
+								$supplier_company = $company;
+							}
+	
+							$tkts_3pp = $this->search_inventory($api['library_name'], array(
+								'no_of_person' => $no_of_person,
+								'adult' => $adult,
+								'child' => $child,
+								'infant' => $infant,
+								'departure_date' => $this->input->post('departure_date'),
+								'return_date' => $this->input->post('return_date'),
+								'source_city' => $source_city,
+								'destination_city' => $destination_city,
+								'source_city_code' => trim($source_city['code']),
+								'destination_city_code' => trim($destination_city['code']),
+								'direct' => 0,
+								'one_stop' => 0,
+								'company' => $company,
+								'current_user' => $current_user,
+								'supl_companyid' => $api['supplier_companyid'],
+								'supl_company' => $supplier_company,
+								'supl_rateplan_id' => $api['supplier_rateplanid'],
+								'default_rateplan_id' => $api['seller_rateplan'],
+								'airlines' => $airlines,
+								'trip_type' => 'round'
+							));
+	
+							log_message('debug', "3pp ($api_3pp_name) => ".json_encode($tkts_3pp));
+
+							if($tkts_3pp && is_array($tkts_3pp) && count($tkts_3pp)>0) {
+								array_push($thirdparty_tickets, ...$tkts_3pp);
+							}
+						}
+					}
+
+					//Live ticket checks
+					$dept_date = date_format(date_create($this->input->post('departure_date')), 'Y-m-d');
+					$liveInventory = $this->getOnlineInventory($source_city['code'], $destination_city['code'], 1, 1, 1, $dept_date, "DOMAIR", array('sourcecityid' => intval($source_city['id']), 'destinationcityid' => intval($destination_city['id'])));
+
+					if($liveInventory && isset($liveInventory['live_tickets'])) {
+						$live_ticket_data = $liveInventory['live_tickets'];
+
+						//save special fare to DB.
+						$special_tickets = $liveInventory['special_tickets'];
+						if($special_tickets && count($special_tickets) > 0) {
+							$this->save_special_inventory($special_tickets, array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city, 'departure_date' => $dept_date));
+						}
+					}
+				}
+
+				$company = $this->session->userdata('company');
+				$currentuser = $this->session->userdata('current_user');
+
+				//if($this->input->post('departure_date_time')==date("d-m-Y")) 
+				if($this->input->post('departure_date')==date("d-m-Y")) 
+				{	
+					$departure_date_time=date("Y-m-d H:i:s");
+					$arr=array(
+					"companyid" => $company["id"],
+					"source"=>$this->input->post('source'),
+					"destination"=>$this->input->post('destination'),
+					"from_date"=>$departure_date_time,
+					"to_date"=>date('Y-m-d', strtotime($this->input->post('return_date'))),
+					"trip_type"=>"ROUND",
+					"approved"=>"1",
+					"available"=>"YES",
+					"no_of_person"=>$this->input->post('no_of_person')
+					//"t.availibility>="=>$days
+					);
+				}
+				else
+				{
+					//$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date_time')));		  
+					$departure_date_time=date("Y-m-d",strtotime($this->input->post('departure_date')));
+					$return_date_time=date("Y-m-d",strtotime($this->input->post('return_date')));
+					$arr=array(
+					"companyid" => $company["id"],
+					"source"=>$this->input->post('source'),
+					"destination"=>$this->input->post('destination'),
+					"from_date"=>$departure_date_time,
+					"to_date"=>$return_date_time,
+					"trip_type"=>"ROUND",
+					"approved"=>"1",
+					"available"=>"YES",
+					"no_of_person"=>$no_of_person
+					//"t.availibility>="=>$days
+				
+					);
+				}
+				$result['company']=$company;
+				$result['city']=$this->User_Model->filter_city("ONE");
+				$result['city1']=$this->Search_Model->filter_city($this->input->post('source'),"ONE"); 
+				$result['city2']=$this->User_Model->filter_city("ROUND");
+				$result['availalble']=$this->Search_Model->search_available_date($this->input->post('source'),$this->input->post('destination'),"ONE", $company["id"]);
+				//$result["flight"]=$this->Search_Model->search_one_way($arr);
+
+				$usertype = $currentuser["type"];
+				$is_admin = $currentuser["is_admin"];
+
+				if($currentuser['type'] === 'B2B') {
+					$user['user_markup']=$this->User_Model->user_settings($currentuser['id'], array('markup'));
+				}
+				else {
+					$user['user_markup']= NULL;
+				}	
+
+				$rateplans = $this->Admin_Model->rateplanByCompanyid($companyid, array('rp.default='=>'1'));
+				$defaultRP = NULL;
+				$defaultRPD = NULL;
+				if(count($rateplans)>0) {
+					$defaultRP = $rateplans[0];
+					$rateplanid = $defaultRP['id'];
+
+					if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && isset($currentuser["rateplanid"]) && intval($currentuser["rateplanid"])>0) {
+						$rateplanid = intval($currentuser["rateplanid"]);
+					}
+
+					$defaultRPD = $this->Admin_Model->rateplandetails($rateplanid);
+				}
+				$rateplan_details = $this->Admin_Model->rateplandetails(-1);
+
+				$tickets = $this->Search_Model->search_round_wayv2($arr);
+				if(!$tickets)
+				{
+					$tickets = [];
+				}
+
+				//append thirdparty tickets
+				if($thirdparty_tickets && is_array($thirdparty_tickets) && count($thirdparty_tickets)>0) {
+					$tickets = $this->append_thiredparty_tickets($tickets, [$thirdparty_tickets]);
+				}
+
+				$modifiable_attributes = [];
+
+				for ($i=0; $tickets && $i < count($tickets); $i++) { 
+					$ticket = &$tickets[$i];
+
+					if(!isset($ticket['library'])) {
+						$ticket = $this->map_ticket_fields($ticket);
+					}
+
+					$modifiable_attributes[] = array('id' => $ticket['id'], 'ticket_no' => $ticket['ticket_no'], 'source_city' => $ticket['source_city'], 
+						'airline' => $ticket['airline'], 
+						'airlineid' => $ticket['airline'], 
+						'destination_city' => $ticket['destination_city'], 
+						'departure_date' => date("d-m-Y",strtotime($ticket['departure_date_time'])), 
+						'departure_time' => date("H:i",strtotime($ticket['departure_date_time'])), 
+						'arrival_date' => date("d-m-Y",strtotime($ticket['arrival_date_time'])),
+						'arrival_time' => date("H:i",strtotime($ticket['arrival_date_time'])), 
+						'flight_no' => $ticket['flight_no'], 
+						'no_of_person' => $ticket['no_of_person'], 
+						'price' => $ticket['price'], 
+						'terminal' => $ticket['terminal'], 
+						'no_of_person' => $ticket['no_of_person'], 
+						'tag' => $ticket['tag']
+					);
+					$live_ticket = NULL;
+					if($live_ticket_data && count($live_ticket_data)>0 && $ticket['sale_type']!=='api') {
+						for ($tk=0; $tk < count($live_ticket_data); $tk++) {
+							$live_ticket = $live_ticket_data[$tk];
+							$depttime = date('H:i', strtotime($live_ticket->departure_date_time));
+							//$depttime = (isset($live_ticket['departure_date_time']) ? $live_ticket['departure_date_time']: '');
+							$tkt_deptime = date('H:i', strtotime($ticket['departure_date_time']));
+							$range1 = date('H:i', strtotime($ticket['departure_date_time'])-(60*20));
+							$range2 = date('H:i', strtotime($ticket['departure_date_time'])+(60*20)); //If 20 mins is risky we can reduce it.
+							//$carrierid = (isset($live_ticket['carrierid']) ? $live_ticket['carrierid'] : '');
+							//$carrierid = (isset($live_ticket['aircode']) ? $live_ticket['aircode'] : '');
+							$carrierid = $live_ticket->aircode;
+							//$cachekey = $carrierid.'-'.$live_ticket['flightno'];
+							//$cachekey = $live_ticket['ticket_no'];
+							//$cachekey = $live_ticket->ticket_no;
+							$cachekey = $live_ticket->flight_no;
+							//$flight_no = str_replace('_', '', str_replace('-', '', $ticket['flight_no']));
+							$flight_no = trim($ticket['flight_no']);
+							$fl_no = 0;
+							preg_match_all('/\d+$/', $flight_no, $matches);
+							if(count($matches)>0 && count($matches[0])>0) {
+								$fl_no = intval($matches[0][0]);
+							}
+							$flight_no = $ticket['aircode'].'-'.$fl_no;
+							log_message('debug', "Matching ticket with live ticket - ".$ticket['id']." => "."$flight_no | $cachekey");
+
+							log_message('debug', "Match criteria => $carrierid === ".$ticket['aircode']." | $depttime === $tkt_deptime | $depttime>=$range1 && $depttime<=$range2 | Within range -> ".($depttime>=$range1 && $depttime<=$range2));
+
+							if($live_ticket && intval($live_ticket->no_of_stop)===0 && ($flight_no===$cachekey || ($carrierid===$ticket['aircode'] && ($depttime===$tkt_deptime || ($depttime>=$range1 && $depttime<=$range2))))) {
+								if($flight_no===$cachekey) {
+									$ticket['live_corrected'] = false;
+								} else {
+									$ticket['live_corrected'] = true;
+								}
+								break;
+							}
+							else {
+								$live_ticket = NULL;
+							}
+						}
+					}
+
+					if($live_ticket) {
+						$ticketid = intval($ticket['id']);
+						log_message('debug', "Matching Live Ticket => ".json_encode($live_ticket, TRUE));
+						$live_dept_date = date('Y-m-d H:i:s', strtotime($live_ticket->departure_date_time));
+						$live_arrv_date = date('Y-m-d H:i:s', strtotime($live_ticket->arrival_date_time));
+						$live_flight_no = $live_ticket->flight_no; //$live_ticket['carrierid']."-".$live_ticket['flightcode'];
+
+						log_message('debug', "Dept Date => $live_dept_date | Arrv Date => ".$live_arrv_date);
+
+						$ticket['departure_date_time'] = $live_dept_date;
+						$ticket['arrival_date_time'] = $live_arrv_date;
+						$ticket['flight_no'] = $live_flight_no;
+						$ticket['terminal'] = isset($live_ticket->terminal)?$live_ticket->terminal:'';
+						$ticket['departure_terminal'] = isset($live_ticket->terminal)?$live_ticket->terminal:'';
+						$ticket['arrival_terminal'] = isset($live_ticket->terminal1)?$live_ticket->terminal1:'';
+
+						//$ticket['live_fare'] = floatval($live_ticket['fare']['adulttotalfare']);
+						$ticket['live_fare'] = floatval($live_ticket->price);
+						$ticket['seatsavailable'] = intval($live_ticket->no_of_person);
+
+						if(isset($ticket['live_corrected']) && boolval($ticket['live_corrected'])) {
+							log_message('debug', 'There is a change according to system info => flight_no: '.$ticket['flight_no'].' | terminal: '.$ticket['departure_terminal'].' | terminal1: '.$ticket['arrival_terminal']);
+							$ticket_update_result = $this->Search_Model->update('tickets_tbl', array(
+								'departure_date_time' => $live_dept_date, 
+								'arrival_date_time' => $live_arrv_date, 
+								'flight_no' => $live_flight_no, 
+								'terminal' => $ticket['terminal'], 
+								'terminal1' => $ticket['arrival_terminal']
+							), array('id' => $ticketid));
+	
+							log_message('debug', "Ticket updated with live info => $ticket_update_result");
+						}
+					}
+					else {
+						$ticket['live_fare'] = -1;
+						$ticket['seatsavailable'] = -1;
+						$ticket['live_corrected'] = false;
+					}
+
+					$suprpd = [];
+					$sellrpd = [];
+					$suprpid = intval($ticket["rate_plan_id"]);
+					$sellrpid = intval($ticket["seller_rateplan_id"]);
+					
+					if($rateplan_details && count($rateplan_details)>0) {
+						foreach ($rateplan_details as $rateplan_detail) {
+							$rpid = intval($rateplan_detail["rateplanid"]);
+		
+							if($rpid === $suprpid) {
+								$suprpd[] = $rateplan_detail;
+							}
+							if($rpid === $sellrpid) {
+								$sellrpd[] = $rateplan_detail;
+							}
+						}
+
+						//If user is a Travel Agent (B2B) then check is there any Rateplan assigned against him or not.
+						//If assigned then ignore wholesaler's rateplan and take the rateplan which is assigned to this customer.
+						//$adminmarkup is his own margin to his customers.
+						$adminmarkup = 0;
+						$usertype = '';
+
+						if($currentuser['type']==='B2B') {
+							if($currentuser['is_admin']==='1') {
+								$usertype = 'EMP';	
+							}
+							else {
+								$usertype = 'B2B';
+							}
+						} else if($currentuser['type']==='B2B') {
+							$usertype = 'B2C';
+						} else if($currentuser['type']==='EMP') {
+							$usertype = 'EMP';
+						}
+
+						if($currentuser["type"]==='B2B' && $currentuser["is_admin"]!=='1' && $defaultRPD!==NULL) {
+							if($companyid === intval($ticket['companyid'])) {
+								$sellrpd = $defaultRPD;
+								$suprpd = $defaultRPD;
+							}
+
+							if($user['user_markup']!==NULL) {
+								if($user['user_markup']['field_value_type'] === '2') {
+									$adminmarkup = floatval($user['user_markup']['field_value']);
+								}
+							}	
+						}
+		
+						if(count($suprpd)>0 || count($sellrpd)>0) {
+							$ticketupdated = $this->calculationTicketValue($ticket, $suprpd, $sellrpd, $companyid, $adminmarkup, $usertype);
+						}
+					}
+					$total = $ticket['total'];
+					$ticket["new"] = 1;
+
+					log_message('debug', "Ticket -> ".json_encode($ticket));
+				}	
+				
+				$this->session->set_userdata('tickets',$tickets);
+
+				// if($companyid==1 || $companyid==7) {
+				// 	//Please enable this if system fare is integrated in this account
+				// 	$circles = $this->Search_Model->get_cities();
+				// }
+				// else {
+				// 	$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				// }
+				
+				$circles = $this->Search_Model->get_inventory_circles($companyid, 365, 'ONE');
+				$sources = $this->get_filtered_sources($circles);
+					
+				$result['sources']=$sources;
+				$result['circles']=json_encode($circles);
+
+				$state = [];
+				$state['contact_number'] = isset($company['mobile'])?$company['mobile']:null;
+				$state['sectors'] = $this->Search_Model->get('city_tbl', null);
+				$state['current_user'] = $current_user;
+				$state['sources'] = $sources;
+				//$state['circles'] = json_encode($circles);
+				$state['circles'] = $circles;
+				$state['triptype'] = 'round';
+				
+				$state['no_of_person'] = $no_of_person;
+				$state['adult'] = $adult;
+				$state['child'] = $child;
+				$state['infant'] = $infant;
+				$state['class'] = $class;
+				$state['trip_type'] = 'ONE';
+				$state['source'] = $this->input->post('source');
+				$state['destination'] = $this->input->post('destination');
+				$state['departure_date'] = $this->input->post('departure_date');
+				$state['return_date'] = $this->input->post('return_date');
+				$state['source_city_name']=$source_city_name;
+				$state['destination_city_name']=$destination_city_name;
+				
+				$result["state"] = $state;
+				$result["flight"]=$tickets;
+				$result["airlines"]=$airlines;
+				$result["flight_attributes"]=$modifiable_attributes;
+				$result["rateplan"]=$rateplans; // $default_rp;
+				$result["currentuser"]=$currentuser;
+				
+				$this->session->set_userdata('no_of_person', $no_of_person);
+				$this->session->set_userdata('state', $state);
+				
+				$result["post"][0]["source"]=$this->input->post('source');
+				$result["post"][0]["destination"]=$this->input->post('destination');
+				$result["post"][0]["departure_date_time"]=$this->input->post('departure_date_time');
+				$result["post"][0]["departure_date"]=$this->input->post('departure_date');
+				$result["post"][0]["no_of_person"]=$adult + $child;
+				$result["post"][0]["hid_trip_type"]="ONE";
+				//echo $this->db->last_query();die(); 
+				$result["post"][0]["qty"]=$no_of_person;
+
+				$result["post"][0]["adult"]=$adult;
+				$result["post"][0]["child"]=$child;
+				$result["post"][0]["infant"]=$infant;
+				$result["post"][0]["class"]=$class;
+				$result["post"][0]["source_city_name"]=$source_city_name;
+				$result["post"][0]["destination_city_name"]=$destination_city_name;
+
+				//$result["setting"]=$this->Search_Model->setting();
+				$result['setting']=$this->Search_Model->company_setting($companyid);
+				if(isset($result['setting']) && isset($result['setting'][0]['payment_gateway'])) {
+					$result['setting'][0]['payment_gateway'] = json_decode($result['setting'][0]['payment_gateway'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['bank_accounts'])) {
+					$result['setting'][0]['bank_accounts'] = json_decode($result['setting'][0]['bank_accounts'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['configuration'])) {
+					$result['setting'][0]['configuration'] = json_decode($result['setting'][0]['configuration'], true);
+				}
+				if(isset($result['setting']) && isset($result['setting'][0]['api_integration'])) {
+					$result['setting'][0]['api_integration'] = json_decode($result['setting'][0]['api_integration'], true);
+				}
+
+				$result["footer"]=$this->Search_Model->get_post(5);
+				$current_user = $this->session->userdata("current_user");
+
+				$result['mywallet']= $this->getMyWallet();
+				$result['controller']= $this;
+							
+				$this->load->view('header1',$result);
+				//$this->load->view('search_one_way',$result);
+				// if($companyid === 7) {
+				$this->load->view('search_round_trip',$result);
+				// }
+				// else {
+				// 	$this->load->view('search_one_wayv2',$result);
+				// }
+				$this->load->view('footer1');
+			}
+			else
+				redirect("/search");  
+		}
+		else
+			redirect("/login");  
+	}
+
+	public function search_round_trip_old()
 	{ 
 	  $diff = intval((strtotime($this->input->post('departure_date_time'))-strtotime(date("d-m-Y")))/60);
 	  $diff=intval($diff/60);

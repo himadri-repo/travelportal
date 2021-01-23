@@ -267,28 +267,40 @@
                 }
             }
 
-            function validation_ticket_search(mode='oneway')
+            function validation_ticket_search()
             {
+                //alert(triptype);
                 $("#progressbar").hide();
-                if($("#trip_type").val()=="")
+                if($("#sc_source").val()=="")
                 {
-                    $("#trip_type").addClass('is-invalid');
-                    $("#trip_type").parent().find(".error").remove();
-                    $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+                    // $("#trip_type").addClass('is-invalid');
+                    // $("#trip_type").parent().find(".error").remove();
+                    // $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+                    alert("Departing city is mandatory");
                     return false;
                 }
-                else if($("#dt_from").val()=="")
+                else if($("#sc_destination").val()=="")
                 {
-                    $("#dt_from").addClass('is-invalid');
-                    $("#dt_from").parent().find(".error").remove();
-                    $("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+                    // $("#trip_type").addClass('is-invalid');
+                    // $("#trip_type").parent().find(".error").remove();
+                    // $("#trip_type").parent().append('<div class="error">Please Select Trip Type !!!</div>');
+                    alert("Arriving city is mandatory");
                     return false;
                 }
-                else if($("#dt_to").val()=="")
+                else if($("#departure_date").val()=="")
                 {
-                    $("#dt_to").addClass('is-invalid');
-                    $("#dt_to").parent().find(".error").remove();
-                    $("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+                    // $("#dt_from").addClass('is-invalid');
+                    // $("#dt_from").parent().find(".error").remove();
+                    // $("#dt_from").parent().append('<div class="error">Please Select Date From !!!</div>');
+                    alert("Departure date can't be empty or invalid");
+                    return false;
+                }
+                else if(triptype==='round' && ($("#return_date").val()=="" || new Date($("#return_date").val())<new Date($("#departure_date").val()) ))
+                {
+                    // $("#dt_to").addClass('is-invalid');
+                    // $("#dt_to").parent().find(".error").remove();
+                    // $("#dt_to").parent().append('<div class="error">Please Select Date To !!!</div>');
+                    alert("In case of round trip booking, return date is mandatory and must be same or greater than departuere date");
                     return false;
                 }
                 else
@@ -297,6 +309,6 @@
                     $("#progressbar").show();
                     return true;
                 }
-            }            
+            }	   
         </script>
         

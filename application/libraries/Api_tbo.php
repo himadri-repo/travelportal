@@ -147,11 +147,19 @@ class Api_tbo extends Api {
 
     public function search_inventory($payload) {
         if(!$payload || !is_array($payload)) return NULL;
+        $trip_type = trim($payload['trip_type']);
+
         $pax = intval($payload['no_of_person']);
         $adult = intval($payload['adult']);
         $child = intval($payload['child']);
         $infant = intval($payload['infant']);
         $departure_date = date('m/d/Y', strtotime($payload['departure_date']));
+
+        if(isset($payload['return_date']) && boolval($payload['return_date']))
+            $return_date = date('m/d/Y', strtotime($payload['return_date']));
+        else {
+            $return_date = false;
+        }
         $source_city_id = intval($payload['source_city']['id']);
         $destination_city_id = intval($payload['destination_city']['id']);
         $source_city = isset($payload['source_city'])?$payload['source_city']['city']:$payload['source_city_code'];
@@ -169,19 +177,43 @@ class Api_tbo extends Api {
         $supl_companyid = intval($payload['supl_companyid']);
         $supl_rateplan_id = intval($payload['supl_rateplan_id']);
         $supl_company = $payload['supl_company'];
-        
+        $journeytype = "1";
+
+        if($trip_type === 'round') {
+            $journeytype = "2";
+        }
+
         $tickets = [];
 
         $data = array('EndUserIp' => '192.168.10.10', 'TokenId' => $this->tokenid, 'AdultCount' => $adult, 'ChildCount' => $child, 'InfantCount' => $infant,
-                'DirectFlight' => $direct, 'OneStopFlight' => $stopflight, 'JourneyType' => "1", 'PreferredAirlines' => NULL);
+                'DirectFlight' => $direct, 'OneStopFlight' => $stopflight, 'JourneyType' => $journeytype, 'PreferredAirlines' => NULL);
 
-        $data['Segments'] = [array(
+        $data['Segments'][0] = array(
             'Origin' => $source_city_code,
             'Destination' => $destination_city_code,
             'FlightCabinClass' => '1', /* 1 means All class | 2 means Economy */
             'PreferredDepartureTime' => date('Y-m-d H:i:s', strtotime($departure_date.' 00:00:00')),
             'PreferredArrivalTime' => date('Y-m-d H:i:s', strtotime($departure_date.' 00:00:00'))
-        )];
+        );
+
+        if($trip_type ==='round' && $return_date) {
+            $data['Segments'][1] = array(
+                'Origin' => $destination_city_code,
+                'Destination' => $source_city_code,
+                'FlightCabinClass' => '1', /* 1 means All class | 2 means Economy */
+                'PreferredDepartureTime' => date('Y-m-d H:i:s', strtotime($return_date.' 00:00:00')),
+                'PreferredArrivalTime' => date('Y-m-d H:i:s', strtotime($return_date.' 00:00:00'))
+            );
+        }
+
+        // $data['Segments'] = [array(
+        //     'Origin' => $source_city_code,
+        //     'Destination' => $destination_city_code,
+        //     'FlightCabinClass' => '1', /* 1 means All class | 2 means Economy */
+        //     'PreferredDepartureTime' => date('Y-m-d H:i:s', strtotime($departure_date.' 00:00:00')),
+        //     'PreferredArrivalTime' => date('Y-m-d H:i:s', strtotime($departure_date.' 00:00:00'))
+        // )];
+
         //$data['Sources'] = NULL;
 
         $urlpart = "BookingEngineService_Air/AirService.svc/rest/Search/";
@@ -207,171 +239,184 @@ class Api_tbo extends Api {
                 $response_status = intval($response['Response']['ResponseStatus']);
                 $traceid = $response['Response']['TraceId'];
                 if($response_status===1) {
-                    $result = $response['Response']['Results'][0];
+                    //$result = $response['Response']['Results'][0];
+                    $results = $response['Response']['Results'];
                 }
                 else {
-                    $result = [];
+                    //$result = [];
+                    $results = [];
                 }
                 $lastairline = null;
-                if($result && is_array($result) && count($result)>0) {
-                    for ($i=0; $i < count($result); $i++) { 
-                        $tmzticket = $result[$i];
-                        if($tmzticket) {
-                            log_message('debug', "$i => ".json_encode($tmzticket));
-                            try {
-                                $image = 'flight.png';
-                                if($lastairline && isset($lastairline['aircode']) && $lastairline['aircode'] === trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
-                                    $image = $lastairline['image'];
-                                }
-                                else {
-                                    for($air=0; $air<count($airlines); $air++) {
-                                        if($airlines[$air]['aircode']===trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
-                                            $image=$airlines[$air]['image'];
-                                            $lastairline = $airlines[$air];
-                                            break;
+                $legcode = "OB";
+                for($leg=0; $leg<count($results); $leg++) {
+                    if(($leg % 2) === 0) {
+                        $legcode = "OB";
+                    }
+                    else {
+                        $legcode = "IB";
+                    }
+                    $result = $results[$leg];
+                    if($result && is_array($result) && count($result)>0) {
+                        for ($i=0; $i < count($result); $i++) { 
+                            $tmzticket = $result[$i];
+                            if($tmzticket) {
+                                log_message('debug', "$i => ".json_encode($tmzticket));
+                                try {
+                                    $image = 'flight.png';
+                                    if($lastairline && isset($lastairline['aircode']) && $lastairline['aircode'] === trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
+                                        $image = $lastairline['image'];
+                                    }
+                                    else {
+                                        for($air=0; $air<count($airlines); $air++) {
+                                            if($airlines[$air]['aircode']===trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
+                                                $image=$airlines[$air]['image'];
+                                                $lastairline = $airlines[$air];
+                                                break;
+                                            }
                                         }
                                     }
-                                }
 
-                                $price_infant = 0;
-                                if($infant > 0) {
-                                    $fare_breakdown = $tmzticket['FareBreakdown'];
-                                    for ($inf=0; $inf < count($fare_breakdown) ; $inf++) { 
-                                        $passenger_fare = $fare_breakdown[$inf];
-                                        if($passenger_fare['PassengerType'] === 3) {
-                                            //infant
-                                            // $price_infant = floatval($passenger_fare['BaseFare']);
-                                            $price_infant = floatval($passenger_fare['BaseFare']) + floatval($passenger_fare['Tax']);
-                                            break;
+                                    $price_infant = 0;
+                                    if($infant > 0) {
+                                        $fare_breakdown = $tmzticket['FareBreakdown'];
+                                        for ($inf=0; $inf < count($fare_breakdown) ; $inf++) { 
+                                            $passenger_fare = $fare_breakdown[$inf];
+                                            if($passenger_fare['PassengerType'] === 3) {
+                                                //infant
+                                                // $price_infant = floatval($passenger_fare['BaseFare']);
+                                                $price_infant = floatval($passenger_fare['BaseFare']) + floatval($passenger_fare['Tax']);
+                                                break;
+                                            }
                                         }
                                     }
-                                }
 
-                                $seats_count = $adult + $child;
-                                $pax = $seats_count;
-                                $no_of_seats = isset($tmzticket['Segments'][0][0]['NoOfSeatAvailable'])?intval($tmzticket['Segments'][0][0]['NoOfSeatAvailable']):0;
-                                $no_of_seats = $no_of_seats>0?$no_of_seats:$pax;
-                                $commision = round(floatval($tmzticket['Fare']['CommissionEarned']) + floatval($tmzticket['Fare']['IncentiveEarned']) + floatval($tmzticket['Fare']['PLBEarned']) , 0);
-                                $tds = round(floatval($tmzticket['Fare']['TdsOnCommission']) + floatval($tmzticket['Fare']['TdsOnIncentive']) + floatval($tmzticket['Fare']['TdsOnPLB']) , 0);
-                                $price = round((floatval($tmzticket['Fare']['OfferedFare']) + $tds - ($price_infant * $infant))/$pax, 0);
-                                $iid = intval(str_replace('IB', '', str_replace('OB', '', $tmzticket['ResultIndex'])));
+                                    $seats_count = $adult + $child;
+                                    $pax = $seats_count;
+                                    $no_of_seats = isset($tmzticket['Segments'][0][0]['NoOfSeatAvailable'])?intval($tmzticket['Segments'][0][0]['NoOfSeatAvailable']):0;
+                                    $no_of_seats = $no_of_seats>0?$no_of_seats:$pax;
+                                    $commision = round(floatval($tmzticket['Fare']['CommissionEarned']) + floatval($tmzticket['Fare']['IncentiveEarned']) + floatval($tmzticket['Fare']['PLBEarned']) , 0);
+                                    $tds = round(floatval($tmzticket['Fare']['TdsOnCommission']) + floatval($tmzticket['Fare']['TdsOnIncentive']) + floatval($tmzticket['Fare']['TdsOnPLB']) , 0);
+                                    $price = round((floatval($tmzticket['Fare']['OfferedFare']) + $tds - ($price_infant * $infant))/$pax, 0);
+                                    $iid = intval(str_replace('IB', '', str_replace('OB', '', $tmzticket['ResultIndex'])));
 
-                                $segments = [];
-                                $lastsegmentidx = 0;
-                                for ($ii=0; $ii<count($tmzticket['Segments'][0]); $ii++) { 
-                                    $seg = $tmzticket['Segments'][0][$ii];
-                                    $segments[] = array(
-                                        'segmentindicator' => $seg['SegmentIndicator'], 
-                                        'aircode' => $seg['Airline']['AirlineCode'],
-                                        'airname' => $seg['Airline']['AirlineName'],
-                                        'flight_number' => $seg['Airline']['FlightNumber'],
-                                        'fare_class' => $seg['Airline']['FareClass'],
-                                        'operating_carrier' => $seg['Airline']['OperatingCarrier'],
-                                        'duration' => intval($seg['Duration']),
-                                        'departure_city' => $seg['Origin']['Airport']['AirportCode'],
-                                        'departure_terminal' => $seg['Origin']['Airport']['Terminal'],
-                                        'departure_datetime' => $seg['Origin']['DepTime'],
-                                        'arrival_city' => $seg['Destination']['Airport']['AirportCode'],
-                                        'arrival_terminal' => $seg['Destination']['Airport']['Terminal'],
-                                        'arrival_datetime' => $seg['Destination']['ArrTime'],
-                                        'aircraft' => $seg['Craft'],
-                                        'flight_status' => $seg['FlightStatus'],
-                                        'iseticketeligible' => boolval($seg['IsETicketEligible'])
+                                    $segments = [];
+                                    $lastsegmentidx = 0;
+                                    for ($ii=0; $ii<count($tmzticket['Segments'][0]); $ii++) { 
+                                        $seg = $tmzticket['Segments'][0][$ii];
+                                        $segments[] = array(
+                                            'segmentindicator' => $seg['SegmentIndicator'], 
+                                            'aircode' => $seg['Airline']['AirlineCode'],
+                                            'airname' => $seg['Airline']['AirlineName'],
+                                            'flight_number' => $seg['Airline']['FlightNumber'],
+                                            'fare_class' => $seg['Airline']['FareClass'],
+                                            'operating_carrier' => $seg['Airline']['OperatingCarrier'],
+                                            'duration' => intval($seg['Duration']),
+                                            'departure_city' => $seg['Origin']['Airport']['AirportCode'],
+                                            'departure_terminal' => $seg['Origin']['Airport']['Terminal'],
+                                            'departure_datetime' => $seg['Origin']['DepTime'],
+                                            'arrival_city' => $seg['Destination']['Airport']['AirportCode'],
+                                            'arrival_terminal' => $seg['Destination']['Airport']['Terminal'],
+                                            'arrival_datetime' => $seg['Destination']['ArrTime'],
+                                            'aircraft' => $seg['Craft'],
+                                            'flight_status' => $seg['FlightStatus'],
+                                            'iseticketeligible' => boolval($seg['IsETicketEligible'])
+                                        );
+
+                                        $lastsegmentidx = $ii;
+                                    }
+
+                                    $llc = isset($tmzticket['IsLCC'])?boolval($tmzticket['IsLCC']):false;
+                                    $gstallowed = isset($tmzticket['GSTAllowed'])?boolval($tmzticket['GSTAllowed']):false;
+                                    $isholdallowedwithssr = isset($tmzticket['IsHoldAllowedWithSSR'])?boolval($tmzticket['IsHoldAllowedWithSSR']):false;
+                                    $ispanrequiredatticket = isset($tmzticket['IsPanRequiredAtTicket'])?boolval($tmzticket['IsPanRequiredAtTicket']):false;
+                                    $ispassportrequiredatbook = isset($tmzticket['IsPassportRequiredAtBook'])?boolval($tmzticket['IsPassportRequiredAtBook']):false;
+                                    $ispassportrequiredatticket = isset($tmzticket['IsPassportRequiredAtTicket'])?boolval($tmzticket['IsPassportRequiredAtTicket']):false;
+                                    $iscouponappilcable = isset($tmzticket['IsCouponAppilcable'])?boolval($tmzticket['IsCouponAppilcable']):false;
+                                    $isgstmandatory = isset($tmzticket['IsGSTMandatory'])?boolval($tmzticket['IsGSTMandatory']):false;
+                                    $remarks = (isset($tmzticket['AirlineRemark']) && $tmzticket['AirlineRemark'] !== '') ? $tmzticket['AirlineRemark'] : 'Live inventory from API';
+                                    $remarks = $remarks." ".($ispanrequiredatticket?'| PAN Mandatory ':'');
+                                    $remarks = $remarks." ".($ispassportrequiredatbook?'| Passport Mandatory ':'');
+                                    $remarks = $remarks." ".($isgstmandatory?'| GST# Mandatory ':'');
+
+                                    $ticket = array(
+                                        'direction' => $legcode,
+                                        'id' => (200100000 + $iid),
+                                        'uid' => intval($company['primary_user_id']),
+                                        'remarks' => $remarks,
+                                        'source' => $source_city_id,
+                                        'destination' => $destination_city_id,
+                                        'source_code' => $tmzticket['Segments'][0][0]['Origin']['Airport']['AirportCode'],
+                                        'destination_code' => $tmzticket['Segments'][0][$lastsegmentidx]['Destination']['Airport']['AirportCode'],
+                                        'source_city' => $source_city, //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
+                                        'destination_city' => $destination_city, //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
+                                        'departure_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Origin']['DepTime'])),
+                                        'arrival_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][$lastsegmentidx]['Destination']['ArrTime'])),
+                                        'flight_no' => trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode']).' '.trim($tmzticket['Segments'][0][0]['Airline']['FlightNumber']),
+                                        'terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
+                                        'departure_terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
+                                        'arrival_terminal' => $tmzticket['Segments'][0][$lastsegmentidx]['Destination']['Airport']['Terminal'],
+                                        'no_of_person' => $no_of_seats,
+                                        'adult' => $adult,
+                                        'child' => $child,
+                                        'infant' => $infant,
+                                        'seatsavailable' => $no_of_seats,
+                                        'tag' => $tmzticket['FareRules'][0]['FareRuleDetail'],
+                                        'data_collected_from' => 'tbo_api',
+                                        'sale_type' => 'api', /*This will be live only but for now making it API //live */
+                                        'library_name' => 'api_tbo',
+                                        'config' => $this->config,
+                                        'refundable' => $tmzticket['IsRefundable']?'Y':'N',
+                                        'total' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                        'airline_name' => $lastairline['display_name'],
+                                        'airline' => $lastairline['id'],
+                                        'aircode' => $tmzticket['Segments'][0][0]['Airline']['AirlineCode'],
+                                        'ticket_no' => 'TBO-TKT-'.$iid,
+                                        'price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                        'cost_price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
+                                        'infant_price' => $price_infant, //floatval($tmzticket['Fare']['OfferedFare']),
+                                        'approved' => 1,
+                                        'class' => 'ECONOMY',
+                                        'no_of_stops' => $lastsegmentidx,
+                                        'companyid' => intval($supl_company['id']), //$company['id'], This has to be supplier company id. Means who own the ticket
+                                        'companyname' => $supl_company['display_name'],
+                                        'user_id' => intval($supl_company['primary_user_id']), // -1,
+                                        'admin_markup' => 0,
+                                        'rate_plan_id' => $supl_rateplan_id,
+                                        'supplierid' => $supl_companyid,
+                                        'sellerid' => $company['id'],
+                                        'seller_rateplan_id' => $default_rateplan_id,
+                                        'adult_total' => 0.00, //if we make it non-zero then search showing wrong date.
+                                        'image' => $image,
+                                        'ResultIndex' => $tmzticket['ResultIndex'],
+                                        // 'SearchIndex' => intval($tmzticket['SearchIndex']),
+                                        // 'SuppSource' => intval($tmzticket['SuppSource']),
+                                        'IsLCC' => isset($tmzticket['IsLCC'])?boolval($tmzticket['IsLCC']):false,
+                                        'GSTAllowed' => isset($tmzticket['GSTAllowed'])?boolval($tmzticket['GSTAllowed']):false,
+                                        'IsHoldAllowedWithSSR' => isset($tmzticket['IsHoldAllowedWithSSR'])?boolval($tmzticket['IsHoldAllowedWithSSR']):false,
+                                        'IsPanRequiredAtTicket' => isset($tmzticket['IsPanRequiredAtTicket'])?boolval($tmzticket['IsPanRequiredAtTicket']):false,
+                                        'IsPassportRequiredAtBook' => isset($tmzticket['IsPassportRequiredAtBook'])?boolval($tmzticket['IsPassportRequiredAtBook']):false,
+                                        'IsPassportRequiredAtTicket' => isset($tmzticket['IsPassportRequiredAtTicket'])?boolval($tmzticket['IsPassportRequiredAtTicket']):false,
+                                        'IsCouponAppilcable' => isset($tmzticket['IsCouponAppilcable'])?boolval($tmzticket['IsCouponAppilcable']):false,
+                                        'IsGSTMandatory' => isset($tmzticket['IsGSTMandatory'])?boolval($tmzticket['IsGSTMandatory']):false,
+                                        'SuppTokenId' => $this->tokenid,
+                                        'SuppTraceId' => $traceid,
+                                        'tokenid' => $this->tokenid,
+                                        'clientid' => $this->member['MemberId'],
+                                        'agencytype' => $this->member['AgencyId'],
+                                        'segments' => $segments
                                     );
+                                    $this->tokenid = $ticket['tokenid'];
+                                    $this->clientid = $ticket['clientid'];
+                                    $this->agencytype = $ticket['agencytype'];
+                            
 
-                                    $lastsegmentidx = $ii;
+                                    $ticket = array_merge($ticket_format, $ticket);
+
+                                    array_push($tickets, $ticket);
                                 }
-
-                                $llc = isset($tmzticket['IsLCC'])?boolval($tmzticket['IsLCC']):false;
-                                $gstallowed = isset($tmzticket['GSTAllowed'])?boolval($tmzticket['GSTAllowed']):false;
-                                $isholdallowedwithssr = isset($tmzticket['IsHoldAllowedWithSSR'])?boolval($tmzticket['IsHoldAllowedWithSSR']):false;
-                                $ispanrequiredatticket = isset($tmzticket['IsPanRequiredAtTicket'])?boolval($tmzticket['IsPanRequiredAtTicket']):false;
-                                $ispassportrequiredatbook = isset($tmzticket['IsPassportRequiredAtBook'])?boolval($tmzticket['IsPassportRequiredAtBook']):false;
-                                $ispassportrequiredatticket = isset($tmzticket['IsPassportRequiredAtTicket'])?boolval($tmzticket['IsPassportRequiredAtTicket']):false;
-                                $iscouponappilcable = isset($tmzticket['IsCouponAppilcable'])?boolval($tmzticket['IsCouponAppilcable']):false;
-                                $isgstmandatory = isset($tmzticket['IsGSTMandatory'])?boolval($tmzticket['IsGSTMandatory']):false;
-                                $remarks = (isset($tmzticket['AirlineRemark']) && $tmzticket['AirlineRemark'] !== '') ? $tmzticket['AirlineRemark'] : 'Live inventory from API';
-                                $remarks = $remarks." ".($ispanrequiredatticket?'| PAN Mandatory ':'');
-                                $remarks = $remarks." ".($ispassportrequiredatbook?'| Passport Mandatory ':'');
-                                $remarks = $remarks." ".($isgstmandatory?'| GST# Mandatory ':'');
-
-                                $ticket = array(
-                                    'id' => (200100000 + $iid),
-                                    'uid' => intval($company['primary_user_id']),
-                                    'remarks' => $remarks,
-                                    'source' => $source_city_id,
-                                    'destination' => $destination_city_id,
-                                    'source_code' => $tmzticket['Segments'][0][0]['Origin']['Airport']['AirportCode'],
-                                    'destination_code' => $tmzticket['Segments'][0][$lastsegmentidx]['Destination']['Airport']['AirportCode'],
-                                    'source_city' => $source_city, //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
-                                    'destination_city' => $destination_city, //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
-                                    'departure_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Origin']['DepTime'])),
-                                    'arrival_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][$lastsegmentidx]['Destination']['ArrTime'])),
-                                    'flight_no' => trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode']).' '.trim($tmzticket['Segments'][0][0]['Airline']['FlightNumber']),
-                                    'terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
-                                    'departure_terminal' => $tmzticket['Segments'][0][0]['Origin']['Airport']['Terminal'],
-                                    'arrival_terminal' => $tmzticket['Segments'][0][$lastsegmentidx]['Destination']['Airport']['Terminal'],
-                                    'no_of_person' => $no_of_seats,
-                                    'adult' => $adult,
-                                    'child' => $child,
-                                    'infant' => $infant,
-                                    'seatsavailable' => $no_of_seats,
-                                    'tag' => $tmzticket['FareRules'][0]['FareRuleDetail'],
-                                    'data_collected_from' => 'tbo_api',
-                                    'sale_type' => 'api', /*This will be live only but for now making it API //live */
-                                    'library_name' => 'api_tbo',
-                                    'config' => $this->config,
-                                    'refundable' => $tmzticket['IsRefundable']?'Y':'N',
-                                    'total' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                    'airline_name' => $lastairline['display_name'],
-                                    'airline' => $lastairline['id'],
-                                    'aircode' => $tmzticket['Segments'][0][0]['Airline']['AirlineCode'],
-                                    'ticket_no' => 'TBO-TKT-'.$iid,
-                                    'price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                    'cost_price' => $price, //floatval($tmzticket['Fare']['OfferedFare']),
-                                    'infant_price' => $price_infant, //floatval($tmzticket['Fare']['OfferedFare']),
-                                    'approved' => 1,
-                                    'class' => 'ECONOMY',
-                                    'no_of_stops' => $lastsegmentidx,
-                                    'companyid' => intval($supl_company['id']), //$company['id'], This has to be supplier company id. Means who own the ticket
-                                    'companyname' => $supl_company['display_name'],
-                                    'user_id' => intval($supl_company['primary_user_id']), // -1,
-                                    'admin_markup' => 0,
-                                    'rate_plan_id' => $supl_rateplan_id,
-                                    'supplierid' => $supl_companyid,
-                                    'sellerid' => $company['id'],
-                                    'seller_rateplan_id' => $default_rateplan_id,
-                                    'adult_total' => 0.00, //if we make it non-zero then search showing wrong date.
-                                    'image' => $image,
-                                    'ResultIndex' => $tmzticket['ResultIndex'],
-                                    // 'SearchIndex' => intval($tmzticket['SearchIndex']),
-                                    // 'SuppSource' => intval($tmzticket['SuppSource']),
-                                    'IsLCC' => isset($tmzticket['IsLCC'])?boolval($tmzticket['IsLCC']):false,
-                                    'GSTAllowed' => isset($tmzticket['GSTAllowed'])?boolval($tmzticket['GSTAllowed']):false,
-                                    'IsHoldAllowedWithSSR' => isset($tmzticket['IsHoldAllowedWithSSR'])?boolval($tmzticket['IsHoldAllowedWithSSR']):false,
-                                    'IsPanRequiredAtTicket' => isset($tmzticket['IsPanRequiredAtTicket'])?boolval($tmzticket['IsPanRequiredAtTicket']):false,
-                                    'IsPassportRequiredAtBook' => isset($tmzticket['IsPassportRequiredAtBook'])?boolval($tmzticket['IsPassportRequiredAtBook']):false,
-                                    'IsPassportRequiredAtTicket' => isset($tmzticket['IsPassportRequiredAtTicket'])?boolval($tmzticket['IsPassportRequiredAtTicket']):false,
-                                    'IsCouponAppilcable' => isset($tmzticket['IsCouponAppilcable'])?boolval($tmzticket['IsCouponAppilcable']):false,
-                                    'IsGSTMandatory' => isset($tmzticket['IsGSTMandatory'])?boolval($tmzticket['IsGSTMandatory']):false,
-                                    'SuppTokenId' => $this->tokenid,
-                                    'SuppTraceId' => $traceid,
-                                    'tokenid' => $this->tokenid,
-                                    'clientid' => $this->member['MemberId'],
-                                    'agencytype' => $this->member['AgencyId'],
-                                    'segments' => $segments
-                                );
-                                $this->tokenid = $ticket['tokenid'];
-                                $this->clientid = $ticket['clientid'];
-                                $this->agencytype = $ticket['agencytype'];
-                        
-
-                                $ticket = array_merge($ticket_format, $ticket);
-
-                                array_push($tickets, $ticket);
-                            }
-                            catch(Exception $ex) {
-                                log_message('error', $ex);
+                                catch(Exception $ex) {
+                                    log_message('error', $ex);
+                                }
                             }
                         }
                     }

@@ -1261,6 +1261,7 @@ class Company extends REST_Controller {
                             }
                             $current_ticket['price'] = floatval($ticket['price']);
                             $current_ticket['total'] = floatval($ticket['price']);
+                            $current_ticket['remarks'] = isset($ticket['remarks']) ? $ticket['remarks'] : '';
                             $company = search_array_item($companies, 'id', $ticket['companyid']);
                             if($company && is_array($company) && count($company)>0 && isset($company['id'])) {
                                 $current_ticket['updated_by'] =  intval($company['primary_user_id']);
@@ -1302,6 +1303,7 @@ class Company extends REST_Controller {
                             $current_ticket['admin_markup'] = 300.00;
                             $current_ticket['no_of_stops'] = 0;
                             $current_ticket['stops_name'] = 'NA';
+                            $current_ticket['remarks'] = isset($ticket['remarks']) ? $ticket['remarks'] : '';
                             $current_ticket['trip_type'] = $ticket['trip_type'];
                             $current_ticket['tag'] = 'Synced via Google Sheet';
                             $current_ticket['no_of_person'] = intval($ticket['no_of_person']);
@@ -1351,8 +1353,13 @@ class Company extends REST_Controller {
         $this->set_response($feedbacks, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
-    public function get_linked_gsheets_get($companyid=-1) {
+    public function get_linked_gsheets_get($companyid=-1, $status=1) {
         $sheets = [];
+
+        if($status === '')
+            $status = 1;
+        else 
+            $status = intval($status);
 
         try
         {
@@ -1362,10 +1369,20 @@ class Company extends REST_Controller {
             // ]            
             $companyid = intval($companyid);
             if($companyid>0) {
-                $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => 1, 'target_companyid' => $companyid));
+                if($status>-1) {
+                    $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => $status, 'target_companyid' => $companyid));
+                }
+                else {
+                    $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('target_companyid' => $companyid));
+                }
             }
             else {
-                $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => 1));
+                if($status>-1) {
+                    $sheets = $this->Search_Model->get('linked_gsheets_tbl', array('status' => $status));
+                }
+                else {
+                    $sheets = $this->Search_Model->get('linked_gsheets_tbl', array());
+                }
             }
             log_message('debug', "Collecting inventory linked gSheets of $companyid => ".json_encode($sheets));
         }
@@ -1374,6 +1391,41 @@ class Company extends REST_Controller {
         }
 
         $this->set_response($sheets, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
+    }
+
+    public function change_gsheets_post($companyid = -1, $sheetid = -1) {
+        $gsheet_update_payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $gsheet = json_decode($gsheet_update_payload, true);
+        $flag = false;
+
+        if($gsheet) {
+            if(intval($gsheet['id'])>0) {
+                $flag = $this->Search_Model->update('linked_gsheets_tbl', array(
+                    'name' => $gsheet['name'],
+                    'sheetid' => $gsheet['sheetid'],
+                    'status' => (intval($gsheet['status'])>0 ? 1 : 0),
+                    'sourcecode' => $gsheet['sourcecode'],
+                    'target_companyid' => $companyid,
+                    'sheet_url' => $gsheet['sheet_url'],
+                ), array(
+                    'id' => intval($gsheet['id'])
+                ));
+            }
+            else {
+                $flag = $this->Search_Model->save('linked_gsheets_tbl', array(
+                    'name' => $gsheet['name'],
+                    'sheetid' => $gsheet['sheetid'],
+                    'status' => (intval($gsheet['status'])>0 ? 1 : 0),
+                    'sourcecode' => $gsheet['sourcecode'],
+                    'target_companyid' => $companyid,
+                    'sheet_url' => $gsheet['sheet_url'],
+                ));
+
+                $gsheet['id'] = $flag ? $flag : -1;
+            }
+        }
+
+        return $flag;
     }
 
     #region helper method    
