@@ -255,7 +255,7 @@ Class Search_Model extends BaseModel
 
 		$sql = "select 	tkt.direction, tkt.id, tkt.source, tkt.destination, tkt.pnr, ct1.city as source_city, ct1.code as source_city_code, ct2.city as destination_city, ct2.code as destination_city_code, tkt.trip_type, tkt.departure_date_time, tkt.arrival_date_time, tkt.flight_no ,tkt.terminal, tkt.no_of_person, tkt.class, 
 			tkt.no_of_stops, tkt.data_collected_from, tkt.sale_type, tkt.refundable, tkt.total, al.display_name as airline, al.id as airlineid, al.image, al.aircode as aircode, tkt.ticket_no, tkt.price, cm.id as companyid, cm.display_name as companyname, tkt.user_id ,tkt.data_collected_from, tkt.updated_on, tkt.updated_by, tkt.tag, 
-			tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, if(tkt.price_infant<=0, $infant_price*2, tkt.price_infant) as infant_price, tkt.fare_rule, tkt.adult_count as adult, tkt.child_count as child, tkt.infant_count as infant, tkt.remarks, 
+			tkt.admin_markup, tkt.last_sync_key, tkt.approved, rpt.rate_plan_id, rpt.supplierid, rpt.sellerid, rpt.seller_rateplan_id, if(tkt.price_infant<=0, $infant_price, tkt.price_infant) as infant_price, tkt.fare_rule, tkt.adult_count as adult, tkt.child_count as child, tkt.infant_count as infant, tkt.remarks, 
 			max(ltkt.departure_date_time) as dept_date_time, max(ltkt.arrival_date_time) as arrv_date_time, max(ltkt.airline) as airlinecode, max(ltkt.adultbasefare) as adultbasefare, max(ltkt.adult_tax_fees) as adult_tax_fees, 
 			max(TIMESTAMPDIFF(MINUTE, ltkt.departure_date_time, ltkt.arrival_date_time)) as timediff, max(ltkt.departure_terminal) as departure_terminal, max(ltkt.arrival_terminal) as arrival_terminal, max(ltkt.adultbasefare+ltkt.adult_tax_fees+200) as adult_total
 			from 
@@ -575,29 +575,45 @@ Class Search_Model extends BaseModel
 	// 	}
 	// }
 
+    public function get_bookingby_correlationid($correlationid) 
+	{    
+		$qry = "select 	u.name,u.email,u.mobile,b.id as booking_id, b.ticket_id,t.ticket_no,c.city as source,ct.city as destination,a.display_name as airline,
+						case when t.direction='OB' then 'Outbound' else 'Inbound' end as direction, 
+						t.class,t.departure_date_time,t.arrival_date_time,t.trip_type,t.departure_terminal,t.arrival_terminal,t.flight_no,
+						case when u.is_admin=1 then 'EMP' else u.type end as type, u.address, 
+						b.admin_markup, b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty, b.adult, b.child, b.infant, b.infant_price, 
+						((b.price * b.qty) + (b.infant_price * b.infant)) as amount, (b.total) as total, b.costprice, b.rateplanid, 
+						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
+						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid, a.image,b.booking_confirm_date, 
+						ifnull((select status from booking_activity_tbl where booking_id=b.id and (requesting_by & 4)=4 order by activity_date limit 1),0) as seller_status, 
+						a.aircode, a.image
+				from bookings_flights_tbl t
+				inner join bookings_tbl b on b.ticket_id = t.ticket_id
+				inner join airline_tbl a on a.id = t.airline
+				inner join city_tbl c on c.id = t.source
+				inner join city_tbl ct on ct.id = t.destination
+				inner join user_tbl u on b.customer_userid =u.id
+				where b.correlationid = '$correlationid' 
+				order by b.id";
+		//$query = $this->db->get();
+		$query = $this->db->query($qry);
+		//echo $this->db->last_query();die();
+		if ($query->num_rows() > 0) 
+		{					
+            return $query->result_array();		
+		}
+		else
+		{
+			  return false;
+		}         	
+    }	
+
     public function booking_details($id) 
 	{    
-	    
-        // $arr=array("b.id"=>$id);  	
-		// $this->db->select('cus.prefix,cus.email as cemail,cus.first_name,cus.last_name,cus.age,cus.mobile_no,cus.pnr,u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,b.date,c.city as source,c1.city as source1,ct.city as destination,ct1.city as destination1,a.airline,a1.airline as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1,b.service_charge,b.sgst,b.cgst,b.igst,b.rate,b.qty,b.amount,b.total,b.type,b.status,b.customer_id,b.seller_id,a.image,b.booking_confirm_date,b.seller_status');
-		// $this->db->from('tickets_tbl as t');
-		// $this->db->join('booking_tbl b', 'b.ticket_id = t.id');
-		// $this->db->join('airline_tbl a', 'a.id = t.airline');
-		// $this->db->join('airline_tbl a1', 'a1.id = t.airline1','left');
-		// $this->db->join('city_tbl c', 'c.id = t.source');
-		// $this->db->join('city_tbl ct', 'ct.id = t.destination');
-		// $this->db->join('city_tbl c1', 'c1.id = t.source1','left');
-		// $this->db->join('city_tbl ct1', 'ct1.id = t.destination1','left');
-		// $this->db->join('user_tbl u', 'b.customer_id =u.id');
-		// $this->db->join('customer_information_tbl cus', 'b.id =cus.booking_id',"left");
-		
-		// $this->db->where($arr);
-		// $this->db->order_by("cus.id","ASC");
-
 		$qry = "select 	cus.prefix,cus.email as cemail, cus.type as passenger_type, cus.first_name,cus.last_name,cus.age,cus.dob,cus.mobile_no,cus.pnr, cus.airline_ticket_no, u.name,u.email,u.mobile,b.id,b.ticket_id,t.ticket_no,c.city as source,c1.city as source1,
 						ct.city as destination,ct1.city as destination1,a.display_name as airline,a1.display_name as airline1,t.class,t.class1,t.departure_date_time,t.departure_date_time1,t.arrival_date_time,t.arrival_date_time1,t.trip_type,t.terminal,
 						t.terminal1,t.terminal2,t.terminal3,t.flight_no,t.flight_no1, case when u.is_admin=1 then 'EMP' else u.type end as type, u.address, 
-						case when cus.type=1 then 'Adult' when cus.type=2 then 'Child' else 'Infant' end as passenger_type_code, b.admin_markup, 
+						case when cus.type=1 then 'Adult' when cus.type=2 then 'Child' else 'Infant' end as passenger_type_code, b.admin_markup, b.correlationid, 
 						b.booking_date as date, b.srvchg as service_charge,b.sgst,b.cgst,b.igst,(b.price) as rate,b.qty, b.adult, b.child, b.infant, b.infant_price, ((b.price * b.qty) + (b.infant_price * b.infant)) as amount, (b.total) as total, b.costprice, b.rateplanid, 
 						case when b.status=0 then 'PENDING' when b.status=1 then 'HOLD' when b.status=2 then 'APPROVED' when b.status=4 then 'PROCESSING' when b.status=8 then 'REJECTED' when b.status=16 then 'CANCELLED' end as status, 
 						b.customer_userid, b.customer_companyid, b.seller_userid, b.seller_companyid,
@@ -2225,6 +2241,7 @@ Class Search_Model extends BaseModel
 		$booking_activity_id = -1;
 		$voucher_no = -1;
 		$booking_type = isset($posteddata['booking_type']) ? $posteddata['booking_type'] : '';
+		$correlationid = isset($posteddata['correlationid']) ? $posteddata['correlationid'] : uniqid();
 		$amount = floatval($parameters["total"]);
 		$isownticket = boolval($parameters["isownticket"]);
 		$parentbooking_id = isset($parameters["pbooking_id"])?intval($parameters["pbooking_id"]):0;
@@ -2272,8 +2289,92 @@ Class Search_Model extends BaseModel
 					"infant_price"=>floatval($parameters["infant_price"]), 
 					"created_by"=>$parameters["created_by"], 
 					"created_on"=>date("Y-m-d H:i:s"),
+					"correlationid" => $correlationid
 				));
 
+				$adult = isset($ticket['adult']) ? intval($ticket['adult']) : 0;
+				$child = isset($ticket['child']) ? intval($ticket['child']) : 0;
+				$infant = isset($ticket['infant']) ? intval($ticket['infant']) : 0;
+				$no_of_person = $adult + $child + $infant;
+
+				$flight = $this->get('airline_tbl', array('airline' => "'".$ticket['airline']."'"));
+				if($flight && count($flight)>0) {
+					$ticket['airlineid'] = $flight[0]['id'];
+				}
+				//insert record into booking_flight_tbl;
+				$booking_ticket_id = $this->save("bookings_flights_tbl", array(
+					"booking_id" => $booking_id,
+					"ticket_id" => $ticket['id'],
+					"ticket_key" => isset($ticket['aid']) ? $ticket['aid'] : '',
+					"direction" => isset($ticket['direction']) ? $ticket['direction'] : 'OB',
+					"source" => isset($ticket['source']) ? $ticket['source'] : -1,
+					"destination" => isset($ticket['destination']) ? $ticket['destination'] : -1,
+					"pnr" => isset($ticket['pnr']) ? $ticket['pnr'] : '',
+					"trip_type" => isset($ticket['trip_type']) ? $ticket['trip_type'] : 'ONE',
+					"departure_date_time" => isset($ticket['departure_date_time']) ? $ticket['departure_date_time'] : '',
+					"arrival_date_time" => isset($ticket['arrival_date_time']) ? $ticket['arrival_date_time'] : '',
+					"flight_no" => isset($ticket['flight_no']) ? $ticket['flight_no'] : '',
+					"departure_terminal" => isset($ticket['terminal']) ? $ticket['terminal'] : '',
+					"arrival_terminal" => isset($ticket['terminal1']) ? $ticket['terminal1'] : '',
+					"no_of_person" => $no_of_person,
+					"adult" => $adult,
+					"child" => $child,
+					"infant" => $infant,
+					"class" => isset($ticket['class']) ? $ticket['class'] : 'ECONOMY',
+					"no_of_stops" => isset($ticket['no_of_stops']) ? $ticket['no_of_stops'] : 0,
+					"data_collected_from" => isset($ticket['data_collected_from']) ? $ticket['data_collected_from'] : '',
+					"sale_type" => isset($ticket['sale_type']) ? $ticket['sale_type'] : 'request',
+					"refundable" => isset($ticket['refundable']) ? $ticket['refundable'] : 'Y',
+					"airline" => isset($ticket['airlineid']) ? $ticket['airlineid'] : (isset($ticket['airline']) ? $ticket['airline'] : -1),
+					"aircode" => isset($ticket['aircode']) ? $ticket['aircode'] : '',
+					"ticket_no" => isset($ticket['ticket_no']) ? $ticket['ticket_no'] : '',
+					"companyid" => isset($ticket['companyid']) ? $ticket['companyid'] : -1,
+					"user_id" => isset($ticket['uid']) ? $ticket['uid'] : -1,
+					"supplier_rate_plan_id" => isset($ticket['rate_plan_id']) ? $ticket['rate_plan_id'] : -1,
+					"seller_rate_plan_id" => isset($ticket['seller_rateplan_id']) ? $ticket['seller_rateplan_id'] : -1,
+					"supplier_companyid" => isset($ticket['supplierid']) ? $ticket['supplierid'] : -1,
+					"seller_companyid" => isset($ticket['sellerid']) ? $ticket['sellerid'] : -1,
+					"result_index" => isset($ticket['ResultIndex']) ? $ticket['ResultIndex'] : '',
+					"cost_price"=>floatval($parameters["costprice"]), 
+					"price"=>$parameters["price"], 
+					"admin_markup"=>$parameters["admin_markup"], 
+					"markup"=>$parameters["markup"], 
+					"srvchg"=>$parameters["srvchg"], 
+					"cgst"=>$parameters["cgst"], 
+					"sgst"=>$parameters["sgst"], 
+					"igst"=>$parameters["igst"], 
+					"total"=>$parameters["total"], 
+					"discount"=>0.00,
+					// "cost_price" => isset($ticket['cost_price']) ? $ticket['cost_price'] : 0.00,
+					// "price" => isset($ticket['price']) ? $ticket['price'] : 0.00,
+					// "admin_markup" => isset($ticket['admin_markup']) ? $ticket['admin_markup'] : 0.00,
+					// "markup" => (isset($ticket['whl_markup']) ? floatval($ticket['whl_markup']) : 0) + (isset($ticket['spl_markup']) ? floatval($ticket['spl_markup']) : 0),
+					// "srvchg" => (isset($ticket['whl_srvchg']) ? floatval($ticket['whl_srvchg']) : 0) + (isset($ticket['spl_srvchg']) ? floatval($ticket['spl_srvchg']) : 0),
+					// "cgst" => (isset($ticket['whl_cgst']) ? floatval($ticket['whl_cgst']) : 0) + (isset($ticket['spl_cgst']) ? floatval($ticket['spl_cgst']) : 0),
+					// "sgst" => (isset($ticket['whl_sgst']) ? floatval($ticket['whl_sgst']) : 0) + (isset($ticket['spl_sgst']) ? floatval($ticket['spl_sgst']) : 0),
+					// "igst" => (isset($ticket['whl_igst']) ? floatval($ticket['whl_igst']) : 0) + (isset($ticket['spl_igst']) ? floatval($ticket['spl_igst']) : 0),
+					// "discount" => (isset($ticket['whl_disc']) ? floatval($ticket['whl_disc']) : 0) + (isset($ticket['spl_disc']) ? floatval($ticket['spl_disc']) : 0),
+					// "total" => isset($ticket['total']) ? $ticket['total'] : 0.00,
+					"islcc" => isset($ticket['IsLCC']) ? $ticket['IsLCC'] : false,
+					"gstallowed" => isset($ticket['GSTAllowed']) ? $ticket['GSTAllowed'] : false,
+					"isholdallowedwithssr" => isset($ticket['IsHoldAllowedWithSSR']) ? $ticket['IsHoldAllowedWithSSR'] : false,
+					"ispassportrequiredatticket" => isset($ticket['IsPassportRequiredAtTicket']) ? $ticket['IsPassportRequiredAtTicket'] : false,
+					"ispassportrequiredatbook" => isset($ticket['IsPassportRequiredAtBook']) ? $ticket['IsPassportRequiredAtBook'] : false,
+					"ispanrequiredatticket" => isset($ticket['IsPanRequiredAtTicket']) ? $ticket['IsPanRequiredAtTicket'] : false,
+					"iscouponappilcable" => isset($ticket['IsCouponAppilcable']) ? $ticket['IsCouponAppilcable'] : false,
+					"isgstmandatory" => isset($ticket['IsGSTMandatory']) ? $ticket['IsGSTMandatory'] : false,
+					"ticket_type" => isset($ticket['ticket_type']) ? $ticket['ticket_type'] : '',
+					"segments" => isset($ticket['segments']) ? json_encode($ticket['segments']) : json_encode('{}'),
+					"adult_rate" => 0.00,
+					"infant_rate" => 0.00,
+					"cgst_rate" => 0.00,
+					"sgst_rate" => 0.00,
+					"igst_rate" => 0.00,
+					"discount_rate" => 0.00,
+					"api_bookingid" => isset($ticket['bookingid']) ? $ticket['bookingid'] : ''
+				));
+
+				log_message('debug', 'Booking Ticket id => '.$booking_ticket_id);
 				//Save booking activity from end users perspective
 				$booking_activity_id = $this->save("booking_activity_tbl", array(
 					"booking_id"=>$booking_id,

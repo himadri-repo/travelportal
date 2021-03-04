@@ -155,7 +155,9 @@
 							<li ><a href="#tab-round-trip" data-toggle="tab">Round Trip</a></li>
 						</ul> <!-- ===1 || $companyid===7 -->
 						<h2 <?= (($companyid>0) ? 'style="font-size:18px; float: right; display: inline; padding: 10px; display:none"' : 'style="font-size:18px; float: right; display: inline; padding: 10px;"') ?>>Search the <span>Flight <i class="fa fa-plane"></i></span></h2>
-						<div class="tab-content" <?= (($companyid>0) ? 'style="border-top: 1px solid #a1a1a1; display:none"' : 'style="border-top: 1px solid #a1a1a1;"') ?>> <!-- ===1 || $companyid===7 -->
+						<?php
+						if($companyid==0) { ?>
+						<div class="tab-content" style="border-top: 1px solid #a1a1a1;"> <!-- ===1 || $companyid===7 -->
 							<!-- Round Trip Section -->
 							<div id="tab-round-trip" class="tab-pane fade in " style="padding-top: 10px;">
 								<form class="pg-search-form" id="frm_one_way" action="<?php echo base_url(); ?>search/search_round_trip" method="post" onsubmit="return validation1()">
@@ -296,7 +298,7 @@
 												<input class="datepicker" placeholder="dd/mm/yyyy" name="departure_date" id="departure_date" readonly value="<?php echo $dt; ?>"/>
 												<select class="form-control" style="display:none" name="departure_date_time" id="departure_date_time">
 												<?php
-													if($available) {
+													if(isset($available)) {
 														foreach($availalble as $key=>$value)
 														{
 														?>
@@ -335,6 +337,9 @@
 								</form>
 							</div><!-- end tab-one-way -->
 						</div><!-- end tab-content -->
+						<?php
+						}
+						?>
 					</div><!-- end page-search-form -->
 				</div>
 			</div>

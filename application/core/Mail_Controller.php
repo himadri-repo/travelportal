@@ -778,6 +778,9 @@ class Mail_Controller  extends CI_Controller
 
 	function isCreditAllowed($current_wallet_balance, $amount, $current_user) {
 		
+		if(isset($current_user['is_admin']) && intval($current_user['is_admin']) === 1)
+			return true;
+
 		$bflag = ($current_user && isset($current_user['credit_ac']) && boolval($current_user['credit_ac']) === true);
 
 		$bflag &= ($current_wallet_balance > -1000000); //max 10 lacks limit

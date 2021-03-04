@@ -48,6 +48,12 @@
 	color: #696565;
 }
 
+.summary_title {
+	font-size: 17px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
 .title1 {
 	color: #ff0000;
 }
@@ -332,7 +338,9 @@
 								$flight_data['flight_no'] = $flightitem['flight_no'];
 								$flight_data['splcode'] = $splcode;
 								$flight_data['dept_date'] = $dept_date;
+								$flight_data['formated_dept_date'] = date('H:i', $dept_date);
 								$flight_data['arrv_date'] = $arrv_date;
+								$flight_data['formated_arrv_date'] = date('H:i', $arrv_date);
 								$flight_data['source_city'] = $source_city;
 								$flight_data['dept_terminal'] = $dept_terminal;
 								$flight_data['stop_details'] = $stops_details;
@@ -342,6 +350,30 @@
 								$flight_data['sale_type'] = $sale_type;
 								$flight_data['id'] = $flightitem["id"];
 								$flight_data['companyid'] = intval($flightitem["companyid"]);
+
+								$infant_price = isset($flight[$key]["infant_price"]) ? floatval($flight[$key]["infant_price"]) : 0;
+
+								$adult = isset($state['adult']) ? intval($state['adult']) : 0;
+								$child = isset($state['child']) ? intval($state['child']) : 0;
+								$infant = isset($state['infant']) ? intval($state['infant']) : 0;
+				
+								$final_total = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+								if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+									$final_total += $flight[$key]["admin_markup"];
+								} 
+								if($currentuser['is_admin']=='1') {
+									$costprice = (floatval($flight[$key]['cost_price']) * ($adult + $child)) + ($infant_price * $infant);
+								}
+								else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+									// $costprice = $flight[$key]["price"] + ($infant_price * $infant);
+									$costprice = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+								}
+								else {
+									$costprice = 0;
+								}
+								
+								$flight_data['costprice'] = $costprice;
+								$flight_data['final_total'] = $final_total;								
 								?>
 
                                 <div class="<?php echo $class?> list-block main-block f-list-block outbound" data="<?= htmlspecialchars(json_encode($flight_data), ENT_QUOTES, 'UTF-8') ?>">
@@ -664,7 +696,9 @@
 								$flight_data['flight_no'] = $flightitem['flight_no'];
 								$flight_data['splcode'] = $splcode;
 								$flight_data['dept_date'] = $dept_date;
+								$flight_data['formated_dept_date'] = date('H:i', $dept_date);
 								$flight_data['arrv_date'] = $arrv_date;
+								$flight_data['formated_arrv_date'] = date('H:i', $arrv_date);
 								$flight_data['source_city'] = $source_city;
 								$flight_data['dept_terminal'] = $dept_terminal;
 								$flight_data['stop_details'] = $stops_details;
@@ -674,6 +708,30 @@
 								$flight_data['sale_type'] = $sale_type;
 								$flight_data['id'] = $flightitem["id"];
 								$flight_data['companyid'] = intval($flightitem["companyid"]);
+
+								$infant_price = isset($flight[$key]["infant_price"]) ? floatval($flight[$key]["infant_price"]) : 0;
+
+								$adult = isset($state['adult']) ? intval($state['adult']) : 0;
+								$child = isset($state['child']) ? intval($state['child']) : 0;
+								$infant = isset($state['infant']) ? intval($state['infant']) : 0;
+				
+								$final_total = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+								if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+									$final_total += $flight[$key]["admin_markup"];
+								} 
+								if($currentuser['is_admin']=='1') {
+									$costprice = (floatval($flight[$key]['cost_price']) * ($adult + $child)) + ($infant_price * $infant);
+								}
+								else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+									// $costprice = $flight[$key]["price"] + ($infant_price * $infant);
+									$costprice = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+								}
+								else {
+									$costprice = 0;
+								}
+								
+								$flight_data['costprice'] = $costprice;
+								$flight_data['final_total'] = $final_total;
 
 								?>
 
@@ -769,26 +827,30 @@
                                                 <div style="text-align: center;">
                                                     <div class="title">
 														<?php 
-														$infant_price = isset($flight[$key]["infant_price"]) ? floatval($flight[$key]["infant_price"]) : 0;
+														// $infant_price = isset($flight[$key]["infant_price"]) ? floatval($flight[$key]["infant_price"]) : 0;
 
-														$adult = isset($state['adult']) ? intval($state['adult']) : 0;
-														$child = isset($state['child']) ? intval($state['child']) : 0;
-														$infant = isset($state['infant']) ? intval($state['infant']) : 0;
+														// $adult = isset($state['adult']) ? intval($state['adult']) : 0;
+														// $child = isset($state['child']) ? intval($state['child']) : 0;
+														// $infant = isset($state['infant']) ? intval($state['infant']) : 0;
 										
-                                                        $final_total = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
-														if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-															$final_total += $flight[$key]["admin_markup"];
-                                                        } 
-                                                        if($currentuser['is_admin']=='1') {
-                                                            $costprice = (floatval($flight[$key]['cost_price']) * ($adult + $child)) + ($infant_price * $infant);
-                                                        }
-                                                        else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
-															// $costprice = $flight[$key]["price"] + ($infant_price * $infant);
-															$costprice = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
-                                                        }
-                                                        else {
-                                                            $costprice = 0;
-                                                        }
+                                                        // $final_total = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+														// if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+														// 	$final_total += $flight[$key]["admin_markup"];
+                                                        // } 
+                                                        // if($currentuser['is_admin']=='1') {
+                                                        //     $costprice = (floatval($flight[$key]['cost_price']) * ($adult + $child)) + ($infant_price * $infant);
+                                                        // }
+                                                        // else if($currentuser['is_admin']!=='1' && $currentuser['type']=='B2B') {
+														// 	// $costprice = $flight[$key]["price"] + ($infant_price * $infant);
+														// 	$costprice = ($flight[$key]["price"] * ($adult + $child)) + ($infant_price * $infant);
+                                                        // }
+                                                        // else {
+                                                        //     $costprice = 0;
+														// }
+														
+														// $flight_data['costprice'] = $costprice;
+														// $flight_data['final_total'] = $final_total;
+
                                                         ?>
                                                         <?php if($final_total>0 && $controller->show_price(intval($flightitem['user_id']))) { ?>
                                                             <i class='fa fa-inr'></i> <?= number_format($final_total,2,".",","); ?>
@@ -891,18 +953,21 @@
 
 				</div><!-- end columns -->
 				<!-- Footer -->
-				<div class="fixed-footer">
+				<?php 
+				if(!empty($flight)) {
+				?>
+				<div class="fixed-footer" id="selection_summary">
 					<div class="container-base footer-content">
 						<div class="row">
 							<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
 								<div class="row">
-									<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
+									<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5" style="border-right: 1px solid #cdcdcd;">
 										<div class="row">
-											<div class="col-xs-12 col-sm-12 col-lg-3 col-md-3" style="padding: 10px;">
+											<div class="col-xs-12 col-sm-12 col-lg-5 col-md-5 offset-md-1" style="padding: 10px; margin-left: 20px;">
 												<div style="display: flex; border-right: 1px solid #e0dcdc;">
 													<img id="ob_image" src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive airline-logo" alt="flight-img" />
 													<div>
-														<div class="title" id="ob_airline">Airline name</div>
+														<div class="summary_title" id="ob_airline">Airline name</div>
 														<div style="color: #aba3a3; font-size: 0.85em;" id="ob_flight">Flight Code</div>
 													</div>
 												</div>
@@ -911,7 +976,7 @@
 												<div style="display: flex; border-right: 0px solid #e0dcdc;">
 													<div style="flex: 1 0 10%; margin: 2px 7px;">
 														<div style="text-align: center;">
-															<span class="title" id="ob_depttime">Dept.Time</span>
+															<span class="summary_title" id="ob_depttime">Dept.Time</span>
 															<div style="color: #aba3a3; font-size: 0.85em;" id="ob_deptcity">City/Terminal</div>
 														</div>
 													</div>
@@ -920,7 +985,7 @@
 													</div>
 													<div style="flex: 1 0 10%;">
 														<div style="text-align: center;">
-															<span class="title" id="ob_arrvdate">Arrv.Time</span>
+															<span class="summary_title" id="ob_arrvtime">Arrv.Time</span>
 															<div style="color: #aba3a3; font-size: 0.85em;" id="ob_arrvcity">City/Terminal</div>
 														</div>										
 													</div>
@@ -928,14 +993,14 @@
 											</div>
 										</div>
 									</div>
-									<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
+									<div class="col-xs-12 col-sm-12 col-md-5 col-lg-5" style="border-right: 1px solid #cdcdcd;">
 										<div class="row">
-											<div class="col-xs-12 col-sm-12 col-lg-3 col-md-3" style="padding: 10px;">
+											<div class="col-xs-12 col-sm-12 col-lg-5 col-md-5 offset-md-1" style="padding: 10px; margin-left: 20px;">
 												<div style="display: flex; border-right: 1px solid #e0dcdc;">
-													<img id="ob_image" src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive airline-logo" alt="flight-img" />
+													<img id="ib_image" src="<?php echo base_url(); ?>upload/thumb/flight.png" class="img-responsive airline-logo" alt="flight-img" />
 													<div>
-														<div class="title" id="ob_airline">Airline name</div>
-														<div style="color: #aba3a3; font-size: 0.85em;" id="ob_flight">Flight Code</div>
+														<div class="summary_title" id="ib_airline">Airline name</div>
+														<div style="color: #aba3a3; font-size: 0.85em;" id="ib_flight">Flight Code</div>
 													</div>
 												</div>
 											</div>
@@ -943,8 +1008,8 @@
 												<div style="display: flex; border-right: 0px solid #e0dcdc;">
 													<div style="flex: 1 0 10%; margin: 2px 7px;">
 														<div style="text-align: center;">
-															<span class="title" id="ob_depttime">Dept.Time</span>
-															<div style="color: #aba3a3; font-size: 0.85em;" id="ob_deptcity">City/Terminal</div>
+															<span class="summary_title" id="ib_depttime">Dept.Time</span>
+															<div style="color: #aba3a3; font-size: 0.85em;" id="ib_deptcity">City/Terminal</div>
 														</div>
 													</div>
 													<div style="flex: 1 0 25%; margin: auto 0px;">
@@ -952,24 +1017,34 @@
 													</div>
 													<div style="flex: 1 0 10%;">
 														<div style="text-align: center;">
-															<span class="title" id="ob_arrvdate">Arrv.Time</span>
-															<div style="color: #aba3a3; font-size: 0.85em;" id="ob_arrvcity">City/Terminal</div>
+															<span class="summary_title" id="ib_arrvtime">Arrv.Time</span>
+															<div style="color: #aba3a3; font-size: 0.85em;" id="ib_arrvcity">City/Terminal</div>
 														</div>										
 													</div>
 												</div>
 											</div>
 										</div>
 									</div>
-									<div class="col-xs-12 col-sm-12 col-md-2 col-lg-2">
-										<div style="padding: 5px 0px;">
-											<a href="<?php echo base_url(); ?>search/round_flightdetails/" class="btn btn-orange" style="float: right; margin: 0px 10px;">Go Next</a>
-										</div>									
+									<div class="col-xs-12 col-sm-12 col-md-1 col-lg-1" style="min-height: 9vh; padding: 25px;">
+										<i class='fa fa-inr'></i><div id="total" style="padding: 0px 5px; display: inline; font-size: 1.2em;"></div>
+									</div>
+									<div class="col-xs-12 col-sm-12 col-md-1 col-lg-1">
+										<form class="pg-search-form" id="book_flights" action="<?php echo base_url(); ?>search/flightdetails_round" method="post" onsubmit="return validate_selection()">
+											<input type="hidden" id="trip_type" name="trip_type" value="ROUND"> 
+											<input type="hidden" id="ticket_type" name="ticket_type" value="OB"> 
+											<input type="hidden" id="ob_selected_ticket" name="ob_selected_ticket" value="">
+											<input type="hidden" id="ib_selected_ticket" name="ib_selected_ticket" value="">
+											<button type="submit" class="btn btn-orange" id="btn_one_way" style="float: right;padding: 25px;margin-top: 0px;">Go Next</button>
+										</form>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+				<?php 
+				}
+				?>
 			</div><!-- end row -->
 		</div><!-- end container -->
 	</div><!-- end flight-listings -->
@@ -1106,7 +1181,7 @@
 	var show_price = <?= $controller->show_price(intval($flightitem['user_id'])) ?>;
 
 	var outbound_selected_element = null;
-	var outboud_selected_ticket = null;
+	var outbound_selected_ticket = null;
 
 	var inbound_selected_element = null;
 	var inbound_selected_ticket = null;
@@ -1130,14 +1205,16 @@
 			}
 
 			if($(element).attr('data')) {
-				outboud_selected_ticket = JSON.parse($(element).attr('data'));
+				outbound_selected_ticket = JSON.parse($(element).attr('data'));
 			}
 
 			$(element).addClass('selected_element');
 			outbound_selected_element = element;
 
-			// if(outboud_selected_ticket) {
-			// 	alert('Outbound : ' + JSON.stringify(outboud_selected_ticket));
+			showSelectedSection('ob', outbound_selected_ticket);
+
+			// if(outbound_selected_ticket) {
+			// 	alert('Outbound : ' + JSON.stringify(outbound_selected_ticket));
 			// }
 		});
 
@@ -1154,6 +1231,8 @@
 
 			$(element).addClass('selected_element');
 			inbound_selected_element = element;
+
+			showSelectedSection('ib', inbound_selected_ticket);
 
 			// if(inbound_selected_ticket) {
 			// 	alert('Inbound : ' + JSON.stringify(inbound_selected_ticket));
@@ -1190,6 +1269,51 @@
 			
 		});
 	});
+
+	function validate_selection() {
+		let flag = false;
+		if(outbound_selected_ticket && outbound_selected_ticket.final_total) {
+			flag = true;
+		}
+
+		if(inbound_selected_ticket && inbound_selected_ticket.final_total) {
+			flag = flag && true;
+		}
+
+		if(!flag) {
+			alert("Please select both directional tickets, to proceed further");
+		}
+
+		return flag;
+	}
+
+	function showSelectedSection(type, selected_ticket) {
+		var base_url = "<?php echo base_url(); ?>upload/thumb/";
+		base_url += (selected_ticket.image === undefined || selected_ticket.image==='') ? 'flight.png' : selected_ticket.image;
+		
+		//ob_flight, ob_depttime, ob_deptcity, ob_arrvtime, ob_arrvcity, 
+		
+		$('#'+type+'_image').attr('src', base_url);
+		$('#'+type+'_airline').text(selected_ticket.airline);
+		$('#'+type+'_flight').text(selected_ticket.flight_no + `(${selected_ticket.splcode})`);
+		$('#'+type+'_depttime').text(selected_ticket.formated_dept_date);
+		$('#'+type+'_deptcity').text(selected_ticket.source_city);
+		$('#'+type+'_arrvtime').text(selected_ticket.formated_arrv_date);
+		$('#'+type+'_arrvcity').text(selected_ticket.destination_city);
+		
+		// alert(outbound_selected_ticket.final_total);
+		// alert(inbound_selected_ticket.final_total);
+
+		// set value for posting
+		$('#ticket_type').val('round');
+		$('#ob_selected_ticket').val(JSON.stringify(outbound_selected_ticket));
+		$('#ib_selected_ticket').val(JSON.stringify(inbound_selected_ticket));
+
+		if(outbound_selected_ticket && inbound_selected_ticket) {
+			$('#book_flights').attr('action', "<?php echo base_url(); ?>search/flightdetails_round/"+outbound_selected_ticket.id+'/'+inbound_selected_ticket.id);
+			$('#total').text(outbound_selected_ticket.final_total + inbound_selected_ticket.final_total);
+		}
+	}
 
 	function save_ticket(ev) {
 		var modelButton = $(ev);
@@ -1321,5 +1445,20 @@
 			$("#progressbar").show();
 			return true;
 		}
+	}	
+
+	function displayTime(ticksInSecs) {
+		var ticks = ticksInSecs;
+		var hh = Math.floor(ticks / 3600);
+		var mm = Math.floor((ticks % 3600) / 60);
+		var ss = ticks % 60;
+
+		//alert( pad(hh, 2) + ":" + pad(mm, 2) + ":" + pad(ss, 2) );
+		return (pad(hh, 2) + ":" + pad(mm, 2)); // + ":" + pad(ss, 2));
+	}
+
+	function pad(n, width) {
+		var n = n + '';
+		return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
 	}	
 </script>

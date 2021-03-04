@@ -1278,6 +1278,9 @@ class Company extends REST_Controller {
                                 $current_ticket['created_by'] =  intval($company['primary_user_id']);
                                 $current_ticket['user_id'] =  intval($company['primary_user_id']);
                             }
+                            $current_ticket['source'] = -1;
+                            $current_ticket['destination'] = -1;
+                            $current_ticket['airline'] = -1;
                             $city = search_array_item($cities, 'code', $ticket['source_city']);
                             if($city && is_array($city) && count($city)>0 && isset($city['id'])) {
                                 $current_ticket['source'] =  intval($city['id']);

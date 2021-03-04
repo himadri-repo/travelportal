@@ -20,11 +20,20 @@
                 $adult = intval($state['adult']);
                 $child = intval($state['child']);
                 $infant = intval($state['infant']);
-                
-                if($flight && is_array($flight) && count($flight) > 0) {
-                    $flight = $flight[0];
-                }
 
+                // if($flight && is_array($flight) && count($flight) > 0) {
+                //     $flight = $flight[0];
+                // }
+
+                $outbound = count($ob_flight)>0 ? $ob_flight[0] : $ob_flight;
+                $inbound = count($ib_flight)>0 ? $ib_flight[0] : $ib_flight;
+
+                $flight = count($ob_flight)>0 ? $ob_flight[0] : $ob_flight;
+
+                $ob_fare_quote = isset($outbound['api_fare_quote']) ? $outbound['api_fare_quote'] : false;
+                $ib_fare_quote = isset($inbound['api_fare_quote']) ? $inbound['api_fare_quote'] : false;
+
+                $fare_quote = isset($flight['api_fare_quote']) ? $flight['api_fare_quote'] : false;
                 $title = $flight['source_city'].' - '.$flight['destination_city'];
                 $dep_date_time = date('D - d-M-Y', strtotime($flight['departure_date_time']));
                 $dep_time = date('H:i', strtotime($flight['departure_date_time']));
@@ -38,10 +47,13 @@
                 $flight_no = $flight['flight_no'];
                 $refundable = ($flight['refundable'] === 'Y') ? 'Refundable' : 'Not Refundable';
                 ?>
-                <form method="POST" id="bookticket" action="<?php echo base_url(); ?>search/review_booking/<?php echo $flight["id"];?>">
+                <form method="POST" id="bookticket" action="<?php echo base_url(); ?>search/review_booking_round/<?= $outbound["id"];?>/<?= $inbound["id"];?>">
+                    <input type="hidden" id="outbound_flight_id" name="outbound_flight_id" value="<?= $outbound["id"];?>">
+                    <input type="hidden" id="inbound_flight_id" name="inbound_flight_id" value="<?= $inbound["id"];?>">
+                    <!-- Depart segment -->
                     <div id="dvflightdetails" class="flight-section left">
                         <div class="section-head flight">
-                            <span>Flight Detail</span>
+                            <span>Flight Detail - Outbound</span>
                             <?php if(boolval($fare_quote['isprice_changed'])) { ?>
                             <div class="tv_right">
                                 <div class="bg_si_d alert_msg blinking">Flight rate has been changed, due to heavy demand</div>
@@ -189,8 +201,10 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="return proceed();">Continue</button>
+                        <!-- <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="return proceed();">Continue</button> -->
                     </div>
+
+                    <!-- Commercial section -->
                     <div id="dvcommercial" class="commercial-section right stickyitem">
                         <div class="section-head money">
                             <span style="float: left; width: 40%;">Price Summary</span>
@@ -199,24 +213,33 @@
                             <div class="traveller infant" id="divNoInfant"><?= $infant ?></div>
                         </div>
                         <div>
-                            <?php if($fare_quote && $fare_quote['passengers_fare'] && is_array($fare_quote['passengers_fare']) && count($fare_quote['passengers_fare']) > 0) { 
+                            <?php if(($ob_fare_quote && $ob_fare_quote['passengers_fare'] && is_array($ob_fare_quote['passengers_fare']) && count($ob_fare_quote['passengers_fare']) > 0) && 
+                                    ($ib_fare_quote && $ib_fare_quote['passengers_fare'] && is_array($ib_fare_quote['passengers_fare']) && count($ib_fare_quote['passengers_fare']) > 0)) { 
                                 $isFD = boolval($state['isfixeddeparture']);
-                                $passengers_fare = $fare_quote['passengers_fare'];
-                                $tds = floatval($fare_quote['fare']['total_tds']);
-                                $commision = floatval($fare_quote['fare']['total_commission']);
-                                $discount = floatval($fare_quote['fare']['discount']);
-                                $total_spl_margin = floatval($fare_quote['fare']['total_spl_margin']);
-                                $total_whl_margin = floatval($fare_quote['fare']['total_whl_margin']);
+                                //$ob_fare_quote['passengers_fare']['BaseFare'] = ($ob_fare_quote['passengers_fare']['BaseFare'] + $ib_fare_quote['passengers_fare']['BaseFare']);
+                                $ob_passengers_fare = $ob_fare_quote['passengers_fare'];
+                                $ib_passengers_fare = $ib_fare_quote['passengers_fare'];
+                                $tds = floatval($ob_fare_quote['fare']['total_tds']) + floatval($ib_fare_quote['fare']['total_tds']);
+                                $commision = floatval($ob_fare_quote['fare']['total_commission']) + floatval($ib_fare_quote['fare']['total_commission']);
+                                $discount = floatval($ob_fare_quote['fare']['discount']) + floatval($ib_fare_quote['fare']['discount']);
+                                $total_spl_margin = floatval($ob_fare_quote['fare']['total_spl_margin']) + floatval($ib_fare_quote['fare']['total_spl_margin']);
+                                $total_whl_margin = floatval($ob_fare_quote['fare']['total_whl_margin']) + floatval($ib_fare_quote['fare']['total_whl_margin']);
                                 //$tax = round(floatval($fare_quote['fare']['tax']) + floatval($fare_quote['fare']['othercharges']) + $tds + $total_spl_margin + $total_whl_margin - $commision - $discount, 0);
-                                $finalvalue = $fare_quote['fare']['offeredfare'] + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child));
+                                $finalvalue = ($ob_fare_quote['fare']['offeredfare'] + $ib_fare_quote['fare']['offeredfare']) + $tds + (($total_spl_margin + $total_whl_margin) * ($adult + $child));
                                 $total = 0;
-                                foreach ($passengers_fare as $passenger_fare) { 
-                                    $passengertype = intval($passenger_fare['PassengerType']);
-                                    $passengercount = intval($passenger_fare['PassengerCount']);
-                                    $admin_markup = floatval($passenger_fare['admin_markup']);
+                                //foreach ($passengers_fare as $passenger_fare) { 
+                                for($i=0; $i<count($ob_passengers_fare); $i++) {
+                                    $ob_passenger_fare = $ob_passengers_fare[$i];
+                                    $ib_passenger_fare = $ib_passengers_fare[$i];
+
+                                    $passengertype = intval($ob_passenger_fare['PassengerType']);
+                                    $passengercount = intval($ob_passenger_fare['PassengerCount']);
+                                    $admin_markup = floatval($ob_passenger_fare['admin_markup']);
+                                    
                                     $passtype = 'Adult';
                                     //$value = floatval($passenger_fare['BaseFare']) * $passengercount;
-                                    $value = floatval($passenger_fare['BaseFare']) * $passengercount;
+                                    $basefare = floatval($ob_passenger_fare['BaseFare'] + $ib_passenger_fare['BaseFare']);
+                                    $value = $basefare * $passengercount;
                                     $finalvalue += $admin_markup * $passengercount;
                                     //$tax += floatval($passenger_fare['Tax']);
                                     if($passengertype === 1) {
@@ -254,10 +277,6 @@
                                 <div class="tr-count">Infant x 1</div>
                                 <div class="tr-value"><span>1250</span></div>
                             </div> -->
-                            <?php
-                                $finalvalue = isset($finalvalue) ? $finalvalue : 0.00;
-                                $total = isset($total) ? $total : 0.00;
-                            ?>
                             <div class="tr-summary">
                                 <div class="tr-count">Total Taxes & Charges</div>
                                 <div class="tr-value"><span><?= ($finalvalue - $total) ?></span></div>
@@ -269,6 +288,178 @@
                         </div>
                         <button id="btnContinue_2" name="btnContinue_2" class="action-button" onclick="return proceed();">Continue</button>
                     </div>
+
+                    <!-- Return segment -->
+                    <?php 
+                        $flight = count($ib_flight)>0 ? $ib_flight[0] : $ib_flight;
+                        $fare_quote = isset($flight['api_fare_quote']) ? $flight['api_fare_quote'] : false;  
+                                      
+                        $title = $flight['source_city'].' - '.$flight['destination_city'];
+                        $dep_date_time = date('D - d-M-Y', strtotime($flight['departure_date_time']));
+                        $dep_time = date('H:i', strtotime($flight['departure_date_time']));
+                        $arv_date_time = date('D - d-M-Y', strtotime($flight['arrival_date_time']));
+                        $arv_time = date('H:i', strtotime($flight['arrival_date_time']));
+                        $dept_year = intval(date('Y', strtotime($flight['departure_date_time'])));
+
+                        $dateDiff = intval((strtotime($flight["arrival_date_time"])-strtotime($flight["departure_date_time"]))/60);
+
+                        $airline_name = $flight['airline_name'];
+                        $flight_no = $flight['flight_no'];
+                        $refundable = ($flight['refundable'] === 'Y') ? 'Refundable' : 'Not Refundable';
+                    ?>
+                    <div id="dvflightdetails_rtn" class="flight-section left">
+                        <div class="section-head flight">
+                            <span>Flight Detail - Inbound</span>
+                            <?php if(boolval($fare_quote['isprice_changed'])) { ?>
+                            <div class="tv_right">
+                                <div class="bg_si_d alert_msg blinking">Flight rate has been changed, due to heavy demand</div>
+                            </div>
+                            <?php } ?>
+
+                            <!-- show error -->
+                            <?php if($error && $error!==null && $error!=='') { ?>
+                            <div class="tv_right">
+                                <div class="bg_si_d alert_msg blinking"><?= $error ?></div>
+                            </div>
+                            <?php } ?>
+                        </div>
+                        <div class="itinerary">
+                            <div class="departure">
+                                <div class="tag">Depart</div>
+                                <div class="flight-item">
+                                    <!-- Itinerary details -->
+                                    <div class="travel-itinerary">
+                                        <span class="travel-title"><?= $title ?></span>
+                                        <span class="travel-title">| <?= $dep_date_time ?></span>
+                                        <!-- <span class="travel-title">Free Meals</span> -->
+                                    </div>
+                                    <!-- Flight details -->
+                                    <?php if($fare_quote && $fare_quote['ob_flight_segments'] && is_array($fare_quote['ob_flight_segments']) && count($fare_quote['ob_flight_segments']) > 0) {
+                                        $index = 0;
+                                        foreach ($fare_quote['ob_flight_segments'] as $quote) { 
+                                            $index++;
+                                            $qt_dep_time = date('H:i', strtotime($quote['DepTime']));
+                                            $qt_arv_time = date('H:i', strtotime($quote['ArrTime']));
+                                            $qt_dep_date_time = date('D - d-M-Y', strtotime($quote['DepTime']));
+                                            $qt_arv_date_time = date('D - d-M-Y', strtotime($quote['ArrTime']));
+                                            $qt_dateDiff = intval((strtotime($quote["ArrTime"])-strtotime($quote["DepTime"]))/60);
+                                            $flight_no = $quote['AirlineCode'].' '.$quote['FlightNumber'];
+                                            $airline_name = $quote['AirlineName'];
+                                            ?>
+                                            <div class="flgith-details">
+                                                <div class="fli1">
+                                                    <div class="fli1-m">
+                                                        <div class="fli1-m-l"><img alt="Flight" width="50" height="35" src="/upload/<?= $flight['image']?>"></div>
+                                                        <div class="fli1-m-r"><span ><?= $airline_name?></span><span><?= $flight_no ?></span></div>
+                                                    </div>
+                                                </div>
+                                                <div class="fli-d-r">
+                                                    <div class="fli2">
+                                                        <div class="fli-cm"><span><?= $quote['Dep_CityCode'] ?></span> <span> <strong><?= $qt_dep_time ?></strong> </span></div>
+                                                        <div class="lin1"></div>
+                                                        <div class="air-dt">
+                                                            <span><?= $qt_dep_date_time ?></span>
+                                                            <span>Terminal - <?= $quote['Dep_Terminal'] ?></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="fli3">
+                                                        <div class="stp"><span><?= intval($qt_dateDiff/60)."h ".($qt_dateDiff%60)."m"; ?></span></div>
+                                                        <div class="lin2"><div class="fli-i"></div></div>
+                                                        <div class="clr"></div>
+                                                        <div class="ref" id="spnRefundable"><span><?= $refundable ?></span></div>
+                                                    </div>
+                                                    <div class="fli4">
+                                                        <div class="fli-cm1"><span><?= $quote['Arr_CityCode'] ?></span> <span> <strong><?= $qt_arv_time ?></strong> </span></div>
+                                                        <div class="lin3"></div>
+                                                        <div class="air-dt1">
+                                                            <span><?= $qt_arv_date_time ?></span>
+                                                            <span>Terminal - <?= $quote['Arr_Terminal'] ?></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="FltAmeUK835">
+                                                    <div class="fli-amenities"> 
+                                                        <div class="make_flex space_between">         
+                                                            <span>             
+                                                                <span class="ftn12" style="font-weight:bold;">A<?= $quote['Craft']?></span>
+                                                                <span class="malt5 mart5">|</span>			
+                                                                <span style="display:none;" class="mart5 ficon-1 opct35"></span>             
+                                                                <span class="mart5 ficon-2"></span>             
+                                                                <span class="mart5 ficon-3"></span>             
+                                                                <span class="mart5 ficon-4"></span>		   
+                                                                <span class="mart5 ficon-5"></span>             
+                                                                <span class="mart5 ficon-6"></span>         
+                                                            </span>         
+                                                            <a class="showmore" id="<?= ($quote['AirlineCode'].$quote['FlightNumber']) ?>" onclick="openTabFltAmeneties(this.id)">SHOW MORE</a>
+                                                        </div>     
+                                                        <div class="moreAmenities" id="divFltAme<?= ($quote['AirlineCode'].$quote['FlightNumber']) ?>">
+                                                            <div class="cmlft">   
+                                                                <span class="amntl">Comfort</span>         
+                                                                <ul>          
+                                                                    <li><span class="mart5 ficon-7"></span>30" seat pitch</li>             
+                                                                    <li><span class="mart5 ficon-6"></span>3-3 seat layout </li>         
+                                                                </ul>
+                                                            </div>
+                                                            <div class="amlft">
+                                                                <span class="amntl">Amenities</span>         
+                                                                <ul>		
+                                                                    <li><span class="mart5 ficon-2"></span> Fresh meal available.</li>        
+                                                                    <li><span class="mart5 ficon-1 opct35"></span>No Wi-fi</li>             
+                                                                    <li><span class="mart5 ficon-3"></span> Power Outlets</li>             
+                                                                    <li><span class="mart5 ficon-4"></span> On demand entertainment</li>         
+                                                                </ul>
+                                                            </div>     
+                                                        </div> 
+                                                    </div>
+                                                </div>
+                                                <?php //if($index === count($fare_quote['ob_flight_segments'])) { ?>
+                                                    <div class="mel1-d111" style="display:block;" id="divFareRules_rtn">
+                                                        <div class="tab_trvlr2">
+                                                            <a class="tabHightLight" id="tabF00_rtn" onclick="tabHightLight(this.id)">Fare Rules</a>
+                                                            <a class="tabHightLight" id="tabBaggage<?= $quote['SegmentIndicator']?>_rtn" onclick="tabBaggage(this.id)">Baggage</a>
+                                                            <span style="float: right;color: green;font-size: 14px;margin-bottom: -1px;"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="new-b2b-bagge-main VisaBaggFar" id="sec_tabBaggage<?= $quote['SegmentIndicator']?>_rtn">
+                                                        <div class="bageg-tab-b2b">
+                                                            <div class="bagg-b2b-air">AIRLINE</div>
+                                                            <div class="check-b2b-air">Check-in Baggage</div>
+                                                            <div class="cabin-b2b-air">Cabin Baggage</div>
+                                                        </div>
+                                                        <div class="bageg-tab-b2b-new">
+                                                            <div class="bagg-b2b-air">
+                                                                <div class="fli-lo-new-bagge">
+                                                                    <span class="logo-xs ai-lg"><img width="28" height="28" src="/upload/<?= $flight['image']?>"></span>
+                                                                </div>
+                                                                <div class="fli-lo-aiame-bagge">
+                                                                    <span class="airline-name"><?= $airline_name ?></span>
+                                                                    <span class="airline-name-code"><?= $flight_no ?></span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="check-b2b-air">
+                                                                <strong>
+                                                                    <span></span>
+                                                                </strong>
+                                                                <span><?= $quote['Baggage'] ?></span>
+                                                            </div>
+                                                            <div class="cabin-b2b-air">
+                                                                <strong>
+                                                                    <span></span>
+                                                                </strong>
+                                                                <span><?= $quote['CabinBaggage'] ?></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php //} ?>
+                                            </div>
+                                        <?php } 
+                                    }?>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="btnContinue_3" name="btnContinue_3" class="action-button" onclick="return proceed();">Continue</button>
+                    </div>
+
                     <div id="dvpassengers" class="flight-section left hidden">
                         <div class="section-head people">
                             <span>Travellers Details</span>
@@ -670,7 +861,11 @@
             if($("#dvflightdetails").hasClass("hidden")) {
                 $('#dvflightdetails').removeClass('hidden');
             }
-            
+
+            if($("#dvflightdetails_rtn").hasClass("hidden")) {
+                $('#dvflightdetails_rtn').removeClass('hidden');
+            }
+
             if(!$("#dvpassengers").hasClass("hidden")) {
                 $('#dvpassengers').addClass('hidden');
             }
@@ -685,7 +880,11 @@
             if(!$("#dvflightdetails").hasClass("hidden")) {
                 $('#dvflightdetails').addClass('hidden');
             }
-            
+
+            if(!$("#dvflightdetails_rtn").hasClass("hidden")) {
+                $('#dvflightdetails_rtn').addClass('hidden');
+            }
+
             if($("#dvpassengers").hasClass("hidden")) {
                 $('#dvpassengers').removeClass('hidden');
             }
@@ -700,7 +899,11 @@
             if(!$("#dvflightdetails").hasClass("hidden")) {
                 $('#dvflightdetails').addClass('hidden');
             }
-            
+
+            if(!$("#dvflightdetails_rtn").hasClass("hidden")) {
+                $('#dvflightdetails_rtn').addClass('hidden');
+            }
+
             if(!$("#dvpassengers").hasClass("hidden")) {
                 $('#dvpassengers').addClass('hidden');
             }

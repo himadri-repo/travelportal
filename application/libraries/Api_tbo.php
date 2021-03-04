@@ -50,7 +50,7 @@ class Api_tbo extends Api {
             $this->host = $this->sponsoring_config ? $this->sponsoring_config['ClientId'] : $this->config['clientid'];
 
 
-            log_message('debug', "Config passed => ".json_encode($config));
+            log_message('debug', "Config passed => ".json_encode($config, JSON_UNESCAPED_SLASHES));
         }
         else {
             log_message('error', "Library - api_tripmaza - Wrong config passed - $config");
@@ -59,7 +59,7 @@ class Api_tbo extends Api {
     
     public function post($urlpart, $data, $content_type="application/json") {
 
-        log_message('debug', "Posted Data : ".json_encode($data, JSON_UNESCAPED_SLASHES));
+        log_message('debug', "Requesting to API ($urlpart) : ".json_encode($data, JSON_UNESCAPED_SLASHES));
         //log_message('debug', "Posted Data : ".json_encode($data, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES));
         //log_message('debug', "Posted Data : ".array2json($data, JSON_UNESCAPED_SLASHES));
 
@@ -94,9 +94,11 @@ class Api_tbo extends Api {
 		$err = curl_error($curl);
         $info = curl_getinfo($curl);
 
-        log_message('debug', 'Info Collected from REST Call '.json_encode($info));
-        log_message('debug', 'Response Collected from REST Call '.json_encode($response));
-        log_message('debug', 'Error Collected from REST Call '.json_encode($err));
+        $response_json = json_decode($response, TRUE);
+
+        log_message('debug', "Info from response ($urlpart) : ".json_encode($info, JSON_UNESCAPED_SLASHES));
+        log_message('debug', "Response of ($urlpart) : ".json_encode($response_json, JSON_UNESCAPED_SLASHES));
+        log_message('debug', "Error of ($urlpart) : ".json_encode($err, JSON_UNESCAPED_SLASHES));
 
         curl_close($curl);
         ini_set('max_execution_time', $max);
@@ -136,10 +138,10 @@ class Api_tbo extends Api {
                 $this->member = $response['Member'];
                 $this->tokenid = $response['TokenId'];
 
-                log_message('debug', "Token generated -> ".$this->tokenid." | Member Details -> ".json_encode($this->member));
+                log_message('debug', "Token generated -> ".$this->tokenid." | Member Details -> ".json_encode($this->member, JSON_UNESCAPED_SLASHES));
             }
             else {
-                log_message('error', "Some error -> ".json_encode($response));
+                log_message('error', "Some error -> ".json_encode($response, JSON_UNESCAPED_SLASHES));
             }
 		  	return $response;
 		}
@@ -260,7 +262,7 @@ class Api_tbo extends Api {
                         for ($i=0; $i < count($result); $i++) { 
                             $tmzticket = $result[$i];
                             if($tmzticket) {
-                                log_message('debug', "$i => ".json_encode($tmzticket));
+                                log_message('debug', "$i => ".json_encode($tmzticket, JSON_UNESCAPED_SLASHES));
                                 try {
                                     $image = 'flight.png';
                                     if($lastairline && isset($lastairline['aircode']) && $lastairline['aircode'] === trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode'])) {
@@ -340,15 +342,15 @@ class Api_tbo extends Api {
 
                                     $ticket = array(
                                         'direction' => $legcode,
-                                        'id' => (200100000 + $iid),
+                                        'id' => $legcode."_".(200100000 + $iid),
                                         'uid' => intval($company['primary_user_id']),
                                         'remarks' => $remarks,
-                                        'source' => $source_city_id,
-                                        'destination' => $destination_city_id,
+                                        'source' => (($legcode === 'OB') ? $source_city_id : $destination_city_id),
+                                        'destination' => (($legcode === 'OB') ? $destination_city_id : $source_city_id),
+                                        'source_city' => (($legcode === 'OB') ? $source_city : $destination_city), //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
+                                        'destination_city' => (($legcode === 'OB') ? $destination_city : $source_city), //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
                                         'source_code' => $tmzticket['Segments'][0][0]['Origin']['Airport']['AirportCode'],
                                         'destination_code' => $tmzticket['Segments'][0][$lastsegmentidx]['Destination']['Airport']['AirportCode'],
-                                        'source_city' => $source_city, //trim($tmzticket['Segments'][0][0]['Origin']['Airport']['AirportName']),
-                                        'destination_city' => $destination_city, //trim($tmzticket['Segments'][0][0]['Destination']['Airport']['AirportName']),
                                         'departure_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][0]['Origin']['DepTime'])),
                                         'arrival_date_time' => date('Y-m-d H:i:s', strtotime($tmzticket['Segments'][0][$lastsegmentidx]['Destination']['ArrTime'])),
                                         'flight_no' => trim($tmzticket['Segments'][0][0]['Airline']['AirlineCode']).' '.trim($tmzticket['Segments'][0][0]['Airline']['FlightNumber']),
@@ -451,7 +453,7 @@ class Api_tbo extends Api {
 		} 
 		else 
 		{
-            log_message("debug", "Response | ".json_encode($response));
+            log_message("debug", "Response | ".json_encode($response, JSON_UNESCAPED_SLASHES));
             // if($response !== '') {
             //     $response = json_decode($response, TRUE);
             // }
@@ -526,7 +528,7 @@ class Api_tbo extends Api {
         return false;
     }
 
-    public function fare_quote($ticket) {
+    public function fare_quote($ticket, $trycount=0) {
         $resultindex = $ticket['ResultIndex'];
         $suppsource = 0;
         $supptraceid = $ticket['SuppTraceId'];
@@ -552,8 +554,12 @@ class Api_tbo extends Api {
         $result = $this->post($urlpart, $data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
+            //$response = isset($response['Response']) ? $response['Response'] : $response;
             $info = isset($result['debug']) ? $result['debug'] : '';
             $err = $result['err'];
+            // if($err === '') {
+            //     $err = isset($response['Error']) ? $response['Error']['ErrorMessage'] : '';
+            // }
         }
         
 		if ($err) 
@@ -563,10 +569,22 @@ class Api_tbo extends Api {
 		} 
 		else 
 		{
+            $isprice_changed = false;
             if($response && isset($response['Response'])) {
                 $response = $response['Response'];
                 if(isset($response['Error']) && intval($response['Error']['ErrorCode'])>0) {
                     log_message('error', "API returned Error => ".$response['Error']['ErrorMessage']);
+                    $isprice_changed = boolval($response['IsPriceChanged']) ? boolval($response['IsPriceChanged']) : false;
+                    $traceid = isset($response['TraceId']) ? $response['TraceId'] : '';
+                    if($trycount<2) {
+                        log_message('debug', "Retrying to get fare quote | Retrying for $trycount times");
+                        return $this->fare_quote($ticket, $trycount+1);
+                    }
+                    else {
+                        $fare_quote = array('isprice_changed' => $isprice_changed, 'offeredfare' => 0, 'traceid' => $traceid, 'fqindex' => '', 'fare' => [], 'passengers_fare' => [], 'ob_flight_segments' => [], 'price' => 0, 'base_price' => 0);
+                        log_message('debug', 'Event after 2 retryies failed to get quote value | Going with default (Fare Quote) : '.json_encode($fare_quote, JSON_UNESCAPED_SLASHES));
+                        return $fare_quote;
+                    }
                 }
                 else {
                     // Published Fare : BaseFare + Tax + OtherCharges + ServiceFee + AdditionalTxnFeepub + AirlineTransFee (i.e. : 7054 = 3596+2966+492+0+0+0)
@@ -576,7 +594,7 @@ class Api_tbo extends Api {
 
                     $result = $response['Results'];
 
-                    log_message('debug', 'Fare Quote Result ->'.json_encode($result));
+                    log_message('debug', 'Fare Quote Result ->'.json_encode($result, JSON_UNESCAPED_SLASHES));
 
                     $isprice_changed = boolval($response['IsPriceChanged']) ? boolval($response['IsPriceChanged']) : false;
                     $traceid = isset($response['TraceId']) ? $response['TraceId'] : '';
@@ -719,7 +737,7 @@ class Api_tbo extends Api {
 
                     $fare_quote = array('isprice_changed' => $isprice_changed, 'offeredfare' => $offeredfare, 'traceid' => $traceid, 'fqindex' => $result_index, 'fare' => $fare, 'passengers_fare' => $passengers_fare, 'ob_flight_segments' => $ob_flight_segments, 'price' => $price, 'base_price' => $total);
 
-                    log_message('debug', 'Fare Quote : '.json_encode($fare_quote));
+                    log_message('debug', 'Fare Quote : '.json_encode($fare_quote, JSON_UNESCAPED_SLASHES));
                     return $fare_quote;
                 }
             }
@@ -745,12 +763,12 @@ class Api_tbo extends Api {
         $this->agencytype = $ticket['agencytype'];
 
         $balance = $this->check_balance();
-        log_message('debug', 'Balance Check : '.json_encode($balance));
+        log_message('debug', 'Balance Check : '.json_encode($balance, JSON_UNESCAPED_SLASHES));
 
         $fare_quote = $this->fare_quote($ticket);
-        log_message('debug', 'Fare Quote : '.json_encode($fare_quote));
+        log_message('debug', 'Fare Quote : '.json_encode($fare_quote, JSON_UNESCAPED_SLASHES));
         
-        log_message('debug', "Posted value => ".json_encode($payload));
+        log_message('debug', "Posted value => ".json_encode($payload, JSON_UNESCAPED_SLASHES));
         //We need to check balance also
         if($balance && $fare_quote && $adminuser) {
             //if(!boolval($fare_quote['isprice_changed'])) {
@@ -773,7 +791,7 @@ class Api_tbo extends Api {
                     // (intval($customer['passenger_age'])>0 ? date("Y-m-d", strtotime("-".intval($customer['passenger_age'])." years")) : date("Y-m-d", strtotime("-20 years")))
                     //Please enter valid title for passenger 1. Title Can be from the following values : Mr ,Mstr ,Mrs ,Ms ,Miss ,Master ,DR ,CHD ,MST ,PROF ,Inf
                     $passender = array(
-                        'PaxId' => "$i",
+                        'PaxId' => "".($i+1)."",
                         //'Title' => $this->get_customer_title($i, $customer['prefix']),
                         'Title' => $this->get_customer_title($i, $customer['passenger_title']),
                         'FirstName' => $customer['passenger_first_name'],
@@ -819,14 +837,14 @@ class Api_tbo extends Api {
                     $booking_response = $this->book_nonlcc($data);
                     $data['BookingId'] = $booking_response['Result']['bookingid'];
                     $data['PNR'] = $booking_response['Result']['pnrlist'];
-                    log_message('debug', "LCC => ".($lcc?'true':'false')." | Book NON LCC Ticket : ".json_encode($booking_response));
+                    log_message('debug', "LCC => ".($lcc?'true':'false')." | Book NON LCC Ticket : ".json_encode($booking_response, JSON_UNESCAPED_SLASHES));
                     if(isset($data['BookingId']) && intval($data['BookingId'])>0) {
                         log_message('debug', "LCC => ".($lcc?'true':'false')." | Calling final booking for NON LCC");
                         $booking_response = $this->book_lcc($data);
                     }
                 }
 
-                log_message('debug', "LCC => ".($lcc?'true':'false')." | Final Booking : ".json_encode($booking_response));
+                log_message('debug', "LCC => ".($lcc?'true':'false')." | Final Booking : ".json_encode($booking_response, JSON_UNESCAPED_SLASHES));
 
                 return $booking_response;
             }
@@ -864,11 +882,29 @@ class Api_tbo extends Api {
     private function book_lcc($data) {
         $err = NULL;
         $err_code = 0;
+
+        // $data['BookingId'] = $booking_response['Result']['bookingid'];
+        // $data['PNR'] = $booking_response['Result']['pnrlist'];
+
+        $bookingid = isset($data['BookingId']) ? intval($data['BookingId']) : false;
+        $pnr = isset($data['PNR']) ? intval($data['PNR']) : false;
         $book_result = [];
         $response = '';
         $info = '';
+        $revised_data = $data;
+
+        if($bookingid && $pnr) {
+            $revised_data = array(
+                'EndUserIp' => $data['EndUserIp'],
+                'TokenId' => $data['TokenId'],
+                'TraceId' => $data['TraceId'],
+                'PNR' => $data['PNR'],
+                'BookingId' => $data['BookingId']
+            );
+        }
+
         $urlpart = "BookingEngineService_Air/AirService.svc/rest/Ticket/";
-        $result = $this->post($urlpart, $data, "application/json");
+        $result = $this->post($urlpart, $revised_data, "application/json");
         if($result && is_array($result)) {
             $response = json_decode($result['response'], TRUE);
             $response = $response['Response'];
@@ -877,12 +913,12 @@ class Api_tbo extends Api {
                 $err = array('ErrorCode' => 999, 'ErrorMessage' => $result['err']);
             }
 
-            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($result, JSON_UNESCAPED_SLASHES));
+            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode(json_decode($response, TRUE), JSON_UNESCAPED_SLASHES));
         }
         
         if ($err) 
         {
-            log_message("debug", "ERROR : ".json_encode($err));
+            log_message("debug", "ERROR : ".json_encode($err, JSON_UNESCAPED_SLASHES));
             $book_result=array('Error' => $err, 'Status' => false);
         } 
         else 
@@ -946,7 +982,7 @@ class Api_tbo extends Api {
         
         if ($err) 
         {
-            log_message("debug", "ERROR : ".json_encode($err));
+            log_message("debug", "ERROR : ".json_encode($err, JSON_UNESCAPED_SLASHES));
             $book_result=array('Error' => $err, 'Status' => false);
         } 
         else 
