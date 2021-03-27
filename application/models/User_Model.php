@@ -205,7 +205,7 @@ Class User_Model extends CI_Model
 		//$userid = $this->session->userdata('user_id');
 
 		$sql = "select 	u.id, u.user_id, u.name, u.profile_image, u.email, u.mobile, u.address, u.state, u.country, u.password, u.is_supplier, 
-						u.is_customer, u.active, u.type, u.credit_ac, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
+						u.is_customer, u.active, u.type, u.credit_ac, u.cr_limit, u.doj, u.companyid, u.created_by, u.created_on, u.updated_by, u.updated_on, u.permission, u.is_admin, u.uid, u.pan, u.gst, u.rateplanid,
         				(select count(t.id) from tickets_tbl t where t.user_id=$userid) as total_ticket, 
         				(select count(seller.id) from bookings_tbl seller where seller.seller_userid=$userid) as sold,
         				(select count(customer.id) from bookings_tbl customer where customer.customer_userid=$userid) as purchased
@@ -1098,13 +1098,13 @@ Class User_Model extends CI_Model
 				"companyid" => $user_info['companyid'], 
 				"userid" => $userid,
 				"amount" => abs($pricediff), 
-				'dr_cr_type'=> $pricediff>0 ?'CR':'CR',
+				'dr_cr_type'=> $pricediff>0 ?'CR':'DR',
 				'trans_type'=>$pricediff>0?11:12, /*20 is for Ticket Booking | 11 is Credit Note | 12 is Debit Note*/
 				"trans_ref_id" => $trans_ref_id,
 				"trans_ref_date" => $trans_ref_date,
 				'trans_ref_type'=>$pricediff>0 ?'CREDIT NOTE':'DEBIT NOTE',
 				"trans_documentid" => $trans_documentid,
-				"narration" => "Customer deleted from booking $trans_ref_id. Differance amount credited to customer account as credit note.",
+				"narration" => isset($arr['narration']) ? $arr['narration'] : "Customer deleted from booking $trans_ref_id. Differance amount credited to customer account as credit note.",
 				"sponsoring_companyid" => $user_info['companyid'],
 				"status" => 1,
 				"approved_by" => $userid,
@@ -1122,6 +1122,48 @@ Class User_Model extends CI_Model
 		}
 
 		return $transaction_id;
+	}
+
+	public function perform_account_transaction($userid, $payload) { 
+		$id = isset($payload['transactionid']) ? intval($payload['transactionid']) : -1;
+		
+		if($id > -1) {
+			$wallet_trans = $this->get('wallet_transaction_tbl', array('id' => $id));
+			if($wallet_trans && count($wallet_trans)>0) {
+				$wallet_trans = $wallet_trans[0];
+			}
+
+			$companyid = intval($wallet_trans['companyid']);
+			$account_balance = $this->get_account_balance($wallet_trans['companyid'], $wallet_trans['userid']);
+			$wallet = $this->get('system_wallets_tbl', array('id' => $wallet_trans['wallet_id']));
+			$dr_cr = isset($payload['dr_cr_type']) ? $payload['dr_cr_type'] : '';
+			$amount = isset($payload['amount']) ? floatval($payload['amount']) : 0;
+
+			$company = $this->get('company_tbl', array('id'=>$companyid));
+			if($company && count($company)>0) {
+				$company = $company[0];
+			}
+			$arr=array(
+				"voucher_no" => $this->Search_Model->get_next_voucherno($company),
+				"transacting_companyid" => $companyid,
+				"transacting_userid" => $userid,
+				"documentid" => $id,
+				"document_date" => $wallet_trans['date'],
+				"document_type" => 2, /* Payment receive */
+				"transaction_type" => (($dr_cr === 'DR') ? "DEBIT NOTE" : ($dr_cr === 'CR' ? 'CREDIT NOTE' : '')),
+				//"credit" => abs($account_balance)>$trans_amount?$trans_amount:abs($account_balance),
+				"credit" => $dr_cr === 'CR' ? $amount : 0,
+				"debit" => $dr_cr === 'DR' ? $amount : 0,
+				"companyid" => $companyid,
+				//"debited_accountid" => (($setting==null || !isset($setting['accountid']))? -1: $setting['accountid']),
+				"created_by" => $userid,
+				"narration"=>"Transaction made to wallet - ".$wallet_trans['trans_id']." | system id: ".$wallet_trans['id']
+			);
+			$voucher_no = $this->Search_Model->save("account_transactions_tbl",$arr);
+
+			return $voucher_no;
+		}
+		return false;
 	}
 	
 	public function settle_wallet_transaction($payload) {

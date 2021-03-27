@@ -165,3 +165,4 @@ $route['api/company/tickets/import'] = 'api/Company/upsert_tickets';
 $route['api/company/links/gsheet/?(:num)?/?(:any)?'] = 'api/Company/get_linked_gsheets/$1/$2';
 $route['api/search/tickets/roundtrip'] = 'api/Search/get_inventory_roundtrip';
 $route['api/company/(:num)/links/gsheet/(:num)'] = 'api/Company/change_gsheets/$1/$2';
+$route['api/company/account/transactions/?(:num)?'] = 'api/Company/perform_wallet_transaction/$1';

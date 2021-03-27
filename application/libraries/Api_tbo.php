@@ -913,7 +913,7 @@ class Api_tbo extends Api {
                 $err = array('ErrorCode' => 999, 'ErrorMessage' => $result['err']);
             }
 
-            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode(json_decode($response, TRUE), JSON_UNESCAPED_SLASHES));
+            log_message('debug', 'Ticketing API POST RESPONSE => '.json_encode($response, JSON_UNESCAPED_SLASHES));
         }
         
         if ($err) 

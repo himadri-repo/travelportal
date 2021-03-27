@@ -1431,6 +1431,56 @@ class Company extends REST_Controller {
         return $flag;
     }
 
+    public function perform_wallet_transaction_post($userid = 0) {
+        $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
+        $payload = json_decode($stream_clean, true);
+
+        if($userid <= 0 || !isset($payload['user_id'])) return;
+
+        try
+        {
+            $amount = isset($payload['amount']) ? floatval($payload['amount']) : 0;
+            $dr_cr = isset($payload['dr_cr_type']) ? $payload['dr_cr_type'] : '';
+            $amount = (($dr_cr === 'DR') ?  ($amount * -1) : $amount);
+            $trans_ref_id = isset($payload['trans_ref_id']) ? $payload['trans_ref_id'] : '';
+            $trans_docid = NULL;
+            $narration = isset($payload['narration']) ? $payload['narration'] : '';
+
+            $transactionid = $this->User_Model->perform_wallet_transaction(intval($payload['user_id']), array(
+                "amount"=>$amount,
+                "trans_type"=>$amount>0?'DR':'CR',
+                "trans_ref_id"=>$trans_ref_id,
+                "trans_ref_date"=>date("Y-m-d H:i:s"),
+                "trans_ref_type"=>$amount>0 ?'CREDIT NOTE':'DEBIT NOTE',
+                "trans_documentid" => $trans_docid,
+                "narration" => $narration
+            ));
+            
+            if($transactionid>-1) {
+                $payload['transactionid'] = $transactionid;
+
+                $voucher_no = $this->User_Model->perform_account_transaction(intval($payload['user_id']), $payload);
+
+                $result = array();
+                $result['code'] = 200;
+                $result['message'] = `Wallet transaction successfully recorded : $transactionid | Voucher No: $voucher_no`;
+                $result['data'] = ['transactionid' => $transactionid, 'voucher_no' => $voucher_no];
+            }
+            else {
+                throw new Exception("Unable to save wallet transaction");
+            }
+        }
+        catch(Exception $ex) {
+            log_message('error', $ex);
+            $result = array();
+            $result['code'] = 501;
+            $result['message'] = $ex;
+            $result['data'] = [];
+        }
+
+        $this->set_response($result, REST_Controller::HTTP_OK);
+    }
+
     #region helper method    
     private function is_ticket_valid($ticket) {
         $flag = false;

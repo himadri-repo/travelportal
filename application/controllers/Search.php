@@ -4041,7 +4041,9 @@ class Search extends Mail_Controller
 
 		try
 		{
-			if($state && isset($state['sale_type']) && $this->is_booking_validv2($booking_payload)) {
+			$isvalid_booking = $this->is_booking_validv2($booking_payload);
+
+			if($state && isset($state['sale_type']) && $isvalid_booking) {
 				if($state['sale_type'] === 'api') {
 					//Take API flow
 					$booking_result = $this->do_api_booking($booking_payload);
@@ -4248,8 +4250,13 @@ class Search extends Mail_Controller
 				}
 				else {
 					log_message('debug', "Can't process booking some error | Booking Id: $booking_id | Wallet Transaction id: $wallettransid | Accounts posting id: $voucher_no");
-					redirect("search/beforebook/$id");
+					redirect("search/flightdetails/$id");
 				}
+			}
+			else {
+				log_message('debug', "Can't process booking some error. Doesn't have enough credit limit Booking Valid? $isvalid_booking");
+				$this->session->set_userdata('ERROR', "Can't proceed with this booking. You don't have enough balance/credit limit");
+				redirect("search/flightdetails/$id");
 			}
 		}
 		catch(Exception $ex) {
@@ -4599,12 +4606,16 @@ class Search extends Mail_Controller
 		$id = $ob_flight['id'];
 		$ib_flight = (isset($payload['ib_flight']) && count($payload['ib_flight'])>0) ? $payload['ib_flight'][0] : $payload['ib_flight'];
 		$iid = $ib_flight['id'];
+		$isround = isset($state['triptype']) && $state['triptype'] === 'round';
 
 		log_message('debug', "Book New -> Payload => : ".json_encode($booking_payload));
 
 		try
 		{
-			if($state && $this->is_booking_validv2($booking_payload)) {
+
+			$isvalid_booking = $this->is_booking_validv2($booking_payload);
+
+			if($state && $isvalid_booking) {
 				$state['correlationid'] = $correlationid = uniqid();
 				
 				#region ******* Outbound flow *********
@@ -4673,8 +4684,6 @@ class Search extends Mail_Controller
 				log_message('debug', "IB final result-> Booking id: $ib_booking_id , Wallet Trans Id: $ib_trans_id");
 				log_message('debug', "9. Correlation Id -> ".$state['correlationid']);
 
-				$isround = isset($state['triptype']) && $state['triptype'] === 'round';
-
 				if($ob_booking_id>0 && $ib_booking_id>0 && $ob_trans_id>=0 && $ib_trans_id>=0) {
 					$this->session->unset_userdata('state');
 					$this->session->unset_userdata('no_of_person');
@@ -4693,6 +4702,16 @@ class Search extends Mail_Controller
 					}
 				}
 			}
+			else {
+				log_message('debug', "Can't process booking some error. Doesn't have enough credit limit Booking Valid? $isvalid_booking");
+				$this->session->set_userdata('ERROR', "Can't proceed with this booking. You don't have enough balance/credit limit");
+				if($isround) {
+					redirect("search/flightdetails_round/$id/$iid");
+				}
+				else {
+					redirect("search/flightdetails/$id");
+				}
+			}
 		}
 		catch(Exception $ex) {
 			log_message('error', $ex);
@@ -4703,7 +4722,7 @@ class Search extends Mail_Controller
 		if(!$booking_payload) return;
 
 		$id = $iid = -1;
-		$payload = $booking_payload['payload'];
+		$payload = &$booking_payload['payload'];
 		$pg_confirmation = $booking_payload['pg_confirmation'];
 		$state = &$payload['state'];
 
@@ -4750,6 +4769,13 @@ class Search extends Mail_Controller
 			else {
 				//for the time being insert a new ticket against API billing company. If present no need to create duplicate.
 				if($result && isset($result['synthetic_ticket']) && $ticket && is_array($ticket)) {
+					$itinerary = isset($result['itinerary']) ? $result['itinerary'] : false;
+					$airline_ticket = false;
+					if(isset($itinerary['Passenger']) && count($itinerary['Passenger'])>0 && isset($itinerary['Passenger'][0]['Ticket'])) {
+						$airline_ticket = $itinerary['Passenger'][0]['Ticket'];
+						$ticket['ticket_no'] = isset($airline_ticket['TicketNumber'])?$airline_ticket['TicketNumber']:$ticket['ticket_no'];
+					}
+					log_message('debug', 'Itinerary => '.json_encode($itinerary));
 					$ticket = array_merge($ticket, $result['synthetic_ticket']);
 					$id = intval($ticket['id']);
 					$status = ($ticket['pnr']!="") ? "CONFIRMED" : "PENDING";
@@ -4780,13 +4806,23 @@ class Search extends Mail_Controller
 		$payload = $booking_payload['payload'];
 		$wallet = $payload['mywallet'];
 		$current_user = $payload['currentuser'];
+
+		$user = $this->User_Model->user_details($current_user['id']);
+		if(count($user)>0) {
+			$user = $user[0];
+		}
+
 		$financial = $payload['state']['financial'];
 		$passengers = $payload['state']['passengers'];
-		$credit_limit = 999999999; /* This should be actual credit limit */
+		$credit_limit = isset($user['cr_limit']) ? floatval($user['cr_limit']) : 0.00;
+		$wallet_balance = floatval($wallet["balance"]);
+		//floatval($wallet["balance"])
 
 		$totalcostprice = floatval($financial['grand_total']);
 
-		$bflag = (floatval($wallet["balance"])>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && $totalcostprice<=$credit_limit);
+		log_message('debug', "Billing Summary: Wallet Balance -> $wallet_balance | Credit Limit -> $credit_limit | Total Cost Price -> $totalcostprice");
+
+		$bflag = ($wallet_balance>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && ($wallet_balance+$credit_limit)>=$totalcostprice);
 
 		//check duplicate passengers
 		$hasduplicatecustomers = false;
@@ -5832,7 +5868,11 @@ class Search extends Mail_Controller
 
 	protected function is_booking_allowed($totalcostprice, $current_user, $wallet) {
 		$user = $this->User_Model->user_details($current_user['id']);
-		$credit_limit = 999999999; /* This should be actual credit limit */
+		if(count($user)>0) {
+			$user = $user[0];
+		}
+		//$credit_limit = floatval($user['cr_limit']); /* This should be actual credit limit */
+		$credit_limit = isset($user['cr_limit']) ? floatval($user['cr_limit']) : 0.00;
 		$wallet_balance = floatval($wallet["balance"]);
 
 		log_message("debug", "Ticket Cost: $totalcostprice | Wallet Balance: $wallet_balance | user id: ".$current_user['id']." | credit allowed: ".intval($current_user["credit_ac"])." | is_admin: ".intval($current_user['is_admin']));
@@ -5840,7 +5880,7 @@ class Search extends Mail_Controller
 		//$flag = $totalcostprice>floatval($wallet["balance"]) && intval($current_user['is_admin'])!=1 && intval($current_user["credit_ac"])==0;
 
 		//We need to check credit limit
-		$flag = (floatval($wallet["balance"])>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && $totalcostprice<=$credit_limit);
+		$flag = ($wallet_balance>=$totalcostprice) || intval($current_user['is_admin'])===1 || (intval($current_user["credit_ac"])===1 && ($wallet_balance+$credit_limit)>=$totalcostprice);
 
 		return $flag;
 	}
