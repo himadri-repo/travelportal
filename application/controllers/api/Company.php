@@ -229,6 +229,15 @@ class Company extends REST_Controller {
         $customer = $this->post('customer');
         $customer_update = $this->Admin_Model->set_customer($customer);
 
+        if($customer && isset($customer['id'])) {
+            //notify user about successful registration
+            $this->Search_Model->notify(array(
+                'doctype' => 'profile_change',
+                'docno' => intval($customer['id']),
+                'template' => 'profile_change'
+            ));
+        }
+
         $this->set_response($customer_update, REST_Controller::HTTP_OK); // CREATED (201) being the HTTP response code REST_Controller::HTTP_CREATED
     }
 
@@ -1469,6 +1478,15 @@ class Company extends REST_Controller {
             else {
                 throw new Exception("Unable to save wallet transaction");
             }
+
+            if($payload && isset($payload['user_id']) && intval($payload['user_id'])>0) {
+                //notify user about successful registration
+                $this->Search_Model->notify(array(
+                    'doctype' => 'profile_change',
+                    'docno' => intval($payload['user_id']),
+                    'template' => 'profile_change'
+                ));
+            }            
         }
         catch(Exception $ex) {
             log_message('error', $ex);

@@ -625,6 +625,13 @@ class User_Controller extends Mail_Controller
 								'msg2'=>"Enjoy! You will be connected to no.1 Air Ticket booking site"
 								);
 					$this->send("Registration",$data);
+
+					//notify user about successful registration
+					$this->Search_Model->notify(array(
+						'doctype' => 'registration',
+						'docno' => $result,
+						'template' => 'registration'
+					));					
 					
 					$data = array(				            
 								'name' => $this->session->userdata('name'),
@@ -662,11 +669,11 @@ class User_Controller extends Mail_Controller
 					$this->session->set_userdata('mobile',"");
 					$this->session->set_userdata('reg_user_id',"");
 					$json["success"]="Your Registration Completed Successfully";
-			   }
-			   else
-			  {
-				$json["error"]=false;
-			  }
+			   	}
+			   	else
+				{
+					$json["error"]=false;
+				}
 			}
 			else
 			{

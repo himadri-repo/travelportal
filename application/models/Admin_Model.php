@@ -159,6 +159,10 @@ Class Admin_Model extends CI_Model
             $data = null;
 		}
 
+		$existing_customer = ($data && count($data)>0) ? $data[0] : [];
+		$wasactive = ($existing_customer && isset($existing_customer['active']) && intval($existing_customer['active']) === 1) ? true : false;
+		$isactive = ($customer && isset($customer['active']) && intval($customer['active']) === 1) ? true : false;
+
 		if(isset($customer['transactions'])) {
 			unset($customer['transactions']);
 		}

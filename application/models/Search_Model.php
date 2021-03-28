@@ -95,6 +95,42 @@ Class BaseModel extends CI_Model {
 				}
 
 				break;	
+			case 'registration':
+			case 'profile_change':
+				$ntfypayload['template'] = $template;
+				$doc = $this->getRegistrationInfo4Notification($docno);
+				$ntfypayload['document'] = $doc;
+				$ntfypayload['payload'] = false;
+				if($doc) {
+					$ntfypayload['payload'] = array(
+						'id' => $doc['id'],
+						'name' => $doc['name'],
+						'email' => $doc['email'],
+						'mobile' => $doc['mobile'],
+						'address' => $doc['address'],
+						'state' => $doc['state'],
+						'country' => $doc['country'],
+						'active' => $doc['active'],
+						'type' => $doc['type'],
+						'company' => array(
+							'id' => $doc['company_id'],
+							'name' => $doc['company_name'],
+							'mobile' => $doc['company_mobile'],
+							'email' => $doc['company_email'],
+							'logo' => $doc['company_logo'],
+							'url' => $doc['url']
+						),
+						'wallet' => array(
+							'id' => $doc['wallet_id'],
+							'name' => $doc['wallet_name'],
+							'balance' => floatval($doc['wallet_balance']),
+							'sponsoring_companyid' => floatval($doc['wallet_sponsored_by_id']),
+							'sponsoring_companyname' => floatval($doc['wallet_sponsored_by_name'])
+						)
+					);
+				}
+
+				break;
 			default:
 				log_message('debug', "BaseModel::getNotifyPayload - DocType invalid");
 		}
@@ -135,34 +171,100 @@ Class BaseModel extends CI_Model {
 		}
 	}
 
+	private function getRegistrationInfo4Notification($userid) {
+		$userid = intval($userid);
+		if($userid>0) {
+					$sql = "select usr.id, usr.name, usr.email, usr.mobile, usr.address, usr.active, usr.type, c.name as company_name, md_state.datavalue state, md_country.datavalue as country, c.id as company_id, c.baseurl as url, 
+					(select attr.datavalue from attributes_tbl attr where attr.code='phone_no' and attr.target_object_type='company' and attr.target_object_id=usr.companyid and attr.active=1) as company_mobile,
+					(select attr.datavalue from attributes_tbl attr where attr.code='email' and attr.target_object_type='company' and attr.target_object_id=usr.companyid and attr.active=1) as company_email,
+					(select attr.datavalue from attributes_tbl attr where attr.code='logo' and attr.target_object_type='company' and attr.target_object_id=usr.companyid and attr.active=1) as company_logo,
+					wl.id as wallet_id, wl.name as wallet_name, wl.balance as wallet_balance, wl.sponsoring_companyid as wallet_sponsored_by_id, c1.name as wallet_sponsored_by_name
+			from user_tbl usr
+			inner join company_tbl c on c.id=usr.companyid
+			inner join system_wallets_tbl wl on wl.userid = usr.id and wl.companyid=usr.companyid
+			inner join metadata_tbl md_state on md_state.associated_object_type='state' and md_state.companyid=0 and md_state.active=1 and md_state.id=usr.state
+			inner join metadata_tbl md_country on md_country.associated_object_type='country' and md_country.companyid=0 and md_country.active=1 and md_country.id=usr.country
+			inner join company_tbl c1 on c1.id=wl.sponsoring_companyid
+			where usr.id=$userid";
+
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{
+				$registered_user = $query->result_array()[0];
+				return $registered_user;
+			}
+			else
+			{
+				return false;
+			}	
+		}
+		else {
+			return false;
+		}
+	}
+
 	public function notify($ntfyfeed) {
 		$ntfyinfo = $this->getNotifyPayload($ntfyfeed);
 		log_message('debug', "BaseModel::notify - Notification feed provided : ".json_encode($ntfyfeed));
 		//Notify to user
 		if($this->processnotification && $ntfyinfo && isset($ntfyinfo['document']) && isset($ntfyinfo['payload']) && $ntfyinfo['payload']) {
 			$tbl = 'notification_tbl';
-			$document = $ntfyinfo['document'];
-			$payload = $ntfyinfo['payload'];
-			$payload = json_encode($payload, JSON_UNESCAPED_UNICODE);
-			$arr = array(
-				'date' => date("Y-m-d H:i:s"),
-				'mode' => 'EMAIL',
-				'companyid' => $document['seller_companyid'],
-				'payloaddata' => $payload,
-				'templatename' => $ntfyfeed['template'],
-				'module' => $ntfyfeed['template'],
-				'receipients' => $document['customer_username'].' <'.$document['customer_email'].'>',
-				'status' => 0,
-				'isread' => 0,
-				'created_on' => date("Y-m-d H:i:s"),
-				'created_by' => $document['customer_userid']
-			);
+			
+			$arr = $this->getNotifyMapFields($ntfyfeed, $ntfyinfo);
 
 			log_message('debug', "BaseModel::notify - Notification table data : ".json_encode($arr));
 			$notifyid = $this->save($tbl, $arr);
 
-			log_message('debug', "BaseModel::notify - Notifier Id : $notifyid | Payload: $payload");
+			log_message('debug', "BaseModel::notify - Notifier Id : $notifyid | Payload: ".json_encode($ntfyinfo['payload'], JSON_UNESCAPED_UNICODE)." | Feed: ".json_encode($ntfyinfo, JSON_UNESCAPED_UNICODE));
 		}		
+	}
+
+	private function getNotifyMapFields($ntfyfeed, $ntfypayload) {
+		$doctype = strtolower($ntfyfeed['doctype']);
+		$docno = intval($ntfyfeed['docno']);
+		$template = strtolower($ntfyfeed['template']);
+		$document = $ntfypayload['document'];
+		$payload = $ntfypayload['payload'];
+		$payload = json_encode($payload, JSON_UNESCAPED_UNICODE);
+		$arr = [];
+
+		switch($doctype) {
+			case 'booking':
+				$arr = array(
+					'date' => date("Y-m-d H:i:s"),
+					'mode' => 'EMAIL',
+					'companyid' => $document['seller_companyid'],
+					'payloaddata' => $payload,
+					'templatename' => $ntfyfeed['template'],
+					'module' => $ntfyfeed['template'],
+					'receipients' => $document['customer_username'].' <'.$document['customer_email'].'>',
+					'status' => 0,
+					'isread' => 0,
+					'created_on' => date("Y-m-d H:i:s"),
+					'created_by' => $document['customer_userid']
+				);				
+				break;
+			case 'registration':
+			case 'profile_change':
+				$arr = array(
+					'date' => date("Y-m-d H:i:s"),
+					'mode' => 'EMAIL',
+					'companyid' => $document['company_id'],
+					'payloaddata' => $payload,
+					'templatename' => $ntfyfeed['template'],
+					'module' => $ntfyfeed['template'],
+					'receipients' => $document['name'].' <'.$document['email'].'>',
+					'status' => 0,
+					'isread' => 0,
+					'created_on' => date("Y-m-d H:i:s"),
+					'created_by' => $document['id']
+				);				
+				break;
+			default:
+		}
+
+		return $arr;
 	}
 }
 
