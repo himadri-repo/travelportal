@@ -39,7 +39,7 @@
                                              <span><i class="fa fa-lock"></i></span>
                                         </div>
                                         
-                                        <div class="checkbox">
+                                        <div class="checkbox" style="display: none;">
                                             <a style="cursor:pointer" class="simple-link" data-toggle="modal" data-target="#login_otp">Login With OTP</a>
                                         </div>
                                         

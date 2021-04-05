@@ -15,7 +15,6 @@
             </div><!-- end container -->
         </section><!-- end page-cover -->
         
-        
         <!--===== INNERPAGE-WRAPPER ====-->
         <section class="innerpage-wrapper">
         	<div id="login" class="innerpage-section-padding">
@@ -31,7 +30,7 @@
                                             
                                       
                                         <div class="form-group">
-                                             <input type="text" class="form-control" maxlength="6" placeholder="OTP"  id="otp" name="otp" autocomplete="off"/>
+                                             <input type="text" class="form-control" maxlength="6" placeholder="OTP"  id="otp" name="otp" autocomplete="off" value="<?= $otp?>" readonly/>
                                              <span><i class="fa fa-lock"></i></span>
                                         </div>
                                         

@@ -466,9 +466,11 @@ class User_Controller extends Mail_Controller
 		$result['mywallet']= $this->getMyWallet();
 		$company = $this->getCurrentCompany();
 		$result["setting"]=$this->Search_Model->company_setting($company["id"]);
+		$otp = $this->session->userdata('otp');
+		$page_payload['otp'] = $otp;
 
 		$this->load->view('header1',$result);
-		$this->load->view('verify');
+		$this->load->view('verify', $page_payload);
 		$this->load->view('footer');
 		
 	}
