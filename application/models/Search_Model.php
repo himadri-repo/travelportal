@@ -1666,10 +1666,21 @@ Class Search_Model extends BaseModel
 				$selleruserinfo = $this->get('user_tbl', array('id' => $seller_userid));
 				$sellercompanyinfo = $this->get('company_tbl', array('id' => $seller_companyid));
 
+				if(date('n') > 3) {
+					$st_date = date_create(date('Y')."-04-01 00:00:00");
+					$ed_date = date_create((date('Y') + 1)."-03-31 23:59:59");
+				}
+				else {
+					$st_date = date_create((date('Y') - 1)."-04-01 00:00:00");
+					$ed_date = date_create(date('Y')."-03-31 23:59:59");
+				}
+
 				$all_bookings = $this->get("bookings_tbl", array(
-					'companyid' => $seller_companyid
+					"seller_companyid" => $seller_companyid,
+					"booking_date >= " => "'".date_format($st_date, 'Y-m-d H:i:s')."'",
+					"booking_date <= " => "'".date_format($ed_date, 'Y-m-d H:i:s')."'"
 				));
-				$fn_year = date('n') > 6 ? date('Y').'-'.(date('Y') + 1) : (date('Y') - 1).'-'.date('Y');
+				$fn_year = date('n') > 3 ? date('Y').'-'.(date('Y') + 1) : (date('Y') - 1).'-'.date('Y');
 				$booking_number = $all_bookings ? (count($all_bookings)+1)."/$fn_year" : "1/$fn_year";
 
 				if($sale_type === 'live') {
@@ -2372,10 +2383,30 @@ Class Search_Model extends BaseModel
 
 				#region Wholesaler side booking
 				//Save booking from end users perspective
+				if(date('n') > 3) {
+					$st_date = date_create(date('Y')."-04-01 00:00:00");
+					$ed_date = date_create((date('Y') + 1)."-03-31 23:59:59");
+				}
+				else {
+					$st_date = date_create((date('Y') - 1)."-04-01 00:00:00");
+					$ed_date = date_create(date('Y')."-03-31 23:59:59");
+				}
+
+				$seller_companyid = $parameters["seller_companyid"];
+				$all_bookings = $this->get("bookings_tbl", array(
+					"seller_companyid" => $seller_companyid,
+					"booking_date >= " => "'".date_format($st_date, 'Y/m/d H:i:s')."'",
+					"booking_date <= " => "'".date_format($ed_date, 'Y/m/d H:i:s')."'"
+				));
+
+				$fn_year = date('n') > 3 ? date('Y').'-'.(date('Y') + 1) : (date('Y') - 1).'-'.date('Y');
+				$booking_number = $all_bookings ? (count($all_bookings)+1)."/$fn_year" : "1/$fn_year";
+
 				$booking_id = $this->save("bookings_tbl", array(
 					"booking_date"=>$parameters["booking_date"], 
 					"ticket_id"=>$parameters["ticket_id"], 
 					"pbooking_id" => $parentbooking_id, 
+					"booking_number" => $booking_number,
 					"pnr"=>$pnr, 
 					"customer_userid"=>$parameters["customer_userid"], 
 					"customer_companyid"=>$parameters["customer_companyid"], 
