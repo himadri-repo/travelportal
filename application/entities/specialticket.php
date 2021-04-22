@@ -90,43 +90,43 @@ class SpecialTicket {
 
         try
         {
-            $poolingbaseid = explode('_', trim($ticket['pollId']));
-            $poolingbaseid = trim($poolingbaseid[0]);
+            // $poolingbaseid = explode('_', trim($ticket['pollId']));
+            // $poolingbaseid = trim($poolingbaseid[0]);
             //$ticketid = isset($ticket['FID']) ? $ticket['FID'] : null;
-            $ticketid = isset($ticket['ID']) ? $ticket['ID'] : null;
-            $fs = $ticket['OD'][0]['FS'][0];
-            $od = $ticket['OD'][0];
-            $adultdata = $ticket['paxWise']['O']['ADT'];
-            $childdata = $ticket['paxWise']['O']['CHD'];
-            $infantdata = $ticket['paxWise']['O']['INF'];
+            $ticketid = isset($ticket['Ref']) ? $ticket['Ref'] : null;
+            // $fs = $ticket['OD'][0]['FS'][0];
+            // $od = $ticket['OD'][0];
+            $adultdata = isset($ticket['Seats']) ? intval($ticket['Seats']) : 0;
+            // $childdata = $ticket['paxWise']['O']['CHD'];
+            // $infantdata = $ticket['paxWise']['O']['INF'];
 
-            if($fs && $od) {
-                $this->id = isset($ticket['ID']) ? $ticket['ID'] : null;
+            if($ticketid) {
+                $this->id = $ticketid; //isset($ticket['ID']) ? $ticket['ID'] : null;
                 $this->trip_type = 'ONE';
                 $this->supplier = isset($ticket['supplierType']) ? $ticket['supplierType'] : null;
                 $this->suppliercode = isset($ticket['supplierCode']) ? $ticket['supplierCode'] : null;
-                $this->departure_date_time = date("Y-m-d H:i",strtotime($fs['ddt'].' '.$fs['dd']));
-                $this->arrival_date_time = date("Y-m-d H:i",strtotime($fs['adt'].' '.$fs['ad']));
-                $this->flight_no = $fs['ac'].'-'.$fs['fl'];
-                $this->aircode = $fs['ac'];
-                $this->airlinecode = $fs['ac'];
-                $this->airlinename = isset($fs['aname']) ? $fs['aname'] : '';
-                $this->dept_airport_name = isset($fs['dan']) ? $fs['dan'] : '';
-                $this->arrv_airport_name = isset($fs['aan']) ? $fs['aan'] : '';
-                $this->class = strtoupper($fs['cabin']);
-                $this->totalduration = $fs['du'];
-                $this->sourcecode = $fs['dac'];
-                $this->destinationcode = $fs['aac'];
-                $this->terminal = 'T-'.$fs['dt'];
-                $this->terminal1 = 'T-'.$fs['at'];
+                $this->departure_date_time = date("Y-m-d H:i",strtotime($ticket['Dep']));
+                $this->arrival_date_time = date("Y-m-d H:i",strtotime($ticket['Arr']));
+                $this->flight_no = $ticket['Fno'];
+                $this->aircode = $ticket['plt'];
+                $this->airlinecode = $ticket['plt'];
+                $this->airlinename = isset($ticket['plt']) ? $ticket['plt'] : '';
+                $this->dept_airport_name = isset($ticket['Org']) ? $ticket['Org'] : '';
+                $this->arrv_airport_name = isset($ticket['Des']) ? $ticket['Des'] : '';
+                $this->class = strtoupper($ticket['Cab']) == 'E' ? 'ECONOMY' : '' ;
+                $this->totalduration = intval($ticket['Dur']);
+                // $this->sourcecode = $fs['dac'];
+                // $this->destinationcode = $fs['aac'];
+                $this->terminal = 'T-';
+                $this->terminal1 = 'T-';
 
-                $this->no_of_person = intval($fs['seat'])>10 ? 10 : intval($fs['seat']);
-                $this->availibility = intval($fs['seat'])>10 ? 10 : intval($fs['seat']);
-                $this->max_no_of_person = intval($fs['seat']);
+                $this->no_of_person = intval($ticket['Seats'])>10 ? 10 : intval($ticket['Seats']);
+                $this->availibility = $this->no_of_person;
+                $this->max_no_of_person = $this->no_of_person;
                 $this->available = $this->no_of_person > 0 ? 'YES' : 'NO';
                 $this->no_of_stop = 0;
-                $this->data_collected_from = 'atrip';
-                $this->last_sync_key = $poolingbaseid;
+                $this->data_collected_from = 'rndtrip';
+                $this->last_sync_key = $ticketid;
                 $this->companyid = 1;
                 $this->user_id = 104;
                 $this->created_by = 104;
@@ -135,22 +135,22 @@ class SpecialTicket {
                 $this->sale_type = 'request';
                 $this->tag = $this->ticket_type;
 
-                $reschedule = isset($adultdata['farerule']) ? (floatval($adultdata['farerule']['change'])+200) : 0;
-                $cancel = isset($adultdata['farerule']) ? (floatval($adultdata['farerule']['cancel'])+200) : 0;
-                $meal = (isset($adultdata['meal']) && boolval($adultdata['meal'])) ? 'YES' : 'NO';
-                $bag = (isset($adultdata['bag']) && isset($adultdata['bag']['value'])) ? $adultdata['bag']['value'].' '.$adultdata['bag']['unit'] : '';
-                $this->remarks = 'Meal : '.$meal.' | baggage : '.$bag.' | Reschedule : '.$reschedule.' | Cancel : '.$cancel.' | ['. strtoupper($this->ticket_type) .']';
+                $reschedule = $ticket['seg'];
+                $cancel = 0;
+                $meal = 'NO';
+                $bag = $ticket['Bagg'];
+                $this->remarks = 'Baggage : '.$bag.' | Reschedule : '.$reschedule;
                 $this->cancel_rate = $cancel;
 
                 $this->ticket_no = $ticketid;
                 
-                $this->price = floatval($adultdata['fare']['TF']);
+                $this->price = floatval($ticket['NETFare']);
                 $this->total = $this->price;
                 $this->baggage = 0.00;
                 $this->meal = 0.00;
                 $this->markup = 0.00;
                 $this->discount = 0.00;
-                $this->price_infant = floatval($infantdata['fare']['TF']);
+                //$this->price_infant = floatval($infantdata['fare']['TF']);
                 $this->price_infant = $this->price_infant > 1500 ? $this->price_infant : 1500;
             }
         }

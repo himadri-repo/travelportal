@@ -361,6 +361,280 @@ class Search extends Mail_Controller
 		return $live_ticket_data;
 	}
 
+	public function getOnlineTicketsByPollingId_roundtrip($data, $sessionid, $url) {
+		$cookie=dirname(__FILE__)."/cookie.txt"; 
+		//$url = 'https://www.airtripsonline.com/air/search/result'; 
+		$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+
+		$curl = curl_init(); 
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_COOKIEJAR => $cookie,
+			CURLOPT_COOKIEFILE => $cookie,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_USERAGENT => $useragent,
+			CURLOPT_HEADER => true,
+			CURLOPT_HTTPHEADER => array(
+				// "host: www.airtripsonline.com",
+				"accept: application/json",
+				"cache-control: no-cache",
+				"content-type: application/json",
+				// "Csrf: $csrf"
+			),
+			CURLOPT_POSTFIELDS => json_encode($data)
+		));
+
+		$response = curl_exec($curl);
+		$jsonresult = json_decode($response);
+		$err = curl_error($curl);
+
+		$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+		$header = substr($response, 0, $header_size);
+		$body = substr($response, $header_size);
+		curl_close($curl);
+
+		$live_ticket_data = json_decode($body, true);
+
+		return $live_ticket_data;
+	}
+
+	public function doAuth_rt($uid, $pwd, $tr_id) {
+		$cookie=dirname(__FILE__)."/cookie.txt"; 
+
+		if(file_exists($cookie)) {
+			if(unlink($cookie)) {
+				log_message("debug", 'Cookie file successfully deleted.');
+			}
+			else {
+				log_message("debug", 'Cookie file can`t be deleted.');
+			}
+		}
+
+		$url = 'https://roundtrip.in/Login/Loginsubmit'; 
+		$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+		$data = '{"tr_id":"RSRGH040010101","NAME":"Sumit","PWD":"Sumit@1234","Environment":"W"}';
+
+		$curl = curl_init(); 
+
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => $url,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_COOKIEJAR => $cookie,
+			CURLOPT_COOKIEFILE => $cookie,
+			CURLOPT_ENCODING => "",
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_USERAGENT => $useragent,
+			CURLOPT_HEADER => true,
+			CURLOPT_POSTFIELDS => $data,
+			CURLOPT_HTTPHEADER => array(
+				// "host: www.roundtrip.in",
+				"accept: application/json",
+				"cache-control: no-cache",
+				"content-type: application/json"
+				// "content-length: ".strlen($data)
+			),
+		));
+
+		$response = curl_exec($curl);
+		$jsonresult = json_decode($response);
+		$err = curl_error($curl);
+
+		preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $response,  $match_found);
+ 
+		$cookies = array();
+		foreach($match_found[1] as $item) {
+			parse_str($item,  $cookieitem);
+			$cookies = array_merge($cookies,  $cookieitem);
+		}
+
+		$sessionid = '';
+		if($cookies && count($cookies)>0 && isset($cookies['ASP_NET_SessionId'])) {
+			$sessionid = $cookies['ASP_NET_SessionId'];
+		}
+
+		log_message('debug', json_encode($cookies));
+		log_message('debug', "Session Id : $sessionid");
+
+		$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
+		$header = substr($response, 0, $header_size);
+		$body = substr($response, $header_size);
+		curl_close($curl);
+		$result = json_decode($body, true);
+		$result['sessionid'] = $sessionid;
+
+		return $result;
+	}
+
+	public function getOnlineInventory_roundtrip($source, $destination, $adult, $child, $infant, $dept_date, $airline, $context) {
+		$specialtickets = [];
+		$livetickets = [];
+		$minfarelist = array();
+		try
+		{
+			$sessionid = null;
+			$result = $this->doAuth_rt("Sumit", "Sumit@1234", "RSRGH040010101");
+			if($result && isset($result['sessionid'])) {
+				$sessionid = $result['sessionid'];
+			}
+
+			log_message('debug', "Session Id : ".$sessionid);
+			$cookie=dirname(__FILE__)."/cookie.txt"; 
+			$url = "https://roundtrip.in/Search/FlightSearch";
+
+			$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
+
+			$live_ticket_data = null;
+			$liveticketsp = [];
+			$poolingids = [];
+			$enabled = true;
+			if($sessionid && $enabled) {
+				$poolingids = array(uniqid());
+			}
+
+			if(count($poolingids) > 0) {
+				log_message('debug', 'Polling ids : '.json_encode($poolingids));
+				//$dept_date = date_format(date_create($dept_date), 'Ymd');
+				$dept_date = date_format(date_create($dept_date), 'd/m/Y');
+				//$invkey = strtoupper(trim($source)).strtoupper(trim($destination)).$dept_date;
+				$invkey = $poolingids[0]; //date_format(date_create($dept_date), 'Ymd');
+
+				$i = 0;
+				$retrycount = 0;
+				$data = array(
+					"strfromCity" => $source,  //"AMD",
+					"strtoCity" => $destination, // "MAA",
+					"strDepartureDate" => $dept_date,
+					"strRetDate" => $dept_date,
+					"strAdults" => $adult,
+					"strChildrens" => $child,
+					"strInfants" => $infant,
+					"strTrip" => "O",
+					"Airline" => "",
+					"FCategory" => "OSC",
+					"Class" => "E",
+					"MultiCity" => "",
+					"HSearch" => "false",
+					"DirectSearch" => "false",
+					"segmenttype" => "D_1",
+					"roundtripflg" => "0",
+					"availagent" => "",
+					"availterminal" => "",
+					"UID" => "$sessionid-$invkey$0",
+					"AppCurrency" => "INR",
+					"fltnumkey" => ",",
+					"fltsegmentkey" => ",",
+					"mulfltnumvia" => "",
+					"ClientID" => "",
+					"BranchID" => "",
+					"GroupID" => "",
+					"reqker" => 0,
+					"Promothread" => "",
+					"Threadspl" => "N",
+					"StudentFare" => false,
+					"ArmyFare" => false,
+					"SnrcitizenFare" => false,
+					"LabourFare" => false,
+					"strBookletFare" => false
+				);
+
+				log_message('debug', 'Roundtrip:Data:Payload : '.json_encode($data, TRUE));
+				while($poolingids && $i<count($poolingids)) {
+					$pollingid = $poolingids[$i];
+
+					$payload = $this->getOnlineTicketsByPollingId_roundtrip($data, $sessionid, $url);
+					log_message('debug', 'Roundtrip:Payload : '.json_encode($payload, TRUE));
+
+					if(count($payload)>0 && isset($payload['Status']) && intval($payload['Status']) === 1 && isset($payload['Result']) && count($payload['Result'])>4) {
+						$retrycount = 0;
+						$i++;
+
+						if(isset($payload['Result']) && isset($payload['Result'][4])) {
+							$tickets = json_decode($payload['Result'][4], true);
+
+							log_message('debug', 'Roundtrip:Tickets : '.json_encode($tickets, TRUE));
+
+							$filled_tickets = $this->fill_transform_ticket_roundtrip($tickets, array(
+								'source' => $source,
+								'destination' => $destination,
+								'sourcecityid' => $context['sourcecityid'],
+								'destinationcityid' => $context['destinationcityid'],
+								'dept_date' => $dept_date,
+								'airline' => $airline,
+								'adult' => $adult,
+								'child' => $child,
+								'infant' => $infant
+							));
+
+							for($ii1=0; $ii1<count($filled_tickets); $ii1++) {
+								$filledticket = $filled_tickets[$ii1];								
+
+								if($filledticket) {
+									// $minfarelist[$filledticket->flight_no] = $filledticket->total;
+
+									if(!isset($minfarelist[$filledticket->flight_no]) || floatval($minfarelist[$filledticket->flight_no]) > floatval($filledticket->total)) {
+										$splticket = null;
+										for($yi=0; $yi<count($specialtickets); $yi++) {
+											$splticket = $specialtickets[$yi];
+											$flightno = trim($splticket->flight_no);
+											$flightno1 = trim($filledticket->flight_no);
+											if($flightno === $flightno1) {
+												break;
+											}
+											else {
+												$splticket = null;
+											}
+										}
+
+										if($splticket) {
+											$splticket->fill_data($filledticket);
+										}
+										else {
+											$specialtickets[] = $filledticket;
+										}
+										$minfarelist[$filledticket->flight_no] = floatval($filledticket->total);
+									}
+
+									// if($filledticket->ticket_type === 'special') {
+									// 	$specialtickets[] = $filledticket;
+									// }
+									$liveticketsp[] = $filledticket;
+								}
+							}
+						}
+					}
+					else {
+						$i++;
+						// if($retrycount<=5) {
+						// 	$retrycount++;
+						// 	usleep(1000000); //sleep for 1 secs.
+						// }
+						// else {
+						// 	$i++;
+						// }
+					}
+				}
+			}
+		}
+		catch(Exception $ex) {
+			log_message('debug', "Live inventory [Exception] => ".$ex);
+		}
+
+		return array('special_tickets' => $specialtickets, 'live_tickets' => $liveticketsp);
+	}
+
 	public function getOnlineInventory($source, $destination, $adult, $child, $infant, $dept_date, $airline, $context) {
 		$specialtickets = [];
 		$livetickets = [];
@@ -378,43 +652,6 @@ class Search extends Mail_Controller
 
 			$useragent = 'Mozilla/5.0 (Windows NT 6.2; WOW64; rv:17.0) Gecko/20100101 Firefox/17.0';
 
-/*			
-			$curl = curl_init(); 
-	
-			curl_setopt_array($curl, array(
-				CURLOPT_URL => $url,
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_COOKIEJAR => $cookie,
-				CURLOPT_COOKIEFILE => $cookie,
-				CURLOPT_ENCODING => "",
-				CURLOPT_MAXREDIRS => 10,
-				CURLOPT_TIMEOUT => 0,
-				CURLOPT_FOLLOWLOCATION => true,
-				CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-				CURLOPT_SSL_VERIFYPEER => false,
-				CURLOPT_CUSTOMREQUEST => "GET",
-				CURLOPT_USERAGENT => $useragent,
-				CURLOPT_HEADER => true,
-				CURLOPT_HTTPHEADER => array(
-					"host: www.airtripsonline.com",
-					"accept: application/json",
-					"cache-control: no-cache",
-					"content-type: application/json",
-					"Csrf: $csrf"
-				),
-			));
-	
-			$response = curl_exec($curl);
-			$err = curl_error($curl);			
-
-			$header_size = curl_getinfo($curl, CURLINFO_HEADER_SIZE);
-			$header = substr($response, 0, $header_size);
-			$body = substr($response, $header_size);
-	
- 		 	curl_close($curl);
-
-			$live_ticket_data = json_decode($body, true);
-*/
 			$live_ticket_data = null;
 			$liveticketsp = [];
 			$poolingids = [];
@@ -540,6 +777,72 @@ class Search extends Mail_Controller
 		return $special_tickets;
 	}
 
+	public function fill_transform_ticket_roundtrip($tickets, $context) {
+		$special_tickets = [];
+		
+		if($tickets && count($tickets)>0) {
+			for($i=0; $i<count($tickets); $i++) {
+				$ticket = $tickets[$i];
+				$fcn = null;
+				$fs = [];
+				// if($ticket && isset($ticket['OD']) && is_array($ticket['OD']) && count($ticket['OD'])>0) {
+				// 	$fcn = isset($ticket['OD'][0]['fcn']) ? strtolower($ticket['OD'][0]['fcn']) : null;
+				// 	$fs = isset($ticket['OD'][0]['FS']) ? $ticket['OD'][0]['FS'] : [];
+				// }
+
+				if($ticket) {
+					$dt = date("Ymd",strtotime($ticket['Dep']));
+					$ticket['Ref'] = $context['source']."-".$context['destination']."-".$dt."-".str_replace(' ','-',$ticket['Fno']).'rndtrip';
+					//only no stop flights allowed
+					$special_ticket = new SpecialTicket();
+					$special_ticket->ticket_type = 'request';
+					$special_ticket->source = intval($context['sourcecityid']);
+					$special_ticket->destination = intval($context['destinationcityid']);
+					$special_ticket->sourcecode = $context['source'];
+					$special_ticket->destinationcode= $context['destination'];
+					$special_ticket->ticketid= $context['destination'];
+					$spltkt = $special_ticket->transform_online_ticket($ticket, $context);
+	
+					$special_tickets[] = $special_ticket;
+				}
+			}
+		}
+
+		return $special_tickets;
+	}
+
+	function clear_live_inventory($context) {
+		$flag = false;
+		$airlines = $context['airlines'];
+		$sourcecity = $context['sourcecity'];
+		$destinationcity = $context['destinationcity'];
+		$deptdate = $context['departure_date'];
+		$data_source = $context['data_source'];
+
+		try {
+			//MIGHT_BE_SOLD_OR_ON_REQUEST
+			$key = uniqid();
+			$flag_result = $this->Search_Model->update('tickets_tbl', array(
+				'last_sync_key' => 'MIGHT_BE_SOLD_OR_ON_REQUEST', //$key,
+				'no_of_person' => 0,
+				'max_no_of_person' => 0,
+				'availibility' => 0,
+				'available' => 'NO'
+			), array(
+				'data_collected_from' => $data_source, //'rndtrip',
+				'source' => intval($sourcecity['id']),
+				'destination' => intval($destinationcity['id']),
+				'date_format(departure_date_time, "%Y-%m-%d") = ' => date("Y-m-d",strtotime($deptdate)),
+				'last_sync_key <>' => 'MIGHT_BE_SOLD_OR_ON_REQUEST'
+			));
+		}
+		catch(Exception $ex) {
+			log_message('debug', $ex);
+		}
+
+		return $flag;
+	}
+
 	//array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city)
 	function save_special_inventory($special_tickets, $context) {
 		$flag = false;
@@ -555,7 +858,7 @@ class Search extends Mail_Controller
 			$flag_result = $this->Search_Model->update('tickets_tbl', array(
 				'last_sync_key' => $key
 			), array(
-				'data_collected_from' => 'atrip',
+				'data_collected_from' => 'rndtrip',
 				'date_format(departure_date_time, "%Y-%m-%d") = ' => date("Y-m-d",strtotime($deptdate)),
 				'last_sync_key <>' => 'MIGHT_BE_SOLD_OR_ON_REQUEST'
 			));
@@ -563,7 +866,7 @@ class Search extends Mail_Controller
 			for($i=0; $i<count($special_tickets); $i++) {
 				$special_ticket = $special_tickets[$i];
 
-				$ticket = $this->Search_Model->get('tickets_tbl', array('ticket_no' => "'".$special_ticket->ticket_no."'", 'data_collected_from' => "'atrip'"));
+				$ticket = $this->Search_Model->get('tickets_tbl', array('ticket_no' => "'".$special_ticket->ticket_no."'", 'data_collected_from' => "'rndtrip'"));
 				if($ticket && isset($ticket) && is_array($ticket) && count($ticket)>0) {
 					$ticket = $ticket[0];
 					log_message('debug', "save_special_inventory (Ticket found) => ".json_encode($ticket));
@@ -590,7 +893,7 @@ class Search extends Mail_Controller
 						'updated_on' => date('Y-m-d H:i:s'),
 						'last_sync_key' => $special_ticket->last_sync_key,
 						'price_infant' => $special_ticket->price_infant
-					), array('ticket_no' => $special_ticket->ticket_no, 'data_collected_from' => 'atrip'));
+					), array('ticket_no' => $special_ticket->ticket_no, 'data_collected_from' => 'rndtrip'));
 				}
 				else {
 					//insert
@@ -850,8 +1153,9 @@ class Search extends Mail_Controller
 					}
 
 					//Live ticket checks
+					log_message('debug', 'Query roundtrip');
 					$dept_date = date_format(date_create($this->input->post('departure_date')), 'Y-m-d');
-					$liveInventory = $this->getOnlineInventory($source_city['code'], $destination_city['code'], 1, 1, 1, $dept_date, "DOMAIR", array('sourcecityid' => intval($source_city['id']), 'destinationcityid' => intval($destination_city['id'])));
+					$liveInventory = $this->getOnlineInventory_roundtrip($source_city['code'], $destination_city['code'], 1, 0, 0, $dept_date, "DOMAIR", array('sourcecityid' => intval($source_city['id']), 'destinationcityid' => intval($destination_city['id'])));
 
 					if($liveInventory && isset($liveInventory['live_tickets'])) {
 						$live_ticket_data = $liveInventory['live_tickets'];
@@ -859,8 +1163,15 @@ class Search extends Mail_Controller
 						//save special fare to DB.
 						$special_tickets = $liveInventory['special_tickets'];
 						if($special_tickets && count($special_tickets) > 0) {
+							log_message('debug', json_encode($special_tickets, TRUE));
 							$this->save_special_inventory($special_tickets, array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city, 'departure_date' => $dept_date));
 						}
+						else {
+							$this->clear_live_inventory(array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city, 'departure_date' => $dept_date, 'data_source' => 'rndtrip'));
+						}
+					}
+					else {
+						$this->clear_live_inventory(array('airlines' => $airlines, 'sourcecity' => $source_city, 'destinationcity' => $destination_city, 'departure_date' => $dept_date, 'data_source' => 'rndtrip'));
 					}
 				}
 
