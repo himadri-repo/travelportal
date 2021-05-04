@@ -580,13 +580,15 @@ h1,h2,h3,h4,h5,h6,.main-title a, .flight-info h3 .flight-destination,.blog-post-
 	top: 0;
 }
 .new-navbar .nav > li > a{
-	font-size:16px;
-	color: #ffffff;
-	top: 0;
-	left: 0;
-	/*font-weight:bold;*/
-	text-decoration: none;
-	/*text-transform:uppercase;*/
+    font-size: 15px;
+    color: #ffffff;
+    top: 5px;
+    left: 0;
+    /* font-weight: bold; */
+    text-decoration: none;
+    /* text-transform: uppercase; */
+    padding: 10px;
+    font-family: 'Lato', sans-serif;
 }
 
 .nopadding {

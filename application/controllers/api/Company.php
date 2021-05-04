@@ -1440,6 +1440,20 @@ class Company extends REST_Controller {
         return $flag;
     }
 
+    public function notify_post() {
+        $notify_payload = $this->security->xss_clean($this->input->raw_input_stream);
+        $ntfy_payload = array_merge(array('docno' => '', 'doctype' => '', 'template' => ''), json_decode($notify_payload, true)); // || {'docno' => '', 'doctype' => '', 'template' => ''};
+        $flag = false;
+
+        $this->Search_Model->notify($ntfy_payload);
+
+        $result = array();
+        $result['code'] = 200;
+        $result['message'] = 'Notification provissioned';
+        $result['data'] = array('status' => 'success', 'code' => 0);
+        $this->set_response($result, REST_Controller::HTTP_OK);
+    }
+
     public function perform_wallet_transaction_post($userid = 0) {
         $stream_clean = $this->security->xss_clean($this->input->raw_input_stream);
         $payload = json_decode($stream_clean, true);

@@ -860,7 +860,7 @@
 						flag = false;
 					}
 
-					if((payment_mode===4 || payment_mode===8) && (reference_date===null || reference_date==='')) {
+					if((payment_type===4 || payment_type===8) && (reference_date===null || reference_date==='')) {
 						err += 'Please provide transaction reference date.\n';
 						flag = false;
 					}

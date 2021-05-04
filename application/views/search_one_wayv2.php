@@ -630,7 +630,7 @@
                                                 <?php } ?>
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6" style="text-align: right;">
-                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
+                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api' && $sale_type=='request') {?>
                                                     <div class="blink_me">Seats & rates are subject to availability. Confirm before booking.</div>
 												<?php } 
 												else if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]==='api') { ?>

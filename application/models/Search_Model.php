@@ -131,6 +131,53 @@ Class BaseModel extends CI_Model {
 				}
 
 				break;
+			case 'flight_status_change':
+				$ntfypayload['template'] = $template;
+				$doc = $this->getFlightStatus4Notification($docno);
+				$ntfypayload['document'] = $doc;
+				$ntfypayload['payload'] = false;
+				if($doc) {
+					$ntfypayload['payload'] = array(
+						'id' => $doc['id'],
+						'name' => $doc['customer_name'],
+						'email' => $doc['customer_name'].' <'.$doc['customer_email'].'>',
+						'company_name' => $doc['customer_company'],
+						'company_id' => $doc['company_id'],
+						'booking_id' => $doc['booking_id'],
+						'sender' => array(
+							'id' => $doc['seller_comp_id'],
+							'name' => $doc['seller_company'],
+							'email' => $doc['seller_email'],
+							'mobile' => $doc['seller_mobile'],
+							'url' => $doc['baseurl']
+						),
+						'flight_stat' => array(
+							'origin' => $doc['dept_aircode'],
+							'destination' => $doc['arrv_aircode'],
+							'airline' => $doc['airline_name'],
+							'airline_code' => $doc['airline_code'],
+							'flightno' => $doc['flightno'],
+							'status' => $doc['status'],
+							'status_name' => $doc['status_name'],
+							'sch_dept_time' => $doc['sch_dept_time'],
+							'sch_arrv_time' => $doc['sch_arrv_time'],
+							'est_dept_time' => $doc['est_dept_time'],
+							'est_arrv_time' => $doc['est_arrv_time'],
+							'act_dept_time' => $doc['act_dept_time'],
+							'act_arrv_time' => $doc['act_arrv_time'],
+							'delay' => $doc['delay'],
+							'is_arrival_delayed' => $doc['is_arrival_delayed'],
+							'is_departure_delayed' => $doc['is_departure_delayed'],
+							'dept_terminal' => $doc['dept_terminal'],
+							'arrv_terminal' => $doc['arrv_terminal'],
+							'dept_gate' => $doc['dept_gate'],
+							'arrv_gate' => $doc['arrv_gate'],
+							'baggage' => $doc['baggage']
+						)
+					);					
+				}
+
+				break;
 			default:
 				log_message('debug', "BaseModel::getNotifyPayload - DocType invalid");
 		}
@@ -167,6 +214,38 @@ Class BaseModel extends CI_Model {
 		else
 		{
 			//return $sql;
+			return false;
+		}
+	}
+
+	private function getFlightStatus4Notification($id) {
+		$id = intval($id);
+
+		if($id>0) {
+			$sql = "select 	fs.id, fs.booking_id, cmp_cust.name as customer_company, cust.companyid as company_id, cust.name as customer_name, cust.email as customer_email, cmp_sel.name as seller_company, sel.companyid as seller_comp_id, sel.name as seller_name, cmp_sel.baseurl, 
+							sel.email as seller_email, sel.mobile as seller_mobile, fs.dept_aircode, fs.arrv_aircode, fs.airline_name, fs.airline_code, fs.flightno, fs.status, fs.status_name, fs.sch_dept_time, fs.sch_arrv_time, fs.est_dept_time, fs.est_arrv_time, fs.act_dept_time, 
+							fs.act_arrv_time, fs.delay, fs.is_arrival_delayed, fs.is_departure_delayed, fs.dept_terminal, fs.arrv_terminal, fs.dept_gate, fs.arrv_gate, fs.baggage, sel.id as seller_id
+					from flight_stat_tbl fs
+					inner join bookings_tbl bk on fs.booking_id=bk.id
+					inner join user_tbl cust on cust.id=bk.customer_userid
+					inner join user_tbl sel on sel.id=bk.seller_userid
+					inner join company_tbl cmp_cust on cmp_cust.id=cust.companyid
+					inner join company_tbl cmp_sel on cmp_sel.id=sel.companyid
+					where fs.id=$id";
+
+			$query = $this->db->query($sql);
+			//echo $this->db->last_query();die();
+			if ($query->num_rows() > 0) 
+			{
+				$flight_stat = $query->result_array()[0];
+				return $flight_stat;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else {
 			return false;
 		}
 	}
@@ -260,6 +339,21 @@ Class BaseModel extends CI_Model {
 					'created_on' => date("Y-m-d H:i:s"),
 					'created_by' => $document['id']
 				);				
+				break;
+			case 'flight_status_change':
+				$arr = array(
+					'date' => date("Y-m-d H:i:s"),
+					'mode' => 'EMAIL',
+					'companyid' => $document['company_id'],
+					'payloaddata' => $payload,
+					'templatename' => $ntfyfeed['template'],
+					'module' => $ntfyfeed['template'],
+					'receipients' => $document['customer_name'].' <'.$document['customer_email'].'>',
+					'status' => 0,
+					'isread' => 0,
+					'created_on' => date("Y-m-d H:i:s"),
+					'created_by' => $document['seller_id']
+				);
 				break;
 			default:
 		}

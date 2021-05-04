@@ -545,7 +545,7 @@
                                                 <?php } ?>
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-8 col-md-8" style="text-align: right;">
-                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
+                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api' && $sale_type=='request') {?>
                                                     <div class="blink_me">Seats & rates are subject to availability. Confirm before booking.</div>
 												<?php } 
 												else if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]==='api') { ?>
@@ -884,7 +884,7 @@
                                                 <?php } ?>
                                             </div>
                                             <div class="col-xs-12 col-sm-12 col-lg-8 col-md-8" style="text-align: right;">
-                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api') {?>
+                                                <?php if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]!=='api' && $sale_type=='request') {?>
                                                     <div class="blink_me">Seats & rates are subject to availability. Confirm before booking.</div>
 												<?php } 
 												else if(isset($flightitem["sale_type"]) && $flightitem["sale_type"]==='api') { ?>
